@@ -26,7 +26,8 @@ export const CANVAS_STRINGS = {
   },
   SUCCESS: {
     IMAGE_GENERATED: "Image generated",
-    IMAGE_GENERATED_DESCRIPTION: "The AI-generated image has been added to the canvas",
+    IMAGE_GENERATED_DESCRIPTION:
+      "The AI-generated image has been added to the canvas",
     VIDEO_CREATED: "Video created successfully",
     VIDEO_PROCESSED: "Video processed successfully",
   },
@@ -75,7 +76,7 @@ export const COLOR_MAP: Record<string, string> = {
 } as const;
 
 export const DEFAULT_IMAGES = {
-  PATHS: ["/chad.png"],
+  PATHS: ["/poor-things.jpeg"],
 } as const;
 
 export const ANIMATION = {
