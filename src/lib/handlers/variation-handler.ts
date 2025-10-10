@@ -2,7 +2,7 @@ import type { PlacedImage } from "@/types/canvas";
 import type { FalClient } from "@fal-ai/client";
 import { CAMERA_VARIATIONS } from "@/constants/camera-variations";
 import { uploadImageDirect } from "./generation-handler";
-import { createPixelatedImage } from "@/utils/placeholder-utils";
+import { createVariationPlaceholder } from "@/utils/placeholder-utils";
 
 interface VariationHandlerDeps {
   images: PlacedImage[];
@@ -192,9 +192,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
     console.log("Creating 12 variation placeholders...");
 
-    // Create blurred version of the source image as loading placeholder
-    const blurredPlaceholder = createPixelatedImage(imgElement, 15);
-
     for (let i = 0; i < 12; i++) {
       const placeholderId = `variation-${timestamp}-${i}`;
       placeholderIds.push(placeholderId);
@@ -208,9 +205,16 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         selectedImage.height
       );
 
+      // Create variation placeholder with the variation number
+      const variationPlaceholder = createVariationPlaceholder(
+        selectedImage.width,
+        selectedImage.height,
+        i + 1
+      );
+
       placeholders.push({
         id: placeholderId,
-        src: blurredPlaceholder,
+        src: variationPlaceholder,
         x,
         y,
         width: selectedImage.width,
@@ -219,10 +223,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         isGenerated: true,
         isLoading: true,
       });
-
-      console.log(
-        `Created placeholder ${i + 1}/12: ${placeholderId} at (${Math.round(x)}, ${Math.round(y)})`
-      );
     }
 
     // Add placeholders to canvas

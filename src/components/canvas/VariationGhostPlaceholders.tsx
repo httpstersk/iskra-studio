@@ -14,17 +14,14 @@ interface VariationGhostPlaceholdersProps {
 export const VariationGhostPlaceholders: React.FC<
   VariationGhostPlaceholdersProps
 > = ({ selectedImage }) => {
-  // Calculate source image center
   const sourceCenterX = selectedImage.x + selectedImage.width / 2;
   const sourceCenterY = selectedImage.y + selectedImage.height / 2;
 
-  // Calculate radius for circular placement
   const diagonal = Math.sqrt(
     selectedImage.width ** 2 + selectedImage.height ** 2
   );
   const radius = diagonal * 1.2;
 
-  // Generate 12 ghost placeholder positions
   const ghostPlaceholders = Array.from({ length: 12 }, (_, i) => {
     const { x, y } = calculateBalancedPosition(
       sourceCenterX,

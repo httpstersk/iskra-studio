@@ -18,6 +18,7 @@ import type {
 } from "@/types/canvas";
 import type { Viewport } from "@/hooks/useCanvasState";
 import { VariationGhostPlaceholders } from "./VariationGhostPlaceholders";
+import { VariationNumbersOverlay } from "./VariationNumbersOverlay";
 
 /**
  * Props for the CanvasStageRenderer component
@@ -259,28 +260,29 @@ export function CanvasStageRenderer({
   if (!isCanvasReady) return null;
 
   return (
-    <Stage
-      aria-label={ARIA_LABELS.STAGE}
-      draggable={false}
-      height={canvasSize.height}
-      onContextMenu={handleContextMenu}
-      onMouseDown={(e) => interactions.handleMouseDown(e, setCroppingImageId)}
-      onMouseLeave={() => {
-        // Mouse leave handled in parent
-      }}
-      onMouseMove={interactions.handleMouseMove}
-      onMouseUp={interactions.handleMouseUp}
-      onTouchEnd={interactions.handleTouchEnd}
-      onTouchMove={interactions.handleTouchMove}
-      onTouchStart={interactions.handleTouchStart}
-      onWheel={interactions.handleWheel}
-      ref={stageRef}
-      scaleX={viewport.scale}
-      scaleY={viewport.scale}
-      width={canvasSize.width}
-      x={viewport.x}
-      y={viewport.y}
-    >
+    <>
+      <Stage
+        aria-label={ARIA_LABELS.STAGE}
+        draggable={false}
+        height={canvasSize.height}
+        onContextMenu={handleContextMenu}
+        onMouseDown={(e) => interactions.handleMouseDown(e, setCroppingImageId)}
+        onMouseLeave={() => {
+          // Mouse leave handled in parent
+        }}
+        onMouseMove={interactions.handleMouseMove}
+        onMouseUp={interactions.handleMouseUp}
+        onTouchEnd={interactions.handleTouchEnd}
+        onTouchMove={interactions.handleTouchMove}
+        onTouchStart={interactions.handleTouchStart}
+        onWheel={interactions.handleWheel}
+        ref={stageRef}
+        scaleX={viewport.scale}
+        scaleY={viewport.scale}
+        width={canvasSize.width}
+        x={viewport.x}
+        y={viewport.y}
+      >
       <Layer>
         {showGrid && <CanvasGrid canvasSize={canvasSize} viewport={viewport} />}
         <SelectionBoxComponent selectionBox={interactions.selectionBox} />
@@ -372,6 +374,15 @@ export function CanvasStageRenderer({
           );
         })()}
       </Layer>
-    </Stage>
+      </Stage>
+
+      {isVariationMode && selectedImageForVariation && (
+        <VariationNumbersOverlay
+          selectedImage={selectedImageForVariation}
+          viewport={viewport}
+          canvasSize={canvasSize}
+        />
+      )}
+    </>
   );
 }
