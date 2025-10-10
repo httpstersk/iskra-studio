@@ -15,13 +15,14 @@ interface VariationGhostPlaceholdersProps {
 export const VariationGhostPlaceholders: React.FC<
   VariationGhostPlaceholdersProps
 > = ({ selectedImage }) => {
-  const sourceCenterX = selectedImage.x + selectedImage.width / 2;
-  const sourceCenterY = selectedImage.y + selectedImage.height / 2;
-
+  // Snap the source image position to grid first to ensure edge-to-edge alignment
+  const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
+  
   const ghostPlaceholders = Array.from({ length: 4 }, (_, i) => {
+    // Calculate position based on snapped source position
     const position = calculateBalancedPosition(
-      sourceCenterX,
-      sourceCenterY,
+      snappedSource.x,
+      snappedSource.y,
       i,
       selectedImage.width,
       selectedImage.height,
@@ -29,13 +30,10 @@ export const VariationGhostPlaceholders: React.FC<
       selectedImage.height
     );
 
-    // Snap ghost placeholder positions to grid for alignment
-    const snapped = snapPosition(position.x, position.y);
-
     return {
       id: `ghost-${i}`,
-      x: snapped.x,
-      y: snapped.y,
+      x: position.x,
+      y: position.y,
       width: selectedImage.width,
       height: selectedImage.height,
     };

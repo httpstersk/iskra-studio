@@ -24,8 +24,8 @@ interface VariationHandlerDeps {
 /**
  * Calculate position for a variation image on each side of the source
  * Creates an arrangement with 4 variations directly adjacent (top, right, bottom, left)
- * @param centerX - X coordinate of the source image center
- * @param centerY - Y coordinate of the source image center
+ * @param sourceX - X coordinate of the source image
+ * @param sourceY - Y coordinate of the source image
  * @param angleIndex - Index of the variation (0-3: top, right, bottom, left)
  * @param sourceWidth - Width of the source image
  * @param sourceHeight - Height of the source image
@@ -33,38 +33,38 @@ interface VariationHandlerDeps {
  * @param variationHeight - Height of the variation image
  */
 export function calculateBalancedPosition(
-  centerX: number,
-  centerY: number,
+  sourceX: number,
+  sourceY: number,
   angleIndex: number,
   sourceWidth: number,
   sourceHeight: number,
   variationWidth: number,
   variationHeight: number
 ) {
-  // Place variations directly adjacent to each side
+  // Place variations directly adjacent to each side, relative to source edges
   switch (angleIndex) {
-    case 0: // Top
+    case 0: // Top - aligned with source left edge
       return {
-        x: centerX - variationWidth / 2,
-        y: centerY - sourceHeight / 2 - variationHeight,
+        x: sourceX,
+        y: sourceY - variationHeight,
       };
-    case 1: // Right
+    case 1: // Right - aligned with source top edge
       return {
-        x: centerX + sourceWidth / 2,
-        y: centerY - variationHeight / 2,
+        x: sourceX + sourceWidth,
+        y: sourceY,
       };
-    case 2: // Bottom
+    case 2: // Bottom - aligned with source left edge
       return {
-        x: centerX - variationWidth / 2,
-        y: centerY + sourceHeight / 2,
+        x: sourceX,
+        y: sourceY + sourceHeight,
       };
-    case 3: // Left
+    case 3: // Left - aligned with source top edge
       return {
-        x: centerX - sourceWidth / 2 - variationWidth,
-        y: centerY - variationHeight / 2,
+        x: sourceX - variationWidth,
+        y: sourceY,
       };
     default:
-      return { x: centerX, y: centerY };
+      return { x: sourceX, y: sourceY };
   }
 }
 
@@ -108,10 +108,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   setIsGenerating(true);
 
   try {
-    // Calculate source image center
-    const sourceCenterX = selectedImage.x + selectedImage.width / 2;
-    const sourceCenterY = selectedImage.y + selectedImage.height / 2;
-
     // Load and prepare the source image
     const imgElement = new window.Image();
     imgElement.crossOrigin = "anonymous";
@@ -201,6 +197,9 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
     console.log("Starting generation without placeholders...");
 
+    // Snap source image position for consistent alignment
+    const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
+
     // Generate all variations in parallel
     console.log("Starting generation of 4 variations in parallel...");
     const variationPromises = CAMERA_VARIATIONS.map(async (prompt, index) => {
@@ -221,19 +220,16 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
         console.log(`Variation ${index + 1}/4 completed successfully`);
 
-        // Calculate position for this variation
+        // Calculate position for this variation based on snapped source position
         const position = calculateBalancedPosition(
-          sourceCenterX,
-          sourceCenterY,
+          snappedSource.x,
+          snappedSource.y,
           index,
           selectedImage.width,
           selectedImage.height,
           selectedImage.width,
           selectedImage.height
         );
-        
-        // Snap to grid for alignment with ghost placeholders
-        const snapped = snapPosition(position.x, position.y);
 
         // Create new image with the generated result
         const newImageId = `variation-${timestamp}-${index}`;
@@ -242,8 +238,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         const newImage: PlacedImage = {
           id: newImageId,
           src: result.url,
-          x: snapped.x,
-          y: snapped.y,
+          x: position.x,
+          y: position.y,
           width: selectedImage.width,
           height: selectedImage.height,
           rotation: 0,

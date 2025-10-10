@@ -150,13 +150,13 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
 
         // Snap to grid
         const snapped = snapPosition(nodeX, nodeY);
-        
+
         // Always constrain visual position to grid
         node.x(snapped.x);
         node.y(snapped.y);
-        
+
         // Only update state when snap position actually changes
-        const hasPositionChanged = 
+        const hasPositionChanged =
           !lastSnapPos.current ||
           lastSnapPos.current.x !== snapped.x ||
           lastSnapPos.current.y !== snapped.y;
@@ -169,7 +169,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
         if (!throttleFrame()) {
           return;
         }
-        
+
         // Trigger haptic feedback on position change
         if (lastSnapPos.current) {
           triggerSnapHaptic();
@@ -196,10 +196,14 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
               if (selectedIds.includes(img.id)) {
                 const imgStartPos = dragStartPositions.get(img.id);
                 if (imgStartPos) {
+                  const targetX = imgStartPos.x + deltaX;
+                  const targetY = imgStartPos.y + deltaY;
+                  const snappedPos = snapPosition(targetX, targetY);
+
                   return {
                     ...img,
-                    x: imgStartPos.x + deltaX,
-                    y: imgStartPos.y + deltaY,
+                    x: snappedPos.x,
+                    y: snappedPos.y,
                   };
                 }
               }
