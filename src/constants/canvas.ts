@@ -76,7 +76,7 @@ export const COLOR_MAP: Record<string, string> = {
 } as const;
 
 export const DEFAULT_IMAGES = {
-  PATHS: ["/poor-things.jpeg"],
+  PATHS: ["/x.jpeg"],
 } as const;
 
 export const ANIMATION = {

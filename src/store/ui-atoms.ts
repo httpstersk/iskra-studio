@@ -47,5 +47,5 @@ export const tempApiKeyAtom = atom<string>("");
 /**
  * Visibility control atoms
  */
-export const hiddenVideoControlsIdsAtom = atom<Set<string>>(new Set());
-export const visibleIndicatorsAtom = atom<Set<string>>(new Set());
+export const hiddenVideoControlsIdsAtom = atom<Set<string>>(new Set<string>());
+export const visibleIndicatorsAtom = atom<Set<string>>(new Set<string>());

@@ -37,6 +37,7 @@ import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 // Handlers
 import { handleRemoveBackground as handleRemoveBackgroundHandler } from "@/lib/handlers/background-handler";
 import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
+import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
 import {
   combineImages,
   deleteElements,
@@ -125,6 +126,9 @@ export default function CanvasPage() {
   // API mutations
   const { mutateAsync: generateTextToImage } = useMutation(
     trpc.generateTextToImage.mutationOptions()
+  );
+  const { mutateAsync: generateImageVariation } = useMutation(
+    trpc.generateImageVariation.mutationOptions()
   );
   const { mutateAsync: isolateObject } = useMutation(
     trpc.isolateObject.mutationOptions()
@@ -278,24 +282,48 @@ export default function CanvasPage() {
 
   /**
    * Handles running image generation
+   * If one image is selected with no prompt, generates 8 camera angle variations
+   * Otherwise, performs standard text-to-image or image-to-image generation
    */
   const handleRun = async () => {
-    await handleRunHandler({
-      canvasSize: canvasState.canvasSize,
-      customApiKey: uiState.customApiKey,
-      falClient,
-      generateTextToImage,
-      generationSettings: generationState.generationSettings,
-      images: canvasState.images,
-      selectedIds: canvasState.selectedIds,
-      setActiveGenerations: generationState.setActiveGenerations,
-      setImages: canvasState.setImages,
-      setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
-      setIsGenerating: generationState.setIsGenerating,
-      setSelectedIds: canvasState.setSelectedIds,
-      toast,
-      viewport: canvasState.viewport,
-    });
+    // Check if we're in variation mode: one image selected, no prompt
+    const isVariationMode =
+      canvasState.selectedIds.length === 1 &&
+      !generationState.generationSettings.prompt.trim();
+
+    if (isVariationMode) {
+      // Generate 8 camera angle variations
+      await handleVariationGeneration({
+        images: canvasState.images,
+        selectedIds: canvasState.selectedIds,
+        customApiKey: uiState.customApiKey,
+        viewport: canvasState.viewport,
+        falClient,
+        setImages: canvasState.setImages,
+        setIsGenerating: generationState.setIsGenerating,
+        setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
+        toast,
+        generateImageVariation,
+      });
+    } else {
+      // Standard generation flow
+      await handleRunHandler({
+        canvasSize: canvasState.canvasSize,
+        customApiKey: uiState.customApiKey,
+        falClient,
+        generateTextToImage,
+        generationSettings: generationState.generationSettings,
+        images: canvasState.images,
+        selectedIds: canvasState.selectedIds,
+        setActiveGenerations: generationState.setActiveGenerations,
+        setImages: canvasState.setImages,
+        setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
+        setIsGenerating: generationState.setIsGenerating,
+        setSelectedIds: canvasState.setSelectedIds,
+        toast,
+        viewport: canvasState.viewport,
+      });
+    }
   };
 
   /**

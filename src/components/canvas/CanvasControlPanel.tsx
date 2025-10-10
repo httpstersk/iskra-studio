@@ -240,7 +240,10 @@ export function CanvasControlPanel({
               onKeyDown={(e) => {
                 if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                   e.preventDefault();
-                  if (!isGenerating && generationSettings.prompt.trim()) {
+                  if (
+                    !isGenerating &&
+                    (generationSettings.prompt.trim() || selectedIds.length > 0)
+                  ) {
                     handleRun();
                   }
                 }
@@ -389,7 +392,9 @@ export function CanvasControlPanel({
                       variant="primary"
                       size="icon"
                       disabled={
-                        isGenerating || !generationSettings.prompt.trim()
+                        isGenerating ||
+                        (selectedIds.length === 0 &&
+                          !generationSettings.prompt.trim())
                       }
                       className={cn(
                         "gap-2 font-medium transition-all",
@@ -405,7 +410,12 @@ export function CanvasControlPanel({
                   </TooltipTrigger>
                   <TooltipContent>
                     <div className="flex items-center gap-2">
-                      <span>Run</span>
+                      <span>
+                        {selectedIds.length === 1 &&
+                        !generationSettings.prompt.trim()
+                          ? "Generate Variations"
+                          : "Run"}
+                      </span>
                       <ShortcutBadge
                         variant="default"
                         size="xs"
