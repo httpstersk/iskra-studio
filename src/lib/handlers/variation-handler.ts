@@ -2,6 +2,7 @@ import type { PlacedImage } from "@/types/canvas";
 import type { FalClient } from "@fal-ai/client";
 import { CAMERA_VARIATIONS } from "@/constants/camera-variations";
 import { uploadImageDirect } from "./generation-handler";
+import { snapPosition } from "@/utils/snap-utils";
 
 interface VariationHandlerDeps {
   images: PlacedImage[];
@@ -221,7 +222,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         console.log(`Variation ${index + 1}/4 completed successfully`);
 
         // Calculate position for this variation
-        const { x, y } = calculateBalancedPosition(
+        const position = calculateBalancedPosition(
           sourceCenterX,
           sourceCenterY,
           index,
@@ -230,6 +231,9 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
           selectedImage.width,
           selectedImage.height
         );
+        
+        // Snap to grid for alignment with ghost placeholders
+        const snapped = snapPosition(position.x, position.y);
 
         // Create new image with the generated result
         const newImageId = `variation-${timestamp}-${index}`;
@@ -238,8 +242,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         const newImage: PlacedImage = {
           id: newImageId,
           src: result.url,
-          x,
-          y,
+          x: snapped.x,
+          y: snapped.y,
           width: selectedImage.width,
           height: selectedImage.height,
           rotation: 0,

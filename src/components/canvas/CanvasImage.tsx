@@ -4,6 +4,7 @@ import Konva from "konva";
 import useImage from "use-image";
 import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
+import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
 
 interface CanvasImageProps {
   dragStartPositions: Map<string, { x: number; y: number }>;
@@ -64,6 +65,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
   const [loadingOpacity, setLoadingOpacity] = useState(0.5);
+  const lastSnapPos = useRef<{ x: number; y: number } | null>(null);
 
   // Pulsing animation for loading placeholders
   useEffect(() => {
@@ -142,13 +144,37 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
         onDragStart();
       }}
       onDragMove={(e) => {
-        if (!throttleFrame()) {
-          return;
-        }
-
         const node = e.target;
         const nodeX = node.x();
         const nodeY = node.y();
+
+        // Snap to grid
+        const snapped = snapPosition(nodeX, nodeY);
+        
+        // Always constrain visual position to grid
+        node.x(snapped.x);
+        node.y(snapped.y);
+        
+        // Only update state when snap position actually changes
+        const hasPositionChanged = 
+          !lastSnapPos.current ||
+          lastSnapPos.current.x !== snapped.x ||
+          lastSnapPos.current.y !== snapped.y;
+
+        if (!hasPositionChanged) {
+          return; // Skip state updates if still in same grid cell
+        }
+
+        // Throttle state updates only when position changes
+        if (!throttleFrame()) {
+          return;
+        }
+        
+        // Trigger haptic feedback on position change
+        if (lastSnapPos.current) {
+          triggerSnapHaptic();
+        }
+        lastSnapPos.current = snapped;
 
         if (selectedIds.includes(image.id) && selectedIds.length > 1) {
           // Multi-selection drag
@@ -157,14 +183,14 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
             return;
           }
 
-          const deltaX = nodeX - startPos.x;
-          const deltaY = nodeY - startPos.y;
+          const deltaX = snapped.x - startPos.x;
+          const deltaY = snapped.y - startPos.y;
 
           // Use functional update to avoid stale closures
           setImages((prevImages) => {
             return prevImages.map((img) => {
               if (img.id === image.id) {
-                return { ...img, x: nodeX, y: nodeY };
+                return { ...img, x: snapped.x, y: snapped.y };
               }
 
               if (selectedIds.includes(img.id)) {
@@ -184,12 +210,14 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
         } else {
           // Single item drag
           onChange({
-            x: nodeX,
-            y: nodeY,
+            x: snapped.x,
+            y: snapped.y,
           });
         }
       }}
       onDragEnd={(e) => {
+        // Reset snap tracking on drag end
+        lastSnapPos.current = null;
         onDragEnd();
       }}
       opacity={image.isLoading ? loadingOpacity : image.isGenerated ? 0.9 : 1}

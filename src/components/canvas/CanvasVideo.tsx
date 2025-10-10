@@ -15,6 +15,7 @@ import {
 import Konva from "konva";
 import type { PlacedVideo } from "@/types/canvas";
 import { throttle } from "@/utils/performance";
+import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
 
 interface CanvasVideoProps {
   video: PlacedVideo;
@@ -57,13 +58,14 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(
-    null,
+    null
   );
   // isVideoLoaded is used to track when the video is ready but not directly referenced
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   // isResizing is used to track resize state for internal component logic
   const [isResizing, setIsResizing] = useState(false);
   const lastUpdateTime = useRef<number>(0);
+  const lastSnapPos = useRef<{ x: number; y: number } | null>(null);
 
   // Create and set up the video element when the component mounts or video src changes
   useEffect(() => {
@@ -247,7 +249,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
           onChange({
             currentTime: Math.min(
               video.duration,
-              video.currentTime + (e.shiftKey ? 10 : 5),
+              video.currentTime + (e.shiftKey ? 10 : 5)
             ),
           });
           break;
@@ -281,18 +283,18 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
     onChange,
   ]);
 
-  // Memoize the drag handler to avoid recreating it on every render
-  const handleDragMove = useMemo(
+  // Create throttled state update function
+  const throttledStateUpdate = useMemo(
     () =>
-      throttle((e: any) => {
-        const node = e.target;
-
-        if (selectedIds.includes(video.id) && selectedIds.length > 1) {
-          // Calculate delta from drag start position
-          const startPos = dragStartPositions.get(video.id);
-          if (startPos) {
-            const deltaX = node.x() - startPos.x;
-            const deltaY = node.y() - startPos.y;
+      throttle(
+        (
+          snapped: { x: number; y: number },
+          isMultiSelect: boolean,
+          startPos?: { x: number; y: number }
+        ) => {
+          if (isMultiSelect && startPos) {
+            const deltaX = snapped.x - startPos.x;
+            const deltaY = snapped.y - startPos.y;
 
             // Update all selected items relative to their start positions
             setVideos((prev) =>
@@ -300,8 +302,8 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
                 if (vid.id === video.id) {
                   return {
                     ...vid,
-                    x: node.x(),
-                    y: node.y(),
+                    x: snapped.x,
+                    y: snapped.y,
                     isVideo: true as const,
                   };
                 } else if (selectedIds.includes(vid.id)) {
@@ -316,18 +318,61 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
                   }
                 }
                 return vid;
-              }),
+              })
             );
+          } else {
+            // Single item drag - just update this video
+            onChange({
+              x: snapped.x,
+              y: snapped.y,
+            });
           }
-        } else {
-          // Single item drag - just update this video
-          onChange({
-            x: node.x(),
-            y: node.y(),
-          });
-        }
-      }, 16), // ~60fps throttle
-    [selectedIds, video.id, dragStartPositions, setVideos, onChange],
+        },
+        16
+      ), // ~60fps throttle
+    [selectedIds, video.id, dragStartPositions, setVideos, onChange]
+  );
+
+  // Handle drag move with snap-to-grid
+  const handleDragMove = useCallback(
+    (e: any) => {
+      const node = e.target;
+      const nodeX = node.x();
+      const nodeY = node.y();
+
+      // Snap to grid
+      const snapped = snapPosition(nodeX, nodeY);
+
+      // Always constrain visual position to grid
+      node.x(snapped.x);
+      node.y(snapped.y);
+
+      // Only update state when snap position actually changes
+      const hasPositionChanged =
+        !lastSnapPos.current ||
+        lastSnapPos.current.x !== snapped.x ||
+        lastSnapPos.current.y !== snapped.y;
+
+      if (!hasPositionChanged) {
+        return; // Skip state updates if still in same grid cell
+      }
+
+      // Trigger haptic feedback on position change
+      if (lastSnapPos.current) {
+        triggerSnapHaptic();
+      }
+      lastSnapPos.current = snapped;
+
+      // Throttled state update
+      const isMultiSelect =
+        selectedIds.includes(video.id) && selectedIds.length > 1;
+      const startPos = isMultiSelect
+        ? dragStartPositions.get(video.id)
+        : undefined;
+
+      throttledStateUpdate(snapped, isMultiSelect, startPos);
+    },
+    [selectedIds, video.id, dragStartPositions, throttledStateUpdate]
   );
 
   return (
@@ -399,6 +444,8 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
         }}
         onDragMove={handleDragMove}
         onDragEnd={() => {
+          // Reset snap tracking on drag end
+          lastSnapPos.current = null;
           onDragEnd();
         }}
         onTransformStart={() => {

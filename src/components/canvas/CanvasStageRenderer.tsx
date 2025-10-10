@@ -68,7 +68,9 @@ interface CanvasStageRendererProps {
 /**
  * Filters visible items based on viewport bounds
  */
-function getVisibleItems<T extends { height: number; width: number; x: number; y: number }>(
+function getVisibleItems<
+  T extends { height: number; width: number; x: number; y: number },
+>(
   items: T[],
   viewport: Viewport,
   canvasSize: { height: number; width: number }
@@ -285,97 +287,104 @@ export function CanvasStageRenderer({
         x={viewport.x}
         y={viewport.y}
       >
-      <Layer>
-        {showGrid && <CanvasGrid canvasSize={canvasSize} viewport={viewport} />}
-        <SelectionBoxComponent selectionBox={interactions.selectionBox} />
+        <Layer>
+          {showGrid && (
+            <CanvasGrid canvasSize={canvasSize} viewport={viewport} />
+          )}
+          <SelectionBoxComponent selectionBox={interactions.selectionBox} />
 
-        {/* Render visible images */}
-        {visibleImages.map((image) => (
-          <CanvasImage
-            dragStartPositions={interactions.dragStartPositions}
-            image={image}
-            isCroppingImage={croppingImageId === image.id}
-            isDraggingImage={interactions.isDraggingImage}
-            isSelected={selectedIds.includes(image.id)}
-            key={image.id}
-            onChange={(newAttrs) => {
-              setImages((prev) =>
-                prev.map((img) =>
-                  img.id === image.id ? { ...img, ...newAttrs } : img
-                )
-              );
-            }}
-            onDoubleClick={() => setCroppingImageId(image.id)}
-            onDragEnd={handleImageDragEnd}
-            onDragStart={() => handleImageDragStart(image.id)}
-            onSelect={(e) => interactions.handleSelect(image.id, e)}
-            selectedIds={selectedIds}
-            setImages={setImages}
-          />
-        ))}
-
-        {/* Ghost placeholders for variation mode */}
-        {isVariationMode && selectedImageForVariation && (
-          <VariationGhostPlaceholders
-            selectedImage={selectedImageForVariation}
-          />
-        )}
-
-        {/* Render visible videos */}
-        {visibleVideos.map((video) => (
-          <CanvasVideo
-            dragStartPositions={interactions.dragStartPositions}
-            isCroppingVideo={false}
-            isDraggingVideo={interactions.isDraggingImage}
-            isSelected={selectedIds.includes(video.id)}
-            key={video.id}
-            onChange={(newAttrs) => {
-              setVideos((prev) =>
-                prev.map((vid) =>
-                  vid.id === video.id ? { ...vid, ...newAttrs } : vid
-                )
-              );
-            }}
-            onDragEnd={() => handleVideoDragEnd(video.id)}
-            onDragStart={() => handleVideoDragStart(video.id)}
-            onResizeEnd={() =>
-              setHiddenVideoControlsIds((prev) => {
-                const newSet = new Set(prev);
-                newSet.delete(video.id);
-                return newSet;
-              })
-            }
-            onResizeStart={() =>
-              setHiddenVideoControlsIds((prev) => new Set([...prev, video.id]))
-            }
-            onSelect={(e) => interactions.handleSelect(video.id, e)}
-            selectedIds={selectedIds}
-            setVideos={setVideos}
-            video={video}
-            videos={videos}
-          />
-        ))}
-
-        {/* Crop overlay */}
-        {croppingImageId && (() => {
-          const croppingImage = images.find((img) => img.id === croppingImageId);
-          if (!croppingImage) return null;
-          return (
-            <CropOverlayWrapper
-              image={croppingImage}
-              onCropChange={(crop) => {
+          {/* Render visible images */}
+          {visibleImages.map((image) => (
+            <CanvasImage
+              dragStartPositions={interactions.dragStartPositions}
+              image={image}
+              isCroppingImage={croppingImageId === image.id}
+              isDraggingImage={interactions.isDraggingImage}
+              isSelected={selectedIds.includes(image.id)}
+              key={image.id}
+              onChange={(newAttrs) => {
                 setImages((prev) =>
                   prev.map((img) =>
-                    img.id === croppingImageId ? { ...img, ...crop } : img
+                    img.id === image.id ? { ...img, ...newAttrs } : img
                   )
                 );
               }}
-              onCropEnd={handleCropEnd}
-              viewportScale={viewport.scale}
+              onDoubleClick={() => setCroppingImageId(image.id)}
+              onDragEnd={handleImageDragEnd}
+              onDragStart={() => handleImageDragStart(image.id)}
+              onSelect={(e) => interactions.handleSelect(image.id, e)}
+              selectedIds={selectedIds}
+              setImages={setImages}
             />
-          );
-        })()}
-      </Layer>
+          ))}
+
+          {/* Ghost placeholders for variation mode */}
+          {isVariationMode && selectedImageForVariation && (
+            <VariationGhostPlaceholders
+              selectedImage={selectedImageForVariation}
+            />
+          )}
+
+          {/* Render visible videos */}
+          {visibleVideos.map((video) => (
+            <CanvasVideo
+              dragStartPositions={interactions.dragStartPositions}
+              isCroppingVideo={false}
+              isDraggingVideo={interactions.isDraggingImage}
+              isSelected={selectedIds.includes(video.id)}
+              key={video.id}
+              onChange={(newAttrs) => {
+                setVideos((prev) =>
+                  prev.map((vid) =>
+                    vid.id === video.id ? { ...vid, ...newAttrs } : vid
+                  )
+                );
+              }}
+              onDragEnd={() => handleVideoDragEnd(video.id)}
+              onDragStart={() => handleVideoDragStart(video.id)}
+              onResizeEnd={() =>
+                setHiddenVideoControlsIds((prev) => {
+                  const newSet = new Set(prev);
+                  newSet.delete(video.id);
+                  return newSet;
+                })
+              }
+              onResizeStart={() =>
+                setHiddenVideoControlsIds(
+                  (prev) => new Set([...prev, video.id])
+                )
+              }
+              onSelect={(e) => interactions.handleSelect(video.id, e)}
+              selectedIds={selectedIds}
+              setVideos={setVideos}
+              video={video}
+              videos={videos}
+            />
+          ))}
+
+          {/* Crop overlay */}
+          {croppingImageId &&
+            (() => {
+              const croppingImage = images.find(
+                (img) => img.id === croppingImageId
+              );
+              if (!croppingImage) return null;
+              return (
+                <CropOverlayWrapper
+                  image={croppingImage}
+                  onCropChange={(crop) => {
+                    setImages((prev) =>
+                      prev.map((img) =>
+                        img.id === croppingImageId ? { ...img, ...crop } : img
+                      )
+                    );
+                  }}
+                  onCropEnd={handleCropEnd}
+                  viewportScale={viewport.scale}
+                />
+              );
+            })()}
+        </Layer>
       </Stage>
 
       {isVariationMode && selectedImageForVariation && (

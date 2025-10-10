@@ -2,6 +2,7 @@ import React from "react";
 import { Rect, Group } from "react-konva";
 import type { PlacedImage } from "@/types/canvas";
 import { calculateBalancedPosition } from "@/lib/handlers/variation-handler";
+import { snapPosition } from "@/utils/snap-utils";
 
 interface VariationGhostPlaceholdersProps {
   selectedImage: PlacedImage;
@@ -18,7 +19,7 @@ export const VariationGhostPlaceholders: React.FC<
   const sourceCenterY = selectedImage.y + selectedImage.height / 2;
 
   const ghostPlaceholders = Array.from({ length: 4 }, (_, i) => {
-    const { x, y } = calculateBalancedPosition(
+    const position = calculateBalancedPosition(
       sourceCenterX,
       sourceCenterY,
       i,
@@ -28,10 +29,13 @@ export const VariationGhostPlaceholders: React.FC<
       selectedImage.height
     );
 
+    // Snap ghost placeholder positions to grid for alignment
+    const snapped = snapPosition(position.x, position.y);
+
     return {
       id: `ghost-${i}`,
-      x,
-      y,
+      x: snapped.x,
+      y: snapped.y,
       width: selectedImage.width,
       height: selectedImage.height,
     };
