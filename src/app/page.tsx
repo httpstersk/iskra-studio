@@ -59,7 +59,11 @@ import {
 } from "@/lib/handlers/image-handlers";
 
 // Types & Utils
-import type { VideoGenerationSettings, PlacedImage, PlacedVideo } from "@/types/canvas";
+import type {
+  VideoGenerationSettings,
+  PlacedImage,
+  PlacedVideo,
+} from "@/types/canvas";
 import { convertImageToVideo } from "@/utils/video-utils";
 import { cn } from "@/lib/utils";
 import { getVideoModelById } from "@/lib/video-models";
@@ -73,7 +77,7 @@ export default function CanvasPage() {
   // ========================================
   // State Management via Custom Hooks
   // ========================================
-  
+
   const {
     images,
     setImages,
@@ -253,19 +257,46 @@ export default function CanvasPage() {
 
   const handleDelete = useCallback(() => {
     saveToHistory();
-    const { newImages, newVideos } = deleteElements(images, videos, selectedIds);
+    const { newImages, newVideos } = deleteElements(
+      images,
+      videos,
+      selectedIds
+    );
     setImages(newImages);
     setVideos(newVideos);
     setSelectedIds([]);
-  }, [images, videos, selectedIds, saveToHistory, setImages, setVideos, setSelectedIds]);
+  }, [
+    images,
+    videos,
+    selectedIds,
+    saveToHistory,
+    setImages,
+    setVideos,
+    setSelectedIds,
+  ]);
 
   const handleDuplicate = useCallback(() => {
     saveToHistory();
-    const { newImages, newVideos } = duplicateElements(images, videos, selectedIds);
+    const { newImages, newVideos } = duplicateElements(
+      images,
+      videos,
+      selectedIds
+    );
     setImages((prev) => [...prev, ...newImages]);
     setVideos((prev) => [...prev, ...newVideos]);
-    setSelectedIds([...newImages.map((img) => img.id), ...newVideos.map((vid) => vid.id)]);
-  }, [images, videos, selectedIds, saveToHistory, setImages, setVideos, setSelectedIds]);
+    setSelectedIds([
+      ...newImages.map((img) => img.id),
+      ...newVideos.map((vid) => vid.id),
+    ]);
+  }, [
+    images,
+    videos,
+    selectedIds,
+    saveToHistory,
+    setImages,
+    setVideos,
+    setSelectedIds,
+  ]);
 
   const handleRemoveBackground = async () => {
     await handleRemoveBackgroundHandler({
@@ -284,7 +315,7 @@ export default function CanvasPage() {
   const handleCombineImages = useCallback(async () => {
     if (selectedIds.length < 2) return;
     saveToHistory();
-    
+
     try {
       const combinedImage = await combineImages(images, selectedIds);
       setImages((prev) => [
@@ -337,7 +368,9 @@ export default function CanvasPage() {
     setIsImageToVideoDialogOpen(true);
   };
 
-  const handleImageToVideoConversion = async (settings: VideoGenerationSettings) => {
+  const handleImageToVideoConversion = async (
+    settings: VideoGenerationSettings
+  ) => {
     if (!selectedImageForVideo) return;
     const image = images.find((img) => img.id === selectedImageForVideo);
     if (!image) return;
@@ -376,7 +409,8 @@ export default function CanvasPage() {
       console.error("Error starting image-to-video conversion:", error);
       toast({
         title: "Conversion failed",
-        description: error instanceof Error ? error.message : "Failed to start conversion",
+        description:
+          error instanceof Error ? error.message : "Failed to start conversion",
         variant: "destructive",
       });
       setIsConvertingToVideo(false);
@@ -388,7 +422,9 @@ export default function CanvasPage() {
     setIsVideoToVideoDialogOpen(true);
   };
 
-  const handleVideoToVideoTransformation = async (settings: VideoGenerationSettings) => {
+  const handleVideoToVideoTransformation = async (
+    settings: VideoGenerationSettings
+  ) => {
     if (!selectedVideoForVideo) return;
     const video = videos.find((vid) => vid.id === selectedVideoForVideo);
     if (!video) return;
@@ -425,7 +461,10 @@ export default function CanvasPage() {
       console.error("Error starting video-to-video transformation:", error);
       toast({
         title: "Transformation failed",
-        description: error instanceof Error ? error.message : "Failed to start transformation",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to start transformation",
         variant: "destructive",
       });
       setIsTransformingVideo(false);
@@ -475,7 +514,10 @@ export default function CanvasPage() {
       console.error("Error starting video extension:", error);
       toast({
         title: "Extension failed",
-        description: error instanceof Error ? error.message : "Failed to start video extension",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to start video extension",
         variant: "destructive",
       });
       setIsExtendingVideo(false);
@@ -489,7 +531,9 @@ export default function CanvasPage() {
 
   const handleVideoBackgroundRemoval = async (backgroundColor: string) => {
     if (!selectedVideoForBackgroundRemoval) return;
-    const video = videos.find((vid) => vid.id === selectedVideoForBackgroundRemoval);
+    const video = videos.find(
+      (vid) => vid.id === selectedVideoForBackgroundRemoval
+    );
     if (!video) return;
 
     try {
@@ -552,7 +596,8 @@ export default function CanvasPage() {
       console.error("Error removing video background:", error);
       toast({
         title: "Error processing video",
-        description: error instanceof Error ? error.message : "An error occurred",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
       setIsRemovingVideoBackground(false);
@@ -571,9 +616,13 @@ export default function CanvasPage() {
       const sourceImageId = generation?.sourceImageId || selectedImageForVideo;
 
       if (generation?.toastId) {
-        const toastElement = document.querySelector(`[data-toast-id="${generation.toastId}"]`);
+        const toastElement = document.querySelector(
+          `[data-toast-id="${generation.toastId}"]`
+        );
         if (toastElement) {
-          const closeButton = toastElement.querySelector("[data-radix-toast-close]");
+          const closeButton = toastElement.querySelector(
+            "[data-radix-toast-close]"
+          );
           if (closeButton instanceof HTMLElement) {
             closeButton.click();
           }
@@ -591,7 +640,9 @@ export default function CanvasPage() {
           toast({ title: "Video created successfully" });
         }
       } else if (generation?.sourceVideoId) {
-        const sourceVideo = videos.find((vid) => vid.id === generation.sourceVideoId);
+        const sourceVideo = videos.find(
+          (vid) => vid.id === generation.sourceVideoId
+        );
         if (sourceVideo) {
           const newVideo: PlacedVideo = {
             id: `video_${Date.now()}_${Math.random().toString(36).substring(7)}`,
@@ -626,7 +677,8 @@ export default function CanvasPage() {
       console.error("Error completing video generation:", error);
       toast({
         title: "Error creating video",
-        description: error instanceof Error ? error.message : "Failed to create video",
+        description:
+          error instanceof Error ? error.message : "Failed to create video",
         variant: "destructive",
       });
     }
@@ -646,15 +698,21 @@ export default function CanvasPage() {
     });
   };
 
-  const handleVideoGenerationProgress = (videoId: string, progress: number, status: string) => {
+  const handleVideoGenerationProgress = (
+    videoId: string,
+    progress: number,
+    status: string
+  ) => {
     console.log(`Video generation progress: ${progress}% - ${status}`);
   };
 
   const handleChatImageGenerated = useCallback(
     (imageUrl: string) => {
       const id = `chat-generated-${Date.now()}-${Math.random()}`;
-      const viewportCenterX = (canvasSize.width / 2 - viewport.x) / viewport.scale;
-      const viewportCenterY = (canvasSize.height / 2 - viewport.y) / viewport.scale;
+      const viewportCenterX =
+        (canvasSize.width / 2 - viewport.x) / viewport.scale;
+      const viewportCenterY =
+        (canvasSize.height / 2 - viewport.y) / viewport.scale;
 
       const newImage: PlacedImage = {
         id,
@@ -669,7 +727,10 @@ export default function CanvasPage() {
 
       setImages((prev) => [...prev, newImage]);
       setSelectedIds([id]);
-      toast({ title: "Image generated", description: "The AI-generated image has been added to the canvas" });
+      toast({
+        title: "Image generated",
+        description: "The AI-generated image has been added to the canvas",
+      });
     },
     [canvasSize, viewport, toast, setImages, setSelectedIds]
   );
@@ -726,7 +787,7 @@ export default function CanvasPage() {
     if (!isStorageLoaded || images.length > 0) return;
 
     const loadDefaultImages = async () => {
-      const defaultImagePaths = ["/chad.png", "/anime.png"];
+      const defaultImagePaths = ["/chad.png"];
 
       for (let i = 0; i < defaultImagePaths.length; i++) {
         const path = defaultImagePaths[i];
@@ -760,7 +821,15 @@ export default function CanvasPage() {
 
               setImages((prev) => [
                 ...prev,
-                { id, src: e.target?.result as string, x, y, width, height, rotation: 0 },
+                {
+                  id,
+                  src: e.target?.result as string,
+                  x,
+                  y,
+                  width,
+                  height,
+                  rotation: 0,
+                },
               ]);
             };
             img.src = e.target?.result as string;
@@ -801,7 +870,9 @@ export default function CanvasPage() {
           }}
           onComplete={(id, finalUrl) => {
             setImages((prev) =>
-              prev.map((img) => (img.id === id ? { ...img, src: finalUrl } : img))
+              prev.map((img) =>
+                img.id === id ? { ...img, src: finalUrl } : img
+              )
             );
             setActiveGenerations((prev) => {
               const newMap = new Map(prev);
@@ -850,12 +921,14 @@ export default function CanvasPage() {
           <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-24 bg-gradient-to-r from-background to-transparent z-10" />
           <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-24 bg-gradient-to-l from-background to-transparent z-10" />
 
-          <ContextMenu onOpenChange={(open) => {
-            if (!open) {
-              setIsolateTarget(null);
-              setIsolateInputValue("");
-            }
-          }}>
+          <ContextMenu
+            onOpenChange={(open) => {
+              if (!open) {
+                setIsolateTarget(null);
+                setIsolateInputValue("");
+              }
+            }}
+          >
             <ContextMenuTrigger asChild>
               <div
                 className="relative bg-background overflow-hidden w-full h-full"
@@ -879,7 +952,9 @@ export default function CanvasPage() {
                     scaleX={viewport.scale}
                     scaleY={viewport.scale}
                     draggable={false}
-                    onMouseDown={(e) => interactions.handleMouseDown(e, setCroppingImageId)}
+                    onMouseDown={(e) =>
+                      interactions.handleMouseDown(e, setCroppingImageId)
+                    }
                     onMouseMove={interactions.handleMouseMove}
                     onMouseUp={interactions.handleMouseUp}
                     onMouseLeave={() => {
@@ -908,7 +983,10 @@ export default function CanvasPage() {
                           canvasPoint.y <= vid.y + vid.height
                         );
                       });
-                      if (clickedVideo && !selectedIds.includes(clickedVideo.id)) {
+                      if (
+                        clickedVideo &&
+                        !selectedIds.includes(clickedVideo.id)
+                      ) {
                         setSelectedIds([clickedVideo.id]);
                         return;
                       }
@@ -920,203 +998,258 @@ export default function CanvasPage() {
                           canvasPoint.y <= img.y + img.height
                         );
                       });
-                      if (clickedImage && !selectedIds.includes(clickedImage.id)) {
+                      if (
+                        clickedImage &&
+                        !selectedIds.includes(clickedImage.id)
+                      ) {
                         setSelectedIds([clickedImage.id]);
                       }
                     }}
                     onWheel={interactions.handleWheel}
                   >
                     <Layer>
-                      {showGrid && <CanvasGrid viewport={viewport} canvasSize={canvasSize} />}
-                      <SelectionBoxComponent selectionBox={interactions.selectionBox} />
+                      {showGrid && (
+                        <CanvasGrid
+                          viewport={viewport}
+                          canvasSize={canvasSize}
+                        />
+                      )}
+                      <SelectionBoxComponent
+                        selectionBox={interactions.selectionBox}
+                      />
 
                       {/* Render Images */}
-                      {images.filter((image) => {
-                        const buffer = 100;
-                        const viewBounds = {
-                          left: -viewport.x / viewport.scale - buffer,
-                          top: -viewport.y / viewport.scale - buffer,
-                          right: (canvasSize.width - viewport.x) / viewport.scale + buffer,
-                          bottom: (canvasSize.height - viewport.y) / viewport.scale + buffer,
-                        };
-                        return !(
-                          image.x + image.width < viewBounds.left ||
-                          image.x > viewBounds.right ||
-                          image.y + image.height < viewBounds.top ||
-                          image.y > viewBounds.bottom
-                        );
-                      }).map((image) => (
-                        <CanvasImage
-                          key={image.id}
-                          image={image}
-                          isSelected={selectedIds.includes(image.id)}
-                          onSelect={(e) => interactions.handleSelect(image.id, e)}
-                          onChange={(newAttrs) => {
-                            setImages((prev) =>
-                              prev.map((img) =>
-                                img.id === image.id ? { ...img, ...newAttrs } : img
-                              )
-                            );
-                          }}
-                          onDoubleClick={() => setCroppingImageId(image.id)}
-                          onDragStart={() => {
-                            let currentSelectedIds = selectedIds;
-                            if (!selectedIds.includes(image.id)) {
-                              currentSelectedIds = [image.id];
-                              setSelectedIds(currentSelectedIds);
+                      {images
+                        .filter((image) => {
+                          const buffer = 100;
+                          const viewBounds = {
+                            left: -viewport.x / viewport.scale - buffer,
+                            top: -viewport.y / viewport.scale - buffer,
+                            right:
+                              (canvasSize.width - viewport.x) / viewport.scale +
+                              buffer,
+                            bottom:
+                              (canvasSize.height - viewport.y) /
+                                viewport.scale +
+                              buffer,
+                          };
+                          return !(
+                            image.x + image.width < viewBounds.left ||
+                            image.x > viewBounds.right ||
+                            image.y + image.height < viewBounds.top ||
+                            image.y > viewBounds.bottom
+                          );
+                        })
+                        .map((image) => (
+                          <CanvasImage
+                            key={image.id}
+                            image={image}
+                            isSelected={selectedIds.includes(image.id)}
+                            onSelect={(e) =>
+                              interactions.handleSelect(image.id, e)
                             }
-                            interactions.setIsDraggingImage(true);
-                            const positions = new Map<string, { x: number; y: number }>();
-                            currentSelectedIds.forEach((id) => {
-                              const img = images.find((i) => i.id === id);
-                              if (img) positions.set(id, { x: img.x, y: img.y });
-                            });
-                            interactions.setDragStartPositions(positions);
-                          }}
-                          onDragEnd={() => {
-                            interactions.setIsDraggingImage(false);
-                            saveToHistory();
-                            interactions.setDragStartPositions(new Map());
-                          }}
-                          selectedIds={selectedIds}
-                          setImages={setImages}
-                          isDraggingImage={interactions.isDraggingImage}
-                          isCroppingImage={croppingImageId === image.id}
-                          dragStartPositions={interactions.dragStartPositions}
-                        />
-                      ))}
-
-                      {/* Render Videos */}
-                      {videos.filter((video) => {
-                        const buffer = 100;
-                        const viewBounds = {
-                          left: -viewport.x / viewport.scale - buffer,
-                          top: -viewport.y / viewport.scale - buffer,
-                          right: (canvasSize.width - viewport.x) / viewport.scale + buffer,
-                          bottom: (canvasSize.height - viewport.y) / viewport.scale + buffer,
-                        };
-                        return !(
-                          video.x + video.width < viewBounds.left ||
-                          video.x > viewBounds.right ||
-                          video.y + video.height < viewBounds.top ||
-                          video.y > viewBounds.bottom
-                        );
-                      }).map((video) => (
-                        <CanvasVideo
-                          key={video.id}
-                          video={video}
-                          isSelected={selectedIds.includes(video.id)}
-                          onSelect={(e) => interactions.handleSelect(video.id, e)}
-                          onChange={(newAttrs) => {
-                            setVideos((prev) =>
-                              prev.map((vid) =>
-                                vid.id === video.id ? { ...vid, ...newAttrs } : vid
-                              )
-                            );
-                          }}
-                          onDragStart={() => {
-                            let currentSelectedIds = selectedIds;
-                            if (!selectedIds.includes(video.id)) {
-                              currentSelectedIds = [video.id];
-                              setSelectedIds(currentSelectedIds);
-                            }
-                            interactions.setIsDraggingImage(true);
-                            setHiddenVideoControlsIds((prev) => new Set([...prev, video.id]));
-                            const positions = new Map<string, { x: number; y: number }>();
-                            currentSelectedIds.forEach((id) => {
-                              const vid = videos.find((v) => v.id === id);
-                              if (vid) positions.set(id, { x: vid.x, y: vid.y });
-                            });
-                            interactions.setDragStartPositions(positions);
-                          }}
-                          onDragEnd={() => {
-                            interactions.setIsDraggingImage(false);
-                            setHiddenVideoControlsIds((prev) => {
-                              const newSet = new Set(prev);
-                              newSet.delete(video.id);
-                              return newSet;
-                            });
-                            saveToHistory();
-                            interactions.setDragStartPositions(new Map());
-                          }}
-                          selectedIds={selectedIds}
-                          videos={videos}
-                          setVideos={setVideos}
-                          isDraggingVideo={interactions.isDraggingImage}
-                          isCroppingVideo={false}
-                          dragStartPositions={interactions.dragStartPositions}
-                          onResizeStart={() =>
-                            setHiddenVideoControlsIds((prev) => new Set([...prev, video.id]))
-                          }
-                          onResizeEnd={() =>
-                            setHiddenVideoControlsIds((prev) => {
-                              const newSet = new Set(prev);
-                              newSet.delete(video.id);
-                              return newSet;
-                            })
-                          }
-                        />
-                      ))}
-
-                      {/* Crop Overlay */}
-                      {croppingImageId && (() => {
-                        const croppingImage = images.find((img) => img.id === croppingImageId);
-                        if (!croppingImage) return null;
-                        return (
-                          <CropOverlayWrapper
-                            image={croppingImage}
-                            viewportScale={viewport.scale}
-                            onCropChange={(crop) => {
+                            onChange={(newAttrs) => {
                               setImages((prev) =>
                                 prev.map((img) =>
-                                  img.id === croppingImageId ? { ...img, ...crop } : img
+                                  img.id === image.id
+                                    ? { ...img, ...newAttrs }
+                                    : img
                                 )
                               );
                             }}
-                            onCropEnd={async () => {
-                              if (croppingImage) {
-                                const cropWidth = croppingImage.cropWidth || 1;
-                                const cropHeight = croppingImage.cropHeight || 1;
-                                const cropX = croppingImage.cropX || 0;
-                                const cropY = croppingImage.cropY || 0;
-
-                                try {
-                                  const croppedImageSrc = await createCroppedImage(
-                                    croppingImage.src,
-                                    cropX,
-                                    cropY,
-                                    cropWidth,
-                                    cropHeight
-                                  );
-
-                                  setImages((prev) =>
-                                    prev.map((img) =>
-                                      img.id === croppingImageId
-                                        ? {
-                                            ...img,
-                                            src: croppedImageSrc,
-                                            x: img.x + cropX * img.width,
-                                            y: img.y + cropY * img.height,
-                                            width: cropWidth * img.width,
-                                            height: cropHeight * img.height,
-                                            cropX: undefined,
-                                            cropY: undefined,
-                                            cropWidth: undefined,
-                                            cropHeight: undefined,
-                                          }
-                                        : img
-                                    )
-                                  );
-                                } catch (error) {
-                                  console.error("Failed to create cropped image:", error);
-                                }
+                            onDoubleClick={() => setCroppingImageId(image.id)}
+                            onDragStart={() => {
+                              let currentSelectedIds = selectedIds;
+                              if (!selectedIds.includes(image.id)) {
+                                currentSelectedIds = [image.id];
+                                setSelectedIds(currentSelectedIds);
                               }
-                              setCroppingImageId(null);
-                              saveToHistory();
+                              interactions.setIsDraggingImage(true);
+                              const positions = new Map<
+                                string,
+                                { x: number; y: number }
+                              >();
+                              currentSelectedIds.forEach((id) => {
+                                const img = images.find((i) => i.id === id);
+                                if (img)
+                                  positions.set(id, { x: img.x, y: img.y });
+                              });
+                              interactions.setDragStartPositions(positions);
                             }}
+                            onDragEnd={() => {
+                              interactions.setIsDraggingImage(false);
+                              saveToHistory();
+                              interactions.setDragStartPositions(new Map());
+                            }}
+                            selectedIds={selectedIds}
+                            setImages={setImages}
+                            isDraggingImage={interactions.isDraggingImage}
+                            isCroppingImage={croppingImageId === image.id}
+                            dragStartPositions={interactions.dragStartPositions}
                           />
-                        );
-                      })()}
+                        ))}
+
+                      {/* Render Videos */}
+                      {videos
+                        .filter((video) => {
+                          const buffer = 100;
+                          const viewBounds = {
+                            left: -viewport.x / viewport.scale - buffer,
+                            top: -viewport.y / viewport.scale - buffer,
+                            right:
+                              (canvasSize.width - viewport.x) / viewport.scale +
+                              buffer,
+                            bottom:
+                              (canvasSize.height - viewport.y) /
+                                viewport.scale +
+                              buffer,
+                          };
+                          return !(
+                            video.x + video.width < viewBounds.left ||
+                            video.x > viewBounds.right ||
+                            video.y + video.height < viewBounds.top ||
+                            video.y > viewBounds.bottom
+                          );
+                        })
+                        .map((video) => (
+                          <CanvasVideo
+                            key={video.id}
+                            video={video}
+                            isSelected={selectedIds.includes(video.id)}
+                            onSelect={(e) =>
+                              interactions.handleSelect(video.id, e)
+                            }
+                            onChange={(newAttrs) => {
+                              setVideos((prev) =>
+                                prev.map((vid) =>
+                                  vid.id === video.id
+                                    ? { ...vid, ...newAttrs }
+                                    : vid
+                                )
+                              );
+                            }}
+                            onDragStart={() => {
+                              let currentSelectedIds = selectedIds;
+                              if (!selectedIds.includes(video.id)) {
+                                currentSelectedIds = [video.id];
+                                setSelectedIds(currentSelectedIds);
+                              }
+                              interactions.setIsDraggingImage(true);
+                              setHiddenVideoControlsIds(
+                                (prev) => new Set([...prev, video.id])
+                              );
+                              const positions = new Map<
+                                string,
+                                { x: number; y: number }
+                              >();
+                              currentSelectedIds.forEach((id) => {
+                                const vid = videos.find((v) => v.id === id);
+                                if (vid)
+                                  positions.set(id, { x: vid.x, y: vid.y });
+                              });
+                              interactions.setDragStartPositions(positions);
+                            }}
+                            onDragEnd={() => {
+                              interactions.setIsDraggingImage(false);
+                              setHiddenVideoControlsIds((prev) => {
+                                const newSet = new Set(prev);
+                                newSet.delete(video.id);
+                                return newSet;
+                              });
+                              saveToHistory();
+                              interactions.setDragStartPositions(new Map());
+                            }}
+                            selectedIds={selectedIds}
+                            videos={videos}
+                            setVideos={setVideos}
+                            isDraggingVideo={interactions.isDraggingImage}
+                            isCroppingVideo={false}
+                            dragStartPositions={interactions.dragStartPositions}
+                            onResizeStart={() =>
+                              setHiddenVideoControlsIds(
+                                (prev) => new Set([...prev, video.id])
+                              )
+                            }
+                            onResizeEnd={() =>
+                              setHiddenVideoControlsIds((prev) => {
+                                const newSet = new Set(prev);
+                                newSet.delete(video.id);
+                                return newSet;
+                              })
+                            }
+                          />
+                        ))}
+
+                      {/* Crop Overlay */}
+                      {croppingImageId &&
+                        (() => {
+                          const croppingImage = images.find(
+                            (img) => img.id === croppingImageId
+                          );
+                          if (!croppingImage) return null;
+                          return (
+                            <CropOverlayWrapper
+                              image={croppingImage}
+                              viewportScale={viewport.scale}
+                              onCropChange={(crop) => {
+                                setImages((prev) =>
+                                  prev.map((img) =>
+                                    img.id === croppingImageId
+                                      ? { ...img, ...crop }
+                                      : img
+                                  )
+                                );
+                              }}
+                              onCropEnd={async () => {
+                                if (croppingImage) {
+                                  const cropWidth =
+                                    croppingImage.cropWidth || 1;
+                                  const cropHeight =
+                                    croppingImage.cropHeight || 1;
+                                  const cropX = croppingImage.cropX || 0;
+                                  const cropY = croppingImage.cropY || 0;
+
+                                  try {
+                                    const croppedImageSrc =
+                                      await createCroppedImage(
+                                        croppingImage.src,
+                                        cropX,
+                                        cropY,
+                                        cropWidth,
+                                        cropHeight
+                                      );
+
+                                    setImages((prev) =>
+                                      prev.map((img) =>
+                                        img.id === croppingImageId
+                                          ? {
+                                              ...img,
+                                              src: croppedImageSrc,
+                                              x: img.x + cropX * img.width,
+                                              y: img.y + cropY * img.height,
+                                              width: cropWidth * img.width,
+                                              height: cropHeight * img.height,
+                                              cropX: undefined,
+                                              cropY: undefined,
+                                              cropWidth: undefined,
+                                              cropHeight: undefined,
+                                            }
+                                          : img
+                                      )
+                                    );
+                                  } catch (error) {
+                                    console.error(
+                                      "Failed to create cropped image:",
+                                      error
+                                    );
+                                  }
+                                }
+                                setCroppingImageId(null);
+                                saveToHistory();
+                              }}
+                            />
+                          );
+                        })()}
                     </Layer>
                   </Stage>
                 )}
@@ -1154,18 +1287,29 @@ export default function CanvasPage() {
 
           {/* Minimap */}
           {showMinimap && (
-            <MiniMap images={images} videos={videos} viewport={viewport} canvasSize={canvasSize} />
+            <MiniMap
+              images={images}
+              videos={videos}
+              viewport={viewport}
+              canvasSize={canvasSize}
+            />
           )}
 
           {/* Zoom Controls */}
-          <ZoomControls viewport={viewport} setViewport={setViewport} canvasSize={canvasSize} />
+          <ZoomControls
+            viewport={viewport}
+            setViewport={setViewport}
+            canvasSize={canvasSize}
+          />
 
           <PoweredByFalBadge />
           <GithubBadge />
 
           {/* Dimension Display */}
           <DimensionDisplay
-            selectedImages={images.filter((img) => selectedIds.includes(img.id))}
+            selectedImages={images.filter((img) =>
+              selectedIds.includes(img.id)
+            )}
             viewport={viewport}
           />
         </div>
@@ -1238,9 +1382,13 @@ export default function CanvasPage() {
         handleVideoExtension={handleVideoExtension}
         isExtendingVideo={isExtendingVideo}
         isRemoveVideoBackgroundDialogOpen={isRemoveVideoBackgroundDialogOpen}
-        setIsRemoveVideoBackgroundDialogOpen={setIsRemoveVideoBackgroundDialogOpen}
+        setIsRemoveVideoBackgroundDialogOpen={
+          setIsRemoveVideoBackgroundDialogOpen
+        }
         selectedVideoForBackgroundRemoval={selectedVideoForBackgroundRemoval}
-        setSelectedVideoForBackgroundRemoval={setSelectedVideoForBackgroundRemoval}
+        setSelectedVideoForBackgroundRemoval={
+          setSelectedVideoForBackgroundRemoval
+        }
         handleVideoBackgroundRemoval={handleVideoBackgroundRemoval}
         isRemovingVideoBackground={isRemovingVideoBackground}
       />
@@ -1293,7 +1441,9 @@ export default function CanvasPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold">AI Assistant</h3>
-                    <p className="text-xs text-muted-foreground">Powered by GPT-4</p>
+                    <p className="text-xs text-muted-foreground">
+                      Powered by GPT-4
+                    </p>
                   </div>
                 </div>
                 <Button
@@ -1306,7 +1456,10 @@ export default function CanvasPage() {
                 </Button>
               </div>
               <div className="flex-1 overflow-hidden bg-background">
-                <Chat onImageGenerated={handleChatImageGenerated} customApiKey={customApiKey} />
+                <Chat
+                  onImageGenerated={handleChatImageGenerated}
+                  customApiKey={customApiKey}
+                />
               </div>
             </motion.div>
           )}
