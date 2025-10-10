@@ -60,7 +60,6 @@ import { StreamingVideo } from "@/components/canvas/StreamingVideo";
 import { CropOverlayWrapper } from "@/components/canvas/CropOverlayWrapper";
 import { CanvasImage } from "@/components/canvas/CanvasImage";
 import { CanvasVideo } from "@/components/canvas/CanvasVideo";
-import { VideoControls } from "@/components/canvas/VideoControls";
 import { ImageToVideoDialog } from "@/components/canvas/ImageToVideoDialog";
 import { VideoToVideoDialog } from "@/components/canvas/VideoToVideoDialog";
 import { ExtendVideoDialog } from "@/components/canvas/ExtendVideoDialog";
@@ -128,7 +127,7 @@ export default function OverlayPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [visibleIndicators, setVisibleIndicators] = useState<Set<string>>(
-    new Set(),
+    new Set()
   );
   const simpsonsStyle = styleModels.find((m) => m.id === "simpsons");
   const { toast } = useToast();
@@ -140,7 +139,7 @@ export default function OverlayPage() {
       styleId: simpsonsStyle?.id || "simpsons",
     });
   const [previousStyleId, setPreviousStyleId] = useState<string>(
-    simpsonsStyle?.id || "simpsons",
+    simpsonsStyle?.id || "simpsons"
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeGenerations, setActiveGenerations] = useState<
@@ -223,7 +222,7 @@ export default function OverlayPage() {
 
   // Touch event states for mobile
   const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(
-    null,
+    null
   );
   const [lastTouchCenter, setLastTouchCenter] = useState<{
     x: number;
@@ -277,7 +276,7 @@ export default function OverlayPage() {
   // Direct FAL upload function using proxy
 
   const { mutateAsync: removeBackground } = useMutation(
-    trpc.removeBackground.mutationOptions(),
+    trpc.removeBackground.mutationOptions()
   );
 
   // Function to handle the "Convert to Video" option in the context menu
@@ -291,7 +290,7 @@ export default function OverlayPage() {
 
   // Function to handle the image-to-video conversion
   const handleImageToVideoConversion = async (
-    settings: VideoGenerationSettings,
+    settings: VideoGenerationSettings
   ) => {
     if (!selectedImageForVideo) return;
 
@@ -305,7 +304,7 @@ export default function OverlayPage() {
       let imageUrl = image.src;
       if (imageUrl.startsWith("data:")) {
         const uploadResult = await falClient.storage.upload(
-          await (await fetch(imageUrl)).blob(),
+          await (await fetch(imageUrl)).blob()
         );
         imageUrl = uploadResult;
       }
@@ -376,7 +375,7 @@ export default function OverlayPage() {
 
   // Function to handle the video-to-video transformation
   const handleVideoToVideoTransformation = async (
-    settings: VideoGenerationSettings,
+    settings: VideoGenerationSettings
   ) => {
     if (!selectedVideoForVideo) return;
 
@@ -390,7 +389,7 @@ export default function OverlayPage() {
       let videoUrl = video.src;
       if (videoUrl.startsWith("data:") || videoUrl.startsWith("blob:")) {
         const uploadResult = await falClient.storage.upload(
-          await (await fetch(videoUrl)).blob(),
+          await (await fetch(videoUrl)).blob()
         );
         videoUrl = uploadResult;
       }
@@ -481,7 +480,7 @@ export default function OverlayPage() {
       let videoUrl = video.src;
       if (videoUrl.startsWith("data:") || videoUrl.startsWith("blob:")) {
         const uploadResult = await falClient.storage.upload(
-          await (await fetch(videoUrl)).blob(),
+          await (await fetch(videoUrl)).blob()
         );
         videoUrl = uploadResult;
       }
@@ -554,7 +553,7 @@ export default function OverlayPage() {
   const handleVideoGenerationComplete = async (
     videoId: string,
     videoUrl: string,
-    duration: number,
+    duration: number
   ) => {
     try {
       console.log("Video generation complete:", {
@@ -572,12 +571,12 @@ export default function OverlayPage() {
       // Dismiss progress toast if it exists
       if (generation?.toastId) {
         const toastElement = document.querySelector(
-          `[data-toast-id="${generation.toastId}"]`,
+          `[data-toast-id="${generation.toastId}"]`
         );
         if (toastElement) {
           // Trigger dismiss by clicking the close button
           const closeButton = toastElement.querySelector(
-            "[data-radix-toast-close]",
+            "[data-radix-toast-close]"
           );
           if (closeButton instanceof HTMLElement) {
             closeButton.click();
@@ -594,7 +593,7 @@ export default function OverlayPage() {
             image,
             videoUrl,
             duration,
-            false, // Don't replace the original image
+            false // Don't replace the original image
           );
 
           // Position the video to the right of the source image
@@ -777,18 +776,18 @@ export default function OverlayPage() {
   const handleVideoGenerationProgress = (
     videoId: string,
     progress: number,
-    status: string,
+    status: string
   ) => {
     // You could update a progress indicator here if needed
     console.log(`Video generation progress: ${progress}% - ${status}`);
   };
 
   const { mutateAsync: isolateObject } = useMutation(
-    trpc.isolateObject.mutationOptions(),
+    trpc.isolateObject.mutationOptions()
   );
 
   const { mutateAsync: generateTextToImage } = useMutation(
-    trpc.generateTextToImage.mutationOptions(),
+    trpc.generateTextToImage.mutationOptions()
   );
 
   // Save current state to storage
@@ -1103,10 +1102,7 @@ export default function OverlayPage() {
     if (images.length > 0) return; // Already have images from storage
 
     const loadDefaultImages = async () => {
-      const defaultImagePaths = [
-        "/chad.png",
-        "/anime.png",
-      ];
+      const defaultImagePaths = ["/chad.png", "/anime.png"];
 
       for (let i = 0; i < defaultImagePaths.length; i++) {
         const path = defaultImagePaths[i];
@@ -1169,7 +1165,7 @@ export default function OverlayPage() {
   const resizeImageIfNeeded = async (
     dataUrl: string,
     maxWidth: number = 2048,
-    maxHeight: number = 2048,
+    maxHeight: number = 2048
   ): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
@@ -1220,7 +1216,7 @@ export default function OverlayPage() {
             reader.readAsDataURL(blob);
           },
           "image/jpeg",
-          0.9, // 90% quality
+          0.9 // 90% quality
         );
       };
       img.onerror = () => reject(new Error("Failed to load image"));
@@ -1234,7 +1230,7 @@ export default function OverlayPage() {
     cropX: number,
     cropY: number,
     cropWidth: number,
-    cropHeight: number,
+    cropHeight: number
   ): Promise<string> => {
     return new Promise((resolve, reject) => {
       const img = new window.Image();
@@ -1261,7 +1257,7 @@ export default function OverlayPage() {
           0,
           0,
           canvas.width,
-          canvas.height,
+          canvas.height
         );
 
         // Convert to data URL
@@ -1284,7 +1280,7 @@ export default function OverlayPage() {
   // Handle file upload
   const handleFileUpload = (
     files: FileList | null,
-    position?: { x: number; y: number },
+    position?: { x: number; y: number }
   ) => {
     if (!files) return;
 
@@ -1429,7 +1425,7 @@ export default function OverlayPage() {
       const touch2 = { x: touches[1].clientX, y: touches[1].clientY };
 
       const distance = Math.sqrt(
-        Math.pow(touch2.x - touch1.x, 2) + Math.pow(touch2.y - touch1.y, 2),
+        Math.pow(touch2.x - touch1.x, 2) + Math.pow(touch2.y - touch1.y, 2)
       );
 
       const center = {
@@ -1481,7 +1477,7 @@ export default function OverlayPage() {
       const touch2 = { x: touches[1].clientX, y: touches[1].clientY };
 
       const distance = Math.sqrt(
-        Math.pow(touch2.x - touch1.x, 2) + Math.pow(touch2.y - touch1.y, 2),
+        Math.pow(touch2.x - touch1.x, 2) + Math.pow(touch2.y - touch1.y, 2)
       );
 
       const center = {
@@ -1555,7 +1551,7 @@ export default function OverlayPage() {
   const handleSelect = (id: string, e: Konva.KonvaEventObject<MouseEvent>) => {
     if (e.evt.shiftKey || e.evt.metaKey || e.evt.ctrlKey) {
       setSelectedIds((prev) =>
-        prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+        prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
       );
     } else {
       setSelectedIds([id]);
@@ -1801,7 +1797,7 @@ export default function OverlayPage() {
     if (!selectedVideoForBackgroundRemoval) return;
 
     const video = videos.find(
-      (vid) => vid.id === selectedVideoForBackgroundRemoval,
+      (vid) => vid.id === selectedVideoForBackgroundRemoval
     );
     if (!video) return;
 
@@ -1817,7 +1813,7 @@ export default function OverlayPage() {
       let videoUrl = video.src;
       if (videoUrl.startsWith("data:") || videoUrl.startsWith("blob:")) {
         const uploadResult = await falClient.storage.upload(
-          await (await fetch(videoUrl)).blob(),
+          await (await fetch(videoUrl)).blob()
         );
         videoUrl = uploadResult;
       }
@@ -1894,7 +1890,7 @@ export default function OverlayPage() {
         const newMap = new Map(prev);
         const generationId = Array.from(prev.keys()).find(
           (key) =>
-            prev.get(key)?.sourceVideoId === selectedVideoForBackgroundRemoval,
+            prev.get(key)?.sourceVideoId === selectedVideoForBackgroundRemoval
         );
         if (generationId) {
           newMap.delete(generationId);
@@ -1919,7 +1915,7 @@ export default function OverlayPage() {
 
       // Get remaining images
       const remainingImages = prev.filter(
-        (img) => !selectedIds.includes(img.id),
+        (img) => !selectedIds.includes(img.id)
       );
 
       // Place selected images at the end (top layer)
@@ -1939,7 +1935,7 @@ export default function OverlayPage() {
 
       // Get remaining images
       const remainingImages = prev.filter(
-        (img) => !selectedIds.includes(img.id),
+        (img) => !selectedIds.includes(img.id)
       );
 
       // Place selected images at the beginning (bottom layer)
@@ -2044,7 +2040,7 @@ export default function OverlayPage() {
         0,
         0,
         canvas.width,
-        canvas.height,
+        canvas.height
       );
 
       // Convert to blob and upload
@@ -2063,7 +2059,7 @@ export default function OverlayPage() {
         dataUrl,
         falClient,
         toast,
-        setIsApiKeyDialogOpen,
+        setIsApiKeyDialogOpen
       );
 
       // Isolate object using EVF-SAM2
@@ -2108,7 +2104,7 @@ export default function OverlayPage() {
             "New image loaded successfully:",
             testImg.width,
             "x",
-            testImg.height,
+            testImg.height
           );
 
           // Create a test canvas to verify the image has transparency
@@ -2162,7 +2158,7 @@ export default function OverlayPage() {
             // Replace old image with new one at same index
             const newImages = [...prev];
             const index = newImages.findIndex(
-              (img) => img.id === isolateTarget,
+              (img) => img.id === isolateTarget
             );
             if (index !== -1) {
               newImages[index] = newImage;
@@ -2295,7 +2291,7 @@ export default function OverlayPage() {
     canvas.height = Math.round(combinedHeight * optimalScale);
 
     console.log(
-      `Creating combined image at ${canvas.width}x${canvas.height} (scale: ${optimalScale.toFixed(2)}x)`,
+      `Creating combined image at ${canvas.width}x${canvas.height} (scale: ${optimalScale.toFixed(2)}x)`
     );
 
     // Draw each image in order using the pre-loaded elements
@@ -2317,7 +2313,7 @@ export default function OverlayPage() {
           -scaledWidth / 2,
           -scaledHeight / 2,
           scaledWidth,
-          scaledHeight,
+          scaledHeight
         );
       } else {
         // Handle cropping if exists
@@ -2336,7 +2332,7 @@ export default function OverlayPage() {
             relX,
             relY,
             scaledWidth,
-            scaledHeight,
+            scaledHeight
           );
         } else {
           ctx.drawImage(
@@ -2348,7 +2344,7 @@ export default function OverlayPage() {
             relX,
             relY,
             scaledWidth,
-            scaledHeight,
+            scaledHeight
           );
         }
       }
@@ -2562,7 +2558,7 @@ export default function OverlayPage() {
         description: "The AI-generated image has been added to the canvas",
       });
     },
-    [canvasSize, viewport, toast],
+    [canvasSize, viewport, toast]
   );
 
   return (
@@ -2583,14 +2579,14 @@ export default function OverlayPage() {
           apiKey={customApiKey}
           onStreamingUpdate={(id, url) => {
             setImages((prev) =>
-              prev.map((img) => (img.id === id ? { ...img, src: url } : img)),
+              prev.map((img) => (img.id === id ? { ...img, src: url } : img))
             );
           }}
           onComplete={(id, finalUrl) => {
             setImages((prev) =>
               prev.map((img) =>
-                img.id === id ? { ...img, src: finalUrl } : img,
-              ),
+                img.id === id ? { ...img, src: finalUrl } : img
+              )
             );
             setActiveGenerations((prev) => {
               const newMap = new Map(prev);
@@ -2805,8 +2801,8 @@ export default function OverlayPage() {
                                 prev.map((img) =>
                                   img.id === image.id
                                     ? { ...img, ...newAttrs }
-                                    : img,
-                                ),
+                                    : img
+                                )
                               );
                             }}
                             onDoubleClick={() => {
@@ -2841,7 +2837,6 @@ export default function OverlayPage() {
                               setDragStartPositions(new Map());
                             }}
                             selectedIds={selectedIds}
-                            images={images}
                             setImages={setImages}
                             isDraggingImage={isDraggingImage}
                             isCroppingImage={croppingImageId === image.id}
@@ -2884,8 +2879,8 @@ export default function OverlayPage() {
                                 prev.map((vid) =>
                                   vid.id === video.id
                                     ? { ...vid, ...newAttrs }
-                                    : vid,
-                                ),
+                                    : vid
+                                )
                               );
                             }}
                             onDragStart={() => {
@@ -2900,7 +2895,7 @@ export default function OverlayPage() {
                               setIsDraggingImage(true);
                               // Hide video controls during drag
                               setHiddenVideoControlsIds(
-                                (prev) => new Set([...prev, video.id]),
+                                (prev) => new Set([...prev, video.id])
                               );
                               // Save positions of all selected items
                               const positions = new Map<
@@ -2934,7 +2929,7 @@ export default function OverlayPage() {
                             dragStartPositions={dragStartPositions}
                             onResizeStart={() =>
                               setHiddenVideoControlsIds(
-                                (prev) => new Set([...prev, video.id]),
+                                (prev) => new Set([...prev, video.id])
                               )
                             }
                             onResizeEnd={() =>
@@ -2951,7 +2946,7 @@ export default function OverlayPage() {
                       {croppingImageId &&
                         (() => {
                           const croppingImage = images.find(
-                            (img) => img.id === croppingImageId,
+                            (img) => img.id === croppingImageId
                           );
                           if (!croppingImage) return null;
 
@@ -2964,8 +2959,8 @@ export default function OverlayPage() {
                                   prev.map((img) =>
                                     img.id === croppingImageId
                                       ? { ...img, ...crop }
-                                      : img,
-                                  ),
+                                      : img
+                                  )
                                 );
                               }}
                               onCropEnd={async () => {
@@ -2986,7 +2981,7 @@ export default function OverlayPage() {
                                         cropX,
                                         cropY,
                                         cropWidth,
-                                        cropHeight,
+                                        cropHeight
                                       );
 
                                     setImages((prev) =>
@@ -3008,13 +3003,13 @@ export default function OverlayPage() {
                                               cropWidth: undefined,
                                               cropHeight: undefined,
                                             }
-                                          : img,
-                                      ),
+                                          : img
+                                      )
                                     );
                                   } catch (error) {
                                     console.error(
                                       "Failed to create cropped image:",
-                                      error,
+                                      error
                                     );
                                   }
                                 }
@@ -3094,7 +3089,7 @@ export default function OverlayPage() {
               className={cn(
                 "bg-card/95 backdrop-blur-lg rounded-3xl",
                 "shadow-[0_0_0_1px_rgba(50,50,50,0.16),0_4px_8px_-0.5px_rgba(50,50,50,0.08),0_8px_16px_-2px_rgba(50,50,50,0.04)]",
-                "dark:shadow-none dark:outline dark:outline-1 dark:outline-border",
+                "dark:shadow-none dark:outline dark:outline-1 dark:outline-border"
               )}
             >
               <div className="flex flex-col gap-3 px-3 md:px-3 py-2 md:py-3 relative">
@@ -3124,7 +3119,7 @@ export default function OverlayPage() {
                               isExtendingVideo ||
                               isTransformingVideo
                             ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
-                            : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30",
+                            : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
                       )}
                     >
                       <GenerationsIndicator
@@ -3160,7 +3155,7 @@ export default function OverlayPage() {
                       className={cn(
                         "rounded-xl overflow-clip flex items-center",
                         "shadow-[0_0_0_1px_rgba(50,50,50,0.12),0_4px_8px_-0.5px_rgba(50,50,50,0.04),0_8px_16px_-2px_rgba(50,50,50,0.02)]",
-                        "dark:shadow-none dark:border dark:border-border",
+                        "dark:shadow-none dark:border dark:border-border"
                       )}
                     >
                       <Button
@@ -3193,7 +3188,7 @@ export default function OverlayPage() {
                         "pointer-events-none select-none",
                         selectedIds.length > 0
                           ? "bg-blue-500/10 dark:bg-blue-500/15 shadow-[0_0_0_1px_rgba(59,130,246,0.2),0_4px_8px_-0.5px_rgba(59,130,246,0.08),0_8px_16px_-2px_rgba(59,130,246,0.04)] dark:shadow-none dark:border dark:border-blue-500/30"
-                          : "bg-orange-500/10 dark:bg-orange-500/15 shadow-[0_0_0_1px_rgba(249,115,22,0.2),0_4px_8px_-0.5px_rgba(249,115,22,0.08),0_8px_16px_-2px_rgba(249,115,22,0.04)] dark:shadow-none dark:border dark:border-orange-500/30",
+                          : "bg-orange-500/10 dark:bg-orange-500/15 shadow-[0_0_0_1px_rgba(249,115,22,0.2),0_4px_8px_-0.5px_rgba(249,115,22,0.08),0_8px_16px_-2px_rgba(249,115,22,0.04)] dark:shadow-none dark:border dark:border-orange-500/30"
                       )}
                     >
                       {selectedIds.length > 0 ? (
@@ -3227,7 +3222,7 @@ export default function OverlayPage() {
                             onClick={async () => {
                               if (
                                 confirm(
-                                  "Clear all saved data? This cannot be undone.",
+                                  "Clear all saved data? This cannot be undone."
                                 )
                               ) {
                                 await canvasStorage.clearAll();
@@ -3365,7 +3360,7 @@ export default function OverlayPage() {
                       onClick={() => {
                         window.open(
                           "https://huggingface.co/collections/kontext-community/flux-kontext-loras-687e8779f8ed40a611a3925f",
-                          "_blank",
+                          "_blank"
                         );
                       }}
                       title="Browse Kontext LoRAs"
@@ -3380,7 +3375,7 @@ export default function OverlayPage() {
                         onClick={() => {
                           // Find the previous style to restore its settings
                           const prevStyle = styleModels.find(
-                            (model) => model.id === previousStyleId,
+                            (model) => model.id === previousStyleId
                           );
 
                           if (prevStyle) {
@@ -3421,7 +3416,7 @@ export default function OverlayPage() {
                       }
                       const selectedModel =
                         styleModels.find(
-                          (m) => m.id === generationSettings.styleId,
+                          (m) => m.id === generationSettings.styleId
                         ) || styleModels.find((m) => m.id === "simpsons");
                       return (
                         <>
@@ -3467,7 +3462,7 @@ export default function OverlayPage() {
                               input.onchange = (e) => {
                                 try {
                                   handleFileUpload(
-                                    (e.target as HTMLInputElement).files,
+                                    (e.target as HTMLInputElement).files
                                   );
                                 } catch (error) {
                                   console.error("File upload error:", error);
@@ -3502,7 +3497,7 @@ export default function OverlayPage() {
                                 } catch (error) {
                                   console.error(
                                     "Failed to trigger file dialog:",
-                                    error,
+                                    error
                                   );
                                   toast({
                                     title: "Upload unavailable",
@@ -3547,7 +3542,7 @@ export default function OverlayPage() {
                             }
                             className={cn(
                               "gap-2 font-medium transition-all",
-                              isGenerating && "bg-secondary",
+                              isGenerating && "bg-secondary"
                             )}
                           >
                             {isGenerating ? (
@@ -3609,7 +3604,7 @@ export default function OverlayPage() {
           {/* Dimension display for selected images */}
           <DimensionDisplay
             selectedImages={images.filter((img) =>
-              selectedIds.includes(img.id),
+              selectedIds.includes(img.id)
             )}
             viewport={viewport}
           />
@@ -3650,7 +3645,7 @@ export default function OverlayPage() {
                     "group relative flex flex-col items-center gap-2 p-3 rounded-xl border",
                     generationSettings.styleId === "custom"
                       ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50",
+                      : "border-border hover:border-primary/50"
                   )}
                 >
                   <div className="w-full aspect-square rounded-lg bg-muted flex items-center justify-center">
@@ -3676,7 +3671,7 @@ export default function OverlayPage() {
                       "group relative flex flex-col items-center gap-2 p-3 rounded-xl border",
                       generationSettings.styleId === model.id
                         ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50",
+                        : "border-border hover:border-primary/50"
                     )}
                   >
                     <div className="relative w-full aspect-square rounded-lg overflow-hidden">

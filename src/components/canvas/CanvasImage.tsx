@@ -4,7 +4,6 @@ import Konva from "konva";
 import useImage from "use-image";
 import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
-import { throttle } from "@/utils/performance";
 
 interface CanvasImageProps {
   image: PlacedImage;
@@ -15,12 +14,55 @@ interface CanvasImageProps {
   onDragEnd: () => void;
   onDoubleClick?: () => void;
   selectedIds: string[];
-  images: PlacedImage[];
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   isDraggingImage: boolean;
   isCroppingImage: boolean;
   dragStartPositions: Map<string, { x: number; y: number }>;
 }
+
+const useCanvasImageSource = (src: string, isGenerated: boolean) => {
+  const [streamingImg] = useStreamingImage(isGenerated ? src : "");
+  const [normalImg] = useImage(isGenerated ? "" : src, "anonymous");
+
+  return useMemo(
+    () => (isGenerated ? streamingImg : normalImg),
+    [isGenerated, normalImg, streamingImg]
+  );
+};
+
+const useSingleSelectionTransformer = (
+  isSelected: boolean,
+  selectedIds: string[],
+  shapeRef: React.RefObject<Konva.Image | null>,
+  trRef: React.RefObject<Konva.Transformer | null>
+) => {
+  useEffect(() => {
+    if (!isSelected || !trRef.current || !shapeRef.current) {
+      return;
+    }
+
+    if (selectedIds.length === 1) {
+      trRef.current.nodes([shapeRef.current]);
+      trRef.current.getLayer()?.batchDraw();
+    } else {
+      trRef.current.nodes([]);
+    }
+  }, [isSelected, selectedIds.length, selectedIds, shapeRef, trRef]);
+};
+
+const useFrameThrottle = (limitMs = 16) => {
+  const lastRef = useRef(0);
+
+  return () => {
+    const now = performance.now();
+    if (now - lastRef.current < limitMs) {
+      return false;
+    }
+
+    lastRef.current = now;
+    return true;
+  };
+};
 
 export const CanvasImage: React.FC<CanvasImageProps> = ({
   image,
@@ -31,7 +73,6 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   onDragEnd,
   onDoubleClick,
   selectedIds,
-  images,
   setImages,
   isDraggingImage,
   isCroppingImage,
@@ -39,24 +80,12 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
 }) => {
   const shapeRef = useRef<Konva.Image>(null);
   const trRef = useRef<Konva.Transformer>(null);
-  // Use streaming image hook for generated images to prevent flicker
-  const [streamingImg] = useStreamingImage(image.isGenerated ? image.src : "");
-  const [normalImg] = useImage(image.isGenerated ? "" : image.src, "anonymous");
-  const img = image.isGenerated ? streamingImg : normalImg;
+  const throttleFrame = useFrameThrottle();
+  const img = useCanvasImageSource(image.src, !!image.isGenerated);
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
 
-  useEffect(() => {
-    if (isSelected && trRef.current && shapeRef.current) {
-      // Only show transformer if this is the only selected item or if clicking on it
-      if (selectedIds.length === 1) {
-        trRef.current.nodes([shapeRef.current]);
-        trRef.current.getLayer()?.batchDraw();
-      } else {
-        trRef.current.nodes([]);
-      }
-    }
-  }, [isSelected, selectedIds.length]);
+  useSingleSelectionTransformer(isSelected, selectedIds, shapeRef, trRef);
 
   return (
     <>
@@ -111,46 +140,54 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
           }
           onDragStart();
         }}
-        onDragMove={useMemo(
-          () =>
-            throttle((e: any) => {
-              const node = e.target;
+        onDragMove={(e) => {
+          if (!throttleFrame()) {
+            return;
+          }
 
-              if (selectedIds.includes(image.id) && selectedIds.length > 1) {
-                // Calculate delta from drag start position
-                const startPos = dragStartPositions.get(image.id);
-                if (startPos) {
-                  const deltaX = node.x() - startPos.x;
-                  const deltaY = node.y() - startPos.y;
+          const node = e.target;
+          const nodeX = node.x();
+          const nodeY = node.y();
 
-                  // Update all selected items relative to their start positions
-                  setImages((prev) =>
-                    prev.map((img) => {
-                      if (img.id === image.id) {
-                        return { ...img, x: node.x(), y: node.y() };
-                      } else if (selectedIds.includes(img.id)) {
-                        const imgStartPos = dragStartPositions.get(img.id);
-                        if (imgStartPos) {
-                          return {
-                            ...img,
-                            x: imgStartPos.x + deltaX,
-                            y: imgStartPos.y + deltaY,
-                          };
-                        }
-                      }
-                      return img;
-                    }),
-                  );
+          if (selectedIds.includes(image.id) && selectedIds.length > 1) {
+            // Multi-selection drag
+            const startPos = dragStartPositions.get(image.id);
+            if (!startPos) {
+              return;
+            }
+
+            const deltaX = nodeX - startPos.x;
+            const deltaY = nodeY - startPos.y;
+
+            // Use functional update to avoid stale closures
+            setImages((prevImages) => {
+              return prevImages.map((img) => {
+                if (img.id === image.id) {
+                  return { ...img, x: nodeX, y: nodeY };
                 }
-              } else {
-                onChange({
-                  x: node.x(),
-                  y: node.y(),
-                });
-              }
-            }, 16), // ~60fps throttle, prevents Safari console errors
-          [selectedIds, image.id, dragStartPositions, setImages, onChange],
-        )}
+
+                if (selectedIds.includes(img.id)) {
+                  const imgStartPos = dragStartPositions.get(img.id);
+                  if (imgStartPos) {
+                    return {
+                      ...img,
+                      x: imgStartPos.x + deltaX,
+                      y: imgStartPos.y + deltaY,
+                    };
+                  }
+                }
+
+                return img;
+              });
+            });
+          } else {
+            // Single item drag
+            onChange({
+              x: nodeX,
+              y: nodeY,
+            });
+          }
+        }}
         onDragEnd={(e) => {
           onDragEnd();
         }}

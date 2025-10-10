@@ -45,7 +45,7 @@ export default function Chat({ onImageGenerated, customApiKey }: ChatProps) {
   const { toast } = useToast();
   const trpc = useTRPC();
   const { mutateAsync: generateTextToImage } = useMutation(
-    trpc.generateTextToImage.mutationOptions(),
+    trpc.generateTextToImage.mutationOptions()
   );
 
   const { messages, sendMessage, status, addToolResult } = useChat({
@@ -74,6 +74,7 @@ export default function Chat({ onImageGenerated, customApiKey }: ChatProps) {
 
           // Find the style model if specified
           let selectedStyle = styleModels.find((m) => m.id === "simpsons"); // default
+
           if (style) {
             const foundStyle = styleModels.find((m) => m.id === style);
             if (foundStyle) {
@@ -194,7 +195,7 @@ export default function Chat({ onImageGenerated, customApiKey }: ChatProps) {
                           const outputInput = part.input as { style?: string };
                           const outputStyleName = outputInput.style
                             ? styleModels.find(
-                                (m) => m.id === outputInput.style,
+                                (m) => m.id === outputInput.style
                               )?.name || outputInput.style
                             : "Default";
 

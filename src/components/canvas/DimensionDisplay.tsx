@@ -15,10 +15,8 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
   selectedImages,
   viewport,
 }) => {
-  // Only show for single image selection to avoid clutter
-  if (selectedImages.length !== 1) return null;
-
-  const image = selectedImages[0];
+  const hasSingleSelection = selectedImages.length === 1;
+  const image = hasSingleSelection ? selectedImages[0] : null;
 
   /**
    * Calculate the natural (API) dimensions that get sent to generation endpoints.
@@ -54,8 +52,8 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
     } catch (error) {
       // Fallback to display dimensions if image loading fails
       return {
-        width: Math.round(image.width),
-        height: Math.round(image.height),
+        width: Math.round(img.width),
+        height: Math.round(img.height),
         isCropped: false,
       };
     }
@@ -68,17 +66,32 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
   } | null>(null);
 
   React.useEffect(() => {
-    getApiDimensions(image).then(setApiDimensions);
-  }, [image.src, image.cropWidth, image.cropHeight]);
+    if (!hasSingleSelection || !image) {
+      setApiDimensions(null);
+      return;
+    }
 
-  if (!apiDimensions) return null;
+    let isMounted = true;
+
+    getApiDimensions(image).then((dims) => {
+      if (isMounted) {
+        setApiDimensions(dims);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasSingleSelection, image?.src, image?.cropWidth, image?.cropHeight]);
+
+  if (!hasSingleSelection || !image || !apiDimensions) return null;
 
   // Get rotation-aware bottom center position using bounding box
   const boundingBox = calculateBoundingBox(image);
   const { x: screenX, y: screenY } = canvasToScreen(
     boundingBox.x + boundingBox.width / 2,
     boundingBox.y + boundingBox.height,
-    viewport,
+    viewport
   );
 
   return (
