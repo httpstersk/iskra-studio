@@ -10,8 +10,14 @@ import { CanvasVideo } from "./CanvasVideo";
 import { CropOverlayWrapper } from "./CropOverlayWrapper";
 import { createCroppedImage } from "@/lib/handlers/image-handlers";
 import { CANVAS_DIMENSIONS, ARIA_LABELS } from "@/constants/canvas";
-import type { PlacedImage, PlacedVideo, SelectionBox } from "@/types/canvas";
+import type {
+  PlacedImage,
+  PlacedVideo,
+  SelectionBox,
+  GenerationSettings,
+} from "@/types/canvas";
 import type { Viewport } from "@/hooks/useCanvasState";
+import { VariationGhostPlaceholders } from "./VariationGhostPlaceholders";
 
 /**
  * Props for the CanvasStageRenderer component
@@ -19,6 +25,7 @@ import type { Viewport } from "@/hooks/useCanvasState";
 interface CanvasStageRendererProps {
   canvasSize: { height: number; width: number };
   croppingImageId: string | null;
+  generationSettings: GenerationSettings;
   hiddenVideoControlsIds: Set<string>;
   images: PlacedImage[];
   interactions: {
@@ -89,6 +96,7 @@ function getVisibleItems<T extends { height: number; width: number; x: number; y
 export function CanvasStageRenderer({
   canvasSize,
   croppingImageId,
+  generationSettings,
   hiddenVideoControlsIds,
   images,
   interactions,
@@ -107,6 +115,15 @@ export function CanvasStageRenderer({
 }: CanvasStageRendererProps) {
   const visibleImages = getVisibleItems(images, viewport, canvasSize);
   const visibleVideos = getVisibleItems(videos, viewport, canvasSize);
+
+  // Check if we're in variation mode (one image selected, no prompt)
+  const isVariationMode =
+    selectedIds.length === 1 &&
+    !generationSettings.prompt.trim() &&
+    !croppingImageId;
+  const selectedImageForVariation = isVariationMode
+    ? images.find((img) => img.id === selectedIds[0])
+    : null;
 
   const handleContextMenu = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage();
@@ -292,6 +309,13 @@ export function CanvasStageRenderer({
             setImages={setImages}
           />
         ))}
+
+        {/* Ghost placeholders for variation mode */}
+        {isVariationMode && selectedImageForVariation && (
+          <VariationGhostPlaceholders
+            selectedImage={selectedImageForVariation}
+          />
+        )}
 
         {/* Render visible videos */}
         {visibleVideos.map((video) => (

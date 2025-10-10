@@ -84,8 +84,33 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   const img = useCanvasImageSource(image.src, !!image.isGenerated);
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
+  const [loadingOpacity, setLoadingOpacity] = useState(0.5);
 
   useSingleSelectionTransformer(isSelected, selectedIds, shapeRef, trRef);
+
+  // Pulsing animation for loading placeholders
+  useEffect(() => {
+    if (!image.isLoading) return;
+
+    let animationFrame: number;
+    const startTime = Date.now();
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const cycle = (elapsed % 2000) / 2000; // 2 second cycle
+      const opacity = 0.3 + Math.sin(cycle * Math.PI * 2) * 0.2; // Oscillate between 0.1 and 0.5
+      setLoadingOpacity(opacity);
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [image.isLoading]);
 
   return (
     <>
@@ -210,9 +235,20 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
           }
           onDragEnd();
         }}
-        opacity={image.isGenerated ? 0.9 : 1}
-        stroke={isSelected ? "#3b82f6" : isHovered ? "#3b82f6" : "transparent"}
-        strokeWidth={isSelected || isHovered ? 2 : 0}
+        opacity={
+          image.isLoading ? loadingOpacity : image.isGenerated ? 0.9 : 1
+        }
+        stroke={
+          image.isLoading
+            ? "#9ca3af"
+            : isSelected
+              ? "#3b82f6"
+              : isHovered
+                ? "#3b82f6"
+                : "transparent"
+        }
+        strokeWidth={image.isLoading ? 3 : isSelected || isHovered ? 2 : 0}
+        dash={image.isLoading ? [10, 5] : undefined}
       />
       {isSelected && selectedIds.length === 1 && (
         <Transformer

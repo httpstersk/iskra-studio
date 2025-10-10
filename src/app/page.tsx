@@ -840,6 +840,7 @@ export default function CanvasPage() {
                 <CanvasStageRenderer
                   canvasSize={canvasState.canvasSize}
                   croppingImageId={uiState.croppingImageId}
+                  generationSettings={generationState.generationSettings}
                   hiddenVideoControlsIds={uiState.hiddenVideoControlsIds}
                   images={canvasState.images}
                   interactions={interactions}

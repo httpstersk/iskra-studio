@@ -2,6 +2,7 @@ import type { PlacedImage } from "@/types/canvas";
 import type { FalClient } from "@fal-ai/client";
 import { CAMERA_VARIATIONS } from "@/constants/camera-variations";
 import { uploadImageDirect } from "./generation-handler";
+import { createPixelatedImage } from "@/utils/placeholder-utils";
 
 interface VariationHandlerDeps {
   images: PlacedImage[];
@@ -21,15 +22,16 @@ interface VariationHandlerDeps {
 }
 
 /**
- * Calculate position for a variation image in a circle around the source image
+ * Calculate position for a variation image with higher density on left and right sides
+ * Creates a visually balanced arrangement with 12 variations
  * @param centerX - X coordinate of the source image center
  * @param centerY - Y coordinate of the source image center
  * @param radius - Distance from center to place the variation
- * @param angleIndex - Index of the variation (0-7)
+ * @param angleIndex - Index of the variation (0-11)
  * @param variationWidth - Width of the variation image
  * @param variationHeight - Height of the variation image
  */
-function calculateCircularPosition(
+export function calculateBalancedPosition(
   centerX: number,
   centerY: number,
   radius: number,
@@ -37,8 +39,28 @@ function calculateCircularPosition(
   variationWidth: number,
   variationHeight: number,
 ) {
-  // Calculate angle in radians (360° / 8 = 45° per variation)
-  const angleInDegrees = angleIndex * 45;
+  // Arrange 12 images with higher density on left and right:
+  // Left side (180°): 4 images at angles 150°, 170°, 190°, 210°
+  // Right side (0°): 4 images at angles -30°, -10°, 10°, 30°
+  // Top (90°): 2 images at angles 75°, 105°
+  // Bottom (270°): 2 images at angles 255°, 285°
+
+  const angles = [
+    -30, // Right side
+    -10,
+    10,
+    30,
+    75, // Top
+    105,
+    150, // Left side
+    170,
+    190,
+    210,
+    255, // Bottom
+    285,
+  ];
+
+  const angleInDegrees = angles[angleIndex];
   const angleInRadians = (angleInDegrees * Math.PI) / 180;
 
   // Calculate position on the circle
@@ -50,7 +72,7 @@ function calculateCircularPosition(
 
 /**
  * Handle variation generation for a selected image
- * Generates 8 variations with different camera settings positioned in a circle
+ * Generates 12 variations with different camera settings positioned in a circle
  */
 export const handleVariationGeneration = async (
   deps: VariationHandlerDeps,
@@ -184,15 +206,21 @@ export const handleVariationGeneration = async (
       return;
     }
 
-    // Create placeholders for all 8 variations
+    // Create placeholders for all 12 variations
+    const timestamp = Date.now();
     const placeholderIds: string[] = [];
     const placeholders: PlacedImage[] = [];
 
-    for (let i = 0; i < 8; i++) {
-      const placeholderId = `variation-${Date.now()}-${i}`;
+    console.log("Creating 12 variation placeholders...");
+
+    // Create blurred version of the source image as loading placeholder
+    const blurredPlaceholder = createPixelatedImage(imgElement, 15);
+
+    for (let i = 0; i < 12; i++) {
+      const placeholderId = `variation-${timestamp}-${i}`;
       placeholderIds.push(placeholderId);
 
-      const { x, y } = calculateCircularPosition(
+      const { x, y } = calculateBalancedPosition(
         sourceCenterX,
         sourceCenterY,
         radius,
@@ -203,22 +231,37 @@ export const handleVariationGeneration = async (
 
       placeholders.push({
         id: placeholderId,
-        src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        src: blurredPlaceholder,
         x,
         y,
         width: selectedImage.width,
         height: selectedImage.height,
         rotation: 0,
         isGenerated: true,
+        isLoading: true,
       });
+
+      console.log(
+        `Created placeholder ${i + 1}/12: ${placeholderId} at (${Math.round(x)}, ${Math.round(y)})`,
+      );
     }
 
     // Add placeholders to canvas
-    setImages((prev) => [...prev, ...placeholders]);
+    console.log(`Adding ${placeholders.length} placeholders to canvas...`);
+    setImages((prev) => {
+      const newImages = [...prev, ...placeholders];
+      console.log(`Total images after adding placeholders: ${newImages.length}`);
+      return newImages;
+    });
 
     // Generate all variations in parallel
+    console.log("Starting generation of 12 variations in parallel...");
     const variationPromises = CAMERA_VARIATIONS.map(async (prompt, index) => {
       try {
+        console.log(
+          `Starting variation ${index + 1}/12 with prompt: ${prompt.substring(0, 50)}...`,
+        );
+
         const result = await generateImageVariation({
           imageUrl: uploadResult.url,
           prompt: prompt,
@@ -229,18 +272,20 @@ export const handleVariationGeneration = async (
           apiKey: customApiKey || undefined,
         });
 
-        // Update the placeholder with the generated image
+        console.log(`Variation ${index + 1}/12 completed successfully`);
+
+        // Update the placeholder with the generated image and remove loading state
         setImages((prev) =>
           prev.map((img) =>
             img.id === placeholderIds[index]
-              ? { ...img, src: result.url }
+              ? { ...img, src: result.url, isLoading: false }
               : img,
           ),
         );
 
         return result;
       } catch (error) {
-        console.error(`Failed to generate variation ${index}:`, error);
+        console.error(`Failed to generate variation ${index + 1}/12:`, error);
         // Remove the failed placeholder
         setImages((prev) =>
           prev.filter((img) => img.id !== placeholderIds[index]),
@@ -260,7 +305,7 @@ export const handleVariationGeneration = async (
     if (successCount > 0) {
       toast({
         title: "Variations generated",
-        description: `Successfully generated ${successCount} of 8 variations`,
+        description: `Successfully generated ${successCount} of 12 variations`,
       });
     }
 
