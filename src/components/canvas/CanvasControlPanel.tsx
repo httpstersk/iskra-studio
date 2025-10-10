@@ -15,7 +15,7 @@ import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 import { checkOS } from "@/utils/os-utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ImageIcon,
+  ImagesIcon,
   Paperclip,
   PlayIcon,
   Redo,
@@ -183,9 +183,9 @@ export function CanvasControlPanel({
               >
                 {selectedIds.length > 0 ? (
                   <div className="flex items-center gap-2 text-xs font-medium">
-                    <ImageIcon className="w-4 h-4 text-blue-600 dark:text-blue-500" />
+                    <ImagesIcon className="w-4 h-4 text-blue-600 dark:text-blue-500" />
                     <span className="text-blue-600 dark:text-blue-500">
-                      Image to Image
+                      Generate Variations
                     </span>
                   </div>
                 ) : (

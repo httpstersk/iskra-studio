@@ -16,7 +16,7 @@ export const VariationNumbersOverlay: React.FC<
   VariationNumbersOverlayProps
 > = ({ selectedImage, viewport, canvasSize, isGenerating, images }) => {
   const hasVariations = images.some((img) => img.id.startsWith("variation-"));
-  
+
   if (hasVariations && !isGenerating) {
     return null;
   }
@@ -58,24 +58,25 @@ export const VariationNumbersOverlay: React.FC<
               className="absolute flex items-center justify-center"
               key={id}
               style={{
+                height: `${screenHeight}px`,
                 left: `${screenX}px`,
                 top: `${screenY}px`,
                 width: `${screenWidth}px`,
-                height: `${screenHeight}px`,
               }}
             >
-              <ShimmeringText
-                color="#555"
-                className="text-2xl"
-                duration={1}
-                repeat={isGenerating}
-                repeatDelay={0.5}
-                shimmerColor="#ffffff"
-                spread={4}
-                startOnView={false}
-                text={number.toString()}
-                animate={isGenerating}
-              />
+              <div className="border border-primary rounded-full size-12 flex items-center justify-center">
+                <ShimmeringText
+                  animate={isGenerating}
+                  color="#666"
+                  duration={1}
+                  repeat={isGenerating}
+                  repeatDelay={0}
+                  shimmerColor="#ffffff"
+                  spread={!isGenerating ? 0 : 4}
+                  startOnView={false}
+                  text={number.toString()}
+                />
+              </div>
             </div>
           );
         }

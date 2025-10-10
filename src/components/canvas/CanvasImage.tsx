@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
-import { Image as KonvaImage, Transformer } from "react-konva";
+import { Image as KonvaImage } from "react-konva";
 import Konva from "konva";
 import useImage from "use-image";
 import { useStreamingImage } from "@/hooks/useStreamingImage";
@@ -30,25 +30,7 @@ const useCanvasImageSource = (src: string, isGenerated: boolean) => {
   );
 };
 
-const useSingleSelectionTransformer = (
-  isSelected: boolean,
-  selectedIds: string[],
-  shapeRef: React.RefObject<Konva.Image | null>,
-  trRef: React.RefObject<Konva.Transformer | null>
-) => {
-  useEffect(() => {
-    if (!isSelected || !trRef.current || !shapeRef.current) {
-      return;
-    }
 
-    if (selectedIds.length === 1) {
-      trRef.current.nodes([shapeRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-    } else {
-      trRef.current.nodes([]);
-    }
-  }, [isSelected, selectedIds.length, selectedIds, shapeRef, trRef]);
-};
 
 const useFrameThrottle = (limitMs = 16) => {
   const lastRef = useRef(0);
@@ -79,14 +61,11 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   dragStartPositions,
 }) => {
   const shapeRef = useRef<Konva.Image>(null);
-  const trRef = useRef<Konva.Transformer>(null);
   const throttleFrame = useFrameThrottle();
   const img = useCanvasImageSource(image.src, !!image.isGenerated);
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
   const [loadingOpacity, setLoadingOpacity] = useState(0.5);
-
-  useSingleSelectionTransformer(isSelected, selectedIds, shapeRef, trRef);
 
   // Pulsing animation for loading placeholders
   useEffect(() => {
@@ -216,25 +195,6 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
         onDragEnd={(e) => {
           onDragEnd();
         }}
-        onTransformEnd={(e) => {
-          const node = shapeRef.current;
-          if (node) {
-            const scaleX = node.scaleX();
-            const scaleY = node.scaleY();
-
-            node.scaleX(1);
-            node.scaleY(1);
-
-            onChange({
-              x: node.x(),
-              y: node.y(),
-              width: Math.max(5, node.width() * scaleX),
-              height: Math.max(5, node.height() * scaleY),
-              rotation: node.rotation(),
-            });
-          }
-          onDragEnd();
-        }}
         opacity={
           image.isLoading ? loadingOpacity : image.isGenerated ? 0.9 : 1
         }
@@ -250,17 +210,6 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
         strokeWidth={image.isLoading ? 3 : isSelected || isHovered ? 2 : 0}
         dash={image.isLoading ? [10, 5] : undefined}
       />
-      {isSelected && selectedIds.length === 1 && (
-        <Transformer
-          ref={trRef}
-          boundBoxFunc={(oldBox, newBox) => {
-            if (newBox.width < 5 || newBox.height < 5) {
-              return oldBox;
-            }
-            return newBox;
-          }}
-        />
-      )}
     </>
   );
 };
