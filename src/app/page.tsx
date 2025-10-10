@@ -5,32 +5,29 @@
  * Provides an infinite canvas for image and video manipulation with AI generation capabilities
  */
 
-import React, { useRef, useCallback } from "react";
-import Konva from "konva";
-import { useTheme } from "next-themes";
-import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
 import { useCanvasState } from "@/hooks/useCanvasState-jotai";
 import { useFalClient } from "@/hooks/useFalClient";
-import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useGenerationState } from "@/hooks/useGenerationState-jotai";
 import { useHistoryState } from "@/hooks/useHistoryState-jotai";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useStorage } from "@/hooks/useStorage";
-import { useTRPC } from "@/trpc/client";
-import { useToast } from "@/hooks/use-toast";
 import { useUIState } from "@/hooks/useUIState-jotai";
+import { useTRPC } from "@/trpc/client";
+import { useMutation } from "@tanstack/react-query";
+import Konva from "konva";
+import { useTheme } from "next-themes";
+import { useCallback, useRef } from "react";
 
 // Components
 import { CanvasContextMenu } from "@/components/canvas/CanvasContextMenu";
 import { CanvasControlPanel } from "@/components/canvas/CanvasControlPanel";
 import { CanvasDialogs } from "@/components/canvas/CanvasDialogs";
 import { CanvasStageRenderer } from "@/components/canvas/CanvasStageRenderer";
-import { ChatPanel } from "@/components/canvas/ChatPanel";
 import { DimensionDisplay } from "@/components/canvas/DimensionDisplay";
-import { GithubBadge } from "@/components/canvas/GithubBadge";
 import { MiniMap } from "@/components/canvas/MiniMap";
-import { PoweredByFalBadge } from "@/components/canvas/PoweredByFalBadge";
 import { StreamingImage } from "@/components/canvas/StreamingImage";
 import { StreamingVideo } from "@/components/canvas/StreamingVideo";
 import { VideoOverlays } from "@/components/canvas/VideoOverlays";
@@ -62,7 +59,6 @@ import {
 } from "@/lib/handlers/video-generation-handlers";
 
 // Types & Utils
-import type { PlacedImage, VideoGenerationSettings } from "@/types/canvas";
 import {
   ANIMATION,
   ARIA_LABELS,
@@ -70,6 +66,7 @@ import {
   CANVAS_STRINGS,
 } from "@/constants/canvas";
 import { useDefaultImages } from "@/hooks/useDefaultImages";
+import type { PlacedImage, VideoGenerationSettings } from "@/types/canvas";
 
 /**
  * Main Canvas Page Component
@@ -788,27 +785,8 @@ export default function CanvasPage() {
         )
       )}
 
-      {/* Main Canvas */}
       <main className="flex-1 relative flex items-center justify-center w-full">
         <div className="relative w-full h-full">
-          {/* Gradient Overlays */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-background to-transparent z-10"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute top-0 bottom-0 left-0 w-24 bg-gradient-to-r from-background to-transparent z-10"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute top-0 bottom-0 right-0 w-24 bg-gradient-to-l from-background to-transparent z-10"
-          />
-
           <ContextMenu
             onOpenChange={(open) => {
               if (!open) {
@@ -860,9 +838,7 @@ export default function CanvasPage() {
               handleDelete={handleDelete}
               handleDuplicate={handleDuplicate}
               handleExtendVideo={handleExtendVideo}
-              handleIsolate={async () => {
-                // TODO: Implement isolate handler
-              }}
+              handleIsolate={async () => {}}
               handleRemoveBackground={handleRemoveBackground}
               handleRemoveVideoBackground={handleRemoveVideoBackground}
               handleRun={handleRun}
@@ -898,9 +874,6 @@ export default function CanvasPage() {
             setViewport={canvasState.setViewport}
             viewport={canvasState.viewport}
           />
-
-          <PoweredByFalBadge />
-          <GithubBadge />
 
           {/* Dimension Display */}
           <DimensionDisplay
@@ -1001,14 +974,6 @@ export default function CanvasPage() {
         setVideos={canvasState.setVideos}
         videos={canvasState.videos}
         viewport={canvasState.viewport}
-      />
-
-      {/* Chat UI */}
-      <ChatPanel
-        customApiKey={uiState.customApiKey}
-        onImageGenerated={handleChatImageGenerated}
-        setShowChat={uiState.setShowChat}
-        showChat={uiState.showChat}
       />
     </div>
   );

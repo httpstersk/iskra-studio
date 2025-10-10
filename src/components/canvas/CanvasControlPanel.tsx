@@ -1,35 +1,28 @@
 "use client";
 
+import { GenerationsIndicator } from "@/components/generations-indicator";
+import { SpinnerIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import {
-  X,
-  ChevronDown,
-  Plus,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import type { GenerationSettings, PlacedImage } from "@/types/canvas";
+import { checkOS } from "@/utils/os-utils";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  ImageIcon,
   Paperclip,
   PlayIcon,
-  ExternalLink,
-  Undo,
   Redo,
   SlidersHorizontal,
-  Trash2,
-  ImageIcon,
+  Undo,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { SpinnerIcon } from "@/components/icons";
 import { ShortcutBadge } from "./ShortcutBadge";
-import { checkOS } from "@/utils/os-utils";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { styleModels } from "@/lib/models";
-import type { PlacedImage, GenerationSettings } from "@/types/canvas";
-import { AnimatePresence, motion } from "framer-motion";
-import { GenerationsIndicator } from "@/components/generations-indicator";
 
 interface CanvasControlPanelProps {
   selectedIds: string[];
@@ -62,11 +55,9 @@ export function CanvasControlPanel({
   images,
   generationSettings,
   setGenerationSettings,
-  previousStyleId,
   isGenerating,
   handleRun,
   handleFileUpload,
-  setIsStyleDialogOpen,
   activeGenerationsSize,
   activeVideoGenerationsSize,
   isRemovingVideoBackground,
@@ -263,7 +254,8 @@ export function CanvasControlPanel({
                     const image = images.find((img) => img.id === id);
                     if (!image) return null;
 
-                    const isLast = index === Math.min(selectedIds.length - 1, 2);
+                    const isLast =
+                      index === Math.min(selectedIds.length - 1, 2);
                     const offset = index * 8;
                     const size = 40 - index * 4;
                     const topOffset = index * 2;
@@ -300,96 +292,10 @@ export function CanvasControlPanel({
             )}
           </div>
 
-          {generationSettings.styleId === "custom" && (
-            <div className="w-full flex items-center gap-2">
-              <Input
-                value={generationSettings.loraUrl}
-                onChange={(e) =>
-                  setGenerationSettings({
-                    ...generationSettings,
-                    loraUrl: e.target.value,
-                  })
-                }
-                placeholder="Kontext LoRA URL (optional)"
-                style={{ fontSize: "16px" }}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="flex items-center gap-2"
-                onClick={() => {
-                  window.open(
-                    "https://huggingface.co/collections/kontext-community/flux-kontext-loras-687e8779f8ed40a611a3925f",
-                    "_blank"
-                  );
-                }}
-                title="Browse Kontext LoRAs"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-              {generationSettings.styleId === "custom" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="flex items-center gap-2"
-                  onClick={() => {
-                    const prevStyle = styleModels.find(
-                      (model) => model.id === previousStyleId
-                    );
-
-                    if (prevStyle) {
-                      setGenerationSettings({
-                        ...generationSettings,
-                        styleId: prevStyle.id,
-                        prompt: prevStyle.prompt,
-                        loraUrl: prevStyle.loraUrl || "",
-                      });
-                    }
-                  }}
-                  title="Go back to previous style"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          )}
-
           {/* Style dropdown and Run button */}
           <div className="flex items-center justify-between">
-            <Button
-              variant="secondary"
-              className="flex items-center gap-2"
-              onClick={() => setIsStyleDialogOpen(true)}
-            >
-              {(() => {
-                if (generationSettings.styleId === "custom") {
-                  return (
-                    <>
-                      <div className="w-5 h-5 flex items-center justify-center">
-                        <Plus className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm">Custom</span>
-                    </>
-                  );
-                }
-                const selectedModel =
-                  styleModels.find((m) => m.id === generationSettings.styleId) ||
-                  styleModels.find((m) => m.id === "simpsons");
-                return (
-                  <>
-                    <img
-                      src={selectedModel?.imageSrc}
-                      alt={selectedModel?.name}
-                      className="w-5 h-5 rounded-xl object-cover"
-                    />
-                    <span className="text-sm">
-                      {selectedModel?.name || "Simpsons Style"}
-                    </span>
-                  </>
-                );
-              })()}
-              <ChevronDown className="h-4 w-4" />
-            </Button>
+            <div></div>
+
             <div className="flex items-center gap-2">
               <TooltipProvider>
                 <Tooltip delayDuration={0}>
@@ -413,7 +319,9 @@ export function CanvasControlPanel({
 
                         input.onchange = (e) => {
                           try {
-                            handleFileUpload((e.target as HTMLInputElement).files);
+                            handleFileUpload(
+                              (e.target as HTMLInputElement).files
+                            );
                           } catch (error) {
                             console.error("File upload error:", error);
                             toast({
@@ -440,7 +348,10 @@ export function CanvasControlPanel({
                           try {
                             input.click();
                           } catch (error) {
-                            console.error("Failed to trigger file dialog:", error);
+                            console.error(
+                              "Failed to trigger file dialog:",
+                              error
+                            );
                             toast({
                               title: "Upload unavailable",
                               description:
@@ -477,7 +388,9 @@ export function CanvasControlPanel({
                       onClick={handleRun}
                       variant="primary"
                       size="icon"
-                      disabled={isGenerating || !generationSettings.prompt.trim()}
+                      disabled={
+                        isGenerating || !generationSettings.prompt.trim()
+                      }
                       className={cn(
                         "gap-2 font-medium transition-all",
                         isGenerating && "bg-secondary"
