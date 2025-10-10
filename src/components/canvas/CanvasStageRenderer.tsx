@@ -51,6 +51,7 @@ interface CanvasStageRendererProps {
     setIsDraggingImage: (dragging: boolean) => void;
   };
   isCanvasReady: boolean;
+  isGenerating: boolean;
   saveToHistory: () => void;
   selectedIds: string[];
   setCroppingImageId: (id: string | null) => void;
@@ -98,6 +99,7 @@ export function CanvasStageRenderer({
   canvasSize,
   croppingImageId,
   generationSettings,
+  isGenerating,
   hiddenVideoControlsIds,
   images,
   interactions,
@@ -381,6 +383,8 @@ export function CanvasStageRenderer({
           selectedImage={selectedImageForVariation}
           viewport={viewport}
           canvasSize={canvasSize}
+          isGenerating={isGenerating}
+          images={images}
         />
       )}
     </>

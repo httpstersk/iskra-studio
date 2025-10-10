@@ -695,24 +695,18 @@ export function GenerationsIndicator({
           ? "bg-green-500/10 dark:bg-green-500/15 text-green-600 dark:text-green-500"
           : outputType === "video"
             ? "bg-purple-500/10 dark:bg-purple-500/15 text-purple-600 dark:text-purple-500"
-            : "bg-[#EC0648]/10 dark:bg-[#EC0648]/15 text-[#EC0648] dark:text-[#EC0648]",
+            : "bg-[#EC0648]/10 dark:bg-[#EC0648]/15 text-[#EC0648] dark:text-[#EC0648]"
       )}
     >
       {isSuccess ? (
         <>
-          <svg
-            width="19"
-            height="19"
-            viewBox="0 0 19 19"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg fill="none" height="19" viewBox="0 0 19 19" width="19">
             <path
               d="M3 10L7 14L16 5"
               stroke="currentColor"
-              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              strokeWidth="2"
             />
           </svg>
           <span className="font-medium">Done</span>
@@ -723,7 +717,7 @@ export function GenerationsIndicator({
             {svgFrames[currentFrame]}
           </AnimatePresence>
           <span className="font-medium">
-            Generating {activeGenerationsSize} {outputType}
+            Generating variations
             {activeGenerationsSize && activeGenerationsSize > 1 ? "s" : ""}
           </span>
         </>

@@ -845,6 +845,7 @@ export default function CanvasPage() {
                   images={canvasState.images}
                   interactions={interactions}
                   isCanvasReady={canvasState.isCanvasReady}
+                  isGenerating={generationState.isGenerating}
                   saveToHistory={historyState.saveToHistory}
                   selectedIds={canvasState.selectedIds}
                   setCroppingImageId={uiState.setCroppingImageId}

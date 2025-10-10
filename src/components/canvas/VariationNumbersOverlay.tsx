@@ -8,11 +8,18 @@ interface VariationNumbersOverlayProps {
   selectedImage: PlacedImage;
   viewport: Viewport;
   canvasSize: { width: number; height: number };
+  isGenerating: boolean;
+  images: PlacedImage[];
 }
 
 export const VariationNumbersOverlay: React.FC<
   VariationNumbersOverlayProps
-> = ({ selectedImage, viewport, canvasSize }) => {
+> = ({ selectedImage, viewport, canvasSize, isGenerating, images }) => {
+  const hasVariations = images.some((img) => img.id.startsWith("variation-"));
+  
+  if (hasVariations && !isGenerating) {
+    return null;
+  }
   const sourceCenterX = selectedImage.x + selectedImage.width / 2;
   const sourceCenterY = selectedImage.y + selectedImage.height / 2;
 
@@ -46,12 +53,10 @@ export const VariationNumbersOverlay: React.FC<
     <div className="pointer-events-none absolute inset-0">
       {ghostPlaceholders.map(
         ({ id, screenHeight, screenWidth, screenX, screenY, number }) => {
-          const fontSize = Math.min(screenWidth, screenHeight) * 0.4;
-
           return (
             <div
-              key={id}
               className="absolute flex items-center justify-center"
+              key={id}
               style={{
                 left: `${screenX}px`,
                 top: `${screenY}px`,
@@ -63,12 +68,13 @@ export const VariationNumbersOverlay: React.FC<
                 color="#555"
                 className="text-2xl"
                 duration={1}
-                repeat={true}
+                repeat={isGenerating}
                 repeatDelay={0.5}
                 shimmerColor="#ffffff"
                 spread={4}
-                startOnView
+                startOnView={false}
                 text={number.toString()}
+                animate={isGenerating}
               />
             </div>
           );

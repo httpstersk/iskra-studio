@@ -6,33 +6,35 @@ import { motion, useInView, UseInViewOptions } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface ShimmeringTextProps {
-  text: string;
-  duration?: number;
+  animate?: boolean;
+  className?: string;
+  color?: string;
   delay?: number;
+  duration?: number;
+  inViewMargin?: UseInViewOptions["margin"];
+  once?: boolean;
   repeat?: boolean;
   repeatDelay?: number;
-  className?: string;
-  startOnView?: boolean;
-  once?: boolean;
-  inViewMargin?: UseInViewOptions["margin"];
-  spread?: number;
-  color?: string;
   shimmerColor?: string;
+  spread?: number;
+  startOnView?: boolean;
+  text: string;
 }
 
 export function ShimmeringText({
-  text,
-  duration = 2,
+  animate = true,
+  className,
+  color,
   delay = 0,
+  duration = 2,
+  inViewMargin,
+  once = false,
   repeat = true,
   repeatDelay = 0.5,
-  className,
-  startOnView = true,
-  once = false,
-  inViewMargin,
-  spread = 2,
-  color,
   shimmerColor,
+  spread = 2,
+  startOnView = true,
+  text,
 }: ShimmeringTextProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once, margin: inViewMargin });
@@ -41,7 +43,7 @@ export function ShimmeringText({
     return text.length * spread;
   }, [text, spread]);
 
-  const shouldAnimate = !startOnView || isInView;
+  const shouldAnimate = animate && (!startOnView || isInView);
 
   return (
     <motion.span
@@ -63,8 +65,8 @@ export function ShimmeringText({
         } as React.CSSProperties
       }
       initial={{
-        backgroundPosition: "100% center",
-        opacity: 0,
+        backgroundPosition: animate ? "100% center" : "0% center",
+        opacity: animate ? 0 : 1,
       }}
       animate={
         shouldAnimate
@@ -72,7 +74,9 @@ export function ShimmeringText({
               backgroundPosition: "0% center",
               opacity: 1,
             }
-          : {}
+          : {
+              opacity: 1,
+            }
       }
       transition={{
         backgroundPosition: {
