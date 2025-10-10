@@ -1,590 +1,450 @@
 "use client";
 
-import React, { useRef, useCallback, useEffect } from "react";
-import { Stage, Layer } from "react-konva";
+/**
+ * Canvas Page - Main application page
+ * Provides an infinite canvas for image and video manipulation with AI generation capabilities
+ */
+
+import React, { useRef, useCallback } from "react";
 import Konva from "konva";
 import { useTheme } from "next-themes";
-import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X } from "lucide-react";
-
-// Hooks
-import { useCanvasState } from "@/hooks/useCanvasState";
-import { useGenerationState } from "@/hooks/useGenerationState";
-import { useHistoryState } from "@/hooks/useHistoryState";
-import { useUIState } from "@/hooks/useUIState";
-import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
-import { useStorage } from "@/hooks/useStorage";
-import { useFileUpload } from "@/hooks/useFileUpload";
-import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { useFalClient } from "@/hooks/useFalClient";
-import { useToast } from "@/hooks/use-toast";
-import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
+import { useCanvasState } from "@/hooks/useCanvasState-jotai";
+import { useFalClient } from "@/hooks/useFalClient";
+import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
+import { useFileUpload } from "@/hooks/useFileUpload";
+import { useGenerationState } from "@/hooks/useGenerationState-jotai";
+import { useHistoryState } from "@/hooks/useHistoryState-jotai";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useStorage } from "@/hooks/useStorage";
+import { useTRPC } from "@/trpc/client";
+import { useToast } from "@/hooks/use-toast";
+import { useUIState } from "@/hooks/useUIState-jotai";
 
 // Components
-import { Button } from "@/components/ui/button";
-import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
-import { StreamingImage } from "@/components/canvas/StreamingImage";
-import { StreamingVideo } from "@/components/canvas/StreamingVideo";
-import { CanvasImage } from "@/components/canvas/CanvasImage";
-import { CanvasVideo } from "@/components/canvas/CanvasVideo";
-import { CanvasGrid } from "@/components/canvas/CanvasGrid";
-import { SelectionBoxComponent } from "@/components/canvas/SelectionBox";
-import { MiniMap } from "@/components/canvas/MiniMap";
-import { ZoomControls } from "@/components/canvas/ZoomControls";
-import { PoweredByFalBadge } from "@/components/canvas/PoweredByFalBadge";
-import { GithubBadge } from "@/components/canvas/GithubBadge";
-import { VideoOverlays } from "@/components/canvas/VideoOverlays";
-import { DimensionDisplay } from "@/components/canvas/DimensionDisplay";
 import { CanvasContextMenu } from "@/components/canvas/CanvasContextMenu";
-import { CropOverlayWrapper } from "@/components/canvas/CropOverlayWrapper";
 import { CanvasControlPanel } from "@/components/canvas/CanvasControlPanel";
 import { CanvasDialogs } from "@/components/canvas/CanvasDialogs";
-import Chat from "@/components/chat/chat";
+import { CanvasStageRenderer } from "@/components/canvas/CanvasStageRenderer";
+import { ChatPanel } from "@/components/canvas/ChatPanel";
+import { DimensionDisplay } from "@/components/canvas/DimensionDisplay";
+import { GithubBadge } from "@/components/canvas/GithubBadge";
+import { MiniMap } from "@/components/canvas/MiniMap";
+import { PoweredByFalBadge } from "@/components/canvas/PoweredByFalBadge";
+import { StreamingImage } from "@/components/canvas/StreamingImage";
+import { StreamingVideo } from "@/components/canvas/StreamingVideo";
+import { VideoOverlays } from "@/components/canvas/VideoOverlays";
+import { ZoomControls } from "@/components/canvas/ZoomControls";
+import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 
 // Handlers
-import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
 import { handleRemoveBackground as handleRemoveBackgroundHandler } from "@/lib/handlers/background-handler";
-import {
-  sendToFront as sendToFrontHandler,
-  sendToBack as sendToBackHandler,
-  bringForward as bringForwardHandler,
-  sendBackward as sendBackwardHandler,
-} from "@/lib/handlers/layer-handlers";
+import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
 import {
   combineImages,
-  duplicateElements,
   deleteElements,
-  createCroppedImage,
+  duplicateElements,
 } from "@/lib/handlers/image-handlers";
+import {
+  bringForward as bringForwardHandler,
+  sendBackward as sendBackwardHandler,
+  sendToBack as sendToBackHandler,
+  sendToFront as sendToFrontHandler,
+} from "@/lib/handlers/layer-handlers";
+import {
+  createBackgroundRemovalConfig,
+  createGenerationId,
+  createImageToVideoConfig,
+  createVideoToVideoConfig,
+  dismissToast,
+  handleVideoCompletion,
+  uploadMediaIfNeeded,
+} from "@/lib/handlers/video-generation-handlers";
 
 // Types & Utils
-import type {
-  VideoGenerationSettings,
-  PlacedImage,
-  PlacedVideo,
-} from "@/types/canvas";
-import { convertImageToVideo } from "@/utils/video-utils";
-import { cn } from "@/lib/utils";
-import { getVideoModelById } from "@/lib/video-models";
+import type { PlacedImage, VideoGenerationSettings } from "@/types/canvas";
+import {
+  ANIMATION,
+  ARIA_LABELS,
+  CANVAS_DIMENSIONS,
+  CANVAS_STRINGS,
+} from "@/constants/canvas";
+import { useDefaultImages } from "@/hooks/useDefaultImages";
 
+/**
+ * Main Canvas Page Component
+ */
 export default function CanvasPage() {
-  const { theme, setTheme } = useTheme();
+  // ========================================
+  // External Hooks & Services
+  // ========================================
+
+  const { setTheme, theme } = useTheme();
   const { toast } = useToast();
-  const trpc = useTRPC();
+  const falClient = useFalClient();
   const stageRef = useRef<Konva.Stage>(null);
+  const trpc = useTRPC();
 
   // ========================================
-  // State Management via Custom Hooks
+  // State Management
   // ========================================
 
-  const {
-    images,
-    setImages,
-    videos,
-    setVideos,
-    selectedIds,
-    setSelectedIds,
-    viewport,
-    setViewport,
-    canvasSize,
-    isCanvasReady,
-  } = useCanvasState();
-
-  const {
-    generationSettings,
-    setGenerationSettings,
-    previousStyleId,
-    setPreviousStyleId,
-    isGenerating,
-    setIsGenerating,
-    activeGenerations,
-    setActiveGenerations,
-    activeVideoGenerations,
-    setActiveVideoGenerations,
-    isConvertingToVideo,
-    setIsConvertingToVideo,
-    isTransformingVideo,
-    setIsTransformingVideo,
-    isExtendingVideo,
-    setIsExtendingVideo,
-    isRemovingVideoBackground,
-    setIsRemovingVideoBackground,
-    isIsolating,
-    setIsIsolating,
-    showSuccess,
-  } = useGenerationState();
-
-  const {
-    history,
-    historyIndex,
-    setHistoryIndex,
-    saveToHistory,
-    undo: undoHistory,
-    redo: redoHistory,
-    canUndo,
-    canRedo,
-  } = useHistoryState(images, videos, selectedIds);
-
-  const {
-    isSettingsDialogOpen,
-    setIsSettingsDialogOpen,
-    isStyleDialogOpen,
-    setIsStyleDialogOpen,
-    isApiKeyDialogOpen,
-    setIsApiKeyDialogOpen,
-    isImageToVideoDialogOpen,
-    setIsImageToVideoDialogOpen,
-    isVideoToVideoDialogOpen,
-    setIsVideoToVideoDialogOpen,
-    isExtendVideoDialogOpen,
-    setIsExtendVideoDialogOpen,
-    isRemoveVideoBackgroundDialogOpen,
-    setIsRemoveVideoBackgroundDialogOpen,
-    selectedImageForVideo,
-    setSelectedImageForVideo,
-    selectedVideoForVideo,
-    setSelectedVideoForVideo,
-    selectedVideoForExtend,
-    setSelectedVideoForExtend,
-    selectedVideoForBackgroundRemoval,
-    setSelectedVideoForBackgroundRemoval,
-    croppingImageId,
-    setCroppingImageId,
-    isolateTarget,
-    setIsolateTarget,
-    isolateInputValue,
-    setIsolateInputValue,
-    showGrid,
-    setShowGrid,
-    showMinimap,
-    setShowMinimap,
-    showChat,
-    setShowChat,
-    customApiKey,
-    setCustomApiKey,
-    tempApiKey,
-    setTempApiKey,
-    hiddenVideoControlsIds,
-    setHiddenVideoControlsIds,
-  } = useUIState();
-
-  // ========================================
-  // Interaction Hooks
-  // ========================================
+  const canvasState = useCanvasState();
+  const generationState = useGenerationState();
+  const historyState = useHistoryState(
+    canvasState.images,
+    canvasState.videos,
+    canvasState.selectedIds
+  );
+  const uiState = useUIState();
 
   const interactions = useCanvasInteractions(
-    viewport,
-    setViewport,
-    canvasSize,
-    images,
-    videos,
-    selectedIds,
-    setSelectedIds,
-    croppingImageId
+    canvasState.viewport,
+    canvasState.setViewport,
+    canvasState.canvasSize,
+    canvasState.images,
+    canvasState.videos,
+    canvasState.selectedIds,
+    canvasState.setSelectedIds,
+    uiState.croppingImageId
   );
 
   const { isStorageLoaded, saveToStorage } = useStorage(
-    images,
-    videos,
-    viewport,
-    setImages,
-    setVideos,
-    setViewport,
-    activeGenerations.size
+    canvasState.images,
+    canvasState.videos,
+    canvasState.viewport,
+    canvasState.setImages,
+    canvasState.setVideos,
+    canvasState.setViewport,
+    generationState.activeGenerations.size
   );
 
-  const { handleFileUpload, handleDrop } = useFileUpload(
-    setImages,
-    viewport,
-    canvasSize
+  const { handleDrop, handleFileUpload } = useFileUpload(
+    canvasState.setImages,
+    canvasState.viewport,
+    canvasState.canvasSize
   );
 
-  const falClient = useFalClient(customApiKey);
-
-  const { mutateAsync: removeBackground } = useMutation(
-    trpc.removeBackground.mutationOptions()
+  // API mutations
+  const { mutateAsync: generateTextToImage } = useMutation(
+    trpc.generateTextToImage.mutationOptions()
   );
   const { mutateAsync: isolateObject } = useMutation(
     trpc.isolateObject.mutationOptions()
   );
-  const { mutateAsync: generateTextToImage } = useMutation(
-    trpc.generateTextToImage.mutationOptions()
+  const { mutateAsync: removeBackground } = useMutation(
+    trpc.removeBackground.mutationOptions()
+  );
+
+  // Load default images
+  useDefaultImages(
+    isStorageLoaded,
+    canvasState.images.length,
+    canvasState.canvasSize,
+    canvasState.setImages
   );
 
   // ========================================
-  // Action Handlers
+  // History Handlers
   // ========================================
 
-  const undo = useCallback(() => {
-    const result = undoHistory();
+  /**
+   * Handles undo operation
+   */
+  const handleUndo = useCallback(() => {
+    const result = historyState.undo();
     if (result) {
-      setImages(result.images);
-      setVideos(result.videos);
-      setSelectedIds(result.selectedIds);
-      setHistoryIndex(result.newIndex);
+      canvasState.setImages(result.images);
+      canvasState.setSelectedIds(result.selectedIds);
+      canvasState.setVideos(result.videos);
+      historyState.setHistoryIndex(result.newIndex);
     }
-  }, [undoHistory, setImages, setVideos, setSelectedIds, setHistoryIndex]);
-
-  const redo = useCallback(() => {
-    const result = redoHistory();
-    if (result) {
-      setImages(result.images);
-      setVideos(result.videos);
-      setSelectedIds(result.selectedIds);
-      setHistoryIndex(result.newIndex);
-    }
-  }, [redoHistory, setImages, setVideos, setSelectedIds, setHistoryIndex]);
-
-  const handleRun = async () => {
-    await handleRunHandler({
-      images,
-      selectedIds,
-      generationSettings,
-      customApiKey,
-      canvasSize,
-      viewport,
-      falClient,
-      setImages,
-      setSelectedIds,
-      setActiveGenerations,
-      setIsGenerating,
-      setIsApiKeyDialogOpen,
-      toast,
-      generateTextToImage,
-    });
-  };
-
-  const handleDelete = useCallback(() => {
-    saveToHistory();
-    const { newImages, newVideos } = deleteElements(
-      images,
-      videos,
-      selectedIds
-    );
-    setImages(newImages);
-    setVideos(newVideos);
-    setSelectedIds([]);
   }, [
-    images,
-    videos,
-    selectedIds,
-    saveToHistory,
-    setImages,
-    setVideos,
-    setSelectedIds,
+    canvasState.setImages,
+    canvasState.setSelectedIds,
+    canvasState.setVideos,
+    historyState,
   ]);
 
-  const handleDuplicate = useCallback(() => {
-    saveToHistory();
-    const { newImages, newVideos } = duplicateElements(
-      images,
-      videos,
-      selectedIds
-    );
-    setImages((prev) => [...prev, ...newImages]);
-    setVideos((prev) => [...prev, ...newVideos]);
-    setSelectedIds([
-      ...newImages.map((img) => img.id),
-      ...newVideos.map((vid) => vid.id),
-    ]);
+  /**
+   * Handles redo operation
+   */
+  const handleRedo = useCallback(() => {
+    const result = historyState.redo();
+    if (result) {
+      canvasState.setImages(result.images);
+      canvasState.setSelectedIds(result.selectedIds);
+      canvasState.setVideos(result.videos);
+      historyState.setHistoryIndex(result.newIndex);
+    }
   }, [
-    images,
-    videos,
-    selectedIds,
-    saveToHistory,
-    setImages,
-    setVideos,
-    setSelectedIds,
+    canvasState.setImages,
+    canvasState.setSelectedIds,
+    canvasState.setVideos,
+    historyState,
   ]);
 
-  const handleRemoveBackground = async () => {
-    await handleRemoveBackgroundHandler({
-      images,
-      selectedIds,
-      setImages,
-      toast,
-      saveToHistory,
-      removeBackground,
-      customApiKey,
-      falClient,
-      setIsApiKeyDialogOpen,
-    });
-  };
+  // ========================================
+  // Image Manipulation Handlers (Alphabetized)
+  // ========================================
 
+  /**
+   * Handles bringing an element forward in the layer stack
+   */
+  const handleBringForward = useCallback(() => {
+    if (canvasState.selectedIds.length === 0) return;
+    historyState.saveToHistory();
+    canvasState.setImages(
+      bringForwardHandler(canvasState.images, canvasState.selectedIds)
+    );
+  }, [canvasState, historyState]);
+
+  /**
+   * Handles combining multiple selected images into one
+   */
   const handleCombineImages = useCallback(async () => {
-    if (selectedIds.length < 2) return;
-    saveToHistory();
+    if (canvasState.selectedIds.length < 2) return;
+    historyState.saveToHistory();
 
     try {
-      const combinedImage = await combineImages(images, selectedIds);
-      setImages((prev) => [
-        ...prev.filter((img) => !selectedIds.includes(img.id)),
+      const combinedImage = await combineImages(
+        canvasState.images,
+        canvasState.selectedIds
+      );
+      canvasState.setImages((prev) => [
+        ...prev.filter((img) => !canvasState.selectedIds.includes(img.id)),
         combinedImage,
       ]);
-      setSelectedIds([combinedImage.id]);
+      canvasState.setSelectedIds([combinedImage.id]);
     } catch (error) {
       console.error("Failed to combine images:", error);
       toast({
-        title: "Failed to combine images",
-        description: error instanceof Error ? error.message : "Unknown error",
+        description:
+          error instanceof Error
+            ? error.message
+            : CANVAS_STRINGS.ERRORS.UNKNOWN_ERROR,
+        title: CANVAS_STRINGS.ERRORS.COMBINE_FAILED,
         variant: "destructive",
       });
     }
-  }, [images, selectedIds, saveToHistory, setImages, setSelectedIds, toast]);
+  }, [canvasState, historyState, toast]);
 
-  const sendToFront = useCallback(() => {
-    if (selectedIds.length === 0) return;
-    saveToHistory();
-    setImages(sendToFrontHandler(images, selectedIds));
-  }, [images, selectedIds, saveToHistory, setImages]);
+  /**
+   * Handles deleting selected elements
+   */
+  const handleDelete = useCallback(() => {
+    historyState.saveToHistory();
+    const { newImages, newVideos } = deleteElements(
+      canvasState.images,
+      canvasState.videos,
+      canvasState.selectedIds
+    );
+    canvasState.setImages(newImages);
+    canvasState.setSelectedIds([]);
+    canvasState.setVideos(newVideos);
+  }, [canvasState, historyState]);
 
-  const sendToBack = useCallback(() => {
-    if (selectedIds.length === 0) return;
-    saveToHistory();
-    setImages(sendToBackHandler(images, selectedIds));
-  }, [images, selectedIds, saveToHistory, setImages]);
+  /**
+   * Handles duplicating selected elements
+   */
+  const handleDuplicate = useCallback(() => {
+    historyState.saveToHistory();
+    const { newImages, newVideos } = duplicateElements(
+      canvasState.images,
+      canvasState.videos,
+      canvasState.selectedIds
+    );
+    canvasState.setImages((prev) => [...prev, ...newImages]);
+    canvasState.setVideos((prev) => [...prev, ...newVideos]);
+    canvasState.setSelectedIds([
+      ...newImages.map((img) => img.id),
+      ...newVideos.map((vid) => vid.id),
+    ]);
+  }, [canvasState, historyState]);
 
-  const bringForward = useCallback(() => {
-    if (selectedIds.length === 0) return;
-    saveToHistory();
-    setImages(bringForwardHandler(images, selectedIds));
-  }, [images, selectedIds, saveToHistory, setImages]);
-
-  const sendBackward = useCallback(() => {
-    if (selectedIds.length === 0) return;
-    saveToHistory();
-    setImages(sendBackwardHandler(images, selectedIds));
-  }, [images, selectedIds, saveToHistory, setImages]);
-
-  // ========================================
-  // Video Generation Handlers
-  // ========================================
-
-  const handleConvertToVideo = (imageId: string) => {
-    const image = images.find((img) => img.id === imageId);
-    if (!image) return;
-    setSelectedImageForVideo(imageId);
-    setIsImageToVideoDialogOpen(true);
+  /**
+   * Handles background removal for selected images
+   */
+  const handleRemoveBackground = async () => {
+    await handleRemoveBackgroundHandler({
+      customApiKey: uiState.customApiKey,
+      falClient,
+      images: canvasState.images,
+      removeBackground,
+      saveToHistory: historyState.saveToHistory,
+      selectedIds: canvasState.selectedIds,
+      setImages: canvasState.setImages,
+      setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
+      toast,
+    });
   };
 
+  /**
+   * Handles running image generation
+   */
+  const handleRun = async () => {
+    await handleRunHandler({
+      canvasSize: canvasState.canvasSize,
+      customApiKey: uiState.customApiKey,
+      falClient,
+      generateTextToImage,
+      generationSettings: generationState.generationSettings,
+      images: canvasState.images,
+      selectedIds: canvasState.selectedIds,
+      setActiveGenerations: generationState.setActiveGenerations,
+      setImages: canvasState.setImages,
+      setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
+      setIsGenerating: generationState.setIsGenerating,
+      setSelectedIds: canvasState.setSelectedIds,
+      toast,
+      viewport: canvasState.viewport,
+    });
+  };
+
+  /**
+   * Handles sending an element backward in the layer stack
+   */
+  const handleSendBackward = useCallback(() => {
+    if (canvasState.selectedIds.length === 0) return;
+    historyState.saveToHistory();
+    canvasState.setImages(
+      sendBackwardHandler(canvasState.images, canvasState.selectedIds)
+    );
+  }, [canvasState, historyState]);
+
+  /**
+   * Handles sending an element to the back of the layer stack
+   */
+  const handleSendToBack = useCallback(() => {
+    if (canvasState.selectedIds.length === 0) return;
+    historyState.saveToHistory();
+    canvasState.setImages(
+      sendToBackHandler(canvasState.images, canvasState.selectedIds)
+    );
+  }, [canvasState, historyState]);
+
+  /**
+   * Handles sending an element to the front of the layer stack
+   */
+  const handleSendToFront = useCallback(() => {
+    if (canvasState.selectedIds.length === 0) return;
+    historyState.saveToHistory();
+    canvasState.setImages(
+      sendToFrontHandler(canvasState.images, canvasState.selectedIds)
+    );
+  }, [canvasState, historyState]);
+
+  // ========================================
+  // Video Generation Handlers (Alphabetized)
+  // ========================================
+
+  /**
+   * Opens dialog for converting an image to video
+   */
+  const handleConvertToVideo = (imageId: string) => {
+    const image = canvasState.images.find((img) => img.id === imageId);
+    if (!image) return;
+    uiState.setIsImageToVideoDialogOpen(true);
+    uiState.setSelectedImageForVideo(imageId);
+  };
+
+  /**
+   * Opens dialog for extending a video
+   */
+  const handleExtendVideo = (videoId: string) => {
+    uiState.setIsExtendVideoDialogOpen(true);
+    uiState.setSelectedVideoForExtend(videoId);
+  };
+
+  /**
+   * Handles image-to-video conversion
+   */
   const handleImageToVideoConversion = async (
     settings: VideoGenerationSettings
   ) => {
-    if (!selectedImageForVideo) return;
-    const image = images.find((img) => img.id === selectedImageForVideo);
+    if (!uiState.selectedImageForVideo) return;
+    const image = canvasState.images.find(
+      (img) => img.id === uiState.selectedImageForVideo
+    );
     if (!image) return;
 
     try {
-      setIsConvertingToVideo(true);
+      generationState.setIsConvertingToVideo(true);
 
-      let imageUrl = image.src;
-      if (imageUrl.startsWith("data:")) {
-        const uploadResult = await falClient.storage.upload(
-          await (await fetch(imageUrl)).blob()
-        );
-        imageUrl = uploadResult;
-      }
+      const imageUrl = await uploadMediaIfNeeded(image.src, falClient);
+      const generationId = createGenerationId("img2vid");
+      const config = createImageToVideoConfig(
+        imageUrl,
+        settings,
+        uiState.selectedImageForVideo
+      );
 
-      const generationId = `img2vid_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-      setActiveVideoGenerations((prev) => {
+      generationState.setActiveVideoGenerations((prev) => {
         const newMap = new Map(prev);
-        newMap.set(generationId, {
-          imageUrl,
-          prompt: settings.prompt || "",
-          duration: settings.duration || 5,
-          modelId: settings.modelId,
-          resolution: settings.resolution || "720p",
-          cameraFixed: settings.cameraFixed,
-          seed: settings.seed,
-          sourceImageId: selectedImageForVideo,
-        });
+        newMap.set(generationId, config);
         return newMap;
       });
 
-      setIsConvertingToVideo(false);
-      setIsImageToVideoDialogOpen(false);
+      generationState.setIsConvertingToVideo(false);
+      uiState.setIsImageToVideoDialogOpen(false);
     } catch (error) {
       console.error("Error starting image-to-video conversion:", error);
       toast({
-        title: "Conversion failed",
-        description:
-          error instanceof Error ? error.message : "Failed to start conversion",
-        variant: "destructive",
-      });
-      setIsConvertingToVideo(false);
-    }
-  };
-
-  const handleVideoToVideo = (videoId: string) => {
-    setSelectedVideoForVideo(videoId);
-    setIsVideoToVideoDialogOpen(true);
-  };
-
-  const handleVideoToVideoTransformation = async (
-    settings: VideoGenerationSettings
-  ) => {
-    if (!selectedVideoForVideo) return;
-    const video = videos.find((vid) => vid.id === selectedVideoForVideo);
-    if (!video) return;
-
-    try {
-      setIsTransformingVideo(true);
-
-      let videoUrl = video.src;
-      if (videoUrl.startsWith("data:") || videoUrl.startsWith("blob:")) {
-        const uploadResult = await falClient.storage.upload(
-          await (await fetch(videoUrl)).blob()
-        );
-        videoUrl = uploadResult;
-      }
-
-      const generationId = `vid2vid_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-      setActiveVideoGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(generationId, {
-          ...settings,
-          imageUrl: videoUrl,
-          duration: video.duration || settings.duration || 5,
-          modelId: settings.modelId || "seedance-pro",
-          resolution: settings.resolution || "720p",
-          isVideoToVideo: true,
-          sourceVideoId: selectedVideoForVideo,
-        });
-        return newMap;
-      });
-
-      setIsVideoToVideoDialogOpen(false);
-    } catch (error) {
-      console.error("Error starting video-to-video transformation:", error);
-      toast({
-        title: "Transformation failed",
         description:
           error instanceof Error
             ? error.message
-            : "Failed to start transformation",
+            : CANVAS_STRINGS.ERRORS.CONVERSION_START_FAILED,
+        title: CANVAS_STRINGS.ERRORS.CONVERSION_FAILED,
         variant: "destructive",
       });
-      setIsTransformingVideo(false);
+      generationState.setIsConvertingToVideo(false);
     }
   };
 
-  const handleExtendVideo = (videoId: string) => {
-    setSelectedVideoForExtend(videoId);
-    setIsExtendVideoDialogOpen(true);
-  };
-
-  const handleVideoExtension = async (settings: VideoGenerationSettings) => {
-    if (!selectedVideoForExtend) return;
-    const video = videos.find((vid) => vid.id === selectedVideoForExtend);
-    if (!video) return;
-
-    try {
-      setIsExtendingVideo(true);
-
-      let videoUrl = video.src;
-      if (videoUrl.startsWith("data:") || videoUrl.startsWith("blob:")) {
-        const uploadResult = await falClient.storage.upload(
-          await (await fetch(videoUrl)).blob()
-        );
-        videoUrl = uploadResult;
-      }
-
-      const generationId = `vid_ext_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-      setActiveVideoGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(generationId, {
-          ...settings,
-          imageUrl: videoUrl,
-          duration: video.duration || settings.duration || 5,
-          modelId: settings.modelId || "seedance-pro",
-          resolution: settings.resolution || "720p",
-          isVideoToVideo: true,
-          isVideoExtension: true,
-          sourceVideoId: selectedVideoForExtend,
-        });
-        return newMap;
-      });
-
-      setIsExtendVideoDialogOpen(false);
-    } catch (error) {
-      console.error("Error starting video extension:", error);
-      toast({
-        title: "Extension failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to start video extension",
-        variant: "destructive",
-      });
-      setIsExtendingVideo(false);
-    }
-  };
-
+  /**
+   * Opens dialog for removing video background
+   */
   const handleRemoveVideoBackground = (videoId: string) => {
-    setSelectedVideoForBackgroundRemoval(videoId);
-    setIsRemoveVideoBackgroundDialogOpen(true);
+    uiState.setIsRemoveVideoBackgroundDialogOpen(true);
+    uiState.setSelectedVideoForBackgroundRemoval(videoId);
   };
 
+  /**
+   * Handles video background removal
+   */
   const handleVideoBackgroundRemoval = async (backgroundColor: string) => {
-    if (!selectedVideoForBackgroundRemoval) return;
-    const video = videos.find(
-      (vid) => vid.id === selectedVideoForBackgroundRemoval
+    if (!uiState.selectedVideoForBackgroundRemoval) return;
+    const video = canvasState.videos.find(
+      (vid) => vid.id === uiState.selectedVideoForBackgroundRemoval
     );
     if (!video) return;
 
     try {
-      setIsRemovingVideoBackground(true);
-      setIsRemoveVideoBackgroundDialogOpen(false);
+      generationState.setIsRemovingVideoBackground(true);
+      uiState.setIsRemoveVideoBackgroundDialogOpen(false);
 
-      let videoUrl = video.src;
-      if (videoUrl.startsWith("data:") || videoUrl.startsWith("blob:")) {
-        const uploadResult = await falClient.storage.upload(
-          await (await fetch(videoUrl)).blob()
-        );
-        videoUrl = uploadResult;
-      }
+      const videoUrl = await uploadMediaIfNeeded(video.src, falClient);
+      const generationId = createGenerationId("bg_removal");
+      const config = createBackgroundRemovalConfig(
+        videoUrl,
+        video.duration,
+        backgroundColor,
+        video.id
+      );
 
-      const generationId = `bg_removal_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-
-      const colorMap: Record<string, string> = {
-        transparent: "Transparent",
-        black: "Black",
-        white: "White",
-        gray: "Gray",
-        red: "Red",
-        green: "Green",
-        blue: "Blue",
-        yellow: "Yellow",
-        cyan: "Cyan",
-        magenta: "Magenta",
-        orange: "Orange",
-      };
-
-      setActiveVideoGenerations((prev) => {
+      generationState.setActiveVideoGenerations((prev) => {
         const newMap = new Map(prev);
-        newMap.set(generationId, {
-          imageUrl: videoUrl,
-          prompt: "Removing background from video",
-          duration: video.duration || 5,
-          modelId: "bria-video-background-removal",
-          modelConfig: getVideoModelById("bria-video-background-removal"),
-          sourceVideoId: video.id,
-          backgroundColor: colorMap[backgroundColor] || "Black",
-        });
+        newMap.set(generationId, config);
         return newMap;
       });
 
       const toastId = toast({
-        title: "Removing background from video",
-        description: "This may take several minutes...",
+        description: CANVAS_STRINGS.VIDEO.BACKGROUND_REMOVAL_DESCRIPTION,
         duration: Infinity,
+        title: CANVAS_STRINGS.VIDEO.BACKGROUND_REMOVAL_TITLE,
       }).id;
 
-      setActiveVideoGenerations((prev) => {
+      generationState.setActiveVideoGenerations((prev) => {
         const newMap = new Map(prev);
         const generation = newMap.get(generationId);
         if (generation) {
@@ -595,109 +455,139 @@ export default function CanvasPage() {
     } catch (error) {
       console.error("Error removing video background:", error);
       toast({
-        title: "Error processing video",
         description:
-          error instanceof Error ? error.message : "An error occurred",
+          error instanceof Error
+            ? error.message
+            : CANVAS_STRINGS.ERRORS.UNKNOWN_ERROR,
+        title: CANVAS_STRINGS.ERRORS.PROCESSING_ERROR,
         variant: "destructive",
       });
-      setIsRemovingVideoBackground(false);
+      generationState.setIsRemovingVideoBackground(false);
     } finally {
-      setSelectedVideoForBackgroundRemoval(null);
+      uiState.setSelectedVideoForBackgroundRemoval(null);
     }
   };
 
+  /**
+   * Handles video extension
+   */
+  const handleVideoExtension = async (settings: VideoGenerationSettings) => {
+    if (!uiState.selectedVideoForExtend) return;
+    const video = canvasState.videos.find(
+      (vid) => vid.id === uiState.selectedVideoForExtend
+    );
+    if (!video) return;
+
+    try {
+      generationState.setIsExtendingVideo(true);
+
+      const videoUrl = await uploadMediaIfNeeded(video.src, falClient);
+      const generationId = createGenerationId("vid_ext");
+      const config = createVideoToVideoConfig(
+        videoUrl,
+        settings,
+        video.duration,
+        uiState.selectedVideoForExtend,
+        true
+      );
+
+      generationState.setActiveVideoGenerations((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(generationId, config);
+        return newMap;
+      });
+
+      uiState.setIsExtendVideoDialogOpen(false);
+    } catch (error) {
+      console.error("Error starting video extension:", error);
+      toast({
+        description:
+          error instanceof Error
+            ? error.message
+            : CANVAS_STRINGS.ERRORS.EXTENSION_START_FAILED,
+        title: CANVAS_STRINGS.ERRORS.EXTENSION_FAILED,
+        variant: "destructive",
+      });
+      generationState.setIsExtendingVideo(false);
+    }
+  };
+
+  /**
+   * Handles completion of video generation
+   */
   const handleVideoGenerationComplete = async (
     videoId: string,
     videoUrl: string,
     duration: number
   ) => {
     try {
-      const generation = activeVideoGenerations.get(videoId);
-      const sourceImageId = generation?.sourceImageId || selectedImageForVideo;
+      const generation = generationState.activeVideoGenerations.get(videoId);
 
       if (generation?.toastId) {
-        const toastElement = document.querySelector(
-          `[data-toast-id="${generation.toastId}"]`
-        );
-        if (toastElement) {
-          const closeButton = toastElement.querySelector(
-            "[data-radix-toast-close]"
-          );
-          if (closeButton instanceof HTMLElement) {
-            closeButton.click();
-          }
-        }
+        dismissToast(generation.toastId);
       }
 
-      if (sourceImageId) {
-        const image = images.find((img) => img.id === sourceImageId);
-        if (image) {
-          const video = convertImageToVideo(image, videoUrl, duration, false);
-          video.x = image.x + image.width + 20;
-          video.y = image.y;
-          setVideos((prev) => [...prev, { ...video, isVideo: true as const }]);
-          saveToHistory();
-          toast({ title: "Video created successfully" });
-        }
-      } else if (generation?.sourceVideoId) {
-        const sourceVideo = videos.find(
-          (vid) => vid.id === generation.sourceVideoId
-        );
-        if (sourceVideo) {
-          const newVideo: PlacedVideo = {
-            id: `video_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-            src: videoUrl,
-            x: sourceVideo.x + sourceVideo.width + 20,
-            y: sourceVideo.y,
-            width: sourceVideo.width,
-            height: sourceVideo.height,
-            rotation: 0,
-            isPlaying: false,
-            currentTime: 0,
-            duration,
-            volume: 1,
-            muted: false,
-            isLooping: false,
-            isVideo: true as const,
-          };
-          setVideos((prev) => [...prev, newVideo]);
-          saveToHistory();
-          toast({ title: "Video processed successfully" });
-        }
+      const { newVideo, sourceType } = handleVideoCompletion(
+        videoId,
+        videoUrl,
+        duration,
+        generation,
+        canvasState.images,
+        canvasState.videos,
+        uiState.selectedImageForVideo
+      );
+
+      if (newVideo) {
+        canvasState.setVideos((prev) => [...prev, newVideo]);
+        historyState.saveToHistory();
+        toast({
+          title:
+            sourceType === "image"
+              ? CANVAS_STRINGS.SUCCESS.VIDEO_CREATED
+              : CANVAS_STRINGS.SUCCESS.VIDEO_PROCESSED,
+        });
       }
 
-      setActiveVideoGenerations((prev) => {
+      generationState.setActiveVideoGenerations((prev) => {
         const newMap = new Map(prev);
         newMap.delete(videoId);
         return newMap;
       });
-      setIsConvertingToVideo(false);
-      setSelectedImageForVideo(null);
+      generationState.setIsConvertingToVideo(false);
+      uiState.setSelectedImageForVideo(null);
     } catch (error) {
       console.error("Error completing video generation:", error);
       toast({
-        title: "Error creating video",
         description:
-          error instanceof Error ? error.message : "Failed to create video",
+          error instanceof Error
+            ? error.message
+            : CANVAS_STRINGS.ERRORS.VIDEO_FAILED,
+        title: CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
         variant: "destructive",
       });
     }
   };
 
+  /**
+   * Handles video generation error
+   */
   const handleVideoGenerationError = (videoId: string, error: string) => {
     console.error("Video generation error:", error);
     toast({
-      title: "Video generation failed",
       description: error,
+      title: CANVAS_STRINGS.ERRORS.VIDEO_GENERATION_FAILED,
       variant: "destructive",
     });
-    setActiveVideoGenerations((prev) => {
+    generationState.setActiveVideoGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.delete(videoId);
       return newMap;
     });
   };
 
+  /**
+   * Handles video generation progress updates
+   */
   const handleVideoGenerationProgress = (
     videoId: string,
     progress: number,
@@ -706,33 +596,95 @@ export default function CanvasPage() {
     console.log(`Video generation progress: ${progress}% - ${status}`);
   };
 
+  /**
+   * Opens dialog for video-to-video transformation
+   */
+  const handleVideoToVideo = (videoId: string) => {
+    uiState.setIsVideoToVideoDialogOpen(true);
+    uiState.setSelectedVideoForVideo(videoId);
+  };
+
+  /**
+   * Handles video-to-video transformation
+   */
+  const handleVideoToVideoTransformation = async (
+    settings: VideoGenerationSettings
+  ) => {
+    if (!uiState.selectedVideoForVideo) return;
+    const video = canvasState.videos.find(
+      (vid) => vid.id === uiState.selectedVideoForVideo
+    );
+    if (!video) return;
+
+    try {
+      generationState.setIsTransformingVideo(true);
+
+      const videoUrl = await uploadMediaIfNeeded(video.src, falClient);
+      const generationId = createGenerationId("vid2vid");
+      const config = createVideoToVideoConfig(
+        videoUrl,
+        settings,
+        video.duration,
+        uiState.selectedVideoForVideo
+      );
+
+      generationState.setActiveVideoGenerations((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(generationId, config);
+        return newMap;
+      });
+
+      uiState.setIsVideoToVideoDialogOpen(false);
+    } catch (error) {
+      console.error("Error starting video-to-video transformation:", error);
+      toast({
+        description:
+          error instanceof Error
+            ? error.message
+            : CANVAS_STRINGS.ERRORS.TRANSFORMATION_START_FAILED,
+        title: CANVAS_STRINGS.ERRORS.TRANSFORMATION_FAILED,
+        variant: "destructive",
+      });
+      generationState.setIsTransformingVideo(false);
+    }
+  };
+
+  // ========================================
+  // Chat Handler
+  // ========================================
+
+  /**
+   * Handles image generated from chat
+   */
   const handleChatImageGenerated = useCallback(
     (imageUrl: string) => {
       const id = `chat-generated-${Date.now()}-${Math.random()}`;
       const viewportCenterX =
-        (canvasSize.width / 2 - viewport.x) / viewport.scale;
+        (canvasState.canvasSize.width / 2 - canvasState.viewport.x) /
+        canvasState.viewport.scale;
       const viewportCenterY =
-        (canvasSize.height / 2 - viewport.y) / viewport.scale;
+        (canvasState.canvasSize.height / 2 - canvasState.viewport.y) /
+        canvasState.viewport.scale;
 
       const newImage: PlacedImage = {
+        height: CANVAS_DIMENSIONS.DEFAULT_IMAGE_SIZE,
         id,
-        src: imageUrl,
-        x: viewportCenterX - 256,
-        y: viewportCenterY - 256,
-        width: 512,
-        height: 512,
-        rotation: 0,
         isGenerated: true,
+        rotation: 0,
+        src: imageUrl,
+        width: CANVAS_DIMENSIONS.DEFAULT_IMAGE_SIZE,
+        x: viewportCenterX - CANVAS_DIMENSIONS.IMAGE_OFFSET,
+        y: viewportCenterY - CANVAS_DIMENSIONS.IMAGE_OFFSET,
       };
 
-      setImages((prev) => [...prev, newImage]);
-      setSelectedIds([id]);
+      canvasState.setImages((prev) => [...prev, newImage]);
+      canvasState.setSelectedIds([id]);
       toast({
-        title: "Image generated",
-        description: "The AI-generated image has been added to the canvas",
+        description: CANVAS_STRINGS.SUCCESS.IMAGE_GENERATED_DESCRIPTION,
+        title: CANVAS_STRINGS.SUCCESS.IMAGE_GENERATED,
       });
     },
-    [canvasSize, viewport, toast, setImages, setSelectedIds]
+    [canvasState, toast]
   );
 
   // ========================================
@@ -740,110 +692,26 @@ export default function CanvasPage() {
   // ========================================
 
   useKeyboardShortcuts({
-    images,
-    selectedIds,
-    setSelectedIds,
-    croppingImageId,
-    setCroppingImageId,
-    generationSettings,
-    isGenerating,
-    viewport,
-    setViewport,
-    canvasSize,
-    undo,
-    redo,
+    bringForward: handleBringForward,
+    canvasSize: canvasState.canvasSize,
+    croppingImageId: uiState.croppingImageId,
+    generationSettings: generationState.generationSettings,
     handleDelete,
     handleDuplicate,
     handleRun,
-    sendToFront,
-    sendToBack,
-    bringForward,
-    sendBackward,
+    images: canvasState.images,
+    isGenerating: generationState.isGenerating,
+    redo: handleRedo,
+    selectedIds: canvasState.selectedIds,
+    sendBackward: handleSendBackward,
+    sendToBack: handleSendToBack,
+    sendToFront: handleSendToFront,
+    setCroppingImageId: uiState.setCroppingImageId,
+    setSelectedIds: canvasState.setSelectedIds,
+    setViewport: canvasState.setViewport,
+    undo: handleUndo,
+    viewport: canvasState.viewport,
   });
-
-  // ========================================
-  // Body Scroll Prevention
-  // ========================================
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.width = "100%";
-    document.body.style.height = "100%";
-
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.height = "";
-    };
-  }, []);
-
-  // ========================================
-  // Load Default Images
-  // ========================================
-
-  useEffect(() => {
-    if (!isStorageLoaded || images.length > 0) return;
-
-    const loadDefaultImages = async () => {
-      const defaultImagePaths = ["/chad.png"];
-
-      for (let i = 0; i < defaultImagePaths.length; i++) {
-        const path = defaultImagePaths[i];
-        try {
-          const response = await fetch(path);
-          const blob = await response.blob();
-          const reader = new FileReader();
-
-          reader.onload = (e) => {
-            const img = new window.Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => {
-              const id = `default-${path.replace("/", "").replace(".png", "")}-${Date.now()}`;
-              const aspectRatio = img.width / img.height;
-              const maxSize = 200;
-              let width = maxSize;
-              let height = maxSize / aspectRatio;
-
-              if (height > maxSize) {
-                height = maxSize;
-                width = maxSize * aspectRatio;
-              }
-
-              const spacing = 250;
-              const totalWidth = spacing * (defaultImagePaths.length - 1);
-              const viewportCenterX = canvasSize.width / 2;
-              const viewportCenterY = canvasSize.height / 2;
-              const startX = viewportCenterX - totalWidth / 2;
-              const x = startX + i * spacing - width / 2;
-              const y = viewportCenterY - height / 2;
-
-              setImages((prev) => [
-                ...prev,
-                {
-                  id,
-                  src: e.target?.result as string,
-                  x,
-                  y,
-                  width,
-                  height,
-                  rotation: 0,
-                },
-              ]);
-            };
-            img.src = e.target?.result as string;
-          };
-
-          reader.readAsDataURL(blob);
-        } catch (error) {
-          console.error(`Failed to load default image ${path}:`, error);
-        }
-      }
-    };
-
-    loadDefaultImages();
-  }, [isStorageLoaded, images.length, canvasSize, setImages]);
 
   // ========================================
   // Render
@@ -851,455 +719,184 @@ export default function CanvasPage() {
 
   return (
     <div
+      aria-label={ARIA_LABELS.CANVAS_MAIN}
       className="bg-background text-foreground font-focal relative flex flex-col w-full overflow-hidden h-screen"
-      style={{ height: "100dvh" }}
-      onDrop={(e) => handleDrop(e, stageRef)}
       onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => handleDrop(e, stageRef)}
+      role="application"
+      style={{ height: "100dvh" }}
     >
       {/* Streaming Generation Components */}
-      {Array.from(activeGenerations.entries()).map(([imageId, generation]) => (
-        <StreamingImage
-          key={imageId}
-          imageId={imageId}
-          generation={generation}
-          apiKey={customApiKey}
-          onStreamingUpdate={(id, url) => {
-            setImages((prev) =>
-              prev.map((img) => (img.id === id ? { ...img, src: url } : img))
-            );
-          }}
-          onComplete={(id, finalUrl) => {
-            setImages((prev) =>
-              prev.map((img) =>
-                img.id === id ? { ...img, src: finalUrl } : img
-              )
-            );
-            setActiveGenerations((prev) => {
-              const newMap = new Map(prev);
-              newMap.delete(id);
-              return newMap;
-            });
-            setIsGenerating(false);
-            setTimeout(() => saveToStorage(), 100);
-          }}
-          onError={(id, error) => {
-            console.error(`Generation error for ${id}:`, error);
-            setImages((prev) => prev.filter((img) => img.id !== id));
-            setActiveGenerations((prev) => {
-              const newMap = new Map(prev);
-              newMap.delete(id);
-              return newMap;
-            });
-            setIsGenerating(false);
-            toast({
-              title: "Generation failed",
-              description: error.toString(),
-              variant: "destructive",
-            });
-          }}
-        />
-      ))}
+      {Array.from(generationState.activeGenerations.entries()).map(
+        ([imageId, generation]) => (
+          <StreamingImage
+            apiKey={uiState.customApiKey}
+            generation={generation}
+            imageId={imageId}
+            key={imageId}
+            onComplete={(id, finalUrl) => {
+              canvasState.setImages((prev) =>
+                prev.map((img) =>
+                  img.id === id ? { ...img, src: finalUrl } : img
+                )
+              );
+              generationState.setActiveGenerations((prev) => {
+                const newMap = new Map(prev);
+                newMap.delete(id);
+                return newMap;
+              });
+              generationState.setIsGenerating(false);
+              setTimeout(() => saveToStorage(), ANIMATION.SAVE_DELAY);
+            }}
+            onError={(id, error) => {
+              console.error(`Generation error for ${id}:`, error);
+              canvasState.setImages((prev) =>
+                prev.filter((img) => img.id !== id)
+              );
+              generationState.setActiveGenerations((prev) => {
+                const newMap = new Map(prev);
+                newMap.delete(id);
+                return newMap;
+              });
+              generationState.setIsGenerating(false);
+              toast({
+                description: error.toString(),
+                title: CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
+                variant: "destructive",
+              });
+            }}
+            onStreamingUpdate={(id, url) => {
+              canvasState.setImages((prev) =>
+                prev.map((img) => (img.id === id ? { ...img, src: url } : img))
+              );
+            }}
+          />
+        )
+      )}
 
-      {Array.from(activeVideoGenerations.entries()).map(([id, generation]) => (
-        <StreamingVideo
-          key={id}
-          videoId={id}
-          generation={generation}
-          onComplete={handleVideoGenerationComplete}
-          onError={handleVideoGenerationError}
-          onProgress={handleVideoGenerationProgress}
-          apiKey={customApiKey}
-        />
-      ))}
+      {Array.from(generationState.activeVideoGenerations.entries()).map(
+        ([id, generation]) => (
+          <StreamingVideo
+            apiKey={uiState.customApiKey}
+            generation={generation}
+            key={id}
+            onComplete={handleVideoGenerationComplete}
+            onError={handleVideoGenerationError}
+            onProgress={handleVideoGenerationProgress}
+            videoId={id}
+          />
+        )
+      )}
 
       {/* Main Canvas */}
       <main className="flex-1 relative flex items-center justify-center w-full">
         <div className="relative w-full h-full">
           {/* Gradient Overlays */}
-          <div className="pointer-events-none absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-background to-transparent z-10" />
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10" />
-          <div className="pointer-events-none absolute top-0 bottom-0 left-0 w-24 bg-gradient-to-r from-background to-transparent z-10" />
-          <div className="pointer-events-none absolute top-0 bottom-0 right-0 w-24 bg-gradient-to-l from-background to-transparent z-10" />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-background to-transparent z-10"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 bottom-0 left-0 w-24 bg-gradient-to-r from-background to-transparent z-10"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 bottom-0 right-0 w-24 bg-gradient-to-l from-background to-transparent z-10"
+          />
 
           <ContextMenu
             onOpenChange={(open) => {
               if (!open) {
-                setIsolateTarget(null);
-                setIsolateInputValue("");
+                uiState.setIsolateInputValue("");
+                uiState.setIsolateTarget(null);
               }
             }}
           >
             <ContextMenuTrigger asChild>
               <div
+                aria-label={ARIA_LABELS.CONTEXT_MENU}
                 className="relative bg-background overflow-hidden w-full h-full"
                 style={{
-                  height: `${canvasSize.height}px`,
-                  width: `${canvasSize.width}px`,
-                  minHeight: `${canvasSize.height}px`,
-                  minWidth: `${canvasSize.width}px`,
-                  cursor: interactions.isPanningCanvas ? "grabbing" : "default",
                   WebkitTouchCallout: "none",
+                  cursor: interactions.isPanningCanvas ? "grabbing" : "default",
+                  height: `${canvasState.canvasSize.height}px`,
+                  minHeight: `${canvasState.canvasSize.height}px`,
+                  minWidth: `${canvasState.canvasSize.width}px`,
                   touchAction: "none",
+                  width: `${canvasState.canvasSize.width}px`,
                 }}
               >
-                {isCanvasReady && (
-                  <Stage
-                    ref={stageRef}
-                    width={canvasSize.width}
-                    height={canvasSize.height}
-                    x={viewport.x}
-                    y={viewport.y}
-                    scaleX={viewport.scale}
-                    scaleY={viewport.scale}
-                    draggable={false}
-                    onMouseDown={(e) =>
-                      interactions.handleMouseDown(e, setCroppingImageId)
-                    }
-                    onMouseMove={interactions.handleMouseMove}
-                    onMouseUp={interactions.handleMouseUp}
-                    onMouseLeave={() => {
-                      if (interactions.isPanningCanvas) {
-                        // Stop panning
-                      }
-                    }}
-                    onTouchStart={interactions.handleTouchStart}
-                    onTouchMove={interactions.handleTouchMove}
-                    onTouchEnd={interactions.handleTouchEnd}
-                    onContextMenu={(e) => {
-                      // Handle right-click context menu
-                      const stage = e.target.getStage();
-                      if (!stage) return;
-                      const point = stage.getPointerPosition();
-                      if (!point) return;
-                      const canvasPoint = {
-                        x: (point.x - viewport.x) / viewport.scale,
-                        y: (point.y - viewport.y) / viewport.scale,
-                      };
-                      const clickedVideo = [...videos].reverse().find((vid) => {
-                        return (
-                          canvasPoint.x >= vid.x &&
-                          canvasPoint.x <= vid.x + vid.width &&
-                          canvasPoint.y >= vid.y &&
-                          canvasPoint.y <= vid.y + vid.height
-                        );
-                      });
-                      if (
-                        clickedVideo &&
-                        !selectedIds.includes(clickedVideo.id)
-                      ) {
-                        setSelectedIds([clickedVideo.id]);
-                        return;
-                      }
-                      const clickedImage = [...images].reverse().find((img) => {
-                        return (
-                          canvasPoint.x >= img.x &&
-                          canvasPoint.x <= img.x + img.width &&
-                          canvasPoint.y >= img.y &&
-                          canvasPoint.y <= img.y + img.height
-                        );
-                      });
-                      if (
-                        clickedImage &&
-                        !selectedIds.includes(clickedImage.id)
-                      ) {
-                        setSelectedIds([clickedImage.id]);
-                      }
-                    }}
-                    onWheel={interactions.handleWheel}
-                  >
-                    <Layer>
-                      {showGrid && (
-                        <CanvasGrid
-                          viewport={viewport}
-                          canvasSize={canvasSize}
-                        />
-                      )}
-                      <SelectionBoxComponent
-                        selectionBox={interactions.selectionBox}
-                      />
-
-                      {/* Render Images */}
-                      {images
-                        .filter((image) => {
-                          const buffer = 100;
-                          const viewBounds = {
-                            left: -viewport.x / viewport.scale - buffer,
-                            top: -viewport.y / viewport.scale - buffer,
-                            right:
-                              (canvasSize.width - viewport.x) / viewport.scale +
-                              buffer,
-                            bottom:
-                              (canvasSize.height - viewport.y) /
-                                viewport.scale +
-                              buffer,
-                          };
-                          return !(
-                            image.x + image.width < viewBounds.left ||
-                            image.x > viewBounds.right ||
-                            image.y + image.height < viewBounds.top ||
-                            image.y > viewBounds.bottom
-                          );
-                        })
-                        .map((image) => (
-                          <CanvasImage
-                            key={image.id}
-                            image={image}
-                            isSelected={selectedIds.includes(image.id)}
-                            onSelect={(e) =>
-                              interactions.handleSelect(image.id, e)
-                            }
-                            onChange={(newAttrs) => {
-                              setImages((prev) =>
-                                prev.map((img) =>
-                                  img.id === image.id
-                                    ? { ...img, ...newAttrs }
-                                    : img
-                                )
-                              );
-                            }}
-                            onDoubleClick={() => setCroppingImageId(image.id)}
-                            onDragStart={() => {
-                              let currentSelectedIds = selectedIds;
-                              if (!selectedIds.includes(image.id)) {
-                                currentSelectedIds = [image.id];
-                                setSelectedIds(currentSelectedIds);
-                              }
-                              interactions.setIsDraggingImage(true);
-                              const positions = new Map<
-                                string,
-                                { x: number; y: number }
-                              >();
-                              currentSelectedIds.forEach((id) => {
-                                const img = images.find((i) => i.id === id);
-                                if (img)
-                                  positions.set(id, { x: img.x, y: img.y });
-                              });
-                              interactions.setDragStartPositions(positions);
-                            }}
-                            onDragEnd={() => {
-                              interactions.setIsDraggingImage(false);
-                              saveToHistory();
-                              interactions.setDragStartPositions(new Map());
-                            }}
-                            selectedIds={selectedIds}
-                            setImages={setImages}
-                            isDraggingImage={interactions.isDraggingImage}
-                            isCroppingImage={croppingImageId === image.id}
-                            dragStartPositions={interactions.dragStartPositions}
-                          />
-                        ))}
-
-                      {/* Render Videos */}
-                      {videos
-                        .filter((video) => {
-                          const buffer = 100;
-                          const viewBounds = {
-                            left: -viewport.x / viewport.scale - buffer,
-                            top: -viewport.y / viewport.scale - buffer,
-                            right:
-                              (canvasSize.width - viewport.x) / viewport.scale +
-                              buffer,
-                            bottom:
-                              (canvasSize.height - viewport.y) /
-                                viewport.scale +
-                              buffer,
-                          };
-                          return !(
-                            video.x + video.width < viewBounds.left ||
-                            video.x > viewBounds.right ||
-                            video.y + video.height < viewBounds.top ||
-                            video.y > viewBounds.bottom
-                          );
-                        })
-                        .map((video) => (
-                          <CanvasVideo
-                            key={video.id}
-                            video={video}
-                            isSelected={selectedIds.includes(video.id)}
-                            onSelect={(e) =>
-                              interactions.handleSelect(video.id, e)
-                            }
-                            onChange={(newAttrs) => {
-                              setVideos((prev) =>
-                                prev.map((vid) =>
-                                  vid.id === video.id
-                                    ? { ...vid, ...newAttrs }
-                                    : vid
-                                )
-                              );
-                            }}
-                            onDragStart={() => {
-                              let currentSelectedIds = selectedIds;
-                              if (!selectedIds.includes(video.id)) {
-                                currentSelectedIds = [video.id];
-                                setSelectedIds(currentSelectedIds);
-                              }
-                              interactions.setIsDraggingImage(true);
-                              setHiddenVideoControlsIds(
-                                (prev) => new Set([...prev, video.id])
-                              );
-                              const positions = new Map<
-                                string,
-                                { x: number; y: number }
-                              >();
-                              currentSelectedIds.forEach((id) => {
-                                const vid = videos.find((v) => v.id === id);
-                                if (vid)
-                                  positions.set(id, { x: vid.x, y: vid.y });
-                              });
-                              interactions.setDragStartPositions(positions);
-                            }}
-                            onDragEnd={() => {
-                              interactions.setIsDraggingImage(false);
-                              setHiddenVideoControlsIds((prev) => {
-                                const newSet = new Set(prev);
-                                newSet.delete(video.id);
-                                return newSet;
-                              });
-                              saveToHistory();
-                              interactions.setDragStartPositions(new Map());
-                            }}
-                            selectedIds={selectedIds}
-                            videos={videos}
-                            setVideos={setVideos}
-                            isDraggingVideo={interactions.isDraggingImage}
-                            isCroppingVideo={false}
-                            dragStartPositions={interactions.dragStartPositions}
-                            onResizeStart={() =>
-                              setHiddenVideoControlsIds(
-                                (prev) => new Set([...prev, video.id])
-                              )
-                            }
-                            onResizeEnd={() =>
-                              setHiddenVideoControlsIds((prev) => {
-                                const newSet = new Set(prev);
-                                newSet.delete(video.id);
-                                return newSet;
-                              })
-                            }
-                          />
-                        ))}
-
-                      {/* Crop Overlay */}
-                      {croppingImageId &&
-                        (() => {
-                          const croppingImage = images.find(
-                            (img) => img.id === croppingImageId
-                          );
-                          if (!croppingImage) return null;
-                          return (
-                            <CropOverlayWrapper
-                              image={croppingImage}
-                              viewportScale={viewport.scale}
-                              onCropChange={(crop) => {
-                                setImages((prev) =>
-                                  prev.map((img) =>
-                                    img.id === croppingImageId
-                                      ? { ...img, ...crop }
-                                      : img
-                                  )
-                                );
-                              }}
-                              onCropEnd={async () => {
-                                if (croppingImage) {
-                                  const cropWidth =
-                                    croppingImage.cropWidth || 1;
-                                  const cropHeight =
-                                    croppingImage.cropHeight || 1;
-                                  const cropX = croppingImage.cropX || 0;
-                                  const cropY = croppingImage.cropY || 0;
-
-                                  try {
-                                    const croppedImageSrc =
-                                      await createCroppedImage(
-                                        croppingImage.src,
-                                        cropX,
-                                        cropY,
-                                        cropWidth,
-                                        cropHeight
-                                      );
-
-                                    setImages((prev) =>
-                                      prev.map((img) =>
-                                        img.id === croppingImageId
-                                          ? {
-                                              ...img,
-                                              src: croppedImageSrc,
-                                              x: img.x + cropX * img.width,
-                                              y: img.y + cropY * img.height,
-                                              width: cropWidth * img.width,
-                                              height: cropHeight * img.height,
-                                              cropX: undefined,
-                                              cropY: undefined,
-                                              cropWidth: undefined,
-                                              cropHeight: undefined,
-                                            }
-                                          : img
-                                      )
-                                    );
-                                  } catch (error) {
-                                    console.error(
-                                      "Failed to create cropped image:",
-                                      error
-                                    );
-                                  }
-                                }
-                                setCroppingImageId(null);
-                                saveToHistory();
-                              }}
-                            />
-                          );
-                        })()}
-                    </Layer>
-                  </Stage>
-                )}
+                <CanvasStageRenderer
+                  canvasSize={canvasState.canvasSize}
+                  croppingImageId={uiState.croppingImageId}
+                  hiddenVideoControlsIds={uiState.hiddenVideoControlsIds}
+                  images={canvasState.images}
+                  interactions={interactions}
+                  isCanvasReady={canvasState.isCanvasReady}
+                  saveToHistory={historyState.saveToHistory}
+                  selectedIds={canvasState.selectedIds}
+                  setCroppingImageId={uiState.setCroppingImageId}
+                  setHiddenVideoControlsIds={uiState.setHiddenVideoControlsIds}
+                  setImages={canvasState.setImages}
+                  setSelectedIds={canvasState.setSelectedIds}
+                  setVideos={canvasState.setVideos}
+                  showGrid={uiState.showGrid}
+                  stageRef={stageRef}
+                  videos={canvasState.videos}
+                  viewport={canvasState.viewport}
+                />
               </div>
             </ContextMenuTrigger>
             <CanvasContextMenu
-              selectedIds={selectedIds}
-              images={images}
-              videos={videos}
-              isGenerating={isGenerating}
-              generationSettings={generationSettings}
-              isolateInputValue={isolateInputValue}
-              isIsolating={isIsolating}
-              handleRun={handleRun}
-              handleDuplicate={handleDuplicate}
-              handleRemoveBackground={handleRemoveBackground}
+              bringForward={handleBringForward}
+              generationSettings={generationState.generationSettings}
               handleCombineImages={handleCombineImages}
+              handleConvertToVideo={handleConvertToVideo}
               handleDelete={handleDelete}
+              handleDuplicate={handleDuplicate}
+              handleExtendVideo={handleExtendVideo}
               handleIsolate={async () => {
                 // TODO: Implement isolate handler
               }}
-              handleConvertToVideo={handleConvertToVideo}
-              handleVideoToVideo={handleVideoToVideo}
-              handleExtendVideo={handleExtendVideo}
+              handleRemoveBackground={handleRemoveBackground}
               handleRemoveVideoBackground={handleRemoveVideoBackground}
-              setCroppingImageId={setCroppingImageId}
-              setIsolateInputValue={setIsolateInputValue}
-              setIsolateTarget={setIsolateTarget}
-              sendToFront={sendToFront}
-              sendToBack={sendToBack}
-              bringForward={bringForward}
-              sendBackward={sendBackward}
+              handleRun={handleRun}
+              handleVideoToVideo={handleVideoToVideo}
+              images={canvasState.images}
+              isGenerating={generationState.isGenerating}
+              isIsolating={generationState.isIsolating}
+              isolateInputValue={uiState.isolateInputValue}
+              selectedIds={canvasState.selectedIds}
+              sendBackward={handleSendBackward}
+              sendToBack={handleSendToBack}
+              sendToFront={handleSendToFront}
+              setCroppingImageId={uiState.setCroppingImageId}
+              setIsolateInputValue={uiState.setIsolateInputValue}
+              setIsolateTarget={uiState.setIsolateTarget}
+              videos={canvasState.videos}
             />
           </ContextMenu>
 
           {/* Minimap */}
-          {showMinimap && (
+          {uiState.showMinimap && (
             <MiniMap
-              images={images}
-              videos={videos}
-              viewport={viewport}
-              canvasSize={canvasSize}
+              canvasSize={canvasState.canvasSize}
+              images={canvasState.images}
+              videos={canvasState.videos}
+              viewport={canvasState.viewport}
             />
           )}
 
           {/* Zoom Controls */}
           <ZoomControls
-            viewport={viewport}
-            setViewport={setViewport}
-            canvasSize={canvasSize}
+            canvasSize={canvasState.canvasSize}
+            setViewport={canvasState.setViewport}
+            viewport={canvasState.viewport}
           />
 
           <PoweredByFalBadge />
@@ -1307,164 +904,112 @@ export default function CanvasPage() {
 
           {/* Dimension Display */}
           <DimensionDisplay
-            selectedImages={images.filter((img) =>
-              selectedIds.includes(img.id)
+            selectedImages={canvasState.images.filter((img) =>
+              canvasState.selectedIds.includes(img.id)
             )}
-            viewport={viewport}
+            viewport={canvasState.viewport}
           />
         </div>
       </main>
 
       {/* Control Panel */}
       <CanvasControlPanel
-        selectedIds={selectedIds}
-        images={images}
-        generationSettings={generationSettings}
-        setGenerationSettings={setGenerationSettings}
-        previousStyleId={previousStyleId}
-        isGenerating={isGenerating}
-        handleRun={handleRun}
+        activeGenerationsSize={generationState.activeGenerations.size}
+        activeVideoGenerationsSize={generationState.activeVideoGenerations.size}
+        canRedo={historyState.canRedo}
+        canUndo={historyState.canUndo}
+        customApiKey={uiState.customApiKey}
+        generationSettings={generationState.generationSettings}
         handleFileUpload={handleFileUpload}
-        setIsStyleDialogOpen={setIsStyleDialogOpen}
-        activeGenerationsSize={activeGenerations.size}
-        activeVideoGenerationsSize={activeVideoGenerations.size}
-        isRemovingVideoBackground={isRemovingVideoBackground}
-        isIsolating={isIsolating}
-        isExtendingVideo={isExtendingVideo}
-        isTransformingVideo={isTransformingVideo}
-        showSuccess={showSuccess}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        undo={undo}
-        redo={redo}
-        setIsSettingsDialogOpen={setIsSettingsDialogOpen}
-        customApiKey={customApiKey}
+        handleRun={handleRun}
+        images={canvasState.images}
+        isExtendingVideo={generationState.isExtendingVideo}
+        isGenerating={generationState.isGenerating}
+        isIsolating={generationState.isIsolating}
+        isRemovingVideoBackground={generationState.isRemovingVideoBackground}
+        isTransformingVideo={generationState.isTransformingVideo}
+        previousStyleId={generationState.previousStyleId}
+        redo={handleRedo}
+        selectedIds={canvasState.selectedIds}
+        setGenerationSettings={generationState.setGenerationSettings}
+        setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
+        setIsStyleDialogOpen={uiState.setIsStyleDialogOpen}
+        showSuccess={generationState.showSuccess}
         toast={toast}
+        undo={handleUndo}
       />
 
       {/* All Dialogs */}
       <CanvasDialogs
-        isSettingsDialogOpen={isSettingsDialogOpen}
-        setIsSettingsDialogOpen={setIsSettingsDialogOpen}
-        customApiKey={customApiKey}
-        setCustomApiKey={setCustomApiKey}
-        tempApiKey={tempApiKey}
-        setTempApiKey={setTempApiKey}
-        theme={theme}
-        setTheme={setTheme}
-        showGrid={showGrid}
-        setShowGrid={setShowGrid}
-        showMinimap={showMinimap}
-        setShowMinimap={setShowMinimap}
-        toast={toast}
-        isStyleDialogOpen={isStyleDialogOpen}
-        setIsStyleDialogOpen={setIsStyleDialogOpen}
-        generationSettings={generationSettings}
-        setGenerationSettings={setGenerationSettings}
-        isImageToVideoDialogOpen={isImageToVideoDialogOpen}
-        setIsImageToVideoDialogOpen={setIsImageToVideoDialogOpen}
-        selectedImageForVideo={selectedImageForVideo}
-        setSelectedImageForVideo={setSelectedImageForVideo}
+        customApiKey={uiState.customApiKey}
+        generationSettings={generationState.generationSettings}
         handleImageToVideoConversion={handleImageToVideoConversion}
-        images={images}
-        isConvertingToVideo={isConvertingToVideo}
-        isVideoToVideoDialogOpen={isVideoToVideoDialogOpen}
-        setIsVideoToVideoDialogOpen={setIsVideoToVideoDialogOpen}
-        selectedVideoForVideo={selectedVideoForVideo}
-        setSelectedVideoForVideo={setSelectedVideoForVideo}
-        handleVideoToVideoTransformation={handleVideoToVideoTransformation}
-        videos={videos}
-        isTransformingVideo={isTransformingVideo}
-        isExtendVideoDialogOpen={isExtendVideoDialogOpen}
-        setIsExtendVideoDialogOpen={setIsExtendVideoDialogOpen}
-        selectedVideoForExtend={selectedVideoForExtend}
-        setSelectedVideoForExtend={setSelectedVideoForExtend}
-        handleVideoExtension={handleVideoExtension}
-        isExtendingVideo={isExtendingVideo}
-        isRemoveVideoBackgroundDialogOpen={isRemoveVideoBackgroundDialogOpen}
-        setIsRemoveVideoBackgroundDialogOpen={
-          setIsRemoveVideoBackgroundDialogOpen
-        }
-        selectedVideoForBackgroundRemoval={selectedVideoForBackgroundRemoval}
-        setSelectedVideoForBackgroundRemoval={
-          setSelectedVideoForBackgroundRemoval
-        }
         handleVideoBackgroundRemoval={handleVideoBackgroundRemoval}
-        isRemovingVideoBackground={isRemovingVideoBackground}
+        handleVideoExtension={handleVideoExtension}
+        handleVideoToVideoTransformation={handleVideoToVideoTransformation}
+        images={canvasState.images}
+        isConvertingToVideo={generationState.isConvertingToVideo}
+        isExtendingVideo={generationState.isExtendingVideo}
+        isExtendVideoDialogOpen={uiState.isExtendVideoDialogOpen}
+        isImageToVideoDialogOpen={uiState.isImageToVideoDialogOpen}
+        isRemoveVideoBackgroundDialogOpen={
+          uiState.isRemoveVideoBackgroundDialogOpen
+        }
+        isRemovingVideoBackground={generationState.isRemovingVideoBackground}
+        isSettingsDialogOpen={uiState.isSettingsDialogOpen}
+        isStyleDialogOpen={uiState.isStyleDialogOpen}
+        isTransformingVideo={generationState.isTransformingVideo}
+        isVideoToVideoDialogOpen={uiState.isVideoToVideoDialogOpen}
+        selectedImageForVideo={uiState.selectedImageForVideo}
+        selectedVideoForBackgroundRemoval={
+          uiState.selectedVideoForBackgroundRemoval
+        }
+        selectedVideoForExtend={uiState.selectedVideoForExtend}
+        selectedVideoForVideo={uiState.selectedVideoForVideo}
+        setCustomApiKey={uiState.setCustomApiKey}
+        setGenerationSettings={generationState.setGenerationSettings}
+        setIsExtendVideoDialogOpen={uiState.setIsExtendVideoDialogOpen}
+        setIsImageToVideoDialogOpen={uiState.setIsImageToVideoDialogOpen}
+        setIsRemoveVideoBackgroundDialogOpen={
+          uiState.setIsRemoveVideoBackgroundDialogOpen
+        }
+        setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
+        setIsStyleDialogOpen={uiState.setIsStyleDialogOpen}
+        setIsVideoToVideoDialogOpen={uiState.setIsVideoToVideoDialogOpen}
+        setSelectedImageForVideo={uiState.setSelectedImageForVideo}
+        setSelectedVideoForBackgroundRemoval={
+          uiState.setSelectedVideoForBackgroundRemoval
+        }
+        setSelectedVideoForExtend={uiState.setSelectedVideoForExtend}
+        setSelectedVideoForVideo={uiState.setSelectedVideoForVideo}
+        setShowGrid={uiState.setShowGrid}
+        setShowMinimap={uiState.setShowMinimap}
+        setTempApiKey={uiState.setTempApiKey}
+        setTheme={setTheme}
+        showGrid={uiState.showGrid}
+        showMinimap={uiState.showMinimap}
+        tempApiKey={uiState.tempApiKey}
+        theme={theme}
+        toast={toast}
+        videos={canvasState.videos}
       />
 
       {/* Video Overlays */}
       <VideoOverlays
-        videos={videos}
-        selectedIds={selectedIds}
-        viewport={viewport}
-        hiddenVideoControlsIds={hiddenVideoControlsIds}
-        setVideos={setVideos}
+        hiddenVideoControlsIds={uiState.hiddenVideoControlsIds}
+        selectedIds={canvasState.selectedIds}
+        setVideos={canvasState.setVideos}
+        videos={canvasState.videos}
+        viewport={canvasState.viewport}
       />
 
       {/* Chat UI */}
-      <div className="fixed right-4 top-4 bottom-4 z-50">
-        <AnimatePresence>
-          {!showChat && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="absolute bottom-0 right-0"
-            >
-              <Button
-                onClick={() => setShowChat(true)}
-                className="shadow-lg rounded-full h-14 w-14 md:w-auto md:h-auto md:rounded-lg"
-                variant="primary"
-                size="lg"
-              >
-                <MessageCircle className="h-5 w-5 md:mr-2" />
-                <span className="hidden md:inline">Chat</span>
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {showChat && (
-            <motion.div
-              initial={{ opacity: 0, x: 20, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 20, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="bg-card border rounded-2xl shadow-2xl w-[95vw] md:w-[500px] lg:w-[500px] h-full overflow-hidden flex flex-col"
-            >
-              <div className="p-4 border-b flex items-center justify-between shrink-0 bg-muted/30">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <MessageCircle className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">AI Assistant</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Powered by GPT-4
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setShowChat(false)}
-                  className="hover:bg-muted"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex-1 overflow-hidden bg-background">
-                <Chat
-                  onImageGenerated={handleChatImageGenerated}
-                  customApiKey={customApiKey}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <ChatPanel
+        customApiKey={uiState.customApiKey}
+        onImageGenerated={handleChatImageGenerated}
+        setShowChat={uiState.setShowChat}
+        showChat={uiState.showChat}
+      />
     </div>
   );
 }
