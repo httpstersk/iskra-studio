@@ -90,122 +90,119 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   }, [image.isLoading]);
 
   return (
-    <>
-      <KonvaImage
-        ref={shapeRef}
-        id={image.id}
-        image={img}
-        x={image.x}
-        y={image.y}
-        width={image.width}
-        height={image.height}
-        rotation={image.rotation}
-        crop={
-          image.cropX !== undefined && !isCroppingImage
-            ? {
-                x: (image.cropX || 0) * (img?.naturalWidth || 0),
-                y: (image.cropY || 0) * (img?.naturalHeight || 0),
-                width: (image.cropWidth || 1) * (img?.naturalWidth || 0),
-                height: (image.cropHeight || 1) * (img?.naturalHeight || 0),
-              }
-            : undefined
-        }
-        draggable={isDraggable}
-        onClick={onSelect}
-        onTap={onSelect}
-        onDblClick={onDoubleClick}
-        onDblTap={onDoubleClick}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onMouseDown={(e) => {
-          // Only allow dragging with left mouse button (0)
-          // Middle mouse (1) and right mouse (2) should not drag images
-          const isLeftButton = e.evt.button === 0;
-          setIsDraggable(isLeftButton);
-
-          // For middle mouse button, don't stop propagation
-          // Let it bubble up to the stage for canvas panning
-          if (e.evt.button === 1) {
-            return;
-          }
-        }}
-        onMouseUp={() => {
-          // Re-enable dragging after mouse up
-          setIsDraggable(true);
-        }}
-        onDragStart={(e) => {
-          // Stop propagation to prevent stage from being dragged
-          e.cancelBubble = true;
-          // Auto-select on drag if not already selected
-          if (!isSelected) {
-            onSelect(e);
-          }
-          onDragStart();
-        }}
-        onDragMove={(e) => {
-          if (!throttleFrame()) {
-            return;
-          }
-
-          const node = e.target;
-          const nodeX = node.x();
-          const nodeY = node.y();
-
-          if (selectedIds.includes(image.id) && selectedIds.length > 1) {
-            // Multi-selection drag
-            const startPos = dragStartPositions.get(image.id);
-            if (!startPos) {
-              return;
+    <KonvaImage
+      ref={shapeRef}
+      id={image.id}
+      image={img}
+      x={image.x}
+      y={image.y}
+      width={image.width}
+      height={image.height}
+      rotation={image.rotation}
+      crop={
+        image.cropX !== undefined && !isCroppingImage
+          ? {
+              x: (image.cropX || 0) * (img?.naturalWidth || 0),
+              y: (image.cropY || 0) * (img?.naturalHeight || 0),
+              width: (image.cropWidth || 1) * (img?.naturalWidth || 0),
+              height: (image.cropHeight || 1) * (img?.naturalHeight || 0),
             }
+          : undefined
+      }
+      draggable={isDraggable}
+      onClick={onSelect}
+      onTap={onSelect}
+      onDblClick={onDoubleClick}
+      onDblTap={onDoubleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onMouseDown={(e) => {
+        // Only allow dragging with left mouse button (0)
+        // Middle mouse (1) and right mouse (2) should not drag images
+        const isLeftButton = e.evt.button === 0;
+        setIsDraggable(isLeftButton);
 
-            const deltaX = nodeX - startPos.x;
-            const deltaY = nodeY - startPos.y;
-
-            // Use functional update to avoid stale closures
-            setImages((prevImages) => {
-              return prevImages.map((img) => {
-                if (img.id === image.id) {
-                  return { ...img, x: nodeX, y: nodeY };
-                }
-
-                if (selectedIds.includes(img.id)) {
-                  const imgStartPos = dragStartPositions.get(img.id);
-                  if (imgStartPos) {
-                    return {
-                      ...img,
-                      x: imgStartPos.x + deltaX,
-                      y: imgStartPos.y + deltaY,
-                    };
-                  }
-                }
-
-                return img;
-              });
-            });
-          } else {
-            // Single item drag
-            onChange({
-              x: nodeX,
-              y: nodeY,
-            });
-          }
-        }}
-        onDragEnd={(e) => {
-          onDragEnd();
-        }}
-        opacity={image.isLoading ? loadingOpacity : image.isGenerated ? 0.9 : 1}
-        stroke={
-          image.isLoading
-            ? "#9ca3af"
-            : isSelected
-              ? "#3b82f6"
-              : isHovered
-                ? "#3b82f6"
-                : "transparent"
+        // For middle mouse button, don't stop propagation
+        // Let it bubble up to the stage for canvas panning
+        if (e.evt.button === 1) {
+          return;
         }
-        strokeWidth={image.isLoading ? 3 : isSelected || isHovered ? 2 : 0}
-        dash={image.isLoading ? [10, 5] : undefined}
-      />
-    </>
+      }}
+      onMouseUp={() => {
+        // Re-enable dragging after mouse up
+        setIsDraggable(true);
+      }}
+      onDragStart={(e) => {
+        // Stop propagation to prevent stage from being dragged
+        e.cancelBubble = true;
+        // Auto-select on drag if not already selected
+        if (!isSelected) {
+          onSelect(e);
+        }
+        onDragStart();
+      }}
+      onDragMove={(e) => {
+        if (!throttleFrame()) {
+          return;
+        }
+
+        const node = e.target;
+        const nodeX = node.x();
+        const nodeY = node.y();
+
+        if (selectedIds.includes(image.id) && selectedIds.length > 1) {
+          // Multi-selection drag
+          const startPos = dragStartPositions.get(image.id);
+          if (!startPos) {
+            return;
+          }
+
+          const deltaX = nodeX - startPos.x;
+          const deltaY = nodeY - startPos.y;
+
+          // Use functional update to avoid stale closures
+          setImages((prevImages) => {
+            return prevImages.map((img) => {
+              if (img.id === image.id) {
+                return { ...img, x: nodeX, y: nodeY };
+              }
+
+              if (selectedIds.includes(img.id)) {
+                const imgStartPos = dragStartPositions.get(img.id);
+                if (imgStartPos) {
+                  return {
+                    ...img,
+                    x: imgStartPos.x + deltaX,
+                    y: imgStartPos.y + deltaY,
+                  };
+                }
+              }
+
+              return img;
+            });
+          });
+        } else {
+          // Single item drag
+          onChange({
+            x: nodeX,
+            y: nodeY,
+          });
+        }
+      }}
+      onDragEnd={(e) => {
+        onDragEnd();
+      }}
+      opacity={image.isLoading ? loadingOpacity : image.isGenerated ? 0.9 : 1}
+      stroke={
+        image.isLoading
+          ? "#6b7280"
+          : isSelected
+            ? "#3b82f6"
+            : isHovered
+              ? "#3b82f6"
+              : "transparent"
+      }
+      strokeWidth={image.isLoading ? 2 : isSelected || isHovered ? 1 : 0}
+    />
   );
 };
