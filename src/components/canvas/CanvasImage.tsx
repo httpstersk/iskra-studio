@@ -6,18 +6,18 @@ import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
 
 interface CanvasImageProps {
+  dragStartPositions: Map<string, { x: number; y: number }>;
   image: PlacedImage;
+  isCroppingImage: boolean;
+  isDraggingImage: boolean;
   isSelected: boolean;
-  onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void;
   onChange: (newAttrs: Partial<PlacedImage>) => void;
-  onDragStart: () => void;
-  onDragEnd: () => void;
   onDoubleClick?: () => void;
+  onDragEnd: () => void;
+  onDragStart: () => void;
+  onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void;
   selectedIds: string[];
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
-  isDraggingImage: boolean;
-  isCroppingImage: boolean;
-  dragStartPositions: Map<string, { x: number; y: number }>;
 }
 
 const useCanvasImageSource = (src: string, isGenerated: boolean) => {
@@ -29,8 +29,6 @@ const useCanvasImageSource = (src: string, isGenerated: boolean) => {
     [isGenerated, normalImg, streamingImg]
   );
 };
-
-
 
 const useFrameThrottle = (limitMs = 16) => {
   const lastRef = useRef(0);
@@ -195,9 +193,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
         onDragEnd={(e) => {
           onDragEnd();
         }}
-        opacity={
-          image.isLoading ? loadingOpacity : image.isGenerated ? 0.9 : 1
-        }
+        opacity={image.isLoading ? loadingOpacity : image.isGenerated ? 0.9 : 1}
         stroke={
           image.isLoading
             ? "#9ca3af"

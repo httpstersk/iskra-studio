@@ -64,19 +64,17 @@ export const VariationNumbersOverlay: React.FC<
                 width: `${screenWidth}px`,
               }}
             >
-              <div className="border border-primary rounded-full size-12 flex items-center justify-center">
-                <ShimmeringText
-                  animate={isGenerating}
-                  color="#666"
-                  duration={1}
-                  repeat={isGenerating}
-                  repeatDelay={0}
-                  shimmerColor="#ffffff"
-                  spread={!isGenerating ? 0 : 4}
-                  startOnView={false}
-                  text={number.toString()}
-                />
-              </div>
+              <ShimmeringText
+                animate={isGenerating}
+                color="#666"
+                duration={1}
+                repeat={isGenerating}
+                repeatDelay={0}
+                shimmerColor="#ffffff"
+                spread={!isGenerating ? 0 : 4}
+                startOnView={false}
+                text={number.toString()}
+              />
             </div>
           );
         }
