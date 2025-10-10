@@ -17,17 +17,13 @@ export const VariationGhostPlaceholders: React.FC<
   const sourceCenterX = selectedImage.x + selectedImage.width / 2;
   const sourceCenterY = selectedImage.y + selectedImage.height / 2;
 
-  const diagonal = Math.sqrt(
-    selectedImage.width ** 2 + selectedImage.height ** 2
-  );
-  const radius = diagonal * 1.2;
-
-  const ghostPlaceholders = Array.from({ length: 12 }, (_, i) => {
+  const ghostPlaceholders = Array.from({ length: 4 }, (_, i) => {
     const { x, y } = calculateBalancedPosition(
       sourceCenterX,
       sourceCenterY,
-      radius,
       i,
+      selectedImage.width,
+      selectedImage.height,
       selectedImage.width,
       selectedImage.height
     );
