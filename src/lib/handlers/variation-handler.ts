@@ -37,29 +37,10 @@ export function calculateBalancedPosition(
   radius: number,
   angleIndex: number,
   variationWidth: number,
-  variationHeight: number,
+  variationHeight: number
 ) {
   // Arrange 12 images with higher density on left and right:
-  // Left side (180°): 4 images at angles 150°, 170°, 190°, 210°
-  // Right side (0°): 4 images at angles -30°, -10°, 10°, 30°
-  // Top (90°): 2 images at angles 75°, 105°
-  // Bottom (270°): 2 images at angles 255°, 285°
-
-  const angles = [
-    -30, // Right side
-    -10,
-    10,
-    30,
-    75, // Top
-    105,
-    150, // Left side
-    170,
-    190,
-    210,
-    255, // Bottom
-    285,
-  ];
-
+  const angles = [-35, -10, 10, 35, 75, 105, 145, 170, 190, 215, 255, 285];
   const angleInDegrees = angles[angleIndex];
   const angleInRadians = (angleInDegrees * Math.PI) / 180;
 
@@ -74,9 +55,7 @@ export function calculateBalancedPosition(
  * Handle variation generation for a selected image
  * Generates 12 variations with different camera settings positioned in a circle
  */
-export const handleVariationGeneration = async (
-  deps: VariationHandlerDeps,
-) => {
+export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   const {
     images,
     selectedIds,
@@ -117,9 +96,9 @@ export const handleVariationGeneration = async (
     const sourceCenterY = selectedImage.y + selectedImage.height / 2;
 
     // Calculate radius for circular placement (distance from center to variations)
-    // Using 1.5x the diagonal of the source image as the radius
+    // Using 1.2x the diagonal of the source image as the radius
     const diagonal = Math.sqrt(
-      selectedImage.width ** 2 + selectedImage.height ** 2,
+      selectedImage.width ** 2 + selectedImage.height ** 2
     );
     const radius = diagonal * 1.2;
 
@@ -161,7 +140,7 @@ export const handleVariationGeneration = async (
       0,
       0,
       canvas.width,
-      canvas.height,
+      canvas.height
     );
 
     // Convert to blob and upload
@@ -182,7 +161,7 @@ export const handleVariationGeneration = async (
         dataUrl,
         falClient,
         toast,
-        setIsApiKeyDialogOpen,
+        setIsApiKeyDialogOpen
       );
     } catch (uploadError) {
       console.error("Failed to upload image:", uploadError);
@@ -226,7 +205,7 @@ export const handleVariationGeneration = async (
         radius,
         i,
         selectedImage.width,
-        selectedImage.height,
+        selectedImage.height
       );
 
       placeholders.push({
@@ -242,7 +221,7 @@ export const handleVariationGeneration = async (
       });
 
       console.log(
-        `Created placeholder ${i + 1}/12: ${placeholderId} at (${Math.round(x)}, ${Math.round(y)})`,
+        `Created placeholder ${i + 1}/12: ${placeholderId} at (${Math.round(x)}, ${Math.round(y)})`
       );
     }
 
@@ -250,7 +229,9 @@ export const handleVariationGeneration = async (
     console.log(`Adding ${placeholders.length} placeholders to canvas...`);
     setImages((prev) => {
       const newImages = [...prev, ...placeholders];
-      console.log(`Total images after adding placeholders: ${newImages.length}`);
+      console.log(
+        `Total images after adding placeholders: ${newImages.length}`
+      );
       return newImages;
     });
 
@@ -259,7 +240,7 @@ export const handleVariationGeneration = async (
     const variationPromises = CAMERA_VARIATIONS.map(async (prompt, index) => {
       try {
         console.log(
-          `Starting variation ${index + 1}/12 with prompt: ${prompt.substring(0, 50)}...`,
+          `Starting variation ${index + 1}/12 with prompt: ${prompt.substring(0, 50)}...`
         );
 
         const result = await generateImageVariation({
@@ -279,8 +260,8 @@ export const handleVariationGeneration = async (
           prev.map((img) =>
             img.id === placeholderIds[index]
               ? { ...img, src: result.url, isLoading: false }
-              : img,
-          ),
+              : img
+          )
         );
 
         return result;
@@ -288,7 +269,7 @@ export const handleVariationGeneration = async (
         console.error(`Failed to generate variation ${index + 1}/12:`, error);
         // Remove the failed placeholder
         setImages((prev) =>
-          prev.filter((img) => img.id !== placeholderIds[index]),
+          prev.filter((img) => img.id !== placeholderIds[index])
         );
         throw error;
       }

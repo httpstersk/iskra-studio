@@ -20,7 +20,7 @@ export const VariationGhostPlaceholders: React.FC<
 
   // Calculate radius for circular placement
   const diagonal = Math.sqrt(
-    selectedImage.width ** 2 + selectedImage.height ** 2,
+    selectedImage.width ** 2 + selectedImage.height ** 2
   );
   const radius = diagonal * 1.2;
 
@@ -32,7 +32,7 @@ export const VariationGhostPlaceholders: React.FC<
       radius,
       i,
       selectedImage.width,
-      selectedImage.height,
+      selectedImage.height
     );
 
     return {
@@ -48,17 +48,17 @@ export const VariationGhostPlaceholders: React.FC<
     <Group>
       {ghostPlaceholders.map((ghost) => (
         <Rect
+          dash={[8, 4]}
+          height={ghost.height}
           key={ghost.id}
+          listening={false}
+          opacity={0.5}
+          perfectDrawEnabled={false}
+          stroke="#fff"
+          strokeWidth={1}
+          width={ghost.width}
           x={ghost.x}
           y={ghost.y}
-          width={ghost.width}
-          height={ghost.height}
-          stroke="#9ca3af"
-          strokeWidth={2}
-          dash={[8, 4]}
-          opacity={0.4}
-          listening={false}
-          perfectDrawEnabled={false}
         />
       ))}
     </Group>
