@@ -127,9 +127,6 @@ export default function CanvasPage() {
   const { mutateAsync: generateTextToImage } = useMutation(
     trpc.generateTextToImage.mutationOptions()
   );
-  const { mutateAsync: generateImageVariation } = useMutation(
-    trpc.generateImageVariation.mutationOptions()
-  );
   const { mutateAsync: isolateObject } = useMutation(
     trpc.isolateObject.mutationOptions()
   );
@@ -292,18 +289,17 @@ export default function CanvasPage() {
       !generationState.generationSettings.prompt.trim();
 
     if (isVariationMode) {
-      // Generate 8 camera angle variations
+      // Generate 4 camera angle variations (optimized)
       await handleVariationGeneration({
         images: canvasState.images,
         selectedIds: canvasState.selectedIds,
-        customApiKey: uiState.customApiKey,
         viewport: canvasState.viewport,
         falClient,
         setImages: canvasState.setImages,
         setIsGenerating: generationState.setIsGenerating,
         setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
+        setActiveGenerations: generationState.setActiveGenerations,
         toast,
-        generateImageVariation,
         variationPrompt: generationState.generationSettings.variationPrompt,
       });
     } else {
@@ -763,31 +759,56 @@ export default function CanvasPage() {
             onComplete={(id, finalUrl) => {
               canvasState.setImages((prev) =>
                 prev.map((img) =>
-                  img.id === id ? { ...img, src: finalUrl } : img
+                  img.id === id
+                    ? { ...img, src: finalUrl, isLoading: false }
+                    : img
                 )
               );
+
               generationState.setActiveGenerations((prev) => {
                 const newMap = new Map(prev);
                 newMap.delete(id);
+
+                // Only set isGenerating to false if this was the last active generation
+                if (newMap.size === 0) {
+                  generationState.setIsGenerating(false);
+                }
+
                 return newMap;
               });
-              generationState.setIsGenerating(false);
+
               setTimeout(() => saveToStorage(), ANIMATION.SAVE_DELAY);
             }}
             onError={(id, error) => {
               console.error(`Generation error for ${id}:`, error);
+
+              // Remove the failed image from canvas
               canvasState.setImages((prev) =>
                 prev.filter((img) => img.id !== id)
               );
+
+              // Remove from active generations
               generationState.setActiveGenerations((prev) => {
                 const newMap = new Map(prev);
                 newMap.delete(id);
+
+                // Only set isGenerating to false if this was the last active generation
+                if (newMap.size === 0) {
+                  generationState.setIsGenerating(false);
+                }
+
                 return newMap;
               });
-              generationState.setIsGenerating(false);
+
+              // Show a less intrusive error for individual variations
+              const isVariation = id.startsWith("variation-");
               toast({
-                description: error.toString(),
-                title: CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
+                description: isVariation
+                  ? "One variation failed to generate"
+                  : error.toString(),
+                title: isVariation
+                  ? "Variation failed"
+                  : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
                 variant: "destructive",
               });
             }}
