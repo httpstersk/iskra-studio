@@ -17,6 +17,25 @@ export function determineAspectRatio(
 }
 
 /**
+ * Gets the optimal dimensions for image generation based on source dimensions
+ * Uses 4K resolution (3840x2160 for landscape, 2160x3840 for portrait)
+ * @param width - Image width
+ * @param height - Image height
+ * @returns Dimensions object { width, height }
+ */
+export function getOptimalImageDimensions(
+  width: number,
+  height: number
+): { width: number; height: number } {
+  const aspectRatioMode = determineAspectRatio(width, height);
+  
+  // Use 4K dimensions (3840x2160 for 16:9, 2160x3840 for 9:16)
+  return aspectRatioMode === "landscape_16_9"
+    ? { width: 3840, height: 2160 }
+    : { width: 2160, height: 3840 };
+}
+
+/**
  * Calculates crop dimensions to fit an image to 16:9 or 9:16 aspect ratio
  * @param originalWidth - Original image width
  * @param originalHeight - Original image height

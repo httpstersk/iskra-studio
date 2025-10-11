@@ -2,7 +2,7 @@ import type { PlacedImage } from "@/types/canvas";
 import type { FalClient } from "@fal-ai/client";
 import { CAMERA_VARIATIONS } from "@/constants/camera-variations";
 import { snapPosition } from "@/utils/snap-utils";
-import { determineAspectRatio } from "@/utils/image-crop-utils";
+import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
 
 /**
  * Optimized upload function that accepts blob directly (no FileReader conversion)
@@ -300,8 +300,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     // Snap source image position for consistent alignment
     const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
 
-    // Determine aspect ratio for variations (lock to 16:9 or 9:16)
-    const aspectRatioMode = determineAspectRatio(
+    // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
+    const imageSizeDimensions = getOptimalImageDimensions(
       selectedImage.width,
       selectedImage.height
     );
@@ -320,7 +320,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
           imageUrl: uploadResult.url,
           prompt: combinedPrompt,
           isVariation: true,
-          imageSize: aspectRatioMode,
+          imageSize: imageSizeDimensions,
         });
       });
 

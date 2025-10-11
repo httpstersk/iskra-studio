@@ -800,13 +800,13 @@ export const appRouter = router({
           "fal-ai/bytedance/seedream/v4/edit",
           {
             input: {
-              prompt: input.prompt,
+              enable_safety_checker: false,
+              image_size: input.imageSize || { width: 3840, height: 2160 },
               image_urls: [input.imageUrl],
-              image_size: input.imageSize || "landscape_16_9",
-              num_images: 1,
               max_images: 1,
+              num_images: 1,
+              prompt: input.prompt,
               seed: input.seed,
-              enable_safety_checker: true,
             },
             pollInterval: 1000,
             logs: true,
