@@ -11,7 +11,7 @@ const BLUR_SIGMA = 20;
 
 interface VariationGhostPlaceholdersProps {
   selectedImage: PlacedImage;
-  stageRef: React.RefObject<Konva.Stage>;
+  stageRef: React.RefObject<Konva.Stage | null>;
   isDragging: boolean;
   variationMode?: "image" | "video";
 }
@@ -44,31 +44,43 @@ export const VariationGhostPlaceholders: React.FC<
       return;
     }
 
+    // Cache the node reference once at the start of dragging
+    if (!nodeRef.current) {
+      nodeRef.current =
+        stageRef.current?.findOne(`#${selectedImage.id}`) ?? null;
+    }
+
     let frameId: number | undefined;
+    let lastX = -Infinity;
+    let lastY = -Infinity;
 
     const updatePosition = () => {
-      if (!nodeRef.current) {
-        nodeRef.current =
-          stageRef.current?.findOne(`#${selectedImage.id}`) ?? null;
-      }
-
       const node = nodeRef.current;
       if (node) {
-        const snapped = snapPosition(node.x(), node.y());
-        setAnchor((prev) =>
-          prev.x === snapped.x && prev.y === snapped.y ? prev : snapped
-        );
+        const x = node.x();
+        const y = node.y();
+        
+        // Only snap and update if position actually changed
+        if (x !== lastX || y !== lastY) {
+          lastX = x;
+          lastY = y;
+          const snapped = snapPosition(x, y);
+          setAnchor((prev) =>
+            prev.x === snapped.x && prev.y === snapped.y ? prev : snapped
+          );
+        }
       }
 
       frameId = requestAnimationFrame(updatePosition);
     };
 
-    updatePosition();
+    frameId = requestAnimationFrame(updatePosition);
 
     return () => {
       if (frameId !== undefined) {
         cancelAnimationFrame(frameId);
       }
+      nodeRef.current = null;
     };
   }, [
     isDragging,

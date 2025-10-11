@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type Konva from "konva";
 import type { PlacedImage, PlacedVideo, SelectionBox } from "@/types/canvas";
 import type { Viewport } from "./useCanvasState";
@@ -104,6 +104,7 @@ export function useCanvasInteractions(
       const clickedOnEmpty = e.target === e.target.getStage();
       const stage = e.target.getStage();
       const mouseButton = e.evt.button;
+      const currentViewport = viewportRef.current;
 
       if (mouseButton === 1) {
         e.evt.preventDefault();
@@ -116,8 +117,8 @@ export function useCanvasInteractions(
         const pos = stage?.getPointerPosition();
         if (pos) {
           const canvasPos = {
-            x: (pos.x - viewport.x) / viewport.scale,
-            y: (pos.y - viewport.y) / viewport.scale,
+            x: (pos.x - currentViewport.x) / currentViewport.scale,
+            y: (pos.y - currentViewport.y) / currentViewport.scale,
           };
 
           setIsSelecting(true);
@@ -132,21 +133,28 @@ export function useCanvasInteractions(
         }
       }
     },
-    [viewport, setSelectedIds]
+    [setSelectedIds]
   );
+
+  // Use refs to avoid recreating callbacks on every viewport change
+  const viewportRef = useRef(viewport);
+  useEffect(() => {
+    viewportRef.current = viewport;
+  }, [viewport]);
 
   const handleMouseMove = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
       const stage = e.target.getStage();
+      const currentViewport = viewportRef.current;
 
       if (isPanningCanvas) {
         const deltaX = e.evt.clientX - lastPanPosition.x;
         const deltaY = e.evt.clientY - lastPanPosition.y;
 
         setViewport({
-          ...viewport,
-          x: viewport.x + deltaX,
-          y: viewport.y + deltaY,
+          ...currentViewport,
+          x: currentViewport.x + deltaX,
+          y: currentViewport.y + deltaY,
         });
 
         setLastPanPosition({ x: e.evt.clientX, y: e.evt.clientY });
@@ -158,8 +166,8 @@ export function useCanvasInteractions(
       const pos = stage?.getPointerPosition();
       if (pos) {
         const canvasPos = {
-          x: (pos.x - viewport.x) / viewport.scale,
-          y: (pos.y - viewport.y) / viewport.scale,
+          x: (pos.x - currentViewport.x) / currentViewport.scale,
+          y: (pos.y - currentViewport.y) / currentViewport.scale,
         };
 
         setSelectionBox((prev) => ({
@@ -169,7 +177,7 @@ export function useCanvasInteractions(
         }));
       }
     },
-    [isPanningCanvas, lastPanPosition, isSelecting, viewport, setViewport]
+    [isPanningCanvas, lastPanPosition, isSelecting, setViewport]
   );
 
   const handleMouseUp = useCallback(

@@ -149,6 +149,8 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       opacity={displayOpacity}
       stroke={strokeColor}
       strokeWidth={strokeWidth}
+      perfectDrawEnabled={false}
+      imageSmoothingEnabled={true}
     />
   );
 };

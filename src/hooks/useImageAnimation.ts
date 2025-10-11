@@ -78,13 +78,20 @@ export const useImageAnimation = ({
 
     const startTime = Date.now();
     let isFading = !!fadeStartTimeRef.current;
+    let lastFrameTime = startTime;
 
-    const animate = () => {
-      const now = Date.now();
+    const animate = (currentTime: number) => {
+      // Skip frame if less than 16ms has passed (limit to ~60fps)
+      const timeSinceLastFrame = currentTime - lastFrameTime;
+      if (timeSinceLastFrame < 16) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      lastFrameTime = currentTime;
 
       if (isLoading) {
         // Pulsing animation while loading
-        const elapsed = now - startTime;
+        const elapsed = currentTime - startTime;
         const cycle = (elapsed % ANIMATION_CONFIG.PULSE_DURATION) / ANIMATION_CONFIG.PULSE_DURATION;
         const opacity =
           ANIMATION_CONFIG.PULSE_MIN_OPACITY +
@@ -94,7 +101,7 @@ export const useImageAnimation = ({
         setDisplayOpacity(opacity);
       } else if (isFading) {
         // Fade-in animation after loading completes
-        const elapsed = now - fadeStartTimeRef.current;
+        const elapsed = currentTime - fadeStartTimeRef.current;
         const progress = Math.min(elapsed / ANIMATION_CONFIG.FADE_DURATION, 1);
 
         if (progress < 1) {

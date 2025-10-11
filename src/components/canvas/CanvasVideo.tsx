@@ -14,7 +14,7 @@ import {
 } from "react-konva";
 import Konva from "konva";
 import type { PlacedVideo } from "@/types/canvas";
-import { throttle } from "@/utils/performance";
+import { throttle, throttleRAF } from "@/utils/performance";
 import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
 
 interface CanvasVideoProps {
@@ -71,71 +71,63 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
     videoEl.muted = video.muted;
     videoEl.volume = video.volume;
     videoEl.currentTime = video.currentTime;
-    videoEl.loop = !!video.isLooping; // Set loop property based on video state
+    videoEl.loop = !!video.isLooping;
 
     // Performance optimizations
-    videoEl.preload = "auto"; // Need auto to ensure first frame loads
-    videoEl.playsInline = true; // Prevent fullscreen on mobile
-    videoEl.disablePictureInPicture = true; // Prevent UI conflicts
+    videoEl.preload = "metadata"; // Changed from 'auto' to reduce bandwidth/memory
+    videoEl.playsInline = true;
+    videoEl.disablePictureInPicture = true;
+
+    // Throttled time update handler - RAF synced for smoother updates
+    const handleTimeUpdate = throttleRAF(() => {
+      onChange({ currentTime: videoEl.currentTime });
+    });
 
     // Set up event listeners
-    videoEl.addEventListener("loadedmetadata", () => {
-      // Update duration if it's different from what we have stored
+    const handleLoadedMetadata = () => {
       if (videoEl.duration !== video.duration) {
         onChange({ duration: videoEl.duration });
       }
-      // Ensure video starts at the beginning when not playing
       if (!video.isPlaying) {
         videoEl.currentTime = 0;
       }
-
-      // Set a small delay before marking the video as loaded
-      // This ensures the video is fully rendered before showing the indicator
+      // Reduced delay for faster perceived loading
       setTimeout(() => {
         setIsVideoLoaded(true);
-        // Update the parent component with the loaded state
         onChange({ isLoaded: true });
-      }, 500); // 500ms delay
-    });
+      }, 100);
+    };
 
-    videoEl.addEventListener("timeupdate", () => {
-      // Only update if enough time has passed to avoid excessive updates
-      const now = Date.now();
-      if (now - lastUpdateTime.current > 100) {
-        // 100ms throttle for smooth playback
-        lastUpdateTime.current = now;
-        onChange({ currentTime: videoEl.currentTime });
-      }
-    });
-
-    videoEl.addEventListener("ended", () => {
-      // If looping is enabled, the browser's native loop will handle it
-      // Only update state if not looping
+    const handleEnded = () => {
       if (!video.isLooping) {
         onChange({ isPlaying: false, currentTime: 0 });
       }
-    });
+    };
 
-    // Ensure video has loaded enough data to display
-    videoEl.addEventListener("loadeddata", () => {
-      // Force a re-render when video data is available
+    const handleLoadedData = () => {
       setVideoElement(videoEl);
-    });
+    };
 
-    // Set the video element in state
+    videoEl.addEventListener("loadedmetadata", handleLoadedMetadata);
+    videoEl.addEventListener("timeupdate", handleTimeUpdate);
+    videoEl.addEventListener("ended", handleEnded);
+    videoEl.addEventListener("loadeddata", handleLoadedData);
+
     setVideoElement(videoEl);
     videoRef.current = videoEl;
-
-    // Force the video to load
     videoEl.load();
 
     return () => {
-      // Clean up event listeners and pause the video when unmounting
+      // Clean up all listeners explicitly
+      videoEl.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      videoEl.removeEventListener("timeupdate", handleTimeUpdate);
+      videoEl.removeEventListener("ended", handleEnded);
+      videoEl.removeEventListener("loadeddata", handleLoadedData);
       videoEl.pause();
       videoEl.removeAttribute("src");
       videoEl.load();
     };
-  }, [video.src]); // Remove debouncedTimeUpdate from deps
+  }, [video.src]);
 
   // Handle play/pause state changes
   useEffect(() => {
@@ -279,10 +271,10 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
     onChange,
   ]);
 
-  // Create throttled state update function
+  // Create RAF-throttled state update function for smoother dragging
   const throttledStateUpdate = useMemo(
     () =>
-      throttle(
+      throttleRAF(
         (
           snapped: { x: number; y: number },
           isMultiSelect: boolean,
@@ -292,7 +284,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
             const deltaX = snapped.x - startPos.x;
             const deltaY = snapped.y - startPos.y;
 
-            // Update all selected items relative to their start positions
+            // Batch update all selected items
             setVideos((prev) =>
               prev.map((vid) => {
                 if (vid.id === video.id) {
@@ -317,15 +309,13 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
               })
             );
           } else {
-            // Single item drag - just update this video
             onChange({
               x: snapped.x,
               y: snapped.y,
             });
           }
-        },
-        16
-      ), // ~60fps throttle
+        }
+      ),
     [selectedIds, video.id, dragStartPositions, setVideos, onChange]
   );
 
@@ -382,6 +372,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
         height={video.height}
         rotation={video.rotation}
         draggable={isDraggable}
+        perfectDrawEnabled={false}
         onClick={(e) => {
           // Prevent event propagation issues
           e.cancelBubble = true;

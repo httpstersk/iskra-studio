@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Stage, Layer } from "react-konva";
 import type Konva from "konva";
 import { CanvasGrid } from "./CanvasGrid";
@@ -112,8 +112,15 @@ export function CanvasStageRenderer({
   viewport,
   variationMode,
 }: CanvasStageRendererProps) {
-  const visibleImages = getVisibleItems(images, viewport, canvasSize);
-  const visibleVideos = getVisibleItems(videos, viewport, canvasSize);
+  // Memoize visible items calculation to avoid recalculating on every render
+  const visibleImages = useMemo(
+    () => getVisibleItems(images, viewport, canvasSize),
+    [images, viewport, canvasSize]
+  );
+  const visibleVideos = useMemo(
+    () => getVisibleItems(videos, viewport, canvasSize),
+    [videos, viewport, canvasSize]
+  );
 
   // Check if we're in variation mode (one image selected, no prompt)
   const isVariationMode =
@@ -236,7 +243,7 @@ export function CanvasStageRenderer({
         x={viewport.x}
         y={viewport.y}
       >
-        <Layer>
+        <Layer listening={true}>
           {showGrid && (
             <CanvasGrid canvasSize={canvasSize} viewport={viewport} />
           )}
