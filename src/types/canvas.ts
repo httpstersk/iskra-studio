@@ -9,10 +9,6 @@ export interface PlacedImage {
   isGenerated?: boolean;
   isLoading?: boolean;
   parentGroupId?: string;
-  cropX?: number;
-  cropY?: number;
-  cropWidth?: number;
-  cropHeight?: number;
 }
 
 export interface PlacedVideo extends Omit<PlacedImage, "isGenerated"> {

@@ -34,8 +34,6 @@ interface CanvasControlPanelProps {
   handleFileUpload: (files: FileList | null) => void;
   activeGenerationsSize: number;
   activeVideoGenerationsSize: number;
-  isRemovingVideoBackground: boolean;
-  isIsolating: boolean;
   isExtendingVideo: boolean;
   isTransformingVideo: boolean;
   showSuccess: boolean;
@@ -58,8 +56,6 @@ export function CanvasControlPanel({
   handleFileUpload,
   activeGenerationsSize,
   activeVideoGenerationsSize,
-  isRemovingVideoBackground,
-  isIsolating,
   isExtendingVideo,
   isTransformingVideo,
   showSuccess,
@@ -86,45 +82,41 @@ export function CanvasControlPanel({
             {(activeGenerationsSize > 0 ||
               activeVideoGenerationsSize > 0 ||
               isGenerating ||
-              isRemovingVideoBackground ||
-              isIsolating ||
               isExtendingVideo ||
               isTransformingVideo ||
               showSuccess) && (
-              <motion.div
-                key={showSuccess ? "success" : "generating"}
-                initial={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
-                animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-                exit={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
-                className={cn(
-                  "absolute z-50 -top-16 left-1/2",
-                  "rounded-xl",
-                  showSuccess
-                    ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
-                    : activeVideoGenerationsSize > 0 ||
-                        isRemovingVideoBackground ||
+                <motion.div
+                  key={showSuccess ? "success" : "generating"}
+                  initial={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
+                  animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+                  exit={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className={cn(
+                    "absolute z-50 -top-16 left-1/2",
+                    "rounded-xl",
+                    showSuccess
+                      ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
+                      : activeVideoGenerationsSize > 0 ||
                         isExtendingVideo ||
                         isTransformingVideo
-                      ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
-                      : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
-                )}
-              >
-                <GenerationsIndicator
-                  isAnimating={!showSuccess}
-                  isSuccess={showSuccess}
-                  className="w-5 h-5"
-                  outputType={
-                    activeVideoGenerationsSize > 0 ||
-                    isRemovingVideoBackground ||
-                    isExtendingVideo ||
-                    isTransformingVideo
-                      ? "video"
-                      : "image"
-                  }
-                />
-              </motion.div>
-            )}
+                        ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
+                        : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
+                  )}
+                >
+                  <GenerationsIndicator
+                    isAnimating={!showSuccess}
+                    isSuccess={showSuccess}
+                    className="w-5 h-5"
+                    outputType={
+                      activeVideoGenerationsSize > 0 ||
+                        isExtendingVideo ||
+                        isTransformingVideo
+                        ? "video"
+                        : "image"
+                    }
+                  />
+                </motion.div>
+              )}
           </AnimatePresence>
 
           {/* Action buttons row */}
@@ -426,7 +418,7 @@ export function CanvasControlPanel({
                     <div className="flex items-center gap-2">
                       <span>
                         {selectedIds.length === 1 &&
-                        !generationSettings.prompt.trim()
+                          !generationSettings.prompt.trim()
                           ? "Generate Variations"
                           : "Run"}
                       </span>

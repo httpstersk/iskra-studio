@@ -31,11 +31,6 @@ export const CANVAS_STRINGS = {
     VIDEO_CREATED: "Video created successfully",
     VIDEO_PROCESSED: "Video processed successfully",
   },
-  VIDEO: {
-    BACKGROUND_REMOVAL_DESCRIPTION: "This may take several minutes...",
-    BACKGROUND_REMOVAL_TITLE: "Removing background from video",
-    REMOVING_BACKGROUND_PROMPT: "Removing background from video",
-  },
 } as const;
 
 export const CANVAS_DIMENSIONS = {
@@ -59,20 +54,6 @@ export const VIDEO_DEFAULTS = {
   RESOLUTION: "720p",
   ROTATION: 0,
   VOLUME: 1,
-} as const;
-
-export const COLOR_MAP: Record<string, string> = {
-  black: "Black",
-  blue: "Blue",
-  cyan: "Cyan",
-  gray: "Gray",
-  green: "Green",
-  magenta: "Magenta",
-  orange: "Orange",
-  red: "Red",
-  transparent: "Transparent",
-  white: "White",
-  yellow: "Yellow",
 } as const;
 
 export const DEFAULT_IMAGES = {

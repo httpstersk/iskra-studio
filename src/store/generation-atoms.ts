@@ -58,15 +58,6 @@ export const isTransformingVideoAtom = atom(false);
  */
 export const isExtendingVideoAtom = atom(false);
 
-/**
- * Atom to track if video background removal is in progress
- */
-export const isRemovingVideoBackgroundAtom = atom(false);
-
-/**
- * Atom to track if object isolation is in progress
- */
-export const isIsolatingAtom = atom(false);
 
 /**
  * Atom to track previous generation count for success detection

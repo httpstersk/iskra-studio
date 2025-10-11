@@ -24,7 +24,6 @@ import { cn } from "@/lib/utils";
 import { ImageToVideoDialog } from "./ImageToVideoDialog";
 import { VideoToVideoDialog } from "./VideoToVideoDialog";
 import { ExtendVideoDialog } from "./ExtendVideoDialog";
-import { RemoveVideoBackgroundDialog } from "./VideoModelComponents";
 import type { VideoGenerationSettings } from "@/types/canvas";
 
 interface CanvasDialogsProps {
@@ -70,13 +69,6 @@ interface CanvasDialogsProps {
   handleVideoExtension: (settings: VideoGenerationSettings) => void;
   isExtendingVideo: boolean;
 
-  // Remove Video Background Dialog
-  isRemoveVideoBackgroundDialogOpen: boolean;
-  setIsRemoveVideoBackgroundDialogOpen: (open: boolean) => void;
-  selectedVideoForBackgroundRemoval: string | null;
-  setSelectedVideoForBackgroundRemoval: (id: string | null) => void;
-  handleVideoBackgroundRemoval: (backgroundColor: string) => void;
-  isRemovingVideoBackground: boolean;
 }
 
 export function CanvasDialogs({
@@ -113,12 +105,6 @@ export function CanvasDialogs({
   setSelectedVideoForExtend,
   handleVideoExtension,
   isExtendingVideo,
-  isRemoveVideoBackgroundDialogOpen,
-  setIsRemoveVideoBackgroundDialogOpen,
-  selectedVideoForBackgroundRemoval,
-  setSelectedVideoForBackgroundRemoval,
-  handleVideoBackgroundRemoval,
-  isRemovingVideoBackground,
 }: CanvasDialogsProps) {
   return (
     <>
@@ -351,27 +337,6 @@ export function CanvasDialogs({
         isExtending={isExtendingVideo}
       />
 
-      <RemoveVideoBackgroundDialog
-        isOpen={isRemoveVideoBackgroundDialogOpen}
-        onClose={() => {
-          setIsRemoveVideoBackgroundDialogOpen(false);
-          setSelectedVideoForBackgroundRemoval(null);
-        }}
-        onProcess={handleVideoBackgroundRemoval}
-        videoUrl={
-          selectedVideoForBackgroundRemoval
-            ? videos.find((vid) => vid.id === selectedVideoForBackgroundRemoval)
-                ?.src || ""
-            : ""
-        }
-        videoDuration={
-          selectedVideoForBackgroundRemoval
-            ? videos.find((vid) => vid.id === selectedVideoForBackgroundRemoval)
-                ?.duration || 0
-            : 0
-        }
-        isProcessing={isRemovingVideoBackground}
-      />
     </>
   );
 }

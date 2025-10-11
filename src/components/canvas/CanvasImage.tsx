@@ -11,11 +11,9 @@ import type { PlacedImage } from "@/types/canvas";
 interface CanvasImageProps {
   dragStartPositions: Map<string, { x: number; y: number }>;
   image: PlacedImage;
-  isCroppingImage: boolean;
   isDraggingImage: boolean;
   isSelected: boolean;
   onChange: (newAttrs: Partial<PlacedImage>) => void;
-  onDoubleClick?: () => void;
   onDragEnd: () => void;
   onDragStart: () => void;
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void;
@@ -59,11 +57,8 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   onChange,
   onDragStart,
   onDragEnd,
-  onDoubleClick,
   selectedIds,
   setImages,
-  isDraggingImage,
-  isCroppingImage,
   dragStartPositions,
 }) => {
   const shapeRef = useRef<Konva.Image>(null);
@@ -93,7 +88,6 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
 
   // Handle interaction states
   const {
-    isHovered,
     isDraggable,
     strokeColor,
     strokeWidth,
@@ -105,7 +99,6 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   } = useImageInteraction({
     image,
     isSelected,
-    isCroppingImage,
     onSelect,
     onDragStart,
   });
@@ -119,26 +112,6 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
     [handleDragEndInternal, onDragEnd]
   );
 
-  // Memoize crop calculation for performance
-  const cropConfig = useMemo(() => {
-    if (image.cropX === undefined || isCroppingImage || !img) {
-      return undefined;
-    }
-    return {
-      x: (image.cropX || 0) * (img.naturalWidth || 0),
-      y: (image.cropY || 0) * (img.naturalHeight || 0),
-      width: (image.cropWidth || 1) * (img.naturalWidth || 0),
-      height: (image.cropHeight || 1) * (img.naturalHeight || 0),
-    };
-  }, [
-    image.cropX,
-    image.cropY,
-    image.cropWidth,
-    image.cropHeight,
-    isCroppingImage,
-    img,
-  ]);
-
   return (
     <KonvaImage
       ref={shapeRef}
@@ -149,12 +122,9 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       width={image.width}
       height={image.height}
       rotation={image.rotation}
-      crop={cropConfig}
       draggable={isDraggable}
       onClick={onSelect}
       onTap={onSelect}
-      onDblClick={onDoubleClick}
-      onDblTap={onDoubleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseDown={handleMouseDown}

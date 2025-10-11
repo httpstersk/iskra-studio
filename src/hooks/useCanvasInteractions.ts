@@ -10,8 +10,7 @@ export function useCanvasInteractions(
   images: PlacedImage[],
   videos: PlacedVideo[],
   selectedIds: string[],
-  setSelectedIds: (ids: string[]) => void,
-  croppingImageId: string | null
+  setSelectedIds: (ids: string[]) => void
 ) {
   const [selectionBox, setSelectionBox] = useState<SelectionBox>({
     startX: 0,
@@ -101,7 +100,7 @@ export function useCanvasInteractions(
   );
 
   const handleMouseDown = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>, setCroppingImageId: (id: string | null) => void) => {
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
       const clickedOnEmpty = e.target === e.target.getStage();
       const stage = e.target.getStage();
       const mouseButton = e.evt.button;
@@ -113,19 +112,7 @@ export function useCanvasInteractions(
         return;
       }
 
-      if (croppingImageId) {
-        const clickedNode = e.target;
-        const cropGroup = clickedNode.findAncestor((node: any) => {
-          return node.attrs && node.attrs.name === "crop-overlay";
-        });
-
-        if (!cropGroup) {
-          setCroppingImageId(null);
-          return;
-        }
-      }
-
-      if (clickedOnEmpty && !croppingImageId && mouseButton === 0) {
+      if (clickedOnEmpty && mouseButton === 0) {
         const pos = stage?.getPointerPosition();
         if (pos) {
           const canvasPos = {
@@ -145,7 +132,7 @@ export function useCanvasInteractions(
         }
       }
     },
-    [viewport, croppingImageId, setSelectedIds]
+    [viewport, setSelectedIds]
   );
 
   const handleMouseMove = useCallback(

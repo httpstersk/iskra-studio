@@ -22,7 +22,6 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
    * Calculate the natural (API) dimensions that get sent to generation endpoints.
    * We show these instead of display dimensions because:
    * - They represent the actual pixel data AI models process
-   * - They account for crops (cropWidth × naturalWidth)
    * - They're consistent regardless of canvas zoom/scaling
    * - Users need to know the true resolution for generation quality
    */
@@ -37,33 +36,22 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
         imgElement.onload = resolve;
       });
 
-      // Calculate effective dimensions accounting for crops (same logic as generation handler)
-      const cropWidth = img.cropWidth || 1;
-      const cropHeight = img.cropHeight || 1;
-
-      const effectiveWidth = cropWidth * imgElement.naturalWidth;
-      const effectiveHeight = cropHeight * imgElement.naturalHeight;
-
       return {
-        width: Math.round(effectiveWidth),
-        height: Math.round(effectiveHeight),
-        isCropped: cropWidth !== 1 || cropHeight !== 1,
+        width: Math.round(imgElement.naturalWidth),
+        height: Math.round(imgElement.naturalHeight),
       };
     } catch (error) {
       // Fallback to display dimensions if image loading fails
       return {
         width: Math.round(img.width),
         height: Math.round(img.height),
-        isCropped: false,
       };
     }
   };
 
-  const [apiDimensions, setApiDimensions] = React.useState<{
-    width: number;
-    height: number;
-    isCropped: boolean;
-  } | null>(null);
+  const [apiDimensions, setApiDimensions] = React.useState<
+    { width: number; height: number } | null
+  >(null);
 
   React.useEffect(() => {
     if (!hasSingleSelection || !image) {
@@ -82,7 +70,7 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [hasSingleSelection, image?.src, image?.cropWidth, image?.cropHeight]);
+  }, [hasSingleSelection, image?.src]);
 
   if (!hasSingleSelection || !image || !apiDimensions) return null;
 

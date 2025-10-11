@@ -32,10 +32,8 @@ interface CanvasToolbarProps {
   redo: () => void;
   handleRun: () => void;
   handleDuplicate: () => void;
-  handleRemoveBackground: () => void;
   handleCombineImages: () => void;
   handleDelete: () => void;
-  setCroppingImageId: (id: string | null) => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   sendToFront: () => void;
   sendToBack: () => void;
@@ -58,10 +56,8 @@ export function CanvasToolbar({
   redo,
   handleRun,
   handleDuplicate,
-  handleRemoveBackground,
   handleCombineImages,
   handleDelete,
-  setCroppingImageId,
   setIsSettingsDialogOpen,
   sendToFront,
   sendToBack,
@@ -93,10 +89,8 @@ export function CanvasToolbar({
         generationSettings={generationSettings}
         handleRun={handleRun}
         handleDuplicate={handleDuplicate}
-        handleRemoveBackground={handleRemoveBackground}
         handleCombineImages={handleCombineImages}
         handleDelete={handleDelete}
-        setCroppingImageId={setCroppingImageId}
         sendToFront={sendToFront}
         sendToBack={sendToBack}
         bringForward={bringForward}

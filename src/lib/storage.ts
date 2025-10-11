@@ -12,12 +12,6 @@ interface ImageTransform {
   x: number;
   y: number;
   rotation: number;
-  cropBox?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
 }
 
 interface CanvasElement {

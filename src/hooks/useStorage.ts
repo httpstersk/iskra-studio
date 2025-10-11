@@ -91,12 +91,6 @@ export function useStorage(
               width: element.width || 300,
               height: element.height || 300,
               rotation: element.transform.rotation,
-              ...(element.transform.cropBox && {
-                cropX: element.transform.cropBox.x,
-                cropY: element.transform.cropBox.y,
-                cropWidth: element.transform.cropBox.width,
-                cropHeight: element.transform.cropBox.height,
-              }),
             });
           }
         } else if (element.type === "video" && element.videoId) {
@@ -117,12 +111,6 @@ export function useStorage(
               volume: element.volume || 1,
               muted: element.muted || false,
               isLoaded: false,
-              ...(element.transform.cropBox && {
-                cropX: element.transform.cropBox.x,
-                cropY: element.transform.cropBox.y,
-                cropWidth: element.transform.cropBox.width,
-                cropHeight: element.transform.cropBox.height,
-              }),
             });
           }
         }

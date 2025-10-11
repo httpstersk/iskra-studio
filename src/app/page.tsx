@@ -35,7 +35,6 @@ import { ZoomControls } from "@/components/canvas/ZoomControls";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 
 // Handlers
-import { handleRemoveBackground as handleRemoveBackgroundHandler } from "@/lib/handlers/background-handler";
 import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
 import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
 import {
@@ -50,7 +49,6 @@ import {
   sendToFront as sendToFrontHandler,
 } from "@/lib/handlers/layer-handlers";
 import {
-  createBackgroundRemovalConfig,
   createGenerationId,
   createImageToVideoConfig,
   createVideoToVideoConfig,
@@ -103,8 +101,7 @@ export default function CanvasPage() {
     canvasState.images,
     canvasState.videos,
     canvasState.selectedIds,
-    canvasState.setSelectedIds,
-    uiState.croppingImageId
+    canvasState.setSelectedIds
   );
 
   const { isStorageLoaded, saveToStorage } = useStorage(
@@ -127,11 +124,8 @@ export default function CanvasPage() {
   const { mutateAsync: generateTextToImage } = useMutation(
     trpc.generateTextToImage.mutationOptions()
   );
-  const { mutateAsync: isolateObject } = useMutation(
-    trpc.isolateObject.mutationOptions()
-  );
-  const { mutateAsync: removeBackground } = useMutation(
-    trpc.removeBackground.mutationOptions()
+  const { mutateAsync: generateImageVariation } = useMutation(
+    trpc.generateImageVariation.mutationOptions()
   );
 
   // Load default images
@@ -260,22 +254,6 @@ export default function CanvasPage() {
     ]);
   }, [canvasState, historyState]);
 
-  /**
-   * Handles background removal for selected images
-   */
-  const handleRemoveBackground = async () => {
-    await handleRemoveBackgroundHandler({
-      customApiKey: uiState.customApiKey,
-      falClient,
-      images: canvasState.images,
-      removeBackground,
-      saveToHistory: historyState.saveToHistory,
-      selectedIds: canvasState.selectedIds,
-      setImages: canvasState.setImages,
-      setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
-      toast,
-    });
-  };
 
   /**
    * Handles running image generation
@@ -423,72 +401,6 @@ export default function CanvasPage() {
     }
   };
 
-  /**
-   * Opens dialog for removing video background
-   */
-  const handleRemoveVideoBackground = (videoId: string) => {
-    uiState.setIsRemoveVideoBackgroundDialogOpen(true);
-    uiState.setSelectedVideoForBackgroundRemoval(videoId);
-  };
-
-  /**
-   * Handles video background removal
-   */
-  const handleVideoBackgroundRemoval = async (backgroundColor: string) => {
-    if (!uiState.selectedVideoForBackgroundRemoval) return;
-    const video = canvasState.videos.find(
-      (vid) => vid.id === uiState.selectedVideoForBackgroundRemoval
-    );
-    if (!video) return;
-
-    try {
-      generationState.setIsRemovingVideoBackground(true);
-      uiState.setIsRemoveVideoBackgroundDialogOpen(false);
-
-      const videoUrl = await uploadMediaIfNeeded(video.src, falClient);
-      const generationId = createGenerationId("bg_removal");
-      const config = createBackgroundRemovalConfig(
-        videoUrl,
-        video.duration,
-        backgroundColor,
-        video.id
-      );
-
-      generationState.setActiveVideoGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(generationId, config);
-        return newMap;
-      });
-
-      const toastId = toast({
-        description: CANVAS_STRINGS.VIDEO.BACKGROUND_REMOVAL_DESCRIPTION,
-        duration: Infinity,
-        title: CANVAS_STRINGS.VIDEO.BACKGROUND_REMOVAL_TITLE,
-      }).id;
-
-      generationState.setActiveVideoGenerations((prev) => {
-        const newMap = new Map(prev);
-        const generation = newMap.get(generationId);
-        if (generation) {
-          newMap.set(generationId, { ...generation, toastId });
-        }
-        return newMap;
-      });
-    } catch (error) {
-      console.error("Error removing video background:", error);
-      toast({
-        description:
-          error instanceof Error
-            ? error.message
-            : CANVAS_STRINGS.ERRORS.UNKNOWN_ERROR,
-        title: CANVAS_STRINGS.ERRORS.PROCESSING_ERROR,
-        variant: "destructive",
-      });
-      generationState.setIsRemovingVideoBackground(false);
-    } finally {
-      uiState.setSelectedVideoForBackgroundRemoval(null);
-    }
-  };
 
   /**
    * Handles video extension
@@ -716,7 +628,6 @@ export default function CanvasPage() {
   useKeyboardShortcuts({
     bringForward: handleBringForward,
     canvasSize: canvasState.canvasSize,
-    croppingImageId: uiState.croppingImageId,
     generationSettings: generationState.generationSettings,
     handleDelete,
     handleDuplicate,
@@ -728,7 +639,6 @@ export default function CanvasPage() {
     sendBackward: handleSendBackward,
     sendToBack: handleSendToBack,
     sendToFront: handleSendToFront,
-    setCroppingImageId: uiState.setCroppingImageId,
     setSelectedIds: canvasState.setSelectedIds,
     setViewport: canvasState.setViewport,
     undo: handleUndo,
@@ -838,12 +748,6 @@ export default function CanvasPage() {
       <main className="flex-1 relative flex items-center justify-center w-full">
         <div className="relative w-full h-full">
           <ContextMenu
-            onOpenChange={(open) => {
-              if (!open) {
-                uiState.setIsolateInputValue("");
-                uiState.setIsolateTarget(null);
-              }
-            }}
           >
             <ContextMenuTrigger asChild>
               <div
@@ -861,7 +765,6 @@ export default function CanvasPage() {
               >
                 <CanvasStageRenderer
                   canvasSize={canvasState.canvasSize}
-                  croppingImageId={uiState.croppingImageId}
                   generationSettings={generationState.generationSettings}
                   hiddenVideoControlsIds={uiState.hiddenVideoControlsIds}
                   images={canvasState.images}
@@ -870,7 +773,6 @@ export default function CanvasPage() {
                   isGenerating={generationState.isGenerating}
                   saveToHistory={historyState.saveToHistory}
                   selectedIds={canvasState.selectedIds}
-                  setCroppingImageId={uiState.setCroppingImageId}
                   setHiddenVideoControlsIds={uiState.setHiddenVideoControlsIds}
                   setImages={canvasState.setImages}
                   setSelectedIds={canvasState.setSelectedIds}
@@ -890,22 +792,14 @@ export default function CanvasPage() {
               handleDelete={handleDelete}
               handleDuplicate={handleDuplicate}
               handleExtendVideo={handleExtendVideo}
-              handleIsolate={async () => {}}
-              handleRemoveBackground={handleRemoveBackground}
-              handleRemoveVideoBackground={handleRemoveVideoBackground}
               handleRun={handleRun}
               handleVideoToVideo={handleVideoToVideo}
               images={canvasState.images}
               isGenerating={generationState.isGenerating}
-              isIsolating={generationState.isIsolating}
-              isolateInputValue={uiState.isolateInputValue}
               selectedIds={canvasState.selectedIds}
               sendBackward={handleSendBackward}
               sendToBack={handleSendToBack}
               sendToFront={handleSendToFront}
-              setCroppingImageId={uiState.setCroppingImageId}
-              setIsolateInputValue={uiState.setIsolateInputValue}
-              setIsolateTarget={uiState.setIsolateTarget}
               videos={canvasState.videos}
             />
           </ContextMenu>
@@ -950,8 +844,6 @@ export default function CanvasPage() {
         images={canvasState.images}
         isExtendingVideo={generationState.isExtendingVideo}
         isGenerating={generationState.isGenerating}
-        isIsolating={generationState.isIsolating}
-        isRemovingVideoBackground={generationState.isRemovingVideoBackground}
         isTransformingVideo={generationState.isTransformingVideo}
         redo={handleRedo}
         selectedIds={canvasState.selectedIds}
@@ -966,7 +858,6 @@ export default function CanvasPage() {
       <CanvasDialogs
         customApiKey={uiState.customApiKey}
         handleImageToVideoConversion={handleImageToVideoConversion}
-        handleVideoBackgroundRemoval={handleVideoBackgroundRemoval}
         handleVideoExtension={handleVideoExtension}
         handleVideoToVideoTransformation={handleVideoToVideoTransformation}
         images={canvasState.images}
@@ -974,31 +865,18 @@ export default function CanvasPage() {
         isExtendingVideo={generationState.isExtendingVideo}
         isExtendVideoDialogOpen={uiState.isExtendVideoDialogOpen}
         isImageToVideoDialogOpen={uiState.isImageToVideoDialogOpen}
-        isRemoveVideoBackgroundDialogOpen={
-          uiState.isRemoveVideoBackgroundDialogOpen
-        }
-        isRemovingVideoBackground={generationState.isRemovingVideoBackground}
         isSettingsDialogOpen={uiState.isSettingsDialogOpen}
         isTransformingVideo={generationState.isTransformingVideo}
         isVideoToVideoDialogOpen={uiState.isVideoToVideoDialogOpen}
         selectedImageForVideo={uiState.selectedImageForVideo}
-        selectedVideoForBackgroundRemoval={
-          uiState.selectedVideoForBackgroundRemoval
-        }
         selectedVideoForExtend={uiState.selectedVideoForExtend}
         selectedVideoForVideo={uiState.selectedVideoForVideo}
         setCustomApiKey={uiState.setCustomApiKey}
         setIsExtendVideoDialogOpen={uiState.setIsExtendVideoDialogOpen}
         setIsImageToVideoDialogOpen={uiState.setIsImageToVideoDialogOpen}
-        setIsRemoveVideoBackgroundDialogOpen={
-          uiState.setIsRemoveVideoBackgroundDialogOpen
-        }
         setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
         setIsVideoToVideoDialogOpen={uiState.setIsVideoToVideoDialogOpen}
         setSelectedImageForVideo={uiState.setSelectedImageForVideo}
-        setSelectedVideoForBackgroundRemoval={
-          uiState.setSelectedVideoForBackgroundRemoval
-        }
         setSelectedVideoForExtend={uiState.setSelectedVideoForExtend}
         setSelectedVideoForVideo={uiState.setSelectedVideoForVideo}
         setShowGrid={uiState.setShowGrid}

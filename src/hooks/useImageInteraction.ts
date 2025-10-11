@@ -5,7 +5,6 @@ import type { PlacedImage } from "@/types/canvas";
 interface UseImageInteractionProps {
   image: PlacedImage;
   isSelected: boolean;
-  isCroppingImage: boolean;
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void;
   onDragStart: () => void;
 }

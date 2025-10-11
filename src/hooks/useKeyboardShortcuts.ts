@@ -6,8 +6,6 @@ interface UseKeyboardShortcutsProps {
   images: PlacedImage[];
   selectedIds: string[];
   setSelectedIds: (ids: string[]) => void;
-  croppingImageId: string | null;
-  setCroppingImageId: (id: string | null) => void;
   generationSettings: GenerationSettings;
   isGenerating: boolean;
   viewport: Viewport;
@@ -28,8 +26,6 @@ export function useKeyboardShortcuts({
   images,
   selectedIds,
   setSelectedIds,
-  croppingImageId,
-  setCroppingImageId,
   generationSettings,
   isGenerating,
   viewport,
@@ -114,11 +110,6 @@ export function useKeyboardShortcuts({
           }
         }
       }
-      // Escape to exit crop mode
-      else if (e.key === "Escape" && croppingImageId) {
-        e.preventDefault();
-        setCroppingImageId(null);
-      }
       // Zoom in
       else if ((e.key === "+" || e.key === "=") && !isInputElement) {
         e.preventDefault();
@@ -173,7 +164,6 @@ export function useKeyboardShortcuts({
     handleDelete,
     handleDuplicate,
     handleRun,
-    croppingImageId,
     viewport,
     canvasSize,
     sendToFront,
@@ -181,7 +171,6 @@ export function useKeyboardShortcuts({
     bringForward,
     sendBackward,
     setSelectedIds,
-    setCroppingImageId,
     setViewport,
     isGenerating,
   ]);
