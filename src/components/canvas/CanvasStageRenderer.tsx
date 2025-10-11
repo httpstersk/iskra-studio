@@ -18,7 +18,6 @@ import type {
 } from "@/types/canvas";
 import type { Viewport } from "@/hooks/useCanvasState";
 import { VariationGhostPlaceholders } from "./VariationGhostPlaceholders";
-import { VariationNumbersOverlay } from "./VariationNumbersOverlay";
 
 /**
  * Props for the CanvasStageRenderer component
@@ -386,16 +385,6 @@ export function CanvasStageRenderer({
             })()}
         </Layer>
       </Stage>
-
-      {isVariationMode && selectedImageForVariation && (
-        <VariationNumbersOverlay
-          selectedImage={selectedImageForVariation}
-          viewport={viewport}
-          canvasSize={canvasSize}
-          isGenerating={isGenerating}
-          images={images}
-        />
-      )}
     </>
   );
 }
