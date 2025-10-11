@@ -6,6 +6,7 @@ import {
   imageToCanvasElement,
   videoToCanvasElement,
 } from "@/utils/canvas-utils";
+import { snapImagesToGrid } from "@/utils/snap-utils";
 import { useToast } from "@/hooks/use-toast";
 
 export function useStorage(
@@ -117,7 +118,7 @@ export function useStorage(
       }
 
       if (loadedImages.length > 0) {
-        setImages(loadedImages);
+        setImages(snapImagesToGrid(loadedImages));
       }
 
       if (loadedVideos.length > 0) {

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { PlacedImage } from "@/types/canvas";
 import { DEFAULT_IMAGES, CANVAS_DIMENSIONS } from "@/constants/canvas";
+import { snapPosition } from "@/utils/snap-utils";
 
 /**
  * Hook to load default images when canvas is empty
@@ -50,6 +51,7 @@ export function useDefaultImages(
               const startX = viewportCenterX - totalWidth / 2;
               const x = startX + i * spacing - width / 2;
               const y = viewportCenterY - height / 2;
+              const snapped = snapPosition(x, y);
 
               setImages((prev) => [
                 ...prev,
@@ -59,8 +61,8 @@ export function useDefaultImages(
                   rotation: 0,
                   src: e.target?.result as string,
                   width,
-                  x,
-                  y,
+                  x: snapped.x,
+                  y: snapped.y,
                 },
               ]);
             };

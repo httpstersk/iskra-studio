@@ -1,6 +1,8 @@
-import React from "react";
-import { Group, Line } from "react-konva";
+import React, { useMemo } from "react";
+import { Group, Rect } from "react-konva";
 import { useTheme } from "next-themes";
+
+import { CANVAS_GRID } from "@/constants/canvas";
 
 interface CanvasGridProps {
   viewport: {
@@ -19,15 +21,46 @@ interface CanvasGridProps {
 export const CanvasGrid: React.FC<CanvasGridProps> = ({
   viewport,
   canvasSize,
-  gridSize = 50,
+  gridSize = CANVAS_GRID.SPACING,
   gridColor,
 }) => {
   const { resolvedTheme } = useTheme();
 
   // Set grid color based on theme
   const effectiveGridColor =
-    gridColor || (resolvedTheme === "dark" ? "#2a2a2a" : "#f0f0f0");
-  const lines = [];
+    gridColor ||
+    (resolvedTheme === "dark"
+      ? CANVAS_GRID.DARK_COLOR
+      : CANVAS_GRID.LIGHT_COLOR);
+  const dotRadius = CANVAS_GRID.DOT_RADIUS;
+
+  const patternConfig = useMemo(() => {
+    if (typeof document === "undefined") {
+      return null;
+    }
+
+    const scale = window.devicePixelRatio || 1;
+    const size = gridSize * scale;
+    const patternCanvas = document.createElement("canvas");
+    patternCanvas.width = size;
+    patternCanvas.height = size;
+
+    const context = patternCanvas.getContext("2d");
+    if (!context) {
+      return null;
+    }
+
+    context.clearRect(0, 0, size, size);
+    context.fillStyle = effectiveGridColor;
+    context.beginPath();
+    context.arc(dotRadius * scale, dotRadius * scale, dotRadius * scale, 0, Math.PI * 2);
+    context.fill();
+
+    return {
+      image: patternCanvas,
+      scale: { x: 1 / scale, y: 1 / scale },
+    };
+  }, [gridSize, effectiveGridColor, dotRadius]);
 
   // Calculate visible area in canvas coordinates
   const startX = Math.floor(-viewport.x / viewport.scale / gridSize) * gridSize;
@@ -39,29 +72,25 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     Math.ceil((canvasSize.height - viewport.y) / viewport.scale / gridSize) *
     gridSize;
 
-  // Vertical lines
-  for (let x = startX; x <= endX; x += gridSize) {
-    lines.push(
-      <Line
-        key={`v-${x}`}
-        points={[x, startY, x, endY]}
-        stroke={effectiveGridColor}
-        strokeWidth={1}
-      />,
-    );
+  if (!patternConfig) {
+    return null;
   }
 
-  // Horizontal lines
-  for (let y = startY; y <= endY; y += gridSize) {
-    lines.push(
-      <Line
-        key={`h-${y}`}
-        points={[startX, y, endX, y]}
-        stroke={effectiveGridColor}
-        strokeWidth={1}
-      />,
-    );
-  }
-
-  return <Group>{lines}</Group>;
+  return (
+    <Group listening={false}>
+      <Rect
+        x={startX - dotRadius}
+        y={startY - dotRadius}
+        width={endX - startX + dotRadius * 2}
+        height={endY - startY + dotRadius * 2}
+        fillPatternImage={patternConfig.image}
+        fillPatternRepeat="repeat"
+        fillPatternScaleX={patternConfig.scale.x}
+        fillPatternScaleY={patternConfig.scale.y}
+        listening={false}
+        perfectDrawEnabled={false}
+        shadowForStrokeEnabled={false}
+      />
+    </Group>
+  );
 };

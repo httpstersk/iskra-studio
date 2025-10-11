@@ -44,6 +44,13 @@ export const CANVAS_DIMENSIONS = {
   IMAGE_SPACING: 20,
 } as const;
 
+export const CANVAS_GRID = {
+  DOT_RADIUS: 0.75,
+  LIGHT_COLOR: "#f0f0f0",
+  DARK_COLOR: "#2a2a2a",
+  SPACING: 12,
+} as const;
+
 export const VIDEO_DEFAULTS = {
   CURRENT_TIME: 0,
   DURATION: 5,
