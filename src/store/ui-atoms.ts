@@ -40,3 +40,8 @@ export const tempApiKeyAtom = atom<string>("");
  */
 export const hiddenVideoControlsIdsAtom = atom<Set<string>>(new Set<string>());
 export const visibleIndicatorsAtom = atom<Set<string>>(new Set<string>());
+
+/**
+ * Variation mode atom - controls number of variations (image: 8, video: 4)
+ */
+export const variationModeAtom = atom<"image" | "video">("image");

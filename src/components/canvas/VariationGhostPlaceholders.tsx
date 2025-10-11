@@ -9,15 +9,18 @@ interface VariationGhostPlaceholdersProps {
   selectedImage: PlacedImage;
   stageRef: React.RefObject<Konva.Stage>;
   isDragging: boolean;
+  variationMode?: "image" | "video";
 }
 
 /**
  * Renders ghost placeholder outlines showing where variations will be generated
  * Appears when a single image is selected (variation mode)
+ * Shows 8 placeholders for image mode, 4 for video mode
+ * Positioned clockwise starting from top center
  */
 export const VariationGhostPlaceholders: React.FC<
   VariationGhostPlaceholdersProps
-> = ({ selectedImage, stageRef, isDragging }) => {
+> = ({ selectedImage, variationMode = "image", stageRef, isDragging }) => {
   const nodeRef = useRef<Konva.Node | null>(null);
   const [anchor, setAnchor] = useState(() =>
     snapPosition(selectedImage.x, selectedImage.y)
@@ -60,34 +63,37 @@ export const VariationGhostPlaceholders: React.FC<
     };
   }, [isDragging, stageRef, selectedImage.id, selectedImage.x, selectedImage.y]);
 
-  const ghostPlaceholders = useMemo(() => {
-    return Array.from({ length: 4 }, (_, i) => {
-      const position = calculateBalancedPosition(
-        anchor.x,
-        anchor.y,
-        i,
-        selectedImage.width,
-        selectedImage.height,
-        selectedImage.width,
-        selectedImage.height
-      );
+  // For video mode, use position indices 0, 2, 4, 6 (top, right, bottom, left - clockwise from top)
+  const positionIndices =
+    variationMode === "image" ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 2, 4, 6];
 
-      return {
-        id: `ghost-${i}`,
-        x: position.x,
-        y: position.y,
-        width: selectedImage.width,
-        height: selectedImage.height,
-      };
-    });
-  }, [anchor.x, anchor.y, selectedImage.height, selectedImage.width]);
+  const ghostPlaceholders = positionIndices.map((positionIndex, i) => {
+    // Calculate position based on snapped source position
+    const position = calculateBalancedPosition(
+      anchor.x,
+      anchor.y,
+      positionIndex,
+      selectedImage.width,
+      selectedImage.height,
+      selectedImage.width,
+      selectedImage.height
+    );
+
+    return {
+      id: `ghost-${i}`,
+      x: position.x,
+      y: position.y,
+      width: selectedImage.width,
+      height: selectedImage.height,
+    };
+  });
 
   return (
     <Group>
       {ghostPlaceholders.map((ghost, index) => (
         <Group key={ghost.id}>
           <Rect
-            dash={[8, 4]}
+            dash={[4, 4]}
             height={ghost.height}
             listening={false}
             opacity={0.5}

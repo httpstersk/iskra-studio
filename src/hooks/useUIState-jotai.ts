@@ -20,6 +20,7 @@ import {
   showGridAtom,
   showMinimapAtom,
   tempApiKeyAtom,
+  variationModeAtom,
   visibleIndicatorsAtom,
 } from "@/store/ui-atoms";
 
@@ -60,6 +61,7 @@ export function useUIState() {
   const [showGrid, setShowGrid] = useAtom(showGridAtom);
   const [showMinimap, setShowMinimap] = useAtom(showMinimapAtom);
   const [tempApiKey, setTempApiKey] = useAtom(tempApiKeyAtom);
+  const [variationMode, setVariationMode] = useAtom(variationModeAtom);
   const [visibleIndicators, setVisibleIndicators] = useAtom(
     visibleIndicatorsAtom
   );
@@ -133,11 +135,13 @@ export function useUIState() {
     setShowGrid,
     setShowMinimap,
     setTempApiKey,
+    setVariationMode,
     setVisibleIndicators,
     showChat,
     showGrid,
     showMinimap,
     tempApiKey,
+    variationMode,
     visibleIndicators,
   };
 }

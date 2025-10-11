@@ -60,36 +60,16 @@ async function processImageToBlob(
     imgElement.onerror = reject;
   });
 
-  // Get crop values or use defaults
-  const cropX = selectedImage.cropX || 0;
-  const cropY = selectedImage.cropY || 0;
-  const cropWidth = selectedImage.cropWidth || 1;
-  const cropHeight = selectedImage.cropHeight || 1;
-
-  // Calculate effective dimensions
-  const effectiveWidth = cropWidth * imgElement.naturalWidth;
-  const effectiveHeight = cropHeight * imgElement.naturalHeight;
-
   // Create canvas for the source image
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d", { alpha: true });
   if (!ctx) throw new Error("Failed to get canvas context");
 
-  canvas.width = effectiveWidth;
-  canvas.height = effectiveHeight;
+  canvas.width = imgElement.naturalWidth;
+  canvas.height = imgElement.naturalHeight;
 
-  // Draw the cropped image
-  ctx.drawImage(
-    imgElement,
-    cropX * imgElement.naturalWidth,
-    cropY * imgElement.naturalHeight,
-    cropWidth * imgElement.naturalWidth,
-    cropHeight * imgElement.naturalHeight,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+  // Draw the image
+  ctx.drawImage(imgElement, 0, 0);
 
   // Convert to blob directly (no FileReader needed)
   // Use JPEG for better performance if no transparency needed
@@ -109,7 +89,7 @@ async function processImageToBlob(
 
   return {
     blob,
-    dimensions: { width: effectiveWidth, height: effectiveHeight },
+    dimensions: { width: canvas.width, height: canvas.height },
   };
 }
 
@@ -130,14 +110,17 @@ interface VariationHandlerDeps {
     variant?: "default" | "destructive";
   }) => void;
   variationPrompt?: string;
+  variationMode?: "image" | "video";
 }
 
 /**
- * Calculate position for a variation image on each side of the source
- * Creates an arrangement with 4 variations directly adjacent (top, right, bottom, left)
+ * Calculate position for a variation image around the source
+ * Positions are arranged clockwise starting from top center
+ * For 8 variations: top, top-right corner, right, bottom-right corner, bottom, bottom-left corner, left, top-left corner
+ * For 4 variations: uses indices 0, 2, 4, 6 (top, right, bottom, left)
  * @param sourceX - X coordinate of the source image
  * @param sourceY - Y coordinate of the source image
- * @param angleIndex - Index of the variation (0-3: top, right, bottom, left)
+ * @param angleIndex - Index of the variation (0-7)
  * @param sourceWidth - Width of the source image
  * @param sourceHeight - Height of the source image
  * @param variationWidth - Width of the variation image
@@ -152,27 +135,47 @@ export function calculateBalancedPosition(
   variationWidth: number,
   variationHeight: number
 ) {
-  // Place variations directly adjacent to each side, relative to source edges
+  // Clockwise positions starting from top center
   switch (angleIndex) {
     case 0: // Top - aligned with source left edge
       return {
         x: sourceX,
         y: sourceY - variationHeight,
       };
-    case 1: // Right - aligned with source top edge
+    case 1: // Top-right corner
+      return {
+        x: sourceX + sourceWidth,
+        y: sourceY - variationHeight,
+      };
+    case 2: // Right - aligned with source top edge
       return {
         x: sourceX + sourceWidth,
         y: sourceY,
       };
-    case 2: // Bottom - aligned with source left edge
+    case 3: // Bottom-right corner
+      return {
+        x: sourceX + sourceWidth,
+        y: sourceY + sourceHeight,
+      };
+    case 4: // Bottom - aligned with source left edge
       return {
         x: sourceX,
         y: sourceY + sourceHeight,
       };
-    case 3: // Left - aligned with source top edge
+    case 5: // Bottom-left corner
+      return {
+        x: sourceX - variationWidth,
+        y: sourceY + sourceHeight,
+      };
+    case 6: // Left - aligned with source top edge
       return {
         x: sourceX - variationWidth,
         y: sourceY,
+      };
+    case 7: // Top-left corner
+      return {
+        x: sourceX - variationWidth,
+        y: sourceY - variationHeight,
       };
     default:
       return { x: sourceX, y: sourceY };
@@ -181,7 +184,9 @@ export function calculateBalancedPosition(
 
 /**
  * Handle variation generation for a selected image
- * Generates 4 variations with different camera settings positioned on each side
+ * Generates 4 or 8 variations with different camera settings
+ * Image mode: 8 variations (sides + corners)
+ * Video mode: 4 variations (sides only)
  * Optimized for maximum performance and UX
  */
 export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
@@ -195,6 +200,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     setActiveGenerations,
     toast,
     variationPrompt,
+    variationMode = "image",
   } = deps;
 
   // Validate selection early
@@ -223,31 +229,51 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
   const timestamp = Date.now();
 
+  // Determine number of variations based on mode
+  // For video mode, use indices 0, 2, 4, 6 (top, right, bottom, left - the 4 sides in clockwise order starting from top)
+  const variationCount = variationMode === "image" ? 8 : 4;
+  const variationsToGenerate =
+    variationMode === "image"
+      ? CAMERA_VARIATIONS
+      : [
+          CAMERA_VARIATIONS[0],
+          CAMERA_VARIATIONS[2],
+          CAMERA_VARIATIONS[4],
+          CAMERA_VARIATIONS[6],
+        ];
+
   // OPTIMIZATION 1: Create placeholders IMMEDIATELY (optimistic UI)
   // Users see instant feedback before any async operations
-  const placeholderImages: PlacedImage[] = CAMERA_VARIATIONS.map((_, index) => {
-    const position = calculateBalancedPosition(
-      snappedSource.x,
-      snappedSource.y,
-      index,
-      selectedImage.width,
-      selectedImage.height,
-      selectedImage.width,
-      selectedImage.height
-    );
+  // For video mode, use position indices 0, 2, 4, 6 (top, right, bottom, left - the 4 cardinal directions)
+  const positionIndices =
+    variationMode === "image" ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 2, 4, 6];
 
-    return {
-      id: `variation-${timestamp}-${index}`,
-      src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-      x: position.x,
-      y: position.y,
-      width: selectedImage.width,
-      height: selectedImage.height,
-      rotation: 0,
-      isGenerated: true,
-      isLoading: true,
-    };
-  });
+  const placeholderImages: PlacedImage[] = variationsToGenerate.map(
+    (_, index) => {
+      const positionIndex = positionIndices[index];
+      const position = calculateBalancedPosition(
+        snappedSource.x,
+        snappedSource.y,
+        positionIndex,
+        selectedImage.width,
+        selectedImage.height,
+        selectedImage.width,
+        selectedImage.height
+      );
+
+      return {
+        id: `variation-${timestamp}-${index}`,
+        src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        x: position.x,
+        y: position.y,
+        width: selectedImage.width,
+        height: selectedImage.height,
+        rotation: 0,
+        isGenerated: true,
+        isLoading: true,
+      };
+    }
+  );
 
   // Add placeholders immediately - single state update
   setImages((prev) => [...prev, ...placeholderImages]);
@@ -255,7 +281,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // Show immediate feedback
   toast({
     title: "Generating variations",
-    description: "Creating 4 camera angle variations...",
+    description: `Creating ${variationCount} ${variationMode === "image" ? "image" : "video"} variations...`,
   });
 
   try {
@@ -276,7 +302,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
-      CAMERA_VARIATIONS.forEach((cameraPrompt, index) => {
+      variationsToGenerate.forEach((cameraPrompt, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
         // Combine user's variation prompt with camera angle prompt
         const combinedPrompt = variationPrompt
