@@ -38,7 +38,17 @@ export function useFileUpload(
               // Create a new image element to get the cropped dimensions
               const croppedImg = new window.Image();
               croppedImg.onload = () => {
-                const aspectRatio = croppedImg.width / croppedImg.height;
+                // Use naturalWidth/naturalHeight to avoid detached element issues
+                const naturalWidth =
+                  croppedImg.naturalWidth || croppedImg.width;
+                const naturalHeight =
+                  croppedImg.naturalHeight || croppedImg.height;
+
+                // Fall back to a safe default if both dimensions are zero
+                const safeWidth = naturalWidth || 512;
+                const safeHeight = naturalHeight || 512;
+
+                const aspectRatio = safeWidth / safeHeight;
                 const maxSize = 300;
                 let width = maxSize;
                 let height = maxSize / aspectRatio;

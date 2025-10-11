@@ -794,6 +794,37 @@ export const appRouter = router({
         // Create a unique ID for this generation
         const generationId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
+        // Map preset strings to concrete dimensions
+        const presetToDimensions: Record<
+          string,
+          { width: number; height: number }
+        > = {
+          landscape_16_9: { width: 3840, height: 2160 },
+          portrait_16_9: { width: 2160, height: 3840 },
+          landscape_4_3: { width: 3840, height: 2880 },
+          portrait_4_3: { width: 2880, height: 3840 },
+          square: { width: 3840, height: 3840 },
+        };
+
+        // Resolve imageSize to a concrete {width, height} object
+        let resolvedImageSize: { width: number; height: number };
+        if (typeof input.imageSize === "string") {
+          // Map preset string to dimensions
+          resolvedImageSize = presetToDimensions[input.imageSize] || {
+            width: 3840,
+            height: 2160,
+          };
+        } else if (input.imageSize && typeof input.imageSize === "object") {
+          // Already an object, validate it has width and height
+          resolvedImageSize = {
+            width: input.imageSize.width || 3840,
+            height: input.imageSize.height || 2160,
+          };
+        } else {
+          // Fallback to default landscape 4K
+          resolvedImageSize = { width: 3840, height: 2160 };
+        }
+
         // Use subscribe to wait for final result
         // Seedream doesn't provide streaming intermediate results, so we just wait for completion
         const result = await falClient.subscribe(
@@ -801,7 +832,7 @@ export const appRouter = router({
           {
             input: {
               enable_safety_checker: false,
-              image_size: input.imageSize || { width: 3840, height: 2160 },
+              image_size: resolvedImageSize,
               image_urls: [input.imageUrl],
               max_images: 1,
               num_images: 1,
