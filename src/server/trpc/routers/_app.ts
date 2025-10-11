@@ -768,10 +768,19 @@ export const appRouter = router({
         imageUrl: z.string().url(),
         prompt: z.string(),
         imageSize: z
-          .object({
-            width: z.number(),
-            height: z.number(),
-          })
+          .union([
+            z.enum([
+              "landscape_16_9",
+              "portrait_16_9",
+              "landscape_4_3",
+              "portrait_4_3",
+              "square",
+            ]),
+            z.object({
+              width: z.number(),
+              height: z.number(),
+            }),
+          ])
           .optional(),
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
@@ -793,7 +802,7 @@ export const appRouter = router({
             input: {
               prompt: input.prompt,
               image_urls: [input.imageUrl],
-              image_size: input.imageSize || { width: 2048, height: 2048 },
+              image_size: input.imageSize || "landscape_16_9",
               num_images: 1,
               max_images: 1,
               seed: input.seed,

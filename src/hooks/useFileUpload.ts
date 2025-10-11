@@ -1,6 +1,10 @@
 import { useCallback } from "react";
 import type { PlacedImage } from "@/types/canvas";
 import type { Viewport } from "./useCanvasState";
+import {
+  determineAspectRatio,
+  cropImageToAspectRatio,
+} from "@/utils/image-crop-utils";
 
 export function useFileUpload(
   setImages: (fn: (prev: PlacedImage[]) => PlacedImage[]) => void,
@@ -14,54 +18,72 @@ export function useFileUpload(
       Array.from(files).forEach((file, index) => {
         if (file.type.startsWith("image/")) {
           const reader = new FileReader();
-          reader.onload = (e) => {
+          reader.onload = async (e) => {
             const id = `img-${Date.now()}-${Math.random()}`;
             const img = new window.Image();
             img.crossOrigin = "anonymous";
-            img.onload = () => {
-              const aspectRatio = img.width / img.height;
-              const maxSize = 300;
-              let width = maxSize;
-              let height = maxSize / aspectRatio;
+            img.onload = async () => {
+              // Determine best aspect ratio and crop the image
+              const targetAspectRatio = determineAspectRatio(
+                img.naturalWidth,
+                img.naturalHeight
+              );
 
-              if (height > maxSize) {
-                height = maxSize;
-                width = maxSize * aspectRatio;
-              }
+              // Crop image to 16:9 or 9:16
+              const croppedImageSrc = await cropImageToAspectRatio(
+                img,
+                targetAspectRatio
+              );
 
-              let x, y;
-              if (position) {
-                x = (position.x - viewport.x) / viewport.scale - width / 2;
-                y = (position.y - viewport.y) / viewport.scale - height / 2;
-              } else {
-                const viewportCenterX =
-                  (canvasSize.width / 2 - viewport.x) / viewport.scale;
-                const viewportCenterY =
-                  (canvasSize.height / 2 - viewport.y) / viewport.scale;
-                x = viewportCenterX - width / 2;
-                y = viewportCenterY - height / 2;
-              }
+              // Create a new image element to get the cropped dimensions
+              const croppedImg = new window.Image();
+              croppedImg.onload = () => {
+                const aspectRatio = croppedImg.width / croppedImg.height;
+                const maxSize = 300;
+                let width = maxSize;
+                let height = maxSize / aspectRatio;
 
-              if (index > 0) {
-                x += index * 20;
-                y += index * 20;
-              }
+                if (height > maxSize) {
+                  height = maxSize;
+                  width = maxSize * aspectRatio;
+                }
 
-              setImages((prev) => [
-                ...prev,
-                {
-                  id,
-                  src: e.target?.result as string,
-                  x,
-                  y,
-                  width,
-                  height,
-                  rotation: 0,
-                },
-              ]);
+                let x, y;
+                if (position) {
+                  x = (position.x - viewport.x) / viewport.scale - width / 2;
+                  y = (position.y - viewport.y) / viewport.scale - height / 2;
+                } else {
+                  const viewportCenterX =
+                    (canvasSize.width / 2 - viewport.x) / viewport.scale;
+                  const viewportCenterY =
+                    (canvasSize.height / 2 - viewport.y) / viewport.scale;
+                  x = viewportCenterX - width / 2;
+                  y = viewportCenterY - height / 2;
+                }
+
+                if (index > 0) {
+                  x += index * 20;
+                  y += index * 20;
+                }
+
+                setImages((prev) => [
+                  ...prev,
+                  {
+                    id,
+                    src: croppedImageSrc,
+                    x,
+                    y,
+                    width,
+                    height,
+                    rotation: 0,
+                  },
+                ]);
+              };
+              croppedImg.src = croppedImageSrc;
             };
             img.src = e.target?.result as string;
           };
+
           reader.readAsDataURL(file);
         }
       });

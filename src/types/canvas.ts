@@ -56,10 +56,16 @@ export interface ActiveGeneration {
   prompt: string;
   loraUrl?: string;
   isVariation?: boolean;
-  imageSize?: {
-    width: number;
-    height: number;
-  };
+  imageSize?: 
+    | "landscape_16_9"
+    | "portrait_16_9"
+    | "landscape_4_3"
+    | "portrait_4_3"
+    | "square"
+    | {
+        width: number;
+        height: number;
+      };
 }
 
 export interface ActiveVideoGeneration {
