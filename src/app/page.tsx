@@ -127,9 +127,6 @@ export default function CanvasPage() {
   const { mutateAsync: generateTextToImage } = useMutation(
     trpc.generateTextToImage.mutationOptions()
   );
-  const { mutateAsync: generateImageVariation } = useMutation(
-    trpc.generateImageVariation.mutationOptions()
-  );
   const { mutateAsync: isolateObject } = useMutation(
     trpc.isolateObject.mutationOptions()
   );
@@ -292,11 +289,10 @@ export default function CanvasPage() {
       !generationState.generationSettings.prompt.trim();
 
     if (isVariationMode) {
-      // Generate 8 camera angle variations
+      // Generate 4 camera angle variations (optimized)
       await handleVariationGeneration({
         images: canvasState.images,
         selectedIds: canvasState.selectedIds,
-        customApiKey: uiState.customApiKey,
         viewport: canvasState.viewport,
         falClient,
         setImages: canvasState.setImages,
@@ -304,7 +300,6 @@ export default function CanvasPage() {
         setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
         setActiveGenerations: generationState.setActiveGenerations,
         toast,
-        generateImageVariation,
       });
     } else {
       // Standard generation flow

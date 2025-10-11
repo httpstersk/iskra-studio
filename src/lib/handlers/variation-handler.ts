@@ -1,13 +1,121 @@
 import type { PlacedImage } from "@/types/canvas";
 import type { FalClient } from "@fal-ai/client";
 import { CAMERA_VARIATIONS } from "@/constants/camera-variations";
-import { uploadImageDirect } from "./generation-handler";
 import { snapPosition } from "@/utils/snap-utils";
+
+/**
+ * Optimized upload function that accepts blob directly (no FileReader conversion)
+ */
+async function uploadBlobDirect(
+  blob: Blob,
+  falClient: FalClient,
+  toast: VariationHandlerDeps["toast"],
+  setIsApiKeyDialogOpen: VariationHandlerDeps["setIsApiKeyDialogOpen"]
+): Promise<{ url: string }> {
+  try {
+    if (blob.size > 10 * 1024 * 1024) {
+      console.warn("Large image:", (blob.size / 1024 / 1024).toFixed(2) + "MB");
+    }
+
+    const uploadResult = await falClient.storage.upload(blob);
+    return { url: uploadResult };
+  } catch (error: any) {
+    const isRateLimit =
+      error.status === 429 ||
+      error.message?.includes("429") ||
+      error.message?.includes("rate limit") ||
+      error.message?.includes("Rate limit");
+
+    if (isRateLimit) {
+      toast({
+        title: "Rate limit exceeded",
+        description: "Add your FAL API key to bypass rate limits.",
+        variant: "destructive",
+      });
+      setIsApiKeyDialogOpen(true);
+    } else {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    }
+    throw error;
+  }
+}
+
+/**
+ * Process image to blob efficiently without FileReader
+ */
+async function processImageToBlob(
+  selectedImage: PlacedImage
+): Promise<{ blob: Blob; dimensions: { width: number; height: number } }> {
+  // Load image
+  const imgElement = new window.Image();
+  imgElement.crossOrigin = "anonymous";
+  imgElement.src = selectedImage.src;
+
+  await new Promise<void>((resolve, reject) => {
+    imgElement.onload = () => resolve();
+    imgElement.onerror = reject;
+  });
+
+  // Get crop values or use defaults
+  const cropX = selectedImage.cropX || 0;
+  const cropY = selectedImage.cropY || 0;
+  const cropWidth = selectedImage.cropWidth || 1;
+  const cropHeight = selectedImage.cropHeight || 1;
+
+  // Calculate effective dimensions
+  const effectiveWidth = cropWidth * imgElement.naturalWidth;
+  const effectiveHeight = cropHeight * imgElement.naturalHeight;
+
+  // Create canvas for the source image
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d", { alpha: true });
+  if (!ctx) throw new Error("Failed to get canvas context");
+
+  canvas.width = effectiveWidth;
+  canvas.height = effectiveHeight;
+
+  // Draw the cropped image
+  ctx.drawImage(
+    imgElement,
+    cropX * imgElement.naturalWidth,
+    cropY * imgElement.naturalHeight,
+    cropWidth * imgElement.naturalWidth,
+    cropHeight * imgElement.naturalHeight,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  // Convert to blob directly (no FileReader needed)
+  // Use JPEG for better performance if no transparency needed
+  const hasTransparency =
+    selectedImage.src.includes(".png") ||
+    selectedImage.src.includes("image/png");
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Failed to create blob"));
+      },
+      hasTransparency ? "image/png" : "image/jpeg",
+      0.95
+    );
+  });
+
+  return {
+    blob,
+    dimensions: { width: effectiveWidth, height: effectiveHeight },
+  };
+}
 
 interface VariationHandlerDeps {
   images: PlacedImage[];
   selectedIds: string[];
-  customApiKey?: string;
   viewport: { x: number; y: number; scale: number };
   falClient: FalClient;
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
@@ -21,7 +129,6 @@ interface VariationHandlerDeps {
     description?: string;
     variant?: "default" | "destructive";
   }) => void;
-  generateImageVariation: (params: any) => Promise<any>;
 }
 
 /**
@@ -74,22 +181,21 @@ export function calculateBalancedPosition(
 /**
  * Handle variation generation for a selected image
  * Generates 4 variations with different camera settings positioned on each side
+ * Optimized for maximum performance and UX
  */
 export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   const {
     images,
     selectedIds,
-    customApiKey,
     falClient,
     setImages,
     setIsGenerating,
     setIsApiKeyDialogOpen,
     setActiveGenerations,
     toast,
-    generateImageVariation,
   } = deps;
 
-  // Ensure exactly one image is selected
+  // Validate selection early
   if (selectedIds.length !== 1) {
     toast({
       title: "Select one image",
@@ -111,154 +217,79 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
   setIsGenerating(true);
 
-  try {
-    // Load and prepare the source image
-    const imgElement = new window.Image();
-    imgElement.crossOrigin = "anonymous";
-    imgElement.src = selectedImage.src;
-    await new Promise((resolve, reject) => {
-      imgElement.onload = resolve;
-      imgElement.onerror = reject;
-    });
+  // Snap source position for consistent alignment
+  const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
+  const timestamp = Date.now();
 
-    // Get crop values or use defaults
-    const cropX = selectedImage.cropX || 0;
-    const cropY = selectedImage.cropY || 0;
-    const cropWidth = selectedImage.cropWidth || 1;
-    const cropHeight = selectedImage.cropHeight || 1;
-
-    // Create canvas for the source image
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Failed to get canvas context");
-
-    // Calculate effective dimensions
-    const effectiveWidth = cropWidth * imgElement.naturalWidth;
-    const effectiveHeight = cropHeight * imgElement.naturalHeight;
-
-    // Set canvas size to original resolution
-    canvas.width = effectiveWidth;
-    canvas.height = effectiveHeight;
-
-    // Draw the cropped image
-    ctx.drawImage(
-      imgElement,
-      cropX * imgElement.naturalWidth,
-      cropY * imgElement.naturalHeight,
-      cropWidth * imgElement.naturalWidth,
-      cropHeight * imgElement.naturalHeight,
-      0,
-      0,
-      canvas.width,
-      canvas.height
+  // OPTIMIZATION 1: Create placeholders IMMEDIATELY (optimistic UI)
+  // Users see instant feedback before any async operations
+  const placeholderImages: PlacedImage[] = CAMERA_VARIATIONS.map((_, index) => {
+    const position = calculateBalancedPosition(
+      snappedSource.x,
+      snappedSource.y,
+      index,
+      selectedImage.width,
+      selectedImage.height,
+      selectedImage.width,
+      selectedImage.height
     );
 
-    // Convert to blob and upload
-    const blob = await new Promise<Blob>((resolve) => {
-      canvas.toBlob((blob) => resolve(blob!), "image/png");
-    });
+    return {
+      id: `variation-${timestamp}-${index}`,
+      src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+      x: position.x,
+      y: position.y,
+      width: selectedImage.width,
+      height: selectedImage.height,
+      rotation: 0,
+      isGenerated: true,
+      isLoading: true,
+    };
+  });
 
-    const reader = new FileReader();
-    const dataUrl = await new Promise<string>((resolve) => {
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.readAsDataURL(blob);
-    });
+  // Add placeholders immediately - single state update
+  setImages((prev) => [...prev, ...placeholderImages]);
 
-    // Upload the image
-    let uploadResult;
-    try {
-      uploadResult = await uploadImageDirect(
-        dataUrl,
-        falClient,
-        toast,
-        setIsApiKeyDialogOpen
-      );
-    } catch (uploadError) {
-      console.error("Failed to upload image:", uploadError);
-      toast({
-        title: "Upload failed",
-        description: "Failed to upload the source image",
-        variant: "destructive",
-      });
-      setIsGenerating(false);
-      return;
-    }
+  // Show immediate feedback
+  toast({
+    title: "Generating variations",
+    description: "Creating 4 camera angle variations...",
+  });
 
-    if (!uploadResult?.url) {
-      console.error("Upload succeeded but no URL returned");
-      toast({
-        title: "Upload failed",
-        description: "No URL returned from upload",
-        variant: "destructive",
-      });
-      setIsGenerating(false);
-      return;
-    }
+  try {
+    // OPTIMIZATION 2: Process image to blob without FileReader
+    const { blob } = await processImageToBlob(selectedImage);
 
-    // Snap source image position for consistent alignment
-    const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
+    // OPTIMIZATION 3: Upload blob directly (no FileReader conversion)
+    const uploadResult = await uploadBlobDirect(
+      blob,
+      falClient,
+      toast,
+      setIsApiKeyDialogOpen
+    );
 
-    // Create placeholder images immediately for better UX
-    const timestamp = Date.now();
-    const placeholderImages: PlacedImage[] = [];
-    
-    console.log("Creating placeholder images for 4 variations...");
-    
-    CAMERA_VARIATIONS.forEach((prompt, index) => {
-      const position = calculateBalancedPosition(
-        snappedSource.x,
-        snappedSource.y,
-        index,
-        selectedImage.width,
-        selectedImage.height,
-        selectedImage.width,
-        selectedImage.height
-      );
-
-      const placeholderId = `variation-${timestamp}-${index}`;
-      
-      const placeholderImage: PlacedImage = {
-        id: placeholderId,
-        src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-        x: position.x,
-        y: position.y,
-        width: selectedImage.width,
-        height: selectedImage.height,
-        rotation: 0,
-        isGenerated: true,
-        isLoading: true,
-      };
-
-      placeholderImages.push(placeholderImage);
-
-      // Add to activeGenerations Map so StreamingImage can handle it
-      setActiveGenerations((prev) => {
-        const newMap = new Map(prev);
+    // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      CAMERA_VARIATIONS.forEach((prompt, index) => {
+        const placeholderId = `variation-${timestamp}-${index}`;
         newMap.set(placeholderId, {
           imageUrl: uploadResult.url,
           prompt: prompt,
         });
-        return newMap;
       });
+      return newMap;
     });
 
-    // Add all placeholder images to canvas at once
-    setImages((prev) => [...prev, ...placeholderImages]);
-
-    console.log("Placeholders created. StreamingImage components will handle generation.");
-
-    // Now that placeholders are created and activeGenerations are set,
-    // the StreamingImage components will handle the actual generation
-    // We can turn off the generating flag since the setup is complete
+    // Setup complete - StreamingImage components will handle generation
     setIsGenerating(false);
-
-    toast({
-      title: "Generating variations",
-      description: "Creating 4 camera angle variations...",
-    });
-
   } catch (error) {
-    console.error("Error generating variations:", error);
+    console.error("Error in variation generation:", error);
+
+    // Clean up placeholders on error
+    const placeholderIds = placeholderImages.map((img) => img.id);
+    setImages((prev) => prev.filter((img) => !placeholderIds.includes(img.id)));
+
     toast({
       title: "Generation failed",
       description:
