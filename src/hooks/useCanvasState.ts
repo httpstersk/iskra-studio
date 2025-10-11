@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import type { SetStateAction } from "react";
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
+import { snapImagesToGrid } from "@/utils/snap-utils";
 
 export interface Viewport {
   x: number;
@@ -8,7 +10,7 @@ export interface Viewport {
 }
 
 export function useCanvasState() {
-  const [images, setImages] = useState<PlacedImage[]>([]);
+  const [images, setImagesState] = useState<PlacedImage[]>([]);
   const [videos, setVideos] = useState<PlacedVideo[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [viewport, setViewport] = useState<Viewport>({
@@ -42,6 +44,21 @@ export function useCanvasState() {
       setIsCanvasReady(true);
     }
   }, [canvasSize]);
+
+  const setImages = useCallback(
+    (value: SetStateAction<PlacedImage[]>) => {
+      setImagesState((prev) => {
+        const nextState =
+          typeof value === "function"
+            ? (value as (prev: PlacedImage[]) => PlacedImage[])(prev)
+            : value;
+
+        const snapped = snapImagesToGrid(nextState);
+        return snapped;
+      });
+    },
+    []
+  );
 
   return {
     images,

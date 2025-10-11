@@ -1,11 +1,14 @@
-import React from "react";
-import { Rect, Group, Text } from "react-konva";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Group, Rect, Text } from "react-konva";
+import Konva from "konva";
 import type { PlacedImage } from "@/types/canvas";
 import { calculateBalancedPosition } from "@/lib/handlers/variation-handler";
 import { snapPosition } from "@/utils/snap-utils";
 
 interface VariationGhostPlaceholdersProps {
   selectedImage: PlacedImage;
+  stageRef: React.RefObject<Konva.Stage>;
+  isDragging: boolean;
 }
 
 /**
@@ -14,30 +17,70 @@ interface VariationGhostPlaceholdersProps {
  */
 export const VariationGhostPlaceholders: React.FC<
   VariationGhostPlaceholdersProps
-> = ({ selectedImage }) => {
-  // Snap the source image position to grid first to ensure edge-to-edge alignment
-  const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
+> = ({ selectedImage, stageRef, isDragging }) => {
+  const nodeRef = useRef<Konva.Node | null>(null);
+  const [anchor, setAnchor] = useState(() =>
+    snapPosition(selectedImage.x, selectedImage.y)
+  );
 
-  const ghostPlaceholders = Array.from({ length: 4 }, (_, i) => {
-    // Calculate position based on snapped source position
-    const position = calculateBalancedPosition(
-      snappedSource.x,
-      snappedSource.y,
-      i,
-      selectedImage.width,
-      selectedImage.height,
-      selectedImage.width,
-      selectedImage.height
-    );
+  useEffect(() => {
+    nodeRef.current = stageRef.current?.findOne(`#${selectedImage.id}`) ?? null;
+  }, [stageRef, selectedImage.id]);
 
-    return {
-      id: `ghost-${i}`,
-      x: position.x,
-      y: position.y,
-      width: selectedImage.width,
-      height: selectedImage.height,
+  useEffect(() => {
+    if (!isDragging) {
+      setAnchor(snapPosition(selectedImage.x, selectedImage.y));
+      return;
+    }
+
+    let frameId: number | undefined;
+
+    const updatePosition = () => {
+      if (!nodeRef.current) {
+        nodeRef.current = stageRef.current?.findOne(`#${selectedImage.id}`) ?? null;
+      }
+
+      const node = nodeRef.current;
+      if (node) {
+        const snapped = snapPosition(node.x(), node.y());
+        setAnchor((prev) =>
+          prev.x === snapped.x && prev.y === snapped.y ? prev : snapped
+        );
+      }
+
+      frameId = requestAnimationFrame(updatePosition);
     };
-  });
+
+    updatePosition();
+
+    return () => {
+      if (frameId !== undefined) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, [isDragging, stageRef, selectedImage.id, selectedImage.x, selectedImage.y]);
+
+  const ghostPlaceholders = useMemo(() => {
+    return Array.from({ length: 4 }, (_, i) => {
+      const position = calculateBalancedPosition(
+        anchor.x,
+        anchor.y,
+        i,
+        selectedImage.width,
+        selectedImage.height,
+        selectedImage.width,
+        selectedImage.height
+      );
+
+      return {
+        id: `ghost-${i}`,
+        x: position.x,
+        y: position.y,
+        width: selectedImage.width,
+        height: selectedImage.height,
+      };
+    });
+  }, [anchor.x, anchor.y, selectedImage.height, selectedImage.width]);
 
   return (
     <Group>

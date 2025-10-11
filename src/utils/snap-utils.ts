@@ -56,7 +56,19 @@ export const snapImagesToGrid = (
   images: PlacedImage[],
   gridSize: number = GRID_SIZE
 ): PlacedImage[] => {
-  return images.map((image) => snapImageToGrid(image, gridSize));
+  let hasChanges = false;
+
+  const snappedImages = images.map((image) => {
+    const snappedImage = snapImageToGrid(image, gridSize);
+
+    if (snappedImage !== image) {
+      hasChanges = true;
+    }
+
+    return snappedImage;
+  });
+
+  return hasChanges ? snappedImages : images;
 };
 
 /**
@@ -86,7 +98,7 @@ export const useSnapFeedback = () => {
 
   return (x: number, y: number) => {
     const snapped = snapPosition(x, y);
-    
+
     // Trigger haptic feedback if position changed after snapping
     if (
       (lastSnappedX !== null && lastSnappedX !== snapped.x) ||
@@ -94,10 +106,10 @@ export const useSnapFeedback = () => {
     ) {
       triggerSnapHaptic();
     }
-    
+
     lastSnappedX = snapped.x;
     lastSnappedY = snapped.y;
-    
+
     return snapped;
   };
 };

@@ -264,7 +264,9 @@ export function CanvasStageRenderer({
           {/* Ghost placeholders for variation mode */}
           {isVariationMode && selectedImageForVariation && (
             <VariationGhostPlaceholders
+              isDragging={interactions.isDraggingImage}
               selectedImage={selectedImageForVariation}
+              stageRef={stageRef}
             />
           )}
 
