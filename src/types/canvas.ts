@@ -59,6 +59,11 @@ export interface ActiveGeneration {
   imageUrl: string;
   prompt: string;
   loraUrl?: string;
+  isVariation?: boolean;
+  imageSize?: {
+    width: number;
+    height: number;
+  };
 }
 
 export interface ActiveVideoGeneration {

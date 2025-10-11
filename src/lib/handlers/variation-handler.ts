@@ -286,6 +286,11 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         newMap.set(placeholderId, {
           imageUrl: uploadResult.url,
           prompt: combinedPrompt,
+          isVariation: true,
+          imageSize: {
+            width: selectedImage.width,
+            height: selectedImage.height,
+          },
         });
       });
 

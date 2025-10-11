@@ -12,7 +12,7 @@ const fal = createFalClient({
 async function getFalClient(
   apiKey: string | undefined,
   ctx: any,
-  isVideo: boolean = false,
+  isVideo: boolean = false
 ) {
   if (apiKey) {
     return createFalClient({
@@ -45,7 +45,7 @@ async function getFalClient(
   const limiterResult = await shouldLimitRequest(
     limiter,
     ip,
-    isVideo ? "video" : undefined,
+    isVideo ? "video" : undefined
   );
   if (limiterResult.shouldLimitRequest) {
     const errorMessage = isVideo
@@ -76,7 +76,7 @@ export const appRouter = router({
         prompt: z.string().optional(),
         styleId: z.string().optional(),
         apiKey: z.string().optional(),
-      }),
+      })
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -103,7 +103,7 @@ export const appRouter = router({
               num_inference_steps: 25,
               guidance_scale: 7.5,
             },
-          },
+          }
         );
 
         let eventIndex = 0;
@@ -179,7 +179,7 @@ export const appRouter = router({
           seed: z.number().optional().default(-1),
           apiKey: z.string().optional(),
         })
-        .passthrough(), // Allow additional fields for different models
+        .passthrough() // Allow additional fields for different models
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -235,7 +235,7 @@ export const appRouter = router({
                 // Round to nearest multiple of 8
                 startFrame = Math.round(startFrame / 8) * 8;
                 console.log(
-                  `Adjusted start frame from ${(input as any).startFrameNum} to ${startFrame} (must be multiple of 8)`,
+                  `Adjusted start frame from ${(input as any).startFrameNum} to ${startFrame} (must be multiple of 8)`
                 );
               }
 
@@ -443,7 +443,7 @@ export const appRouter = router({
 
         console.log(
           `Calling ${modelEndpoint} with parameters:`,
-          JSON.stringify(inputParams, null, 2),
+          JSON.stringify(inputParams, null, 2)
         );
 
         let result;
@@ -483,7 +483,7 @@ export const appRouter = router({
               errorDetail = JSON.stringify(errorDetail);
             }
             throw new Error(
-              `Invalid parameters for ${modelEndpoint}: ${errorDetail}`,
+              `Invalid parameters for ${modelEndpoint}: ${errorDetail}`
             );
           }
           throw apiError;
@@ -539,7 +539,7 @@ export const appRouter = router({
         duration: z.number().optional().default(3),
         styleId: z.string().optional(),
         apiKey: z.string().optional(),
-      }),
+      })
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -570,7 +570,7 @@ export const appRouter = router({
               motion_bucket_id: 127, // Higher values = more motion
               seed: Math.floor(Math.random() * 2147483647),
             },
-          },
+          }
         );
 
         let eventIndex = 0;
@@ -633,7 +633,7 @@ export const appRouter = router({
       z.object({
         imageUrl: z.string().url(),
         apiKey: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       try {
@@ -646,7 +646,7 @@ export const appRouter = router({
               image_url: input.imageUrl,
               sync_mode: true,
             },
-          },
+          }
         );
 
         return {
@@ -655,9 +655,7 @@ export const appRouter = router({
       } catch (error) {
         console.error("Error removing background:", error);
         throw new Error(
-          error instanceof Error
-            ? error.message
-            : "Failed to remove background",
+          error instanceof Error ? error.message : "Failed to remove background"
         );
       }
     }),
@@ -668,7 +666,7 @@ export const appRouter = router({
         imageUrl: z.string().url(),
         textInput: z.string(),
         apiKey: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       try {
@@ -721,7 +719,7 @@ export const appRouter = router({
         ]);
 
         console.log(
-          `Original image: ${originalMetadata.width}x${originalMetadata.height}`,
+          `Original image: ${originalMetadata.width}x${originalMetadata.height}`
         );
         console.log(`Mask image: ${maskMetadata.width}x${maskMetadata.height}`);
 
@@ -734,7 +732,7 @@ export const appRouter = router({
           console.log("Resizing mask to match original image dimensions...");
           processedMask = maskImage.resize(
             originalMetadata.width,
-            originalMetadata.height,
+            originalMetadata.height
           );
         }
 
@@ -789,7 +787,7 @@ export const appRouter = router({
         // Upload the segmented image to FAL storage
         console.log("Uploading segmented image to storage...");
         const uploadResult = await falClient.storage.upload(
-          new Blob([new Uint8Array(segmentedImage)], { type: "image/png" }),
+          new Blob([new Uint8Array(segmentedImage)], { type: "image/png" })
         );
 
         // Return the URL of the segmented object
@@ -815,14 +813,14 @@ export const appRouter = router({
           error.message?.includes("not enterprise ready")
         ) {
           throw new Error(
-            "This model requires an enterprise FAL account. Please contact FAL support for access or use the 'Remove Background' feature instead.",
+            "This model requires an enterprise FAL account. Please contact FAL support for access or use the 'Remove Background' feature instead."
           );
         }
 
         // Check for other specific error types
         if (error.status === 403 || error.message?.includes("Forbidden")) {
           throw new Error(
-            "API access denied. Please check your FAL API key permissions.",
+            "API access denied. Please check your FAL API key permissions."
           );
         }
 
@@ -846,7 +844,7 @@ export const appRouter = router({
           ])
           .optional(),
         apiKey: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       try {
@@ -868,7 +866,7 @@ export const appRouter = router({
               seed: input.seed,
               loras,
             },
-          },
+          }
         );
 
         // Handle different possible response structures
@@ -886,7 +884,7 @@ export const appRouter = router({
       } catch (error) {
         console.error("Error in text-to-image generation:", error);
         throw new Error(
-          error instanceof Error ? error.message : "Failed to generate image",
+          error instanceof Error ? error.message : "Failed to generate image"
         );
       }
     }),
@@ -900,7 +898,7 @@ export const appRouter = router({
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
         apiKey: z.string().optional(),
-      }),
+      })
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -985,7 +983,7 @@ export const appRouter = router({
           .optional(),
         seed: z.number().optional(),
         apiKey: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       try {
@@ -1003,7 +1001,7 @@ export const appRouter = router({
               seed: input.seed,
               enable_safety_checker: true,
             },
-          },
+          }
         );
 
         // Handle response
@@ -1021,8 +1019,83 @@ export const appRouter = router({
         throw new Error(
           error instanceof Error
             ? error.message
-            : "Failed to generate image variation",
+            : "Failed to generate image variation"
         );
+      }
+    }),
+
+  generateImageVariationStream: publicProcedure
+    .input(
+      z.object({
+        imageUrl: z.string().url(),
+        prompt: z.string(),
+        imageSize: z
+          .object({
+            width: z.number(),
+            height: z.number(),
+          })
+          .optional(),
+        seed: z.number().optional(),
+        lastEventId: z.string().optional(),
+        apiKey: z.string().optional(),
+      })
+    )
+    .subscription(async function* ({ input, signal, ctx }) {
+      try {
+        const falClient = await getFalClient(input.apiKey, ctx);
+
+        // Create a unique ID for this generation
+        const generationId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+        // Use subscribe to wait for final result
+        // Seedream doesn't provide streaming intermediate results, so we just wait for completion
+        const result = await falClient.subscribe(
+          "fal-ai/bytedance/seedream/v4/edit",
+          {
+            input: {
+              prompt: input.prompt,
+              image_urls: [input.imageUrl],
+              image_size: input.imageSize || { width: 2048, height: 2048 },
+              num_images: 1,
+              max_images: 1,
+              seed: input.seed,
+              enable_safety_checker: true,
+            },
+            pollInterval: 1000,
+            logs: true,
+          }
+        );
+
+        if (signal?.aborted) {
+          return;
+        }
+
+        // Handle different possible response structures
+        const resultData = (result as any).data || result;
+        const images = resultData.images || [];
+        if (!images?.[0]) {
+          yield tracked(`${generationId}_error`, {
+            type: "error",
+            error: "No image generated",
+          });
+          return;
+        }
+
+        // Send the final image
+        yield tracked(`${generationId}_complete`, {
+          type: "complete",
+          imageUrl: images[0].url,
+          seed: resultData.seed,
+        });
+      } catch (error) {
+        console.error("Error in image variation stream:", error);
+        yield tracked(`error_${Date.now()}`, {
+          type: "error",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to generate image variation",
+        });
       }
     }),
 });
