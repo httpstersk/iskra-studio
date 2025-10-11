@@ -1,10 +1,12 @@
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import React, { useRef, useMemo, useCallback } from "react";
 import { Image as KonvaImage } from "react-konva";
 import Konva from "konva";
 import useImage from "use-image";
 import { useStreamingImage } from "@/hooks/useStreamingImage";
+import { useImageAnimation } from "@/hooks/useImageAnimation";
+import { useImageDrag } from "@/hooks/useImageDrag";
+import { useImageInteraction } from "@/hooks/useImageInteraction";
 import type { PlacedImage } from "@/types/canvas";
-import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
 
 interface CanvasImageProps {
   dragStartPositions: Map<string, { x: number; y: number }>;
@@ -21,6 +23,9 @@ interface CanvasImageProps {
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
 }
 
+/**
+ * Hook to get the appropriate image source (streaming or normal)
+ */
 const useCanvasImageSource = (src: string, isGenerated: boolean) => {
   const [streamingImg] = useStreamingImage(isGenerated ? src : "");
   const [normalImg] = useImage(isGenerated ? "" : src, "anonymous");
@@ -31,18 +36,20 @@ const useCanvasImageSource = (src: string, isGenerated: boolean) => {
   );
 };
 
+/**
+ * Hook to throttle updates to 60fps
+ */
 const useFrameThrottle = (limitMs = 16) => {
   const lastRef = useRef(0);
 
-  return () => {
+  return useCallback(() => {
     const now = performance.now();
     if (now - lastRef.current < limitMs) {
       return false;
     }
-
     lastRef.current = now;
     return true;
-  };
+  }, [limitMs]);
 };
 
 export const CanvasImage: React.FC<CanvasImageProps> = ({
@@ -61,82 +68,76 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
 }) => {
   const shapeRef = useRef<Konva.Image>(null);
   const throttleFrame = useFrameThrottle();
+
+  // Get image source (streaming or normal)
   const img = useCanvasImageSource(image.src, !!image.isGenerated);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isDraggable, setIsDraggable] = useState(true);
-  const [loadingOpacity, setLoadingOpacity] = useState(0.5);
-  const [displayOpacity, setDisplayOpacity] = useState(
-    image.isLoading ? 0.5 : image.isGenerated ? 0.9 : 1
-  );
-  const lastSnapPos = useRef<{ x: number; y: number } | null>(null);
-  const wasLoadingRef = useRef(image.isLoading);
 
-  // Pulsing animation for loading placeholders
-  useEffect(() => {
-    if (!image.isLoading) return;
+  // Handle loading and fade-in animations
+  const { displayOpacity } = useImageAnimation({
+    isLoading: !!image.isLoading,
+    isGenerated: !!image.isGenerated,
+    hasImage: !!img,
+  });
 
-    let animationFrame: number;
-    const startTime = Date.now();
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const cycle = (elapsed % 2000) / 2000; // 2 second cycle
-      const opacity = 0.3 + Math.sin(cycle * Math.PI * 2) * 0.2; // Oscillate between 0.1 and 0.5
-      setLoadingOpacity(opacity);
-      animationFrame = requestAnimationFrame(animate);
-    };
-
-    animationFrame = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
-      }
-    };
-  }, [image.isLoading]);
-
-  // Smooth fade-in when loading completes
-  useEffect(() => {
-    // Check if we just transitioned from loading to loaded
-    if (wasLoadingRef.current && !image.isLoading && img) {
-      // Animate from current loading opacity to final opacity
-      const startOpacity = loadingOpacity;
-      const targetOpacity = image.isGenerated ? 0.9 : 1;
-      const startTime = Date.now();
-      const duration = 600; // 600ms fade-in
-
-      let animationFrame: number;
-
-      const animate = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Ease-out cubic for smooth deceleration
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const currentOpacity = startOpacity + (targetOpacity - startOpacity) * eased;
-        
-        setDisplayOpacity(currentOpacity);
-
-        if (progress < 1) {
-          animationFrame = requestAnimationFrame(animate);
-        }
-      };
-
-      animationFrame = requestAnimationFrame(animate);
-
-      return () => {
-        if (animationFrame) {
-          cancelAnimationFrame(animationFrame);
-        }
-      };
-    } else if (image.isLoading) {
-      setDisplayOpacity(loadingOpacity);
-    } else {
-      setDisplayOpacity(image.isGenerated ? 0.9 : 1);
+  // Handle drag behavior
+  const { handleDragMove, handleDragEnd: handleDragEndInternal } = useImageDrag(
+    {
+      image,
+      selectedIds,
+      dragStartPositions,
+      onChange,
+      setImages,
+      throttleFrame,
     }
+  );
 
-    wasLoadingRef.current = image.isLoading;
-  }, [image.isLoading, image.isGenerated, loadingOpacity, img]);
+  // Handle interaction states
+  const {
+    isHovered,
+    isDraggable,
+    strokeColor,
+    strokeWidth,
+    handleMouseEnter,
+    handleMouseLeave,
+    handleMouseDown,
+    handleMouseUp,
+    handleDragStart: handleDragStartInternal,
+  } = useImageInteraction({
+    image,
+    isSelected,
+    isCroppingImage,
+    onSelect,
+    onDragStart,
+  });
+
+  // Wrap drag end to call both internal and external handlers
+  const handleDragEndWrapper = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      handleDragEndInternal();
+      onDragEnd();
+    },
+    [handleDragEndInternal, onDragEnd]
+  );
+
+  // Memoize crop calculation for performance
+  const cropConfig = useMemo(() => {
+    if (image.cropX === undefined || isCroppingImage || !img) {
+      return undefined;
+    }
+    return {
+      x: (image.cropX || 0) * (img.naturalWidth || 0),
+      y: (image.cropY || 0) * (img.naturalHeight || 0),
+      width: (image.cropWidth || 1) * (img.naturalWidth || 0),
+      height: (image.cropHeight || 1) * (img.naturalHeight || 0),
+    };
+  }, [
+    image.cropX,
+    image.cropY,
+    image.cropWidth,
+    image.cropHeight,
+    isCroppingImage,
+    img,
+  ]);
 
   return (
     <KonvaImage
@@ -148,140 +149,22 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       width={image.width}
       height={image.height}
       rotation={image.rotation}
-      crop={
-        image.cropX !== undefined && !isCroppingImage
-          ? {
-              x: (image.cropX || 0) * (img?.naturalWidth || 0),
-              y: (image.cropY || 0) * (img?.naturalHeight || 0),
-              width: (image.cropWidth || 1) * (img?.naturalWidth || 0),
-              height: (image.cropHeight || 1) * (img?.naturalHeight || 0),
-            }
-          : undefined
-      }
+      crop={cropConfig}
       draggable={isDraggable}
       onClick={onSelect}
       onTap={onSelect}
       onDblClick={onDoubleClick}
       onDblTap={onDoubleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onMouseDown={(e) => {
-        // Only allow dragging with left mouse button (0)
-        // Middle mouse (1) and right mouse (2) should not drag images
-        const isLeftButton = e.evt.button === 0;
-        setIsDraggable(isLeftButton);
-
-        // For middle mouse button, don't stop propagation
-        // Let it bubble up to the stage for canvas panning
-        if (e.evt.button === 1) {
-          return;
-        }
-      }}
-      onMouseUp={() => {
-        // Re-enable dragging after mouse up
-        setIsDraggable(true);
-      }}
-      onDragStart={(e) => {
-        // Stop propagation to prevent stage from being dragged
-        e.cancelBubble = true;
-        // Auto-select on drag if not already selected
-        if (!isSelected) {
-          onSelect(e);
-        }
-        onDragStart();
-      }}
-      onDragMove={(e) => {
-        const node = e.target;
-        const nodeX = node.x();
-        const nodeY = node.y();
-
-        // Snap to grid
-        const snapped = snapPosition(nodeX, nodeY);
-
-        // Always constrain visual position to grid
-        node.x(snapped.x);
-        node.y(snapped.y);
-
-        // Only update state when snap position actually changes
-        const hasPositionChanged =
-          !lastSnapPos.current ||
-          lastSnapPos.current.x !== snapped.x ||
-          lastSnapPos.current.y !== snapped.y;
-
-        if (!hasPositionChanged) {
-          return; // Skip state updates if still in same grid cell
-        }
-
-        // Throttle state updates only when position changes
-        if (!throttleFrame()) {
-          return;
-        }
-
-        // Trigger haptic feedback on position change
-        if (lastSnapPos.current) {
-          triggerSnapHaptic();
-        }
-        lastSnapPos.current = snapped;
-
-        if (selectedIds.includes(image.id) && selectedIds.length > 1) {
-          // Multi-selection drag
-          const startPos = dragStartPositions.get(image.id);
-          if (!startPos) {
-            return;
-          }
-
-          const deltaX = snapped.x - startPos.x;
-          const deltaY = snapped.y - startPos.y;
-
-          // Use functional update to avoid stale closures
-          setImages((prevImages) => {
-            return prevImages.map((img) => {
-              if (img.id === image.id) {
-                return { ...img, x: snapped.x, y: snapped.y };
-              }
-
-              if (selectedIds.includes(img.id)) {
-                const imgStartPos = dragStartPositions.get(img.id);
-                if (imgStartPos) {
-                  const targetX = imgStartPos.x + deltaX;
-                  const targetY = imgStartPos.y + deltaY;
-                  const snappedPos = snapPosition(targetX, targetY);
-
-                  return {
-                    ...img,
-                    x: snappedPos.x,
-                    y: snappedPos.y,
-                  };
-                }
-              }
-
-              return img;
-            });
-          });
-        } else {
-          // Single item drag
-          onChange({
-            x: snapped.x,
-            y: snapped.y,
-          });
-        }
-      }}
-      onDragEnd={(e) => {
-        // Reset snap tracking on drag end
-        lastSnapPos.current = null;
-        onDragEnd();
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onDragStart={handleDragStartInternal}
+      onDragMove={handleDragMove}
+      onDragEnd={handleDragEndWrapper}
       opacity={displayOpacity}
-      stroke={
-        image.isLoading
-          ? "#6b7280"
-          : isSelected
-            ? "#3b82f6"
-            : isHovered
-              ? "#3b82f6"
-              : "transparent"
-      }
-      strokeWidth={image.isLoading ? 2 : isSelected || isHovered ? 1 : 0}
+      stroke={strokeColor}
+      strokeWidth={strokeWidth}
     />
   );
 };

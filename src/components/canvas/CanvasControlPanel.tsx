@@ -114,15 +114,6 @@ export function CanvasControlPanel({
                   isAnimating={!showSuccess}
                   isSuccess={showSuccess}
                   className="w-5 h-5"
-                  activeGenerationsSize={
-                    activeGenerationsSize +
-                    activeVideoGenerationsSize +
-                    (isGenerating ? 1 : 0) +
-                    (isRemovingVideoBackground ? 1 : 0) +
-                    (isIsolating ? 1 : 0) +
-                    (isExtendingVideo ? 1 : 0) +
-                    (isTransformingVideo ? 1 : 0)
-                  }
                   outputType={
                     activeVideoGenerationsSize > 0 ||
                     isRemovingVideoBackground ||
