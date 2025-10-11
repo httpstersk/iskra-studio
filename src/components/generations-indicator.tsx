@@ -6,7 +6,6 @@ interface GenerationsIndicatorProps {
   className?: string;
   speed?: number;
   isAnimating?: boolean;
-  activeGenerationsSize?: number;
   outputType?: "image" | "video";
   isSuccess?: boolean;
 }
@@ -15,7 +14,6 @@ export function GenerationsIndicator({
   className,
   speed = 150,
   isAnimating = true,
-  activeGenerationsSize,
   outputType = "image",
   isSuccess = false,
 }: GenerationsIndicatorProps) {
@@ -31,7 +29,6 @@ export function GenerationsIndicator({
       height="19"
       viewBox="0 0 19 19"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
     >
       <rect
         x="3"
@@ -183,7 +180,6 @@ export function GenerationsIndicator({
       height="19"
       viewBox="0 0 19 19"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
     >
       <rect
         x="3"
@@ -331,7 +327,6 @@ export function GenerationsIndicator({
       height="19"
       viewBox="0 0 19 19"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
     >
       <rect x="5" width="4" height="4" fill="#EC0648" fillOpacity="0.08" />
       <rect width="4" height="4" fill="#EC0648" fillOpacity="0.08" />
@@ -451,7 +446,6 @@ export function GenerationsIndicator({
       height="19"
       viewBox="0 0 19 19"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
     >
       <rect x="5" width="4" height="4" fill="#EC0648" />
       <rect width="4" height="4" fill="#EC0648" fillOpacity="0.08" />
@@ -557,7 +551,6 @@ export function GenerationsIndicator({
       height="19"
       viewBox="0 0 19 19"
       fill="none"
-      xmlns="http://www.w3.org/2000/svg"
     >
       <rect
         x="3"
@@ -716,10 +709,7 @@ export function GenerationsIndicator({
           <AnimatePresence mode="wait">
             {svgFrames[currentFrame]}
           </AnimatePresence>
-          <span className="font-medium">
-            Generating variations
-            {activeGenerationsSize && activeGenerationsSize > 1 ? "s" : ""}
-          </span>
+          <span className="font-medium">Generating variations</span>
         </>
       )}
     </div>

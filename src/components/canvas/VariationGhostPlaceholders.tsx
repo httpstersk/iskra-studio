@@ -1,5 +1,5 @@
 import React from "react";
-import { Rect, Group } from "react-konva";
+import { Rect, Group, Text } from "react-konva";
 import type { PlacedImage } from "@/types/canvas";
 import { calculateBalancedPosition } from "@/lib/handlers/variation-handler";
 import { snapPosition } from "@/utils/snap-utils";
@@ -17,7 +17,7 @@ export const VariationGhostPlaceholders: React.FC<
 > = ({ selectedImage }) => {
   // Snap the source image position to grid first to ensure edge-to-edge alignment
   const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
-  
+
   const ghostPlaceholders = Array.from({ length: 4 }, (_, i) => {
     // Calculate position based on snapped source position
     const position = calculateBalancedPosition(
@@ -41,20 +41,35 @@ export const VariationGhostPlaceholders: React.FC<
 
   return (
     <Group>
-      {ghostPlaceholders.map((ghost) => (
-        <Rect
-          dash={[8, 4]}
-          height={ghost.height}
-          key={ghost.id}
-          listening={false}
-          opacity={0.5}
-          perfectDrawEnabled={false}
-          stroke="#fff"
-          strokeWidth={1}
-          width={ghost.width}
-          x={ghost.x}
-          y={ghost.y}
-        />
+      {ghostPlaceholders.map((ghost, index) => (
+        <Group key={ghost.id}>
+          <Rect
+            dash={[8, 4]}
+            height={ghost.height}
+            listening={false}
+            opacity={0.5}
+            perfectDrawEnabled={false}
+            stroke="#fff"
+            strokeWidth={1}
+            width={ghost.width}
+            x={ghost.x}
+            y={ghost.y}
+          />
+          <Text
+            align="center"
+            fill="#fff"
+            fontSize={12}
+            height={ghost.height}
+            listening={false}
+            opacity={0.8}
+            perfectDrawEnabled={false}
+            text={(index + 1).toString()}
+            verticalAlign="middle"
+            width={ghost.width}
+            x={ghost.x}
+            y={ghost.y}
+          />
+        </Group>
       ))}
     </Group>
   );

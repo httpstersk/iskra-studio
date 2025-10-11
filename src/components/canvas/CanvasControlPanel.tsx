@@ -85,45 +85,38 @@ export function CanvasControlPanel({
               isExtendingVideo ||
               isTransformingVideo ||
               showSuccess) && (
-              <motion.div
-                key={showSuccess ? "success" : "generating"}
-                initial={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
-                animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-                exit={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
-                className={cn(
-                  "absolute z-50 -top-16 left-1/2",
-                  "rounded-xl",
-                  showSuccess
-                    ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
-                    : activeVideoGenerationsSize > 0 ||
+                <motion.div
+                  key={showSuccess ? "success" : "generating"}
+                  initial={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
+                  animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+                  exit={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className={cn(
+                    "absolute z-50 -top-16 left-1/2",
+                    "rounded-xl",
+                    showSuccess
+                      ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
+                      : activeVideoGenerationsSize > 0 ||
                         isExtendingVideo ||
                         isTransformingVideo
-                      ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
-                      : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
-                )}
-              >
-                <GenerationsIndicator
-                  isAnimating={!showSuccess}
-                  isSuccess={showSuccess}
-                  className="w-5 h-5"
-                  activeGenerationsSize={
-                    activeGenerationsSize +
-                    activeVideoGenerationsSize +
-                    (isGenerating ? 1 : 0) +
-                    (isExtendingVideo ? 1 : 0) +
-                    (isTransformingVideo ? 1 : 0)
-                  }
-                  outputType={
-                    activeVideoGenerationsSize > 0 ||
-                    isExtendingVideo ||
-                    isTransformingVideo
-                      ? "video"
-                      : "image"
-                  }
-                />
-              </motion.div>
-            )}
+                        ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
+                        : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
+                  )}
+                >
+                  <GenerationsIndicator
+                    isAnimating={!showSuccess}
+                    isSuccess={showSuccess}
+                    className="w-5 h-5"
+                    outputType={
+                      activeVideoGenerationsSize > 0 ||
+                        isExtendingVideo ||
+                        isTransformingVideo
+                        ? "video"
+                        : "image"
+                    }
+                  />
+                </motion.div>
+              )}
           </AnimatePresence>
 
           {/* Action buttons row */}
@@ -213,32 +206,29 @@ export function CanvasControlPanel({
             </div>
           </div>
 
-          <div className="relative">
-            <Textarea
-              value={generationSettings.prompt}
-              onChange={(e) =>
-                setGenerationSettings({
-                  ...generationSettings,
-                  prompt: e.target.value,
-                })
-              }
-              placeholder={`Enter a prompt... (${checkOS("Win") || checkOS("Linux") ? "Ctrl" : "⌘"}+Enter to run)`}
-              className="w-full h-20 resize-none border-none p-2 pr-36"
-              style={{ fontSize: "16px" }}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  if (
-                    !isGenerating &&
-                    (generationSettings.prompt.trim() || selectedIds.length > 0)
-                  ) {
-                    handleRun();
-                  }
+          {selectedIds.length > 0 && (
+            <div className="relative">
+              <Textarea
+                value={generationSettings.variationPrompt || ""}
+                onChange={(e) =>
+                  setGenerationSettings({
+                    ...generationSettings,
+                    variationPrompt: e.target.value,
+                  })
                 }
-              }}
-            />
+                placeholder="Enter edit instructions for variations (optional)..."
+                className="w-full h-16 resize-none border-none p-2 pr-24"
+                style={{ fontSize: "16px" }}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                    e.preventDefault();
+                    if (!isGenerating) {
+                      handleRun();
+                    }
+                  }
+                }}
+              />
 
-            {selectedIds.length > 0 && (
               <div className="absolute top-1 right-2 flex items-center justify-end">
                 <div className="relative h-12 w-20">
                   {selectedIds.slice(0, 3).map((id, index) => {
@@ -280,8 +270,36 @@ export function CanvasControlPanel({
                   })}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {selectedIds.length === 0 && (
+            <div className="relative">
+              <Textarea
+                value={generationSettings.prompt}
+                onChange={(e) =>
+                  setGenerationSettings({
+                    ...generationSettings,
+                    prompt: e.target.value,
+                  })
+                }
+                placeholder={`Enter a prompt... (${checkOS("Win") || checkOS("Linux") ? "Ctrl" : "⌘"}+Enter to run)`}
+                className="w-full h-20 resize-none border-none p-2"
+                style={{ fontSize: "16px" }}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                    e.preventDefault();
+                    if (
+                      !isGenerating &&
+                      generationSettings.prompt.trim()
+                    ) {
+                      handleRun();
+                    }
+                  }
+                }}
+              />
+            </div>
+          )}
 
           {/* Style dropdown and Run button */}
           <div className="flex items-center justify-between">
@@ -400,7 +418,7 @@ export function CanvasControlPanel({
                     <div className="flex items-center gap-2">
                       <span>
                         {selectedIds.length === 1 &&
-                        !generationSettings.prompt.trim()
+                          !generationSettings.prompt.trim()
                           ? "Generate Variations"
                           : "Run"}
                       </span>
