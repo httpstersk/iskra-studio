@@ -115,8 +115,9 @@ interface VariationHandlerDeps {
 
 /**
  * Calculate position for a variation image around the source
- * For 4 variations: top, right, bottom, left (directly adjacent)
- * For 8 variations: all 4 sides plus 4 corners
+ * Positions are arranged clockwise starting from top center
+ * For 8 variations: top, top-right corner, right, bottom-right corner, bottom, bottom-left corner, left, top-left corner
+ * For 4 variations: uses indices 0, 2, 4, 6 (top, right, bottom, left)
  * @param sourceX - X coordinate of the source image
  * @param sourceY - Y coordinate of the source image
  * @param angleIndex - Index of the variation (0-7)
@@ -134,48 +135,47 @@ export function calculateBalancedPosition(
   variationWidth: number,
   variationHeight: number
 ) {
-  // First 4 positions: directly adjacent to each side
+  // Clockwise positions starting from top center
   switch (angleIndex) {
     case 0: // Top - aligned with source left edge
       return {
         x: sourceX,
         y: sourceY - variationHeight,
       };
-    case 1: // Right - aligned with source top edge
+    case 1: // Top-right corner
+      return {
+        x: sourceX + sourceWidth,
+        y: sourceY - variationHeight,
+      };
+    case 2: // Right - aligned with source top edge
       return {
         x: sourceX + sourceWidth,
         y: sourceY,
       };
-    case 2: // Bottom - aligned with source left edge
+    case 3: // Bottom-right corner
+      return {
+        x: sourceX + sourceWidth,
+        y: sourceY + sourceHeight,
+      };
+    case 4: // Bottom - aligned with source left edge
       return {
         x: sourceX,
         y: sourceY + sourceHeight,
       };
-    case 3: // Left - aligned with source top edge
+    case 5: // Bottom-left corner
+      return {
+        x: sourceX - variationWidth,
+        y: sourceY + sourceHeight,
+      };
+    case 6: // Left - aligned with source top edge
       return {
         x: sourceX - variationWidth,
         y: sourceY,
       };
-    // Additional 4 positions for 8-variation mode: corners
-    case 4: // Top-left corner
+    case 7: // Top-left corner
       return {
         x: sourceX - variationWidth,
         y: sourceY - variationHeight,
-      };
-    case 5: // Top-right corner
-      return {
-        x: sourceX + sourceWidth,
-        y: sourceY - variationHeight,
-      };
-    case 6: // Bottom-right corner
-      return {
-        x: sourceX + sourceWidth,
-        y: sourceY + sourceHeight,
-      };
-    case 7: // Bottom-left corner
-      return {
-        x: sourceX - variationWidth,
-        y: sourceY + sourceHeight,
       };
     default:
       return { x: sourceX, y: sourceY };
@@ -230,34 +230,50 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   const timestamp = Date.now();
 
   // Determine number of variations based on mode
+  // For video mode, use indices 0, 2, 4, 6 (top, right, bottom, left - the 4 sides in clockwise order starting from top)
   const variationCount = variationMode === "image" ? 8 : 4;
-  const variationsToGenerate = CAMERA_VARIATIONS.slice(0, variationCount);
+  const variationsToGenerate =
+    variationMode === "image"
+      ? CAMERA_VARIATIONS
+      : [
+          CAMERA_VARIATIONS[0],
+          CAMERA_VARIATIONS[2],
+          CAMERA_VARIATIONS[4],
+          CAMERA_VARIATIONS[6],
+        ];
 
   // OPTIMIZATION 1: Create placeholders IMMEDIATELY (optimistic UI)
   // Users see instant feedback before any async operations
-  const placeholderImages: PlacedImage[] = variationsToGenerate.map((_, index) => {
-    const position = calculateBalancedPosition(
-      snappedSource.x,
-      snappedSource.y,
-      index,
-      selectedImage.width,
-      selectedImage.height,
-      selectedImage.width,
-      selectedImage.height
-    );
+  // For video mode, use position indices 0, 2, 4, 6 (top, right, bottom, left - the 4 cardinal directions)
+  const positionIndices =
+    variationMode === "image" ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 2, 4, 6];
 
-    return {
-      id: `variation-${timestamp}-${index}`,
-      src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-      x: position.x,
-      y: position.y,
-      width: selectedImage.width,
-      height: selectedImage.height,
-      rotation: 0,
-      isGenerated: true,
-      isLoading: true,
-    };
-  });
+  const placeholderImages: PlacedImage[] = variationsToGenerate.map(
+    (_, index) => {
+      const positionIndex = positionIndices[index];
+      const position = calculateBalancedPosition(
+        snappedSource.x,
+        snappedSource.y,
+        positionIndex,
+        selectedImage.width,
+        selectedImage.height,
+        selectedImage.width,
+        selectedImage.height
+      );
+
+      return {
+        id: `variation-${timestamp}-${index}`,
+        src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        x: position.x,
+        y: position.y,
+        width: selectedImage.width,
+        height: selectedImage.height,
+        rotation: 0,
+        isGenerated: true,
+        isLoading: true,
+      };
+    }
+  );
 
   // Add placeholders immediately - single state update
   setImages((prev) => [...prev, ...placeholderImages]);

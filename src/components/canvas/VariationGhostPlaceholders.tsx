@@ -13,6 +13,7 @@ interface VariationGhostPlaceholdersProps {
  * Renders ghost placeholder outlines showing where variations will be generated
  * Appears when a single image is selected (variation mode)
  * Shows 8 placeholders for image mode, 4 for video mode
+ * Positioned clockwise starting from top center
  */
 export const VariationGhostPlaceholders: React.FC<
   VariationGhostPlaceholdersProps
@@ -20,13 +21,16 @@ export const VariationGhostPlaceholders: React.FC<
   // Snap the source image position to grid first to ensure edge-to-edge alignment
   const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
 
-  const ghostCount = variationMode === "image" ? 8 : 4;
-  const ghostPlaceholders = Array.from({ length: ghostCount }, (_, i) => {
+  // For video mode, use position indices 0, 2, 4, 6 (top, right, bottom, left - clockwise from top)
+  const positionIndices =
+    variationMode === "image" ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 2, 4, 6];
+
+  const ghostPlaceholders = positionIndices.map((positionIndex, i) => {
     // Calculate position based on snapped source position
     const position = calculateBalancedPosition(
       snappedSource.x,
       snappedSource.y,
-      i,
+      positionIndex,
       selectedImage.width,
       selectedImage.height,
       selectedImage.width,
@@ -47,7 +51,7 @@ export const VariationGhostPlaceholders: React.FC<
       {ghostPlaceholders.map((ghost, index) => (
         <Group key={ghost.id}>
           <Rect
-            dash={[8, 4]}
+            dash={[4, 4]}
             height={ghost.height}
             listening={false}
             opacity={0.5}
