@@ -13,6 +13,9 @@ interface VariationHandlerDeps {
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   setIsApiKeyDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setActiveGenerations: React.Dispatch<
+    React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
+  >;
   toast: (props: {
     title: string;
     description?: string;
@@ -81,6 +84,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     setImages,
     setIsGenerating,
     setIsApiKeyDialogOpen,
+    setActiveGenerations,
     toast,
     generateImageVariation,
   } = deps;
@@ -191,93 +195,68 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       return;
     }
 
-    // Store IDs for generated images
-    const timestamp = Date.now();
-    const generatedIds: string[] = [];
-
-    console.log("Starting generation without placeholders...");
-
     // Snap source image position for consistent alignment
     const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
 
-    // Generate all variations in parallel
-    console.log("Starting generation of 4 variations in parallel...");
-    const variationPromises = CAMERA_VARIATIONS.map(async (prompt, index) => {
-      try {
-        console.log(
-          `Starting variation ${index + 1}/4 with prompt: ${prompt.substring(0, 50)}...`
-        );
+    // Create placeholder images immediately for better UX
+    const timestamp = Date.now();
+    const placeholderImages: PlacedImage[] = [];
+    
+    console.log("Creating placeholder images for 4 variations...");
+    
+    CAMERA_VARIATIONS.forEach((prompt, index) => {
+      const position = calculateBalancedPosition(
+        snappedSource.x,
+        snappedSource.y,
+        index,
+        selectedImage.width,
+        selectedImage.height,
+        selectedImage.width,
+        selectedImage.height
+      );
 
-        const result = await generateImageVariation({
+      const placeholderId = `variation-${timestamp}-${index}`;
+      
+      const placeholderImage: PlacedImage = {
+        id: placeholderId,
+        src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        x: position.x,
+        y: position.y,
+        width: selectedImage.width,
+        height: selectedImage.height,
+        rotation: 0,
+        isGenerated: true,
+        isLoading: true,
+      };
+
+      placeholderImages.push(placeholderImage);
+
+      // Add to activeGenerations Map so StreamingImage can handle it
+      setActiveGenerations((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(placeholderId, {
           imageUrl: uploadResult.url,
           prompt: prompt,
-          imageSize: {
-            width: Math.min(canvas.width, 2048),
-            height: Math.min(canvas.height, 2048),
-          },
-          apiKey: customApiKey || undefined,
         });
-
-        console.log(`Variation ${index + 1}/4 completed successfully`);
-
-        // Calculate position for this variation based on snapped source position
-        const position = calculateBalancedPosition(
-          snappedSource.x,
-          snappedSource.y,
-          index,
-          selectedImage.width,
-          selectedImage.height,
-          selectedImage.width,
-          selectedImage.height
-        );
-
-        // Create new image with the generated result
-        const newImageId = `variation-${timestamp}-${index}`;
-        generatedIds.push(newImageId);
-
-        const newImage: PlacedImage = {
-          id: newImageId,
-          src: result.url,
-          x: position.x,
-          y: position.y,
-          width: selectedImage.width,
-          height: selectedImage.height,
-          rotation: 0,
-          isGenerated: true,
-        };
-
-        // Add the generated image to canvas
-        setImages((prev) => [...prev, newImage]);
-
-        return result;
-      } catch (error) {
-        console.error(`Failed to generate variation ${index + 1}/4:`, error);
-        throw error;
-      }
+        return newMap;
+      });
     });
 
-    // Wait for all variations to complete
-    const results = await Promise.allSettled(variationPromises);
+    // Add all placeholder images to canvas at once
+    setImages((prev) => [...prev, ...placeholderImages]);
 
-    // Count successes and failures
-    const successCount = results.filter((r) => r.status === "fulfilled").length;
-    const failureCount = results.filter((r) => r.status === "rejected").length;
+    console.log("Placeholders created. StreamingImage components will handle generation.");
 
-    // Show completion toast
-    if (successCount > 0) {
-      toast({
-        title: "Variations generated",
-        description: `Successfully generated ${successCount} of 4 variations`,
-      });
-    }
+    // Now that placeholders are created and activeGenerations are set,
+    // the StreamingImage components will handle the actual generation
+    // We can turn off the generating flag since the setup is complete
+    setIsGenerating(false);
 
-    if (failureCount > 0) {
-      toast({
-        title: "Some variations failed",
-        description: `${failureCount} variations could not be generated`,
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Generating variations",
+      description: "Creating 4 camera angle variations...",
+    });
+
   } catch (error) {
     console.error("Error generating variations:", error);
     toast({
@@ -288,7 +267,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
           : "Failed to generate variations",
       variant: "destructive",
     });
-  } finally {
     setIsGenerating(false);
   }
 };

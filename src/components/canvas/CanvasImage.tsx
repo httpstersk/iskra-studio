@@ -65,7 +65,11 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
   const [loadingOpacity, setLoadingOpacity] = useState(0.5);
+  const [displayOpacity, setDisplayOpacity] = useState(
+    image.isLoading ? 0.5 : image.isGenerated ? 0.9 : 1
+  );
   const lastSnapPos = useRef<{ x: number; y: number } | null>(null);
+  const wasLoadingRef = useRef(image.isLoading);
 
   // Pulsing animation for loading placeholders
   useEffect(() => {
@@ -90,6 +94,49 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       }
     };
   }, [image.isLoading]);
+
+  // Smooth fade-in when loading completes
+  useEffect(() => {
+    // Check if we just transitioned from loading to loaded
+    if (wasLoadingRef.current && !image.isLoading && img) {
+      // Animate from current loading opacity to final opacity
+      const startOpacity = loadingOpacity;
+      const targetOpacity = image.isGenerated ? 0.9 : 1;
+      const startTime = Date.now();
+      const duration = 600; // 600ms fade-in
+
+      let animationFrame: number;
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Ease-out cubic for smooth deceleration
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const currentOpacity = startOpacity + (targetOpacity - startOpacity) * eased;
+        
+        setDisplayOpacity(currentOpacity);
+
+        if (progress < 1) {
+          animationFrame = requestAnimationFrame(animate);
+        }
+      };
+
+      animationFrame = requestAnimationFrame(animate);
+
+      return () => {
+        if (animationFrame) {
+          cancelAnimationFrame(animationFrame);
+        }
+      };
+    } else if (image.isLoading) {
+      setDisplayOpacity(loadingOpacity);
+    } else {
+      setDisplayOpacity(image.isGenerated ? 0.9 : 1);
+    }
+
+    wasLoadingRef.current = image.isLoading;
+  }, [image.isLoading, image.isGenerated, loadingOpacity, img]);
 
   return (
     <KonvaImage
@@ -224,7 +271,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
         lastSnapPos.current = null;
         onDragEnd();
       }}
-      opacity={image.isLoading ? loadingOpacity : image.isGenerated ? 0.9 : 1}
+      opacity={displayOpacity}
       stroke={
         image.isLoading
           ? "#6b7280"
