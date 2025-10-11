@@ -1,34 +1,33 @@
-import React from "react";
+import { SpinnerIcon } from "@/components/icons";
 import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSub,
-  ContextMenuSubTrigger,
   ContextMenuSubContent,
+  ContextMenuSubTrigger,
 } from "@/components/ui/context-menu";
-import { ShortcutBadge } from "./ShortcutBadge";
-import {
-  Play,
-  Copy,
-  Combine,
-  Download,
-  X,
-  Layers,
-  ChevronUp,
-  ChevronDown,
-  MoveUp,
-  MoveDown,
-  Video,
-  FilePlus,
-} from "lucide-react";
-import { SpinnerIcon } from "@/components/icons";
-import { checkOS } from "@/utils/os-utils";
-import { exportVideoAsGif } from "@/utils/gif-export";
 import type {
+  GenerationSettings,
   PlacedImage,
   PlacedVideo,
-  GenerationSettings,
 } from "@/types/canvas";
+import { checkOS } from "@/utils/os-utils";
+import {
+  ChevronDown,
+  ChevronUp,
+  Combine,
+  Copy,
+  Download,
+  FilePlus,
+  Layers,
+  MoveDown,
+  MoveUp,
+  Play,
+  Video,
+  X,
+} from "lucide-react";
+import React from "react";
+import { ShortcutBadge } from "./ShortcutBadge";
 
 interface CanvasContextMenuProps {
   selectedIds: string[];
@@ -90,6 +89,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           }
         />
       </ContextMenuItem>
+
       <ContextMenuItem
         onClick={handleDuplicate}
         disabled={selectedIds.length === 0}
@@ -98,6 +98,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
         <Copy className="h-4 w-4" />
         Duplicate
       </ContextMenuItem>
+
       {selectedIds.length === 1 &&
         handleConvertToVideo &&
         images.some((img) => img.id === selectedIds[0]) && (
@@ -111,20 +112,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
             Image to Video
           </ContextMenuItem>
         )}
-      {/* Temporarily disabled Video to Video option
-      {selectedIds.length === 1 &&
-        handleVideoToVideo &&
-        videos?.some((v) => v.id === selectedIds[0]) && (
-          <ContextMenuItem
-            onClick={() => {
-              handleVideoToVideo(selectedIds[0]);
-            }}
-            className="flex items-center gap-2"
-          >
-            <Video className="h-4 w-4" />
-            Video to Video
-          </ContextMenuItem>
-        )} */}
+
       {selectedIds.length === 1 &&
         handleExtendVideo &&
         videos?.some((v) => v.id === selectedIds[0]) && (
@@ -138,6 +126,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
             Extend Video
           </ContextMenuItem>
         )}
+
       <ContextMenuItem
         onClick={handleCombineImages}
         disabled={selectedIds.length < 2}
@@ -216,25 +205,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           </ContextMenuItem>
         </ContextMenuSubContent>
       </ContextMenuSub>
-      {selectedIds.length === 1 &&
-        videos?.some((v) => v.id === selectedIds[0]) && (
-          <ContextMenuItem
-            onClick={async () => {
-              const video = videos.find((v) => v.id === selectedIds[0]);
-              if (video) {
-                try {
-                  await exportVideoAsGif(video.src);
-                } catch (error) {
-                  console.error("Failed to export GIF:", error);
-                }
-              }
-            }}
-            className="flex items-center gap-2"
-          >
-            <Video className="h-4 w-4" />
-            Export GIF
-          </ContextMenuItem>
-        )}
+
       <ContextMenuItem
         onClick={async () => {
           for (const id of selectedIds) {
@@ -278,6 +249,7 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
         <Download className="h-4 w-4" />
         Download
       </ContextMenuItem>
+
       <ContextMenuItem
         onClick={handleDelete}
         disabled={selectedIds.length === 0}
