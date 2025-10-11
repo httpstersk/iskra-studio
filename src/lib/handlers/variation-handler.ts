@@ -270,42 +270,30 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       setIsApiKeyDialogOpen
     );
 
-    console.log("Starting generation without placeholders...");
-
     // Snap source image position for consistent alignment
     const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
 
-    // Generate all variations in parallel
-    console.log("Starting generation of 4 variations in parallel...");
-
-    const variationPromises = CAMERA_VARIATIONS.map(
-      async (cameraPrompt, index) => {
+    // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      CAMERA_VARIATIONS.forEach((cameraPrompt, index) => {
+        const placeholderId = `variation-${timestamp}-${index}`;
         // Combine user's variation prompt with camera angle prompt
         const combinedPrompt = variationPrompt
           ? `${variationPrompt}. ${cameraPrompt}`
           : cameraPrompt;
 
-        console.log(
-          `Starting variation ${index + 1}/4 with prompt: ${combinedPrompt.substring(0, 50)}...`
-        );
-
-        // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
-        setActiveGenerations((prev) => {
-          const newMap = new Map(prev);
-          CAMERA_VARIATIONS.forEach((prompt, index) => {
-            const placeholderId = `variation-${timestamp}-${index}`;
-            newMap.set(placeholderId, {
-              imageUrl: uploadResult.url,
-              prompt: prompt,
-            });
-          });
-          return newMap;
+        newMap.set(placeholderId, {
+          imageUrl: uploadResult.url,
+          prompt: combinedPrompt,
         });
+      });
 
-        // Setup complete - StreamingImage components will handle generation
-        setIsGenerating(false);
-      }
-    );
+      return newMap;
+    });
+
+    // Setup complete - StreamingImage components will handle generation
+    setIsGenerating(false);
   } catch (error) {
     console.error("Error in variation generation:", error);
 
