@@ -44,7 +44,7 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
 
   // Use variation endpoint for variations, regular endpoint for normal generation
   const variationSubscription = useSubscription(
-    trpc.generateImageVariationStream.subscriptionOptions(
+    trpc.generateImageVariation.subscriptionOptions(
       {
         imageUrl: generation.imageUrl,
         prompt: generation.prompt,
@@ -55,8 +55,8 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
         enabled: !!generation.isVariation,
         onData,
         onError: onErrorHandler,
-      },
-    ),
+      }
+    )
   );
 
   const regularSubscription = useSubscription(
@@ -71,8 +71,8 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
         enabled: !generation.isVariation,
         onData,
         onError: onErrorHandler,
-      },
-    ),
+      }
+    )
   );
 
   return null;

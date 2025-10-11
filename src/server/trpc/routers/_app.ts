@@ -982,60 +982,6 @@ export const appRouter = router({
           })
           .optional(),
         seed: z.number().optional(),
-        apiKey: z.string().optional(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      try {
-        const falClient = await getFalClient(input.apiKey, ctx);
-
-        const result = await falClient.subscribe(
-          "fal-ai/bytedance/seedream/v4/edit",
-          {
-            input: {
-              prompt: input.prompt,
-              image_urls: [input.imageUrl],
-              image_size: input.imageSize || { width: 2048, height: 2048 },
-              num_images: 1,
-              max_images: 1,
-              seed: input.seed,
-              enable_safety_checker: true,
-            },
-          }
-        );
-
-        // Handle response
-        const resultData = (result as any).data || result;
-        if (!resultData.images?.[0]) {
-          throw new Error("No image generated");
-        }
-
-        return {
-          url: resultData.images[0].url,
-          seed: resultData.seed,
-        };
-      } catch (error) {
-        console.error("Error in image variation generation:", error);
-        throw new Error(
-          error instanceof Error
-            ? error.message
-            : "Failed to generate image variation"
-        );
-      }
-    }),
-
-  generateImageVariationStream: publicProcedure
-    .input(
-      z.object({
-        imageUrl: z.string().url(),
-        prompt: z.string(),
-        imageSize: z
-          .object({
-            width: z.number(),
-            height: z.number(),
-          })
-          .optional(),
-        seed: z.number().optional(),
         lastEventId: z.string().optional(),
         apiKey: z.string().optional(),
       })
