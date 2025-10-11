@@ -1,5 +1,34 @@
+/**
+ * Canvas image manipulation handlers
+ * 
+ * This module provides handlers for common image operations including
+ * combining multiple images, duplicating elements, and deleting elements.
+ * 
+ * @module lib/handlers/image-handlers
+ */
+
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 
+/**
+ * Combines multiple selected images into a single image by rendering them
+ * onto a canvas with their relative positions preserved.
+ * 
+ * The combined image maintains:
+ * - Relative positions of all selected images
+ * - Original image quality (up to 4x scale)
+ * - Rotation transformations
+ * - Z-order (layer order)
+ * 
+ * @param images - Array of all images on the canvas
+ * @param selectedIds - IDs of images to combine
+ * @returns Promise resolving to a new PlacedImage containing the combined result
+ * 
+ * @example
+ * ```typescript
+ * const combined = await combineImages(allImages, ['img1', 'img2', 'img3']);
+ * setImages([...otherImages, combined]);
+ * ```
+ */
 export async function combineImages(
   images: PlacedImage[],
   selectedIds: string[]
@@ -122,6 +151,27 @@ export async function combineImages(
   };
 }
 
+/**
+ * Duplicates selected images and videos with a slight offset.
+ * Creates copies of all selected elements with new IDs and positions
+ * offset by 20 pixels in both x and y directions.
+ * 
+ * @param images - Array of all images on the canvas
+ * @param videos - Array of all videos on the canvas
+ * @param selectedIds - IDs of elements to duplicate
+ * @returns Object containing arrays of newly created images and videos
+ * 
+ * @example
+ * ```typescript
+ * const { newImages, newVideos } = duplicateElements(
+ *   allImages,
+ *   allVideos,
+ *   ['img1', 'vid1']
+ * );
+ * setImages([...allImages, ...newImages]);
+ * setVideos([...allVideos, ...newVideos]);
+ * ```
+ */
 export function duplicateElements(
   images: PlacedImage[],
   videos: PlacedVideo[],
@@ -148,6 +198,26 @@ export function duplicateElements(
   return { newImages, newVideos };
 }
 
+/**
+ * Deletes selected images and videos from the canvas.
+ * Returns filtered arrays with selected elements removed.
+ * 
+ * @param images - Array of all images on the canvas
+ * @param videos - Array of all videos on the canvas
+ * @param selectedIds - IDs of elements to delete
+ * @returns Object containing filtered arrays without deleted elements
+ * 
+ * @example
+ * ```typescript
+ * const { newImages, newVideos } = deleteElements(
+ *   allImages,
+ *   allVideos,
+ *   ['img1', 'vid1']
+ * );
+ * setImages(newImages);
+ * setVideos(newVideos);
+ * ```
+ */
 export function deleteElements(
   images: PlacedImage[],
   videos: PlacedVideo[],

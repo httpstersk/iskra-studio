@@ -1,25 +1,75 @@
+/**
+ * Image drag behavior hook
+ * 
+ * Provides optimized drag handling for canvas images with grid snapping,
+ * haptic feedback, and multi-selection support. Implements throttling
+ * to prevent excessive state updates during drag operations.
+ * 
+ * @module hooks/useImageDrag
+ */
+
 import { useRef, useCallback } from "react";
 import type Konva from "konva";
 import type { PlacedImage } from "@/types/canvas";
 import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
 
+/**
+ * Props for useImageDrag hook
+ */
 interface UseImageDragProps {
+  /** The image being dragged */
   image: PlacedImage;
+  /** IDs of all currently selected images */
   selectedIds: string[];
+  /** Map of image IDs to their positions at drag start */
   dragStartPositions: Map<string, { x: number; y: number }>;
+  /** Callback to update a single image's properties */
   onChange: (newAttrs: Partial<PlacedImage>) => void;
+  /** State setter for all images (used in multi-selection) */
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
+  /** Throttle function that returns true if update should proceed */
   throttleFrame: () => boolean;
 }
 
+/**
+ * Return value from useImageDrag hook
+ */
 interface UseImageDragReturn {
+  /** Handler for drag move events */
   handleDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void;
+  /** Handler for drag end events */
   handleDragEnd: () => void;
 }
 
 /**
- * Custom hook for optimized image dragging with snapping
- * Handles both single and multi-selection drag behavior
+ * Custom hook for optimized image dragging with grid snapping and multi-selection support.
+ * 
+ * Features:
+ * - Automatic grid snapping with configurable grid size
+ * - Haptic feedback on snap position changes
+ * - Single and multi-selection drag support
+ * - Throttled state updates to prevent performance issues
+ * - Synchronized movement of all selected images
+ * 
+ * @param props - Hook configuration
+ * @returns Drag event handlers
+ * 
+ * @example
+ * ```typescript
+ * const { handleDragMove, handleDragEnd } = useImageDrag({
+ *   image: placedImage,
+ *   selectedIds: ['img1', 'img2'],
+ *   dragStartPositions: dragPosMap,
+ *   onChange: updateImage,
+ *   setImages: setAllImages,
+ *   throttleFrame: () => true
+ * });
+ * 
+ * <KonvaImage
+ *   onDragMove={handleDragMove}
+ *   onDragEnd={handleDragEnd}
+ * />
+ * ```
  */
 export const useImageDrag = ({
   image,

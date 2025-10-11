@@ -1,3 +1,17 @@
+/**
+ * Canvas stage renderer component
+ * 
+ * Main rendering component for the Konva canvas stage. Handles:
+ * - Viewport culling for performance optimization
+ * - Grid rendering
+ * - Selection box visualization
+ * - Image and video element rendering
+ * - Variation mode ghost placeholders
+ * - All mouse and touch interactions
+ * 
+ * @module components/canvas/CanvasStageRenderer
+ */
+
 "use client";
 
 import React, { useMemo } from "react";
@@ -60,7 +74,15 @@ interface CanvasStageRendererProps {
 }
 
 /**
- * Filters visible items based on viewport bounds
+ * Filters visible items based on viewport bounds for performance optimization.
+ * Only returns items that intersect with the current viewport (plus buffer).
+ * This prevents rendering of off-screen elements.
+ * 
+ * @template T - Type of canvas element (must have position and dimensions)
+ * @param items - Array of canvas elements to filter
+ * @param viewport - Current viewport state
+ * @param canvasSize - Canvas container dimensions
+ * @returns Array of elements visible in current viewport
  */
 function getVisibleItems<
   T extends { height: number; width: number; x: number; y: number },
@@ -88,8 +110,33 @@ function getVisibleItems<
 }
 
 /**
- * CanvasStageRenderer component
- * Renders the Konva Stage with all canvas elements
+ * CanvasStageRenderer component - Main rendering component for the canvas.
+ * 
+ * This component manages the Konva Stage and all its child elements, implementing
+ * viewport culling for optimal performance. It handles all user interactions
+ * including mouse events, touch events, and keyboard shortcuts.
+ * 
+ * Performance optimizations:
+ * - Viewport culling: Only renders visible elements
+ * - Memoized visible items calculation
+ * - Efficient event delegation
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <CanvasStageRenderer
+ *   canvasSize={{ width: 1920, height: 1080 }}
+ *   viewport={{ x: 0, y: 0, scale: 1.0 }}
+ *   images={allImages}
+ *   videos={allVideos}
+ *   selectedIds={selectedIds}
+ *   interactions={interactionHandlers}
+ *   stageRef={stageRef}
+ *   showGrid={true}
+ *   isCanvasReady={true}
+ *   // ... other props
+ * />
+ * ```
  */
 export function CanvasStageRenderer({
   canvasSize,

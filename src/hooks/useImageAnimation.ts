@@ -1,36 +1,91 @@
+/**
+ * Image loading animation hook
+ * 
+ * Provides smooth loading animations for canvas images with pulsing
+ * effect during loading and fade-in effect when loading completes.
+ * Uses a single requestAnimationFrame loop for optimal performance.
+ * 
+ * @module hooks/useImageAnimation
+ */
+
 import { useState, useEffect, useRef } from "react";
 
 /**
- * Animation constants
+ * Animation timing and opacity configuration
  */
 const ANIMATION_CONFIG = {
-  PULSE_DURATION: 2000, // 2 second pulse cycle
+  /** Duration of one complete pulse cycle in milliseconds */
+  PULSE_DURATION: 2000,
+  /** Minimum opacity during pulse animation */
   PULSE_MIN_OPACITY: 0.3,
+  /** Amplitude of pulse opacity variation */
   PULSE_AMPLITUDE: 0.2,
-  FADE_DURATION: 600, // 600ms fade-in
+  /** Duration of fade-in animation in milliseconds */
+  FADE_DURATION: 600,
+  /** Opacity for generated images */
   GENERATED_OPACITY: 0.9,
+  /** Opacity for normal images */
   NORMAL_OPACITY: 1,
 } as const;
 
 /**
- * Easing function: cubic ease-out
+ * Easing function for smooth fade-in animation.
+ * Uses cubic ease-out curve for natural motion.
+ * 
+ * @param t - Progress value between 0 and 1
+ * @returns Eased value between 0 and 1
  */
 const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
 
+/**
+ * Props for useImageAnimation hook
+ */
 interface UseImageAnimationProps {
+  /** Whether the image is currently loading */
   isLoading: boolean;
+  /** Whether the image was generated (affects final opacity) */
   isGenerated: boolean;
+  /** Whether the image element has loaded */
   hasImage: boolean;
 }
 
+/**
+ * Return value from useImageAnimation hook
+ */
 interface UseImageAnimationReturn {
+  /** Current opacity value to apply to the image */
   displayOpacity: number;
+  /** Current loading animation opacity value */
   loadingOpacity: number;
 }
 
 /**
- * Optimized hook for image loading animations
- * Combines pulsing and fade-in into a single requestAnimationFrame loop
+ * Custom hook for optimized image loading animations with pulsing and fade-in effects.
+ * 
+ * Features:
+ * - Smooth pulsing animation during loading (sine wave)
+ * - Cubic ease-out fade-in when loading completes
+ * - Single RAF loop for optimal performance
+ * - Frame-rate limiting (~60fps)
+ * - Automatic cleanup on unmount
+ * - Different final opacity for generated vs normal images
+ * 
+ * @param props - Hook configuration
+ * @returns Current opacity values for rendering
+ * 
+ * @example
+ * ```typescript
+ * const { displayOpacity } = useImageAnimation({
+ *   isLoading: image.isLoading,
+ *   isGenerated: image.isGenerated,
+ *   hasImage: !!imageElement
+ * });
+ * 
+ * <KonvaImage
+ *   image={imageElement}
+ *   opacity={displayOpacity}
+ * />
+ * ```
  */
 export const useImageAnimation = ({
   isLoading,
