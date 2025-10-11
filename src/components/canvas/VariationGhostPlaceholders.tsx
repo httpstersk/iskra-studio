@@ -1,9 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Group, Rect, Text } from "react-konva";
+import React, { useEffect, useRef, useState } from "react";
+import { Group, Rect, Image as KonvaImage, Text } from "react-konva";
 import Konva from "konva";
+import useImage from "use-image";
 import type { PlacedImage } from "@/types/canvas";
 import { calculateBalancedPosition } from "@/lib/handlers/variation-handler";
 import { snapPosition } from "@/utils/snap-utils";
+import { createBlurredCloneCanvas } from "@/utils/glsl-blur";
+
+const BLUR_SIGMA = 20;
 
 interface VariationGhostPlaceholdersProps {
   selectedImage: PlacedImage;
@@ -25,6 +29,10 @@ export const VariationGhostPlaceholders: React.FC<
   const [anchor, setAnchor] = useState(() =>
     snapPosition(selectedImage.x, selectedImage.y)
   );
+  const [blurredClone, setBlurredClone] = useState<HTMLCanvasElement | null>(
+    null
+  );
+  const [sourceImage] = useImage(selectedImage.src, "anonymous");
 
   useEffect(() => {
     nodeRef.current = stageRef.current?.findOne(`#${selectedImage.id}`) ?? null;
@@ -40,7 +48,8 @@ export const VariationGhostPlaceholders: React.FC<
 
     const updatePosition = () => {
       if (!nodeRef.current) {
-        nodeRef.current = stageRef.current?.findOne(`#${selectedImage.id}`) ?? null;
+        nodeRef.current =
+          stageRef.current?.findOne(`#${selectedImage.id}`) ?? null;
       }
 
       const node = nodeRef.current;
@@ -61,7 +70,37 @@ export const VariationGhostPlaceholders: React.FC<
         cancelAnimationFrame(frameId);
       }
     };
-  }, [isDragging, stageRef, selectedImage.id, selectedImage.x, selectedImage.y]);
+  }, [
+    isDragging,
+    stageRef,
+    selectedImage.id,
+    selectedImage.x,
+    selectedImage.y,
+  ]);
+
+  useEffect(() => {
+    if (!sourceImage || selectedImage.width <= 0 || selectedImage.height <= 0) {
+      setBlurredClone(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const canvas = createBlurredCloneCanvas(
+      sourceImage,
+      selectedImage.width,
+      selectedImage.height,
+      BLUR_SIGMA
+    );
+
+    if (!cancelled) {
+      setBlurredClone(canvas);
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sourceImage, selectedImage.width, selectedImage.height]);
 
   // For video mode, use position indices 0, 2, 4, 6 (top, right, bottom, left - clockwise from top)
   const positionIndices =
@@ -90,15 +129,36 @@ export const VariationGhostPlaceholders: React.FC<
 
   return (
     <Group>
-      {ghostPlaceholders.map((ghost, index) => (
+      {ghostPlaceholders.map((ghost, i) => (
         <Group key={ghost.id}>
+          {blurredClone ? (
+            <KonvaImage
+              height={ghost.height}
+              image={blurredClone}
+              listening={false}
+              opacity={0.75}
+              perfectDrawEnabled={false}
+              width={ghost.width}
+              x={ghost.x}
+              y={ghost.y}
+            />
+          ) : (
+            <Rect
+              fill="rgba(15, 23, 42, 0.45)"
+              height={ghost.height}
+              listening={false}
+              perfectDrawEnabled={false}
+              width={ghost.width}
+              x={ghost.x}
+              y={ghost.y}
+            />
+          )}
           <Rect
-            dash={[4, 4]}
             height={ghost.height}
             listening={false}
-            opacity={0.5}
+            opacity={0.25}
             perfectDrawEnabled={false}
-            stroke="#fff"
+            stroke="white"
             strokeWidth={1}
             width={ghost.width}
             x={ghost.x}
@@ -112,7 +172,7 @@ export const VariationGhostPlaceholders: React.FC<
             listening={false}
             opacity={0.8}
             perfectDrawEnabled={false}
-            text={(index + 1).toString()}
+            text={(i + 1).toString()}
             verticalAlign="middle"
             width={ghost.width}
             x={ghost.x}
