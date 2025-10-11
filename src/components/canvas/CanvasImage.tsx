@@ -17,6 +17,7 @@ interface CanvasImageProps {
   onDragEnd: () => void;
   onDragStart: () => void;
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void;
+  onDoubleClick?: (imageId: string) => void;
   selectedIds: string[];
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
 }
@@ -57,6 +58,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   onChange,
   onDragStart,
   onDragEnd,
+  onDoubleClick,
   selectedIds,
   setImages,
   dragStartPositions,
@@ -112,6 +114,17 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
     [handleDragEndInternal, onDragEnd]
   );
 
+  // Handle double-click to toggle variation mode
+  const handleDoubleClickWrapper = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
+      e.cancelBubble = true;
+      if (onDoubleClick) {
+        onDoubleClick(image.id);
+      }
+    },
+    [onDoubleClick, image.id]
+  );
+
   return (
     <KonvaImage
       ref={shapeRef}
@@ -125,6 +138,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       draggable={isDraggable}
       onClick={onSelect}
       onTap={onSelect}
+      onDblClick={handleDoubleClickWrapper}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseDown={handleMouseDown}

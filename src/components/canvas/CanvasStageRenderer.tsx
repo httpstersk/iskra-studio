@@ -45,6 +45,7 @@ interface CanvasStageRendererProps {
   };
   isCanvasReady: boolean;
   isGenerating: boolean;
+  onImageDoubleClick?: (imageId: string) => void;
   saveToHistory: () => void;
   selectedIds: string[];
   setHiddenVideoControlsIds: React.Dispatch<React.SetStateAction<Set<string>>>;
@@ -55,6 +56,7 @@ interface CanvasStageRendererProps {
   stageRef: React.RefObject<Konva.Stage | null>;
   videos: PlacedVideo[];
   viewport: Viewport;
+  variationMode?: "image" | "video";
 }
 
 /**
@@ -97,6 +99,7 @@ export function CanvasStageRenderer({
   images,
   interactions,
   isCanvasReady,
+  onImageDoubleClick,
   saveToHistory,
   selectedIds,
   setHiddenVideoControlsIds,
@@ -107,6 +110,7 @@ export function CanvasStageRenderer({
   stageRef,
   videos,
   viewport,
+  variationMode,
 }: CanvasStageRendererProps) {
   const visibleImages = getVisibleItems(images, viewport, canvasSize);
   const visibleVideos = getVisibleItems(videos, viewport, canvasSize);
@@ -255,6 +259,7 @@ export function CanvasStageRenderer({
               }}
               onDragEnd={handleImageDragEnd}
               onDragStart={() => handleImageDragStart(image.id)}
+              onDoubleClick={onImageDoubleClick}
               onSelect={(e) => interactions.handleSelect(image.id, e)}
               selectedIds={selectedIds}
               setImages={setImages}
@@ -265,6 +270,7 @@ export function CanvasStageRenderer({
           {isVariationMode && selectedImageForVariation && (
             <VariationGhostPlaceholders
               selectedImage={selectedImageForVariation}
+              variationMode={variationMode}
             />
           )}
 

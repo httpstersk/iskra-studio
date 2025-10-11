@@ -124,9 +124,6 @@ export default function CanvasPage() {
   const { mutateAsync: generateTextToImage } = useMutation(
     trpc.generateTextToImage.mutationOptions()
   );
-  const { mutateAsync: generateImageVariation } = useMutation(
-    trpc.generateImageVariation.mutationOptions()
-  );
 
   // Load default images
   useDefaultImages(
@@ -254,10 +251,23 @@ export default function CanvasPage() {
     ]);
   }, [canvasState, historyState]);
 
+  /**
+   * Handles double-click on an image to toggle variation mode
+   */
+  const handleImageDoubleClick = useCallback(
+    (imageId: string) => {
+      // Only toggle if the image is selected
+      if (canvasState.selectedIds.includes(imageId)) {
+        const newMode = uiState.variationMode === "image" ? "video" : "image";
+        uiState.setVariationMode(newMode);
+      }
+    },
+    [canvasState.selectedIds, uiState]
+  );
 
   /**
    * Handles running image generation
-   * If one image is selected with no prompt, generates 8 camera angle variations
+   * If one image is selected with no prompt, generates variations (8 for image, 4 for video)
    * Otherwise, performs standard text-to-image or image-to-image generation
    */
   const handleRun = async () => {
@@ -267,7 +277,7 @@ export default function CanvasPage() {
       !generationState.generationSettings.prompt.trim();
 
     if (isVariationMode) {
-      // Generate 4 camera angle variations (optimized)
+      // Generate variations based on mode (8 for image, 4 for video)
       await handleVariationGeneration({
         images: canvasState.images,
         selectedIds: canvasState.selectedIds,
@@ -279,6 +289,7 @@ export default function CanvasPage() {
         setActiveGenerations: generationState.setActiveGenerations,
         toast,
         variationPrompt: generationState.generationSettings.variationPrompt,
+        variationMode: uiState.variationMode,
       });
     } else {
       // Standard generation flow
@@ -400,7 +411,6 @@ export default function CanvasPage() {
       generationState.setIsConvertingToVideo(false);
     }
   };
-
 
   /**
    * Handles video extension
@@ -747,8 +757,7 @@ export default function CanvasPage() {
 
       <main className="flex-1 relative flex items-center justify-center w-full">
         <div className="relative w-full h-full">
-          <ContextMenu
-          >
+          <ContextMenu>
             <ContextMenuTrigger asChild>
               <div
                 aria-label={ARIA_LABELS.CONTEXT_MENU}
@@ -771,6 +780,7 @@ export default function CanvasPage() {
                   interactions={interactions}
                   isCanvasReady={canvasState.isCanvasReady}
                   isGenerating={generationState.isGenerating}
+                  onImageDoubleClick={handleImageDoubleClick}
                   saveToHistory={historyState.saveToHistory}
                   selectedIds={canvasState.selectedIds}
                   setHiddenVideoControlsIds={uiState.setHiddenVideoControlsIds}
@@ -781,6 +791,7 @@ export default function CanvasPage() {
                   stageRef={stageRef}
                   videos={canvasState.videos}
                   viewport={canvasState.viewport}
+                  variationMode={uiState.variationMode}
                 />
               </div>
             </ContextMenuTrigger>
@@ -852,6 +863,7 @@ export default function CanvasPage() {
         showSuccess={generationState.showSuccess}
         toast={toast}
         undo={handleUndo}
+        variationMode={uiState.variationMode}
       />
 
       {/* All Dialogs */}

@@ -6,19 +6,22 @@ import { snapPosition } from "@/utils/snap-utils";
 
 interface VariationGhostPlaceholdersProps {
   selectedImage: PlacedImage;
+  variationMode?: "image" | "video";
 }
 
 /**
  * Renders ghost placeholder outlines showing where variations will be generated
  * Appears when a single image is selected (variation mode)
+ * Shows 8 placeholders for image mode, 4 for video mode
  */
 export const VariationGhostPlaceholders: React.FC<
   VariationGhostPlaceholdersProps
-> = ({ selectedImage }) => {
+> = ({ selectedImage, variationMode = "image" }) => {
   // Snap the source image position to grid first to ensure edge-to-edge alignment
   const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
 
-  const ghostPlaceholders = Array.from({ length: 4 }, (_, i) => {
+  const ghostCount = variationMode === "image" ? 8 : 4;
+  const ghostPlaceholders = Array.from({ length: ghostCount }, (_, i) => {
     // Calculate position based on snapped source position
     const position = calculateBalancedPosition(
       snappedSource.x,
