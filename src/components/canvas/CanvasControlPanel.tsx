@@ -29,11 +29,9 @@ interface CanvasControlPanelProps {
   images: PlacedImage[];
   generationSettings: GenerationSettings;
   setGenerationSettings: (settings: GenerationSettings) => void;
-  previousStyleId: string;
   isGenerating: boolean;
   handleRun: () => void;
   handleFileUpload: (files: FileList | null) => void;
-  setIsStyleDialogOpen: (open: boolean) => void;
   activeGenerationsSize: number;
   activeVideoGenerationsSize: number;
   isRemovingVideoBackground: boolean;

@@ -9,25 +9,20 @@ import type {
   ActiveVideoGeneration,
   GenerationSettings,
 } from "@/types/canvas";
-import { styleModels } from "@/lib/models";
-
-const simpsonsStyle = styleModels.find((m) => m.id === "simpsons");
 
 /**
  * Atom for generation settings (prompt, style, LoRA)
  */
 export const generationSettingsAtom = atom<GenerationSettings>({
-  loraUrl: simpsonsStyle?.loraUrl || "",
-  prompt: simpsonsStyle?.prompt || "",
-  styleId: simpsonsStyle?.id || "simpsons",
+  loraUrl: "",
+  prompt: "",
+  styleId: "custom",
 });
 
 /**
  * Atom to track the previous style ID for restoration
  */
-export const previousStyleIdAtom = atom<string>(
-  simpsonsStyle?.id || "simpsons"
-);
+export const previousStyleIdAtom = atom<string>("custom");
 
 /**
  * Atom to track if image generation is in progress

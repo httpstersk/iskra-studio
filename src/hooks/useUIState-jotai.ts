@@ -14,7 +14,6 @@ import {
   isImageToVideoDialogOpenAtom,
   isRemoveVideoBackgroundDialogOpenAtom,
   isSettingsDialogOpenAtom,
-  isStyleDialogOpenAtom,
   isVideoToVideoDialogOpenAtom,
   isolateInputValueAtom,
   isolateTargetAtom,
@@ -54,9 +53,6 @@ export function useUIState() {
   ] = useAtom(isRemoveVideoBackgroundDialogOpenAtom);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useAtom(
     isSettingsDialogOpenAtom
-  );
-  const [isStyleDialogOpen, setIsStyleDialogOpen] = useAtom(
-    isStyleDialogOpenAtom
   );
   const [isVideoToVideoDialogOpen, setIsVideoToVideoDialogOpen] = useAtom(
     isVideoToVideoDialogOpenAtom
@@ -137,7 +133,6 @@ export function useUIState() {
     isImageToVideoDialogOpen,
     isRemoveVideoBackgroundDialogOpen,
     isSettingsDialogOpen,
-    isStyleDialogOpen,
     isVideoToVideoDialogOpen,
     isolateInputValue,
     isolateTarget,
@@ -153,7 +148,6 @@ export function useUIState() {
     setIsImageToVideoDialogOpen,
     setIsRemoveVideoBackgroundDialogOpen,
     setIsSettingsDialogOpen,
-    setIsStyleDialogOpen,
     setIsVideoToVideoDialogOpen,
     setIsolateInputValue,
     setIsolateTarget,

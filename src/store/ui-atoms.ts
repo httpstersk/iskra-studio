@@ -13,7 +13,6 @@ export const isExtendVideoDialogOpenAtom = atom(false);
 export const isImageToVideoDialogOpenAtom = atom(false);
 export const isRemoveVideoBackgroundDialogOpenAtom = atom(false);
 export const isSettingsDialogOpenAtom = atom(false);
-export const isStyleDialogOpenAtom = atom(false);
 export const isVideoToVideoDialogOpenAtom = atom(false);
 
 /**

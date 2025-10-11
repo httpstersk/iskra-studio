@@ -26,10 +26,6 @@ export async function POST(req: Request) {
             .describe(
               "The aspect ratio of the generated image. Always use 'square' format."
             ),
-          style: z
-            .enum(["simpsons"])
-            .optional()
-            .describe("The artistic style to apply to the image"),
         }),
       },
     },

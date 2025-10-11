@@ -18,16 +18,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Check, Plus, SunIcon, MoonIcon, MonitorIcon } from "lucide-react";
+import { Check, SunIcon, MoonIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { styleModels } from "@/lib/models";
 import { ImageToVideoDialog } from "./ImageToVideoDialog";
 import { VideoToVideoDialog } from "./VideoToVideoDialog";
 import { ExtendVideoDialog } from "./ExtendVideoDialog";
 import { RemoveVideoBackgroundDialog } from "./VideoModelComponents";
-import type { GenerationSettings, VideoGenerationSettings } from "@/types/canvas";
+import type { VideoGenerationSettings } from "@/types/canvas";
 
 interface CanvasDialogsProps {
   // Settings Dialog
@@ -45,11 +43,6 @@ interface CanvasDialogsProps {
   setShowMinimap: (show: boolean) => void;
   toast: any;
 
-  // Style Dialog
-  isStyleDialogOpen: boolean;
-  setIsStyleDialogOpen: (open: boolean) => void;
-  generationSettings: GenerationSettings;
-  setGenerationSettings: (settings: GenerationSettings) => void;
 
   // Image to Video Dialog
   isImageToVideoDialogOpen: boolean;
@@ -100,10 +93,6 @@ export function CanvasDialogs({
   showMinimap,
   setShowMinimap,
   toast,
-  isStyleDialogOpen,
-  setIsStyleDialogOpen,
-  generationSettings,
-  setGenerationSettings,
   isImageToVideoDialogOpen,
   setIsImageToVideoDialogOpen,
   selectedImageForVideo,
@@ -315,87 +304,6 @@ export function CanvasDialogs({
         </DialogContent>
       </Dialog>
 
-      {/* Style Selection Dialog */}
-      <Dialog open={isStyleDialogOpen} onOpenChange={setIsStyleDialogOpen}>
-        <DialogContent className="w-[95vw] max-w-4xl max-h-[80vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle>Choose a Style</DialogTitle>
-            <DialogDescription>
-              Select a style to apply to your images or choose Custom to use
-              your own LoRA
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="relative">
-            <div className="pointer-events-none absolute -top-[1px] left-0 right-0 z-30 h-4 md:h-12 bg-gradient-to-b from-background via-background/90 to-transparent" />
-            <div className="pointer-events-none absolute -bottom-[1px] left-0 right-0 z-30 h-4 md:h-12 bg-gradient-to-t from-background via-background/90 to-transparent" />
-
-            <div className="overflow-y-auto max-h-[60vh] px-1">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pt-4 pb-6 md:pt-8 md:pb-12">
-                <button
-                  onClick={() => {
-                    setGenerationSettings({
-                      ...generationSettings,
-                      loraUrl: "",
-                      prompt: "",
-                      styleId: "custom",
-                    });
-                    setIsStyleDialogOpen(false);
-                  }}
-                  className={cn(
-                    "group relative flex flex-col items-center gap-2 p-3 rounded-xl border",
-                    generationSettings.styleId === "custom"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                  )}
-                >
-                  <div className="w-full aspect-square rounded-lg bg-muted flex items-center justify-center">
-                    <Plus className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <span className="text-sm font-medium">Custom</span>
-                </button>
-
-                {styleModels.map((model) => (
-                  <button
-                    key={model.id}
-                    onClick={() => {
-                      setGenerationSettings({
-                        ...generationSettings,
-                        loraUrl: model.loraUrl || "",
-                        prompt: model.prompt,
-                        styleId: model.id,
-                      });
-                      setIsStyleDialogOpen(false);
-                    }}
-                    className={cn(
-                      "group relative flex flex-col items-center gap-2 p-3 rounded-xl border",
-                      generationSettings.styleId === model.id
-                        ? "border-primary bg-primary/10"
-                        : "border-border hover:border-primary/50"
-                    )}
-                  >
-                    <div className="relative w-full aspect-square rounded-lg overflow-hidden">
-                      <Image
-                        src={model.imageSrc}
-                        alt={model.name}
-                        width={200}
-                        height={200}
-                        className="w-full h-full object-cover"
-                      />
-                      {generationSettings.styleId === model.id && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center"></div>
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-center">
-                      {model.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Video Dialogs */}
       <ImageToVideoDialog

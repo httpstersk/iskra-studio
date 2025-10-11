@@ -931,12 +931,10 @@ export default function CanvasPage() {
         isIsolating={generationState.isIsolating}
         isRemovingVideoBackground={generationState.isRemovingVideoBackground}
         isTransformingVideo={generationState.isTransformingVideo}
-        previousStyleId={generationState.previousStyleId}
         redo={handleRedo}
         selectedIds={canvasState.selectedIds}
         setGenerationSettings={generationState.setGenerationSettings}
         setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
-        setIsStyleDialogOpen={uiState.setIsStyleDialogOpen}
         showSuccess={generationState.showSuccess}
         toast={toast}
         undo={handleUndo}
@@ -945,7 +943,6 @@ export default function CanvasPage() {
       {/* All Dialogs */}
       <CanvasDialogs
         customApiKey={uiState.customApiKey}
-        generationSettings={generationState.generationSettings}
         handleImageToVideoConversion={handleImageToVideoConversion}
         handleVideoBackgroundRemoval={handleVideoBackgroundRemoval}
         handleVideoExtension={handleVideoExtension}
@@ -960,7 +957,6 @@ export default function CanvasPage() {
         }
         isRemovingVideoBackground={generationState.isRemovingVideoBackground}
         isSettingsDialogOpen={uiState.isSettingsDialogOpen}
-        isStyleDialogOpen={uiState.isStyleDialogOpen}
         isTransformingVideo={generationState.isTransformingVideo}
         isVideoToVideoDialogOpen={uiState.isVideoToVideoDialogOpen}
         selectedImageForVideo={uiState.selectedImageForVideo}
@@ -970,14 +966,12 @@ export default function CanvasPage() {
         selectedVideoForExtend={uiState.selectedVideoForExtend}
         selectedVideoForVideo={uiState.selectedVideoForVideo}
         setCustomApiKey={uiState.setCustomApiKey}
-        setGenerationSettings={generationState.setGenerationSettings}
         setIsExtendVideoDialogOpen={uiState.setIsExtendVideoDialogOpen}
         setIsImageToVideoDialogOpen={uiState.setIsImageToVideoDialogOpen}
         setIsRemoveVideoBackgroundDialogOpen={
           uiState.setIsRemoveVideoBackgroundDialogOpen
         }
         setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
-        setIsStyleDialogOpen={uiState.setIsStyleDialogOpen}
         setIsVideoToVideoDialogOpen={uiState.setIsVideoToVideoDialogOpen}
         setSelectedImageForVideo={uiState.setSelectedImageForVideo}
         setSelectedVideoForBackgroundRemoval={

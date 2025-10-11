@@ -22,7 +22,6 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Response } from "@/components/ai-elements/response";
 import { Loader } from "@/components/ai-elements/loader";
-import { styleModels } from "@/lib/models";
 
 interface ChatProps {
   onImageGenerated?: (imageUrl: string) => void;
@@ -72,26 +71,13 @@ export default function Chat({ onImageGenerated, customApiKey }: ChatProps) {
             imageSize?: "square";
           };
 
-          // Find the style model if specified
-          let selectedStyle = styleModels.find((m) => m.id === "simpsons"); // default
+          // Use the prompt directly without any style modifications
+          const finalPrompt = prompt;
 
-          if (style) {
-            const foundStyle = styleModels.find((m) => m.id === style);
-            if (foundStyle) {
-              selectedStyle = foundStyle;
-            }
-          }
-
-          // Combine the style prompt with user prompt
-          const finalPrompt = selectedStyle
-            ? `${prompt}, ${selectedStyle.prompt}`
-            : prompt;
-
-          // Call the tRPC mutation with LoRA
+          // Call the tRPC mutation
           const result = await generateTextToImage({
             prompt: finalPrompt,
             imageSize: "square",
-            loraUrl: selectedStyle?.loraUrl,
             apiKey: customApiKey,
           });
 
@@ -104,7 +90,7 @@ export default function Chat({ onImageGenerated, customApiKey }: ChatProps) {
           addToolResult({
             tool: "generateTextToImage",
             toolCallId: toolCall.toolCallId,
-            output: `Image generated in ${selectedStyle?.name || "default"} and added to canvas`,
+            output: "Image generated and added to canvas",
           });
         } catch (error) {
           console.error("Error generating image:", error);
@@ -168,12 +154,7 @@ export default function Chat({ onImageGenerated, customApiKey }: ChatProps) {
                         case "input-available":
                           const input = part.input as {
                             prompt: string;
-                            style?: string;
                           };
-                          const styleName = input.style
-                            ? styleModels.find((m) => m.id === input.style)
-                                ?.name || input.style
-                            : "Default";
 
                           return (
                             <div key={callId} className="space-y-1">
@@ -181,29 +162,13 @@ export default function Chat({ onImageGenerated, customApiKey }: ChatProps) {
                                 <Loader />
                                 Generating image: "{input.prompt}"
                               </div>
-                              {input.style && (
-                                <div className="flex items-center gap-2 ml-6">
-                                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                                  <span className="text-purple-600 font-medium text-xs">
-                                    Using {styleName} Lora
-                                  </span>
-                                </div>
-                              )}
                             </div>
                           );
                         case "output-available":
-                          const outputInput = part.input as { style?: string };
-                          const outputStyleName = outputInput.style
-                            ? styleModels.find(
-                                (m) => m.id === outputInput.style
-                              )?.name || outputInput.style
-                            : "Default";
-
                           return (
                             <div key={callId} className="space-y-2">
                               <p className="text-sm text-green-600">
-                                ✓ Image generated in {outputStyleName} style and
-                                added to canvas
+                                ✓ Image generated and added to canvas
                               </p>
                             </div>
                           );
