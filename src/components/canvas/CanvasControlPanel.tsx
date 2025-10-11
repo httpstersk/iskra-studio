@@ -34,8 +34,6 @@ interface CanvasControlPanelProps {
   handleFileUpload: (files: FileList | null) => void;
   activeGenerationsSize: number;
   activeVideoGenerationsSize: number;
-  isRemovingVideoBackground: boolean;
-  isIsolating: boolean;
   isExtendingVideo: boolean;
   isTransformingVideo: boolean;
   showSuccess: boolean;
@@ -58,8 +56,6 @@ export function CanvasControlPanel({
   handleFileUpload,
   activeGenerationsSize,
   activeVideoGenerationsSize,
-  isRemovingVideoBackground,
-  isIsolating,
   isExtendingVideo,
   isTransformingVideo,
   showSuccess,
@@ -86,8 +82,6 @@ export function CanvasControlPanel({
             {(activeGenerationsSize > 0 ||
               activeVideoGenerationsSize > 0 ||
               isGenerating ||
-              isRemovingVideoBackground ||
-              isIsolating ||
               isExtendingVideo ||
               isTransformingVideo ||
               showSuccess) && (
@@ -103,7 +97,6 @@ export function CanvasControlPanel({
                   showSuccess
                     ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
                     : activeVideoGenerationsSize > 0 ||
-                        isRemovingVideoBackground ||
                         isExtendingVideo ||
                         isTransformingVideo
                       ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
@@ -118,14 +111,11 @@ export function CanvasControlPanel({
                     activeGenerationsSize +
                     activeVideoGenerationsSize +
                     (isGenerating ? 1 : 0) +
-                    (isRemovingVideoBackground ? 1 : 0) +
-                    (isIsolating ? 1 : 0) +
                     (isExtendingVideo ? 1 : 0) +
                     (isTransformingVideo ? 1 : 0)
                   }
                   outputType={
                     activeVideoGenerationsSize > 0 ||
-                    isRemovingVideoBackground ||
                     isExtendingVideo ||
                     isTransformingVideo
                       ? "video"

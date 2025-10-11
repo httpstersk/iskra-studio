@@ -208,12 +208,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
 
   for (const img of selectedImages) {
     try {
-      // Get crop values
-      const cropX = img.cropX || 0;
-      const cropY = img.cropY || 0;
-      const cropWidth = img.cropWidth || 1;
-      const cropHeight = img.cropHeight || 1;
-
       // Load the image
       const imgElement = new window.Image();
       imgElement.crossOrigin = "anonymous"; // Enable CORS
@@ -227,35 +221,11 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Failed to get canvas context");
 
-      // Calculate the effective original dimensions accounting for crops
-      let effectiveWidth = imgElement.naturalWidth;
-      let effectiveHeight = imgElement.naturalHeight;
-
-      if (cropWidth !== 1 || cropHeight !== 1) {
-        effectiveWidth = cropWidth * imgElement.naturalWidth;
-        effectiveHeight = cropHeight * imgElement.naturalHeight;
-      }
-
       // Set canvas size to the original resolution (not display size)
-      canvas.width = effectiveWidth;
-      canvas.height = effectiveHeight;
+      canvas.width = imgElement.naturalWidth;
+      canvas.height = imgElement.naturalHeight;
 
-      console.log(
-        `Processing image at ${canvas.width}x${canvas.height} (original res, display: ${img.width}x${img.height})`,
-      );
-
-      // Always use the crop values (default to full image if not set)
-      ctx.drawImage(
-        imgElement,
-        cropX * imgElement.naturalWidth,
-        cropY * imgElement.naturalHeight,
-        cropWidth * imgElement.naturalWidth,
-        cropHeight * imgElement.naturalHeight,
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-      );
+      ctx.drawImage(imgElement, 0, 0);
 
       // Convert to blob and upload
       const blob = await new Promise<Blob>((resolve) => {

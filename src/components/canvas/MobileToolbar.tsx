@@ -10,8 +10,6 @@ import {
 import {
   Play,
   Copy,
-  Crop,
-  Scissors,
   Combine,
   Download,
   Trash2,
@@ -31,10 +29,8 @@ interface MobileToolbarProps {
   generationSettings: GenerationSettings;
   handleRun: () => void;
   handleDuplicate: () => void;
-  handleRemoveBackground: () => void;
   handleCombineImages: () => void;
   handleDelete: () => void;
-  setCroppingImageId: (id: string | null) => void;
   sendToFront: () => void;
   sendToBack: () => void;
   bringForward: () => void;
@@ -48,10 +44,8 @@ export const MobileToolbar: React.FC<MobileToolbarProps> = ({
   generationSettings,
   handleRun,
   handleDuplicate,
-  handleRemoveBackground,
   handleCombineImages,
   handleDelete,
-  setCroppingImageId,
   sendToFront,
   sendToBack,
   bringForward,
@@ -93,32 +87,6 @@ export const MobileToolbar: React.FC<MobileToolbarProps> = ({
         title="Duplicate"
       >
         <Copy className="h-12 w-12" />
-      </Button>
-
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={() => {
-          if (selectedIds.length === 1) {
-            setCroppingImageId(selectedIds[0]);
-          }
-        }}
-        disabled={selectedIds.length !== 1}
-        className="w-12 h-12 p-0"
-        title="Crop"
-      >
-        <Crop className="h-12 w-12" />
-      </Button>
-
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={handleRemoveBackground}
-        disabled={selectedIds.length === 0}
-        className="w-12 h-12 p-0"
-        title="Remove Background"
-      >
-        <Scissors className="h-12 w-12" />
       </Button>
 
       <Button

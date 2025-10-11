@@ -4,7 +4,7 @@
  */
 
 import { useEffect } from "react";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import {
   activeGenerationsAtom,
   activeVideoGenerationsAtom,
@@ -12,8 +12,6 @@ import {
   isConvertingToVideoAtom,
   isExtendingVideoAtom,
   isGeneratingAtom,
-  isIsolatingAtom,
-  isRemovingVideoBackgroundAtom,
   isTransformingVideoAtom,
   previousGenerationCountAtom,
   previousStyleIdAtom,
@@ -41,10 +39,6 @@ export function useGenerationState() {
     isExtendingVideoAtom
   );
   const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom);
-  const [isIsolating, setIsIsolating] = useAtom(isIsolatingAtom);
-  const [isRemovingVideoBackground, setIsRemovingVideoBackground] = useAtom(
-    isRemovingVideoBackgroundAtom
-  );
   const [isTransformingVideo, setIsTransformingVideo] = useAtom(
     isTransformingVideoAtom
   );
@@ -60,8 +54,6 @@ export function useGenerationState() {
       activeGenerations.size +
       activeVideoGenerations.size +
       (isGenerating ? 1 : 0) +
-      (isRemovingVideoBackground ? 1 : 0) +
-      (isIsolating ? 1 : 0) +
       (isExtendingVideo ? 1 : 0) +
       (isTransformingVideo ? 1 : 0);
 
@@ -79,8 +71,6 @@ export function useGenerationState() {
     activeVideoGenerations.size,
     isExtendingVideo,
     isGenerating,
-    isIsolating,
-    isRemovingVideoBackground,
     isTransformingVideo,
     previousGenerationCount,
     setPreviousGenerationCount,
@@ -106,8 +96,6 @@ export function useGenerationState() {
     isConvertingToVideo,
     isExtendingVideo,
     isGenerating,
-    isIsolating,
-    isRemovingVideoBackground,
     isTransformingVideo,
     previousStyleId,
     setActiveGenerations,
@@ -116,8 +104,6 @@ export function useGenerationState() {
     setIsConvertingToVideo,
     setIsExtendingVideo,
     setIsGenerating,
-    setIsIsolating,
-    setIsRemovingVideoBackground,
     setIsTransformingVideo,
     setPreviousStyleId,
     showSuccess,

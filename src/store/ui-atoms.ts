@@ -11,7 +11,6 @@ import { atom } from "jotai";
 export const isApiKeyDialogOpenAtom = atom(false);
 export const isExtendVideoDialogOpenAtom = atom(false);
 export const isImageToVideoDialogOpenAtom = atom(false);
-export const isRemoveVideoBackgroundDialogOpenAtom = atom(false);
 export const isSettingsDialogOpenAtom = atom(false);
 export const isVideoToVideoDialogOpenAtom = atom(false);
 
@@ -21,14 +20,7 @@ export const isVideoToVideoDialogOpenAtom = atom(false);
 export const selectedImageForVideoAtom = atom<string | null>(null);
 export const selectedVideoForExtendAtom = atom<string | null>(null);
 export const selectedVideoForVideoAtom = atom<string | null>(null);
-export const selectedVideoForBackgroundRemovalAtom = atom<string | null>(null);
 
-/**
- * Canvas interaction atoms
- */
-export const croppingImageIdAtom = atom<string | null>(null);
-export const isolateInputValueAtom = atom("");
-export const isolateTargetAtom = atom<string | null>(null);
 
 /**
  * View settings atoms

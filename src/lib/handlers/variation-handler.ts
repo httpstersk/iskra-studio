@@ -117,37 +117,16 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       imgElement.onerror = reject;
     });
 
-    // Get crop values or use defaults
-    const cropX = selectedImage.cropX || 0;
-    const cropY = selectedImage.cropY || 0;
-    const cropWidth = selectedImage.cropWidth || 1;
-    const cropHeight = selectedImage.cropHeight || 1;
-
     // Create canvas for the source image
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Failed to get canvas context");
 
-    // Calculate effective dimensions
-    const effectiveWidth = cropWidth * imgElement.naturalWidth;
-    const effectiveHeight = cropHeight * imgElement.naturalHeight;
-
     // Set canvas size to original resolution
-    canvas.width = effectiveWidth;
-    canvas.height = effectiveHeight;
+    canvas.width = imgElement.naturalWidth;
+    canvas.height = imgElement.naturalHeight;
 
-    // Draw the cropped image
-    ctx.drawImage(
-      imgElement,
-      cropX * imgElement.naturalWidth,
-      cropY * imgElement.naturalHeight,
-      cropWidth * imgElement.naturalWidth,
-      cropHeight * imgElement.naturalHeight,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    ctx.drawImage(imgElement, 0, 0);
 
     // Convert to blob and upload
     const blob = await new Promise<Blob>((resolve) => {

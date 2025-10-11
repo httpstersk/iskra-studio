@@ -29,12 +29,8 @@ export async function combineImages(
       imgElement.onload = resolve;
     });
 
-    const effectiveWidth = img.cropWidth
-      ? imgElement.naturalWidth * img.cropWidth
-      : imgElement.naturalWidth;
-    const effectiveHeight = img.cropHeight
-      ? imgElement.naturalHeight * img.cropHeight
-      : imgElement.naturalHeight;
+    const effectiveWidth = imgElement.naturalWidth;
+    const effectiveHeight = imgElement.naturalHeight;
 
     const scaleX = effectiveWidth / img.width;
     const scaleY = effectiveHeight / img.height;
@@ -89,36 +85,17 @@ export async function combineImages(
         scaledHeight
       );
     } else {
-      if (
-        img.cropX !== undefined &&
-        img.cropY !== undefined &&
-        img.cropWidth !== undefined &&
-        img.cropHeight !== undefined
-      ) {
-        ctx.drawImage(
-          imgElement,
-          img.cropX * imgElement.naturalWidth,
-          img.cropY * imgElement.naturalHeight,
-          img.cropWidth * imgElement.naturalWidth,
-          img.cropHeight * imgElement.naturalHeight,
-          relX,
-          relY,
-          scaledWidth,
-          scaledHeight
-        );
-      } else {
-        ctx.drawImage(
-          imgElement,
-          0,
-          0,
-          imgElement.naturalWidth,
-          imgElement.naturalHeight,
-          relX,
-          relY,
-          scaledWidth,
-          scaledHeight
-        );
-      }
+      ctx.drawImage(
+        imgElement,
+        0,
+        0,
+        imgElement.naturalWidth,
+        imgElement.naturalHeight,
+        relX,
+        relY,
+        scaledWidth,
+        scaledHeight
+      );
     }
 
     ctx.restore();
@@ -182,51 +159,3 @@ export function deleteElements(
   };
 }
 
-export async function createCroppedImage(
-  imageSrc: string,
-  cropX: number,
-  cropY: number,
-  cropWidth: number,
-  cropHeight: number
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        reject(new Error("Failed to get canvas context"));
-        return;
-      }
-
-      canvas.width = cropWidth * img.naturalWidth;
-      canvas.height = cropHeight * img.naturalHeight;
-
-      ctx.drawImage(
-        img,
-        cropX * img.naturalWidth,
-        cropY * img.naturalHeight,
-        cropWidth * img.naturalWidth,
-        cropHeight * img.naturalHeight,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          reject(new Error("Failed to create blob"));
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      }, "image/png");
-    };
-    img.onerror = () => reject(new Error("Failed to load image"));
-    img.src = imageSrc;
-  });
-}

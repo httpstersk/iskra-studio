@@ -6,19 +6,14 @@
 import { useEffect } from "react";
 import { useAtom } from "jotai";
 import {
-  croppingImageIdAtom,
   customApiKeyAtom,
   hiddenVideoControlsIdsAtom,
   isApiKeyDialogOpenAtom,
   isExtendVideoDialogOpenAtom,
   isImageToVideoDialogOpenAtom,
-  isRemoveVideoBackgroundDialogOpenAtom,
   isSettingsDialogOpenAtom,
   isVideoToVideoDialogOpenAtom,
-  isolateInputValueAtom,
-  isolateTargetAtom,
   selectedImageForVideoAtom,
-  selectedVideoForBackgroundRemovalAtom,
   selectedVideoForExtendAtom,
   selectedVideoForVideoAtom,
   showChatAtom,
@@ -33,7 +28,6 @@ import {
  * Handles localStorage persistence for settings
  */
 export function useUIState() {
-  const [croppingImageId, setCroppingImageId] = useAtom(croppingImageIdAtom);
   const [customApiKey, setCustomApiKey] = useAtom(customApiKeyAtom);
   const [hiddenVideoControlsIds, setHiddenVideoControlsIds] = useAtom(
     hiddenVideoControlsIdsAtom
@@ -47,25 +41,15 @@ export function useUIState() {
   const [isImageToVideoDialogOpen, setIsImageToVideoDialogOpen] = useAtom(
     isImageToVideoDialogOpenAtom
   );
-  const [
-    isRemoveVideoBackgroundDialogOpen,
-    setIsRemoveVideoBackgroundDialogOpen,
-  ] = useAtom(isRemoveVideoBackgroundDialogOpenAtom);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useAtom(
     isSettingsDialogOpenAtom
   );
   const [isVideoToVideoDialogOpen, setIsVideoToVideoDialogOpen] = useAtom(
     isVideoToVideoDialogOpenAtom
   );
-  const [isolateInputValue, setIsolateInputValue] = useAtom(
-    isolateInputValueAtom
-  );
-  const [isolateTarget, setIsolateTarget] = useAtom(isolateTargetAtom);
   const [selectedImageForVideo, setSelectedImageForVideo] = useAtom(
     selectedImageForVideoAtom
   );
-  const [selectedVideoForBackgroundRemoval, setSelectedVideoForBackgroundRemoval] =
-    useAtom(selectedVideoForBackgroundRemovalAtom);
   const [selectedVideoForExtend, setSelectedVideoForExtend] = useAtom(
     selectedVideoForExtendAtom
   );
@@ -125,34 +109,24 @@ export function useUIState() {
   }, [customApiKey]);
 
   return {
-    croppingImageId,
     customApiKey,
     hiddenVideoControlsIds,
     isApiKeyDialogOpen,
     isExtendVideoDialogOpen,
     isImageToVideoDialogOpen,
-    isRemoveVideoBackgroundDialogOpen,
     isSettingsDialogOpen,
     isVideoToVideoDialogOpen,
-    isolateInputValue,
-    isolateTarget,
     selectedImageForVideo,
-    selectedVideoForBackgroundRemoval,
     selectedVideoForExtend,
     selectedVideoForVideo,
     setCustomApiKey,
-    setCroppingImageId,
     setHiddenVideoControlsIds,
     setIsApiKeyDialogOpen,
     setIsExtendVideoDialogOpen,
     setIsImageToVideoDialogOpen,
-    setIsRemoveVideoBackgroundDialogOpen,
     setIsSettingsDialogOpen,
     setIsVideoToVideoDialogOpen,
-    setIsolateInputValue,
-    setIsolateTarget,
     setSelectedImageForVideo,
-    setSelectedVideoForBackgroundRemoval,
     setSelectedVideoForExtend,
     setSelectedVideoForVideo,
     setShowChat,

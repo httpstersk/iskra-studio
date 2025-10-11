@@ -24,12 +24,10 @@ interface CanvasVideoProps {
   onChange: (newAttrs: Partial<PlacedVideo>) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
-  onDoubleClick?: () => void;
   selectedIds: string[];
   videos: PlacedVideo[];
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
   isDraggingVideo: boolean;
-  isCroppingVideo: boolean;
   dragStartPositions: Map<string, { x: number; y: number }>;
   onResizeStart?: () => void;
   onResizeEnd?: () => void;
@@ -42,12 +40,10 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
   onChange,
   onDragStart,
   onDragEnd,
-  onDoubleClick,
   selectedIds,
   // videos is used in the type definition but not in the component
   setVideos,
   // isDraggingVideo is not used but kept for API compatibility
-  isCroppingVideo,
   dragStartPositions,
   onResizeStart,
   onResizeEnd,
@@ -385,16 +381,6 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
         width={video.width}
         height={video.height}
         rotation={video.rotation}
-        crop={
-          video.cropX !== undefined && !isCroppingVideo && videoElement
-            ? {
-                x: (video.cropX || 0) * videoElement.videoWidth,
-                y: (video.cropY || 0) * videoElement.videoHeight,
-                width: (video.cropWidth || 1) * videoElement.videoWidth,
-                height: (video.cropHeight || 1) * videoElement.videoHeight,
-              }
-            : undefined
-        }
         draggable={isDraggable}
         onClick={(e) => {
           // Prevent event propagation issues
@@ -409,8 +395,6 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
           }
         }}
         onTap={onSelect}
-        onDblClick={onDoubleClick}
-        onDblTap={onDoubleClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onMouseDown={(e) => {

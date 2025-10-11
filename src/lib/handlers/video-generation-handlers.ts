@@ -1,12 +1,11 @@
 /**
  * Video generation handlers
- * Handles image-to-video, video-to-video, video extension, and background removal operations
+ * Handles image-to-video, video-to-video, and video extension operations
  */
 
 import type { PlacedImage, PlacedVideo, VideoGenerationSettings } from "@/types/canvas";
-import { getVideoModelById } from "@/lib/video-models";
 import { convertImageToVideo } from "@/utils/video-utils";
-import { COLOR_MAP, CANVAS_STRINGS, VIDEO_DEFAULTS, CANVAS_DIMENSIONS } from "@/constants/canvas";
+import { VIDEO_DEFAULTS, CANVAS_DIMENSIONS } from "@/constants/canvas";
 
 /**
  * Creates a unique generation ID with prefix
@@ -69,26 +68,6 @@ export function createVideoToVideoConfig(
     isVideoToVideo: true,
     modelId: settings.modelId || VIDEO_DEFAULTS.MODEL_ID,
     resolution: settings.resolution || VIDEO_DEFAULTS.RESOLUTION,
-    sourceVideoId,
-  };
-}
-
-/**
- * Creates a video generation configuration for background removal
- */
-export function createBackgroundRemovalConfig(
-  videoUrl: string,
-  videoDuration: number,
-  backgroundColor: string,
-  sourceVideoId: string
-) {
-  return {
-    backgroundColor: COLOR_MAP[backgroundColor] || "Black",
-    duration: videoDuration || VIDEO_DEFAULTS.DURATION,
-    imageUrl: videoUrl,
-    modelConfig: getVideoModelById("bria-video-background-removal"),
-    modelId: "bria-video-background-removal",
-    prompt: CANVAS_STRINGS.VIDEO.REMOVING_BACKGROUND_PROMPT,
     sourceVideoId,
   };
 }
