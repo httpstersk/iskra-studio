@@ -304,6 +304,7 @@ export default function CanvasPage() {
         setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
         toast,
         generateImageVariation,
+        variationPrompt: generationState.generationSettings.variationPrompt,
       });
     } else {
       // Standard generation flow

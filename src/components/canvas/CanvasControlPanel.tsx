@@ -223,32 +223,29 @@ export function CanvasControlPanel({
             </div>
           </div>
 
-          <div className="relative">
-            <Textarea
-              value={generationSettings.prompt}
-              onChange={(e) =>
-                setGenerationSettings({
-                  ...generationSettings,
-                  prompt: e.target.value,
-                })
-              }
-              placeholder={`Enter a prompt... (${checkOS("Win") || checkOS("Linux") ? "Ctrl" : "⌘"}+Enter to run)`}
-              className="w-full h-20 resize-none border-none p-2 pr-36"
-              style={{ fontSize: "16px" }}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  if (
-                    !isGenerating &&
-                    (generationSettings.prompt.trim() || selectedIds.length > 0)
-                  ) {
-                    handleRun();
-                  }
+          {selectedIds.length > 0 && (
+            <div className="relative">
+              <Textarea
+                value={generationSettings.variationPrompt || ""}
+                onChange={(e) =>
+                  setGenerationSettings({
+                    ...generationSettings,
+                    variationPrompt: e.target.value,
+                  })
                 }
-              }}
-            />
+                placeholder="Enter edit instructions for variations (optional)..."
+                className="w-full h-16 resize-none border-none p-2 pr-24"
+                style={{ fontSize: "16px" }}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                    e.preventDefault();
+                    if (!isGenerating) {
+                      handleRun();
+                    }
+                  }
+                }}
+              />
 
-            {selectedIds.length > 0 && (
               <div className="absolute top-1 right-2 flex items-center justify-end">
                 <div className="relative h-12 w-20">
                   {selectedIds.slice(0, 3).map((id, index) => {
@@ -290,8 +287,36 @@ export function CanvasControlPanel({
                   })}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {selectedIds.length === 0 && (
+            <div className="relative">
+              <Textarea
+                value={generationSettings.prompt}
+                onChange={(e) =>
+                  setGenerationSettings({
+                    ...generationSettings,
+                    prompt: e.target.value,
+                  })
+                }
+                placeholder={`Enter a prompt... (${checkOS("Win") || checkOS("Linux") ? "Ctrl" : "⌘"}+Enter to run)`}
+                className="w-full h-20 resize-none border-none p-2"
+                style={{ fontSize: "16px" }}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                    e.preventDefault();
+                    if (
+                      !isGenerating &&
+                      generationSettings.prompt.trim()
+                    ) {
+                      handleRun();
+                    }
+                  }
+                }}
+              />
+            </div>
+          )}
 
           {/* Style dropdown and Run button */}
           <div className="flex items-center justify-between">

@@ -19,6 +19,7 @@ interface VariationHandlerDeps {
     variant?: "default" | "destructive";
   }) => void;
   generateImageVariation: (params: any) => Promise<any>;
+  variationPrompt?: string;
 }
 
 /**
@@ -83,6 +84,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     setIsApiKeyDialogOpen,
     toast,
     generateImageVariation,
+    variationPrompt,
   } = deps;
 
   // Ensure exactly one image is selected
@@ -202,15 +204,20 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
     // Generate all variations in parallel
     console.log("Starting generation of 4 variations in parallel...");
-    const variationPromises = CAMERA_VARIATIONS.map(async (prompt, index) => {
+    const variationPromises = CAMERA_VARIATIONS.map(async (cameraPrompt, index) => {
       try {
+        // Combine user's variation prompt with camera angle prompt
+        const combinedPrompt = variationPrompt 
+          ? `${variationPrompt}. ${cameraPrompt}` 
+          : cameraPrompt;
+        
         console.log(
-          `Starting variation ${index + 1}/4 with prompt: ${prompt.substring(0, 50)}...`
+          `Starting variation ${index + 1}/4 with prompt: ${combinedPrompt.substring(0, 50)}...`
         );
 
         const result = await generateImageVariation({
           imageUrl: uploadResult.url,
-          prompt: prompt,
+          prompt: combinedPrompt,
           imageSize: {
             width: Math.min(canvas.width, 2048),
             height: Math.min(canvas.height, 2048),
