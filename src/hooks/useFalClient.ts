@@ -1,12 +1,10 @@
 import React from "react";
-import { createFalClient } from "@fal-ai/client";
+
+import { createProxyFalClient } from "@/lib/fal/utils";
 
 // Custom hook for FAL client
 export const useFalClient = (apiKey?: string) => {
   return React.useMemo(() => {
-    return createFalClient({
-      credentials: apiKey ?? undefined,
-      proxyUrl: "/api/fal",
-    });
+    return createProxyFalClient(apiKey);
   }, [apiKey]);
 };

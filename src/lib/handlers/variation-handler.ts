@@ -1,4 +1,5 @@
 import { CAMERA_VARIATIONS } from "@/constants/camera-variations";
+import { FAL_UPLOAD_PATH } from "@/lib/fal/constants";
 import type { PlacedImage } from "@/types/canvas";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
 import { snapPosition } from "@/utils/snap-utils";
@@ -24,7 +25,7 @@ async function uploadBlobDirect(
     formData.append("file", blob, "image.png");
 
     // Use our server-side upload proxy to avoid CORS
-    const response = await fetch("/api/fal/upload", {
+    const response = await fetch(FAL_UPLOAD_PATH, {
       method: "POST",
       body: formData,
       headers: customApiKey

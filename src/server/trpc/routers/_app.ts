@@ -1,7 +1,11 @@
-import { createFalClient } from "@fal-ai/client";
 import { tracked } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "../init";
+import {
+  resolveFalClient,
+  standardRateLimiter,
+  videoRateLimiter,
+} from "@/lib/fal/utils";
 
 // Type helper for video generation input
 type VideoGenerationInput = {
@@ -48,62 +52,31 @@ type ApiResponse = {
   [key: string]: unknown;
 } & Record<string, unknown>;
 
-const fal = createFalClient({
-  credentials: () => process.env.FAL_KEY as string,
-});
-
 // Helper function to check rate limits or use custom API key
 async function getFalClient(
   apiKey: string | undefined,
   ctx: { req?: any; user?: { id: string } },
   isVideo: boolean = false
 ) {
-  if (apiKey) {
-    return createFalClient({
-      credentials: () => apiKey,
-    });
-  }
+  const headersSource =
+    ctx.req?.headers instanceof Headers ? ctx.req.headers : ctx.req?.headers;
 
-  // Apply rate limiting when using default key
-  const { shouldLimitRequest } = await import("@/lib/ratelimit");
-  const { createRateLimiter } = await import("@/lib/ratelimit");
+  const resolved = await resolveFalClient({
+    apiKey,
+    limiter: isVideo ? videoRateLimiter : standardRateLimiter,
+    headers: headersSource,
+    bucketId: isVideo ? "video" : undefined,
+    fallbackIp: typeof ctx.req?.ip === "string" ? ctx.req.ip : undefined,
+  });
 
-  // Different rate limits for video vs regular operations
-  const limiter = isVideo
-    ? {
-        perMinute: createRateLimiter(2, "60 s"),
-        perHour: createRateLimiter(4, "60 m"),
-        perDay: createRateLimiter(8, "24 h"),
-      }
-    : {
-        perMinute: createRateLimiter(5, "60 s"),
-        perHour: createRateLimiter(15, "60 m"),
-        perDay: createRateLimiter(50, "24 h"),
-      };
-
-  const ip =
-    ctx.req?.headers instanceof Headers
-      ? ctx.req.headers.get("x-forwarded-for") ||
-        ctx.req.headers.get("x-real-ip") ||
-        "unknown"
-      : ctx.req?.headers?.["x-forwarded-for"] ||
-        ctx.req?.headers?.["x-real-ip"] ||
-        ctx.req?.ip ||
-        "unknown";
-
-  const limiterResult = await shouldLimitRequest(
-    limiter,
-    ip,
-    isVideo ? "video" : undefined
-  );
-  if (limiterResult.shouldLimitRequest) {
+  if (resolved.limited) {
     const errorMessage = isVideo
-      ? `Video generation rate limit exceeded: 1 video per ${limiterResult.period}. Add your FAL API key to bypass rate limits.`
-      : `Rate limit exceeded per ${limiterResult.period}. Add your FAL API key to bypass rate limits.`;
+      ? `Video generation rate limit exceeded: 1 video per ${resolved.period}. Add your FAL API key to bypass rate limits.`
+      : `Rate limit exceeded per ${resolved.period}. Add your FAL API key to bypass rate limits.`;
     throw new Error(errorMessage);
   }
 
-  return fal;
+  return resolved.client;
 }
 
 // Helper function to download image

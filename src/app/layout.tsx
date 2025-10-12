@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { CoreProviders } from "./core-providers";
 import "./globals.css";
 
+import { FAL_PROXY_PATH, FAL_UPLOAD_PATH } from "@/lib/fal/constants";
+
 const TITLE = "Iskra Studio";
 const DESCRIPTION = "✸";
 
@@ -88,7 +90,11 @@ export default function RootLayout({
               method: "POST",
             },
             {
-              path: "/api/fal",
+              path: FAL_PROXY_PATH,
+              method: "POST",
+            },
+            {
+              path: FAL_UPLOAD_PATH,
               method: "POST",
             },
           ]}

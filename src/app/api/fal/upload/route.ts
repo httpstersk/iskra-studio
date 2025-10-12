@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createFalClient } from "@fal-ai/client";
-import {
-  createRateLimiter,
-  RateLimiter,
-  shouldLimitRequest,
-} from "@/lib/ratelimit";
+
 import { checkBotId } from "botid/server";
 
-const limiter: RateLimiter = {
-  perMinute: createRateLimiter(5, "60 s"),
-  perHour: createRateLimiter(15, "60 m"),
-  perDay: createRateLimiter(50, "24 h"),
-};
+import {
+  buildRateLimitHeaders,
+  checkRateLimit,
+  createServerFalClient,
+  extractBearerToken,
+  standardLimitHeaders,
+  standardRateLimiter,
+} from "@/lib/fal/utils";
 
 /**
  * POST handler for uploading files to fal.ai through server-side proxy
@@ -27,30 +25,33 @@ export async function POST(req: NextRequest) {
 
     // Check if user has provided their own API key
     const authHeader = req.headers.get("authorization");
-    const hasCustomApiKey = authHeader && authHeader.length > 0;
+    const bearerToken = extractBearerToken(authHeader);
+    if (authHeader && !bearerToken) {
+      return NextResponse.json(
+        { error: "Invalid authorization header" },
+        { status: 400 }
+      );
+    }
+    const hasCustomApiKey = Boolean(bearerToken);
 
     // Only apply rate limiting if no custom API key is provided
-    if (!hasCustomApiKey) {
-      const ip = req.headers.get("x-forwarded-for") || "";
-      const limiterResult = await shouldLimitRequest(limiter, ip);
-      if (limiterResult.shouldLimitRequest) {
-        return new Response(
-          `Rate limit exceeded per ${limiterResult.period}. Add your FAL API key to bypass rate limits.`,
-          {
-            status: 429,
-            headers: {
-              "Content-Type": "text/plain",
-              "X-RateLimit-Limit":
-                limiterResult.period === "perMinute"
-                  ? "5"
-                  : limiterResult.period === "perHour"
-                    ? "15"
-                    : "50",
-              "X-RateLimit-Period": limiterResult.period,
-            },
-          },
-        );
-      }
+    const limiterResult = await checkRateLimit({
+      limiter: standardRateLimiter,
+      headers: req.headers,
+      hasCustomApiKey,
+    });
+
+    if (limiterResult.shouldLimitRequest) {
+      return new Response(
+        `Rate limit exceeded per ${limiterResult.period}. Add your FAL API key to bypass rate limits.`,
+        {
+          status: 429,
+          headers: buildRateLimitHeaders(
+            limiterResult.period,
+            standardLimitHeaders
+          ),
+        }
+      );
     }
 
     // Get the file from the request body
@@ -68,11 +69,7 @@ export async function POST(req: NextRequest) {
     const blob = new Blob([await file.arrayBuffer()], { type: file.type });
 
     // Create fal client with API key from environment or user-provided key
-    const falClient = createFalClient({
-      credentials: hasCustomApiKey 
-        ? authHeader?.replace("Bearer ", "")
-        : process.env.FAL_KEY,
-    });
+    const falClient = createServerFalClient(bearerToken);
 
     // Upload the file server-side
     const uploadResult = await falClient.storage.upload(blob);
