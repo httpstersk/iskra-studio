@@ -6,6 +6,7 @@ export interface PlacedImage {
   width: number;
   height: number;
   rotation: number;
+  opacity?: number;
   isGenerated?: boolean;
   isLoading?: boolean;
   parentGroupId?: string;

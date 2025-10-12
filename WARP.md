@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-**Iskra/Spark** is an infinite canvas image and video editor with AI transformations using fal.ai. Built with Next.js 15, React Konva, and tRPC. The project implements an infinite canvas where users can manipulate images and videos with AI-powered features like style transfer, background removal, object isolation, and video generation.
+**Iskra Studio** is an infinite canvas image and video editor with AI transformations using fal.ai. Built with Next.js 15, React Konva, and tRPC. The project implements an infinite canvas where users can manipulate images and videos with AI-powered features like style transfer, background removal, object isolation, and video generation.
 
 ## Development Commands
 

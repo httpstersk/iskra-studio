@@ -143,6 +143,9 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
     hasImage: !!img,
   });
 
+  // Use explicit opacity if set, otherwise use animation opacity
+  const finalOpacity = image.opacity !== undefined ? image.opacity : displayOpacity;
+
   // Handle drag behavior
   const { handleDragMove, handleDragEnd: handleDragEndInternal } = useImageDrag(
     {
@@ -213,7 +216,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       onDragStart={handleDragStartInternal}
       onDragMove={handleDragMove}
       onDragEnd={handleDragEndWrapper}
-      opacity={displayOpacity}
+      opacity={finalOpacity}
       stroke={strokeColor}
       strokeWidth={strokeWidth}
       perfectDrawEnabled={false}

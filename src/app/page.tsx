@@ -701,10 +701,22 @@ export default function CanvasPage() {
             imageId={imageId}
             key={imageId}
             onComplete={(id, finalUrl) => {
+              // Check if this is a variation by looking at the ID pattern
+              const isVariation = id.startsWith("variation-");
+              
+              // Extract timestamp from variation ID to find all variations in the same batch
+              let variationBatchTimestamp: string | null = null;
+              if (isVariation) {
+                const match = id.match(/^variation-(\d+)-\d+$/);
+                if (match) {
+                  variationBatchTimestamp = match[1];
+                }
+              }
+
               canvasState.setImages((prev) =>
                 prev.map((img) =>
                   img.id === id
-                    ? { ...img, src: finalUrl, isLoading: false }
+                    ? { ...img, src: finalUrl, isLoading: false, opacity: 1.0 }
                     : img
                 )
               );
@@ -713,9 +725,26 @@ export default function CanvasPage() {
                 const newMap = new Map(prev);
                 newMap.delete(id);
 
+                // Check if this was the last variation in a batch to complete
+                if (variationBatchTimestamp && newMap.size > 0) {
+                  // Check if there are any more variations from the same batch still generating
+                  const hasMoreFromBatch = Array.from(newMap.keys()).some(
+                    (key) => key.startsWith(`variation-${variationBatchTimestamp}-`)
+                  );
+                  
+                  // If no more variations from this batch, deselect the source image
+                  if (!hasMoreFromBatch) {
+                    canvasState.setSelectedIds([]);
+                  }
+                }
+
                 // Only set isGenerating to false if this was the last active generation
                 if (newMap.size === 0) {
                   generationState.setIsGenerating(false);
+                  // Deselect all images when all generations are complete
+                  if (isVariation) {
+                    canvasState.setSelectedIds([]);
+                  }
                 }
 
                 return newMap;

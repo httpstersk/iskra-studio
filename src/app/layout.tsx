@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import { CoreProviders } from "./core-providers";
 import "./globals.css";
 
-const TITLE = "Iskra ✸ Spark";
-const DESCRIPTION = "";
+const TITLE = "Iskra Studio";
+const DESCRIPTION = "✸";
 
 export const metadata: Metadata = {
   title: {
