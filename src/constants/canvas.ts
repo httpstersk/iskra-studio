@@ -64,7 +64,7 @@ export const VIDEO_DEFAULTS = {
 } as const;
 
 export const DEFAULT_IMAGES = {
-  PATHS: ["/us.jpeg"],
+  PATHS: ["/dream-scenario.jpeg"],
 } as const;
 
 export const ANIMATION = {
