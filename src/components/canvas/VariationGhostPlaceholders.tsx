@@ -25,7 +25,13 @@ interface VariationGhostPlaceholdersProps {
  */
 export const VariationGhostPlaceholders: React.FC<
   VariationGhostPlaceholdersProps
-> = ({ selectedImage, variationMode = "image", generationCount = 4, stageRef, isDragging }) => {
+> = ({
+  selectedImage,
+  variationMode = "image",
+  generationCount = 4,
+  stageRef,
+  isDragging,
+}) => {
   const nodeRef = useRef<Konva.Node | null>(null);
   const [anchor, setAnchor] = useState(() =>
     snapPosition(selectedImage.x, selectedImage.y)
@@ -60,7 +66,7 @@ export const VariationGhostPlaceholders: React.FC<
       if (node) {
         const x = node.x();
         const y = node.y();
-        
+
         // Only snap and update if position actually changed
         if (x !== lastX || y !== lastY) {
           lastX = x;

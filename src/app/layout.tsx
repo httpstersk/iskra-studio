@@ -1,5 +1,4 @@
 import { commitMono, focal, hal, halMono, inconsolata } from "@/lib/fonts";
-import { Analytics } from "@vercel/analytics/next";
 import { BotIdClient } from "botid/client";
 import type { Metadata } from "next";
 import { CoreProviders } from "./core-providers";
@@ -99,7 +98,6 @@ export default function RootLayout({
       <body className={`font-sans bg-background text-foreground min-h-screen`}>
         <CoreProviders>{children}</CoreProviders>
       </body>
-      <Analytics />
     </html>
   );
 }
