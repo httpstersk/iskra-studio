@@ -181,24 +181,24 @@ export function calculateBalancedPosition(
         y: sourceY - variationHeight,
       };
     // Outer ring positions (8-11) for 12 variations - placed at cardinal directions outside the inner ring
-    case 8: // Top middle (outer) - centered horizontally, further out
+    case 8: // Top middle (outer) - centered horizontally, one image further out
       return {
         x: sourceX + sourceWidth / 2 - variationWidth / 2,
-        y: sourceY - variationHeight * 2 - variationHeight,
+        y: sourceY - variationHeight * 2,
       };
-    case 9: // Right middle (outer) - centered vertically, further out
+    case 9: // Right middle (outer) - centered vertically, one image further out
       return {
-        x: sourceX + sourceWidth * 2 + sourceWidth,
+        x: sourceX + sourceWidth * 2,
         y: sourceY + sourceHeight / 2 - variationHeight / 2,
       };
-    case 10: // Bottom middle (outer) - centered horizontally, further out
+    case 10: // Bottom middle (outer) - centered horizontally, one image further out
       return {
         x: sourceX + sourceWidth / 2 - variationWidth / 2,
-        y: sourceY + sourceHeight * 2 + sourceHeight,
+        y: sourceY + sourceHeight * 2,
       };
-    case 11: // Left middle (outer) - centered vertically, further out
+    case 11: // Left middle (outer) - centered vertically, one image further out
       return {
-        x: sourceX - variationWidth * 2 - variationWidth,
+        x: sourceX - variationWidth * 2,
         y: sourceY + sourceHeight / 2 - variationHeight / 2,
       };
     default:
