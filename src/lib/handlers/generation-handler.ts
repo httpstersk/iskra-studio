@@ -26,7 +26,12 @@ interface GenerationHandlerDeps {
     variant?: "default" | "destructive";
   }) => void;
   generateTextToImage: (
-    params: Record<string, unknown>
+    params: {
+      prompt: string;
+      seed?: number;
+      imageSize?: "landscape_4_3" | "portrait_4_3" | "square" | "landscape_16_9" | "portrait_16_9";
+      apiKey?: string;
+    }
   ) => Promise<{ width: number; height: number; url: string }>;
 }
 

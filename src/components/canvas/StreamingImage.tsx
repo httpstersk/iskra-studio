@@ -36,12 +36,15 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
 
     if (eventData.type === "progress") {
       const event = eventData.data;
-      if (event.images && event.images.length > 0) {
-        onStreamingUpdate(imageId, event.images[0].url);
+
+      if (event?.images && event.images.length > 0) {
+        onStreamingUpdate(imageId, event.images[0].url || "");
       }
     } else if (eventData.type === "complete") {
-      onComplete(imageId, eventData.imageUrl);
-    } else if (eventData.type === "error") {
+      if (eventData.imageUrl) {
+        onComplete(imageId, eventData.imageUrl);
+      }
+    } else if (eventData.type === "error" && eventData.error) {
       onError(imageId, eventData.error);
     }
   };

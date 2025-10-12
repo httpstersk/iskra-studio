@@ -43,6 +43,7 @@ type ApiResponse = {
     images?: Array<{ url?: string }>;
   };
   video_url?: string;
+  video?: { url?: string };
   duration?: number;
   [key: string]: unknown;
 } & Record<string, unknown>;
@@ -54,10 +55,7 @@ const fal = createFalClient({
 // Helper function to check rate limits or use custom API key
 async function getFalClient(
   apiKey: string | undefined,
-  ctx: {
-    req?: { ip?: string; headers?: Record<string, string> };
-    user?: { id: string };
-  },
+  ctx: { req?: any; user?: { id: string } },
   isVideo: boolean = false
 ) {
   if (apiKey) {
@@ -84,9 +82,14 @@ async function getFalClient(
       };
 
   const ip =
-    ctx.req?.headers.get?.("x-forwarded-for") ||
-    ctx.req?.headers.get?.("x-real-ip") ||
-    "unknown";
+    ctx.req?.headers instanceof Headers
+      ? ctx.req.headers.get("x-forwarded-for") ||
+        ctx.req.headers.get("x-real-ip") ||
+        "unknown"
+      : ctx.req?.headers?.["x-forwarded-for"] ||
+        ctx.req?.headers?.["x-real-ip"] ||
+        ctx.req?.ip ||
+        "unknown";
 
   const limiterResult = await shouldLimitRequest(
     limiter,
@@ -396,11 +399,16 @@ export const appRouter = router({
                   // Modify prompt to indicate continuation
                   if (
                     inputParams.prompt &&
-                    !inputParams.prompt.toLowerCase().includes("continue") &&
-                    !inputParams.prompt.toLowerCase().includes("extend")
+                    !(inputParams.prompt as string)
+                      .toLowerCase()
+                      .includes("continue") &&
+                    !(inputParams.prompt as string)
+                      .toLowerCase()
+                      .includes("extend")
                   ) {
                     inputParams.prompt =
-                      "Continue this video naturally. " + inputParams.prompt;
+                      "Continue this video naturally. " +
+                      (inputParams.prompt as string);
                   }
                 } else {
                   // Regular video-to-video transformation
@@ -506,18 +514,20 @@ export const appRouter = router({
           if ((apiError as { body?: { detail?: unknown } }).body?.detail) {
             console.error(
               "Validation error details:",
-              (apiError as { body?: { detail?: unknown } }).body.detail
+              (apiError as { body?: { detail?: unknown } }).body?.detail
             );
           }
 
           // Re-throw with more context
           if (
-            apiError.status === 422 ||
-            apiError.message?.includes("Unprocessable Entity")
+            (apiError as { status?: number }).status === 422 ||
+            (apiError as { message?: string }).message?.includes(
+              "Unprocessable Entity"
+            )
           ) {
             let errorDetail =
-              apiError.body?.detail ||
-              apiError.message ||
+              (apiError as { body?: { detail?: unknown } }).body?.detail ||
+              (apiError as { message?: string }).message ||
               "Please check the video format and parameters";
             // If errorDetail is an object, stringify it
             if (typeof errorDetail === "object") {
@@ -705,15 +715,16 @@ export const appRouter = router({
 
         // Handle different possible response structures
         const resultData = (result as ApiResponse).data || result;
-        if (!resultData.images?.[0]) {
+        const images = (resultData as any).images || [];
+        if (!images[0]) {
           throw new Error("No image generated");
         }
 
         return {
-          url: resultData.images[0].url,
-          width: resultData.images[0].width,
-          height: resultData.images[0].height,
-          seed: resultData.seed,
+          url: images[0].url || "",
+          width: (images[0] as any).width || 512,
+          height: (images[0] as any).height || 512,
+          seed: (resultData as any).seed || Math.random(),
         };
       } catch (error) {
         console.error("Error in text-to-image generation:", error);
@@ -776,7 +787,7 @@ export const appRouter = router({
 
         // Handle different possible response structures
         const resultData = (result as ApiResponse).data || result;
-        const images = resultData.images || [];
+        const images = (resultData as any).images || [];
         if (!images?.[0]) {
           yield tracked(`${generationId}_error`, {
             type: "error",
@@ -789,7 +800,7 @@ export const appRouter = router({
         yield tracked(`${generationId}_complete`, {
           type: "complete",
           imageUrl: images[0].url,
-          seed: resultData.seed,
+          seed: (resultData as any).seed || Math.random(),
         });
       } catch (error) {
         console.error("Error in image generation stream:", error);
@@ -889,7 +900,7 @@ export const appRouter = router({
 
         // Handle different possible response structures
         const resultData = (result as ApiResponse).data || result;
-        const images = resultData.images || [];
+        const images = (resultData as any).images || [];
         if (!images?.[0]) {
           yield tracked(`${generationId}_error`, {
             type: "error",
@@ -902,7 +913,7 @@ export const appRouter = router({
         yield tracked(`${generationId}_complete`, {
           type: "complete",
           imageUrl: images[0].url,
-          seed: resultData.seed,
+          seed: (resultData as any).seed || Math.random(),
         });
       } catch (error) {
         console.error("Error in image variation stream:", error);

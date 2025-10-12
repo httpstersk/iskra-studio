@@ -294,7 +294,7 @@ export const VideoModelOptions: React.FC<VideoModelOptionsProps> = ({
                 id={key}
                 type={key === "seed" ? "text" : "number"}
                 placeholder={option.placeholder}
-                value={isSeedException ? "random" : value}
+                value={isSeedException ? "random" : (typeof value === 'string' || typeof value === 'number' ? String(value) : '')}
                 onChange={(e) => {
                   if (key === "seed") {
                     const val = e.target.value;

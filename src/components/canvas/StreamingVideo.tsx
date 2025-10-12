@@ -58,7 +58,14 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
       {
         enabled: true,
         onData: async (data: { data: unknown }) => {
-          const eventData = data.data;
+          const eventData = data.data as {
+            type: string;
+            progress?: number;
+            status?: string;
+            videoUrl?: string;
+            error?: string;
+            duration?: number;
+          };
 
           if (eventData.type === "progress") {
             onProgress(
@@ -71,13 +78,13 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
                     ? "Transforming video..."
                     : "Converting image to video...")
             );
-          } else if (eventData.type === "complete") {
+          } else if (eventData.type === "complete" && eventData.videoUrl) {
             onComplete(
               videoId,
               eventData.videoUrl,
               eventData.duration || generation.duration || 5
             );
-          } else if (eventData.type === "error") {
+          } else if (eventData.type === "error" && eventData.error) {
             onError(videoId, eventData.error);
           }
         },
@@ -114,7 +121,14 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
       {
         enabled: true,
         onData: async (data: { data: unknown }) => {
-          const eventData = data.data;
+          const eventData = data.data as {
+            type: string;
+            progress?: number;
+            status?: string;
+            videoUrl?: string;
+            error?: string;
+            duration?: number;
+          };
 
           if (eventData.type === "progress") {
             onProgress(
@@ -122,13 +136,13 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
               eventData.progress || 0,
               eventData.status || "Generating video from text..."
             );
-          } else if (eventData.type === "complete") {
+          } else if (eventData.type === "complete" && eventData.videoUrl) {
             onComplete(
               videoId,
               eventData.videoUrl,
               eventData.duration || generation.duration || 3
             );
-          } else if (eventData.type === "error") {
+          } else if (eventData.type === "error" && eventData.error) {
             onError(videoId, eventData.error);
           }
         },

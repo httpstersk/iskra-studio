@@ -34,7 +34,10 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       : CANVAS_GRID.LIGHT_COLOR);
   const dotRadius = CANVAS_GRID.DOT_RADIUS;
 
-  const patternConfig = useMemo((): { image: HTMLCanvasElement; scale: { x: number; y: number } } | null => {
+  const patternConfig = useMemo((): {
+    image: HTMLCanvasElement;
+    scale: { x: number; y: number };
+  } | null => {
     if (typeof document === "undefined") {
       return null;
     }
@@ -89,7 +92,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
         y={startY - dotRadius}
         width={endX - startX + dotRadius * 2}
         height={endY - startY + dotRadius * 2}
-        fillPatternImage={patternConfig.image as CanvasImageSource}
+        fillPatternImage={patternConfig.image as unknown as HTMLImageElement}
         fillPatternRepeat="repeat"
         fillPatternScaleX={patternConfig.scale.x}
         fillPatternScaleY={patternConfig.scale.y}

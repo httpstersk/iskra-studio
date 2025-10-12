@@ -475,7 +475,7 @@ export default function CanvasPage() {
         videoId,
         videoUrl,
         duration,
-        generation,
+        generation || null,
         canvasState.images,
         canvasState.videos,
         uiState.selectedImageForVideo
@@ -664,7 +664,7 @@ export default function CanvasPage() {
       aria-label={ARIA_LABELS.CANVAS_MAIN}
       className="bg-background text-foreground font-focal relative flex flex-col w-full overflow-hidden h-screen"
       onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => handleDrop(e, stageRef)}
+      onDrop={(e) => handleDrop(e, stageRef as React.RefObject<{ container(): HTMLElement }>)}
       role="application"
       style={{ height: "100dvh" }}
     >

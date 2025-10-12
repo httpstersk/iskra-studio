@@ -104,7 +104,7 @@ export function useFileUpload(
   const handleDrop = useCallback(
     (
       e: React.DragEvent,
-      stageRef: React.RefObject<{ container: () => HTMLElement }>
+      stageRef: React.RefObject<{ container(): HTMLElement }>
     ) => {
       e.preventDefault();
 
