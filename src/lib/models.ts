@@ -3,7 +3,6 @@ export interface StyleModel {
   name: string;
   imageSrc: string;
   prompt: string;
-  loraUrl?: string;
   overlay?: boolean;
 }
 

@@ -114,7 +114,6 @@ export const generateImage = (
     new Map(prev).set(placeholderId, {
       imageUrl,
       prompt: generationSettings.prompt,
-      loraUrl: generationSettings.loraUrl,
     }),
   );
 };
@@ -154,7 +153,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
     try {
       const result = await generateTextToImage({
         prompt: generationSettings.prompt,
-        loraUrl: generationSettings.loraUrl || undefined,
         imageSize: "square",
         apiKey: customApiKey || undefined,
       });

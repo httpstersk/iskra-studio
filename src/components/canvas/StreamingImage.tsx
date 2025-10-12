@@ -64,7 +64,6 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
       {
         imageUrl: generation.imageUrl,
         prompt: generation.prompt,
-        ...(generation.loraUrl ? { loraUrl: generation.loraUrl } : {}),
         ...(apiKey ? { apiKey } : {}),
       },
       {

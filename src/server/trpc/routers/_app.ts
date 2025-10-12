@@ -624,7 +624,6 @@ export const appRouter = router({
     .input(
       z.object({
         prompt: z.string(),
-        loraUrl: z.string().url().optional(),
         seed: z.number().optional(),
         imageSize: z
           .enum([
@@ -642,21 +641,17 @@ export const appRouter = router({
       try {
         const falClient = await getFalClient(input.apiKey, ctx);
 
-        const loras = input.loraUrl ? [{ path: input.loraUrl, scale: 1 }] : [];
-
         const result = await falClient.subscribe(
-          "fal-ai/flux-kontext-lora/text-to-image",
+          "fal-ai/flux/dev",
           {
             input: {
               prompt: input.prompt,
               image_size: input.imageSize || "square",
-              num_inference_steps: 30,
-              guidance_scale: 2.5,
+              num_inference_steps: 4,
               num_images: 1,
               enable_safety_checker: true,
               output_format: "png",
               seed: input.seed,
-              loras,
             },
           }
         );
@@ -686,7 +681,6 @@ export const appRouter = router({
       z.object({
         imageUrl: z.string().url(),
         prompt: z.string(),
-        loraUrl: z.string().url().optional(),
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
         apiKey: z.string().optional(),
@@ -696,23 +690,18 @@ export const appRouter = router({
       try {
         const falClient = await getFalClient(input.apiKey, ctx);
 
-        const loras = input.loraUrl ? [{ path: input.loraUrl, scale: 1 }] : [];
-
         // Create a unique ID for this generation
         const generationId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
         // Start streaming from fal.ai
-        const stream = await falClient.stream("fal-ai/flux-kontext-lora", {
+        const stream = await falClient.stream("fal-ai/flux/dev/image-to-image", {
           input: {
             image_url: input.imageUrl,
             prompt: input.prompt,
-            num_inference_steps: 30,
-            guidance_scale: 2.5,
+            num_inference_steps: 4,
             num_images: 1,
             enable_safety_checker: true,
-            resolution_mode: "match_input",
             seed: input.seed,
-            loras,
           },
         });
 

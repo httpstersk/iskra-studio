@@ -8,7 +8,7 @@ An infinite canvas image editor with AI transformations using fal.ai. Built with
 
 - Infinite canvas with pan/zoom
 - Drag & drop image upload
-- AI style transfer via Flux Kontext LoRA
+- AI style transfer via Flux models
 - Background removal and object isolation
 - Real-time streaming of AI results
 - Multi-selection and image manipulation
@@ -59,8 +59,8 @@ Image generation uses fal.ai's streaming API to provide live updates:
 
 ```typescript
 // Server-side streaming with tRPC
-const stream = await falClient.stream("fal-ai/flux-kontext-lora", {
-  input: { image_url, prompt, loras },
+const stream = await falClient.stream("fal-ai/flux/dev/image-to-image", {
+  input: { image_url, prompt },
 });
 
 for await (const event of stream) {
@@ -92,9 +92,9 @@ Built with tRPC for type-safe API calls:
 
 ### Style Transfer
 
-Uses fal.ai's Flux Kontext LoRA model to apply artistic styles:
+Uses fal.ai's Flux models to apply artistic styles:
 
-1. User selects an image and a style (or provides custom LoRA URL)
+1. User selects an image and provides a prompt
 2. Image is uploaded to fal.ai storage via proxy
 3. Streaming transformation begins, updating canvas in real-time
 4. Final high-quality result replaces the preview

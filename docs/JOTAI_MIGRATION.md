@@ -16,7 +16,7 @@ Manages canvas-specific state:
 
 ### 2. `/src/store/generation-atoms.ts`
 Manages AI generation state:
-- `generationSettingsAtom` - Prompt, style, LoRA settings
+- `generationSettingsAtom` - Prompt, style settings
 - `previousStyleIdAtom` - Previous style for restoration
 - `isGeneratingAtom` - Image generation in progress
 - `activeGenerationsAtom` - Active image generation jobs (Map)

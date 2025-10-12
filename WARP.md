@@ -86,7 +86,7 @@ Different limits for users without API keys:
 ### API Routes (tRPC)
 Located in `src/server/trpc/routers/_app.ts`:
 
-- **`generateImageStream`**: Streaming image-to-image with Flux Kontext LoRA
+- **`generateImageStream`**: Streaming image-to-image with Flux
 - **`generateImageToVideo`**: Image-to-video conversion (multiple models)
 - **`generateTextToVideo`**: Text-to-video generation
 - **`transformVideo`**: Video-to-video transformations
@@ -98,7 +98,7 @@ Located in `src/server/trpc/routers/_app.ts`:
 ### AI Models Integration
 
 #### Image Models
-- **Flux Kontext LoRA**: Style transfer and image-to-image
+- **Flux Models**: Style transfer and image-to-image
 - **Bria Background Removal**: Clean background removal
 - **EVF-SAM**: Natural language object segmentation
 - **SeeDANCE v4**: Image variation generation

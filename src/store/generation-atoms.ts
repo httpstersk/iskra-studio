@@ -11,10 +11,9 @@ import type {
 } from "@/types/canvas";
 
 /**
- * Atom for generation settings (prompt, style, LoRA)
+ * Atom for generation settings (prompt, style)
  */
 export const generationSettingsAtom = atom<GenerationSettings>({
-  loraUrl: "",
   prompt: "",
   styleId: "custom",
 });
