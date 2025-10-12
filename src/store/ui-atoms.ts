@@ -42,6 +42,13 @@ export const hiddenVideoControlsIdsAtom = atom<Set<string>>(new Set<string>());
 export const visibleIndicatorsAtom = atom<Set<string>>(new Set<string>());
 
 /**
- * Variation mode atom - controls number of variations (image: 8, video: 4)
+ * Variation mode atom - controls type of variations (image or video)
  */
 export const variationModeAtom = atom<"image" | "video">("image");
+
+/**
+ * Generation count atom - controls number of variations
+ * For images: can be 4, 8, or 12
+ * For videos: always 4
+ */
+export const generationCountAtom = atom<number>(4);

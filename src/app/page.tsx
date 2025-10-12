@@ -252,22 +252,45 @@ export default function CanvasPage() {
   }, [canvasState, historyState]);
 
   /**
-   * Handles double-click on an image to toggle variation mode
+   * Handles double-click on an image to cycle generation count (4 → 8 → 12 → 4)
+   * Only works for image mode; video mode always uses 4
    */
   const handleImageDoubleClick = useCallback(
     (imageId: string) => {
-      // Only toggle if the image is selected
-      if (canvasState.selectedIds.includes(imageId)) {
-        const newMode = uiState.variationMode === "image" ? "video" : "image";
-        uiState.setVariationMode(newMode);
+      // Only cycle count if the image is selected and in image mode
+      if (canvasState.selectedIds.includes(imageId) && uiState.variationMode === "image") {
+        const currentCount = uiState.generationCount;
+        let newCount: number;
+        
+        // Cycle: 4 → 8 → 12 → 4
+        if (currentCount === 4) {
+          newCount = 8;
+        } else if (currentCount === 8) {
+          newCount = 12;
+        } else {
+          newCount = 4;
+        }
+        
+        uiState.setGenerationCount(newCount);
       }
     },
     [canvasState.selectedIds, uiState]
   );
 
   /**
+   * Handles switching variation mode and ensures video mode always uses 4 variations
+   */
+  const handleVariationModeChange = useCallback((mode: "image" | "video") => {
+    uiState.setVariationMode(mode);
+    // Reset count to 4 when switching to video mode
+    if (mode === "video") {
+      uiState.setGenerationCount(4);
+    }
+  }, [uiState]);
+
+  /**
    * Handles running image generation
-   * If one image is selected with no prompt, generates variations (8 for image, 4 for video)
+   * If one image is selected with no prompt, generates variations based on mode and count
    * Otherwise, performs standard text-to-image or image-to-image generation
    */
   const handleRun = async () => {
@@ -277,7 +300,7 @@ export default function CanvasPage() {
       !generationState.generationSettings.prompt.trim();
 
     if (isVariationMode) {
-      // Generate variations based on mode (8 for image, 4 for video)
+      // Generate variations based on mode and count
       await handleVariationGeneration({
         images: canvasState.images,
         selectedIds: canvasState.selectedIds,
@@ -290,6 +313,7 @@ export default function CanvasPage() {
         toast,
         variationPrompt: generationState.generationSettings.variationPrompt,
         variationMode: uiState.variationMode,
+        variationCount: uiState.generationCount,
       });
     } else {
       // Standard generation flow
@@ -774,6 +798,7 @@ export default function CanvasPage() {
               >
                 <CanvasStageRenderer
                   canvasSize={canvasState.canvasSize}
+                  generationCount={uiState.generationCount}
                   generationSettings={generationState.generationSettings}
                   hiddenVideoControlsIds={uiState.hiddenVideoControlsIds}
                   images={canvasState.images}
@@ -849,9 +874,11 @@ export default function CanvasPage() {
         canRedo={historyState.canRedo}
         canUndo={historyState.canUndo}
         customApiKey={uiState.customApiKey}
+        generationCount={uiState.generationCount}
         generationSettings={generationState.generationSettings}
         handleFileUpload={handleFileUpload}
         handleRun={handleRun}
+        handleVariationModeChange={handleVariationModeChange}
         images={canvasState.images}
         isExtendingVideo={generationState.isExtendingVideo}
         isGenerating={generationState.isGenerating}

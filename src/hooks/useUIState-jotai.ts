@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useAtom } from "jotai";
 import {
   customApiKeyAtom,
+  generationCountAtom,
   hiddenVideoControlsIdsAtom,
   isApiKeyDialogOpenAtom,
   isExtendVideoDialogOpenAtom,
@@ -30,6 +31,7 @@ import {
  */
 export function useUIState() {
   const [customApiKey, setCustomApiKey] = useAtom(customApiKeyAtom);
+  const [generationCount, setGenerationCount] = useAtom(generationCountAtom);
   const [hiddenVideoControlsIds, setHiddenVideoControlsIds] = useAtom(
     hiddenVideoControlsIdsAtom
   );
@@ -112,6 +114,7 @@ export function useUIState() {
 
   return {
     customApiKey,
+    generationCount,
     hiddenVideoControlsIds,
     isApiKeyDialogOpen,
     isExtendVideoDialogOpen,
@@ -122,6 +125,7 @@ export function useUIState() {
     selectedVideoForExtend,
     selectedVideoForVideo,
     setCustomApiKey,
+    setGenerationCount,
     setHiddenVideoControlsIds,
     setIsApiKeyDialogOpen,
     setIsExtendVideoDialogOpen,

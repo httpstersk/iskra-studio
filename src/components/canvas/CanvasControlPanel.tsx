@@ -3,6 +3,7 @@
 import { GenerationsIndicator } from "@/components/generations-indicator";
 import { SpinnerIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
@@ -49,6 +50,8 @@ interface CanvasControlPanelProps {
     variant?: "default" | "destructive";
   }) => void;
   variationMode?: "image" | "video";
+  generationCount: number;
+  handleVariationModeChange: (mode: "image" | "video") => void;
 }
 
 export function CanvasControlPanel({
@@ -72,6 +75,8 @@ export function CanvasControlPanel({
   customApiKey,
   toast,
   variationMode = "image",
+  generationCount,
+  handleVariationModeChange,
 }: CanvasControlPanelProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:p-0 md:pb-0 md:max-w-[648px]">
@@ -158,37 +163,49 @@ export function CanvasControlPanel({
                 </Button>
               </div>
 
-              {/* Mode indicator badge */}
-              <div
-                className={cn(
-                  "h-9 rounded-xl overflow-clip flex items-center px-3",
-                  "pointer-events-none select-none",
-                  selectedIds.length > 0
-                    ? variationMode === "image"
+              {/* Mode indicator badge with switch */}
+              {selectedIds.length > 0 ? (
+                <div
+                  className={cn(
+                    "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
+                    variationMode === "image"
                       ? "bg-blue-500/10 dark:bg-blue-500/15 shadow-[0_0_0_1px_rgba(59,130,246,0.2),0_4px_8px_-0.5px_rgba(59,130,246,0.08),0_8px_16px_-2px_rgba(59,130,246,0.04)] dark:shadow-none dark:border dark:border-blue-500/30"
                       : "bg-purple-500/10 dark:bg-purple-500/15 shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
-                    : "bg-orange-500/10 dark:bg-orange-500/15 shadow-[0_0_0_1px_rgba(249,115,22,0.2),0_4px_8px_-0.5px_rgba(249,115,22,0.08),0_8px_16px_-2px_rgba(249,115,22,0.04)] dark:shadow-none dark:border dark:border-orange-500/30"
-                )}
-              >
-                {selectedIds.length > 0 ? (
+                  )}
+                >
                   <div className="flex items-center gap-2 text-xs font-medium">
                     {variationMode === "image" ? (
                       <>
                         <ImagesIcon className="w-4 h-4 text-blue-600 dark:text-blue-500" />
                         <span className="text-blue-600 dark:text-blue-500">
-                          Image Variations (8)
+                          Image ({generationCount})
                         </span>
                       </>
                     ) : (
                       <>
                         <PlayIcon className="w-4 h-4 text-purple-600 dark:text-purple-500 fill-purple-600 dark:fill-purple-500" />
                         <span className="text-purple-600 dark:text-purple-500">
-                          Video Variations (4)
+                          Video (4)
                         </span>
                       </>
                     )}
                   </div>
-                ) : (
+                  <Switch
+                    checked={variationMode === "video"}
+                    onCheckedChange={(checked) => {
+                      handleVariationModeChange(checked ? "video" : "image");
+                    }}
+                    className="h-5 w-9 data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-blue-600"
+                  />
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    "h-9 rounded-xl overflow-clip flex items-center px-3",
+                    "pointer-events-none select-none",
+                    "bg-orange-500/10 dark:bg-orange-500/15 shadow-[0_0_0_1px_rgba(249,115,22,0.2),0_4px_8px_-0.5px_rgba(249,115,22,0.08),0_8px_16px_-2px_rgba(249,115,22,0.04)] dark:shadow-none dark:border dark:border-orange-500/30"
+                  )}
+                >
                   <div className="flex items-center gap-2 text-xs font-medium">
                     <span className="text-orange-600 dark:text-orange-500 font-bold text-sm">
                       T
@@ -197,8 +214,8 @@ export function CanvasControlPanel({
                       Text to Image
                     </span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             <div className="flex-1" />
             <div className="flex items-center gap-2">

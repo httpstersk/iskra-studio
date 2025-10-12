@@ -14,17 +14,18 @@ interface VariationGhostPlaceholdersProps {
   stageRef: React.RefObject<Konva.Stage | null>;
   isDragging: boolean;
   variationMode?: "image" | "video";
+  generationCount?: number;
 }
 
 /**
  * Renders ghost placeholder outlines showing where variations will be generated
  * Appears when a single image is selected (variation mode)
- * Shows 8 placeholders for image mode, 4 for video mode
+ * Shows 4, 8, or 12 placeholders for image mode, 4 for video mode
  * Positioned clockwise starting from top center
  */
 export const VariationGhostPlaceholders: React.FC<
   VariationGhostPlaceholdersProps
-> = ({ selectedImage, variationMode = "image", stageRef, isDragging }) => {
+> = ({ selectedImage, variationMode = "image", generationCount = 4, stageRef, isDragging }) => {
   const nodeRef = useRef<Konva.Node | null>(null);
   const [anchor, setAnchor] = useState(() =>
     snapPosition(selectedImage.x, selectedImage.y)
@@ -114,9 +115,20 @@ export const VariationGhostPlaceholders: React.FC<
     };
   }, [sourceImage, selectedImage.width, selectedImage.height]);
 
-  // For video mode, use position indices 0, 2, 4, 6 (top, right, bottom, left - clockwise from top)
-  const positionIndices =
-    variationMode === "image" ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 2, 4, 6];
+  // Determine position indices based on generation count
+  // 4 variations: indices 0, 2, 4, 6 (top, right, bottom, left - cardinal directions)
+  // 8 variations: all indices 0-7 (sides + corners)
+  // 12 variations: indices 0-7 (inner ring) + 8-11 (outer cardinal directions)
+  let positionIndices: number[];
+
+  if (generationCount === 4) {
+    positionIndices = [0, 2, 4, 6];
+  } else if (generationCount === 8) {
+    positionIndices = [0, 1, 2, 3, 4, 5, 6, 7];
+  } else {
+    // 12 variations: 8 inner positions + 4 outer cardinal directions
+    positionIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  }
 
   const ghostPlaceholders = positionIndices.map((positionIndex, i) => {
     // Calculate position based on snapped source position

@@ -112,6 +112,7 @@ interface VariationHandlerDeps {
   }) => void;
   variationPrompt?: string;
   variationMode?: "image" | "video";
+  variationCount?: number;
 }
 
 /**
@@ -119,9 +120,10 @@ interface VariationHandlerDeps {
  * Positions are arranged clockwise starting from top center
  * For 8 variations: top, top-right corner, right, bottom-right corner, bottom, bottom-left corner, left, top-left corner
  * For 4 variations: uses indices 0, 2, 4, 6 (top, right, bottom, left)
+ * For 12 variations: positions 0-7 are the inner ring, positions 8-11 are outer cardinal directions
  * @param sourceX - X coordinate of the source image
  * @param sourceY - Y coordinate of the source image
- * @param angleIndex - Index of the variation (0-7)
+ * @param angleIndex - Index of the variation (0-11)
  * @param sourceWidth - Width of the source image
  * @param sourceHeight - Height of the source image
  * @param variationWidth - Width of the variation image
@@ -178,6 +180,27 @@ export function calculateBalancedPosition(
         x: sourceX - variationWidth,
         y: sourceY - variationHeight,
       };
+    // Outer ring positions (8-11) for 12 variations - placed at cardinal directions outside the inner ring
+    case 8: // Top middle (outer) - centered horizontally, further out
+      return {
+        x: sourceX + sourceWidth / 2 - variationWidth / 2,
+        y: sourceY - variationHeight * 2 - variationHeight,
+      };
+    case 9: // Right middle (outer) - centered vertically, further out
+      return {
+        x: sourceX + sourceWidth * 2 + sourceWidth,
+        y: sourceY + sourceHeight / 2 - variationHeight / 2,
+      };
+    case 10: // Bottom middle (outer) - centered horizontally, further out
+      return {
+        x: sourceX + sourceWidth / 2 - variationWidth / 2,
+        y: sourceY + sourceHeight * 2 + sourceHeight,
+      };
+    case 11: // Left middle (outer) - centered vertically, further out
+      return {
+        x: sourceX - variationWidth * 2 - variationWidth,
+        y: sourceY + sourceHeight / 2 - variationHeight / 2,
+      };
     default:
       return { x: sourceX, y: sourceY };
   }
@@ -185,9 +208,9 @@ export function calculateBalancedPosition(
 
 /**
  * Handle variation generation for a selected image
- * Generates 4 or 8 variations with different camera settings
- * Image mode: 8 variations (sides + corners)
- * Video mode: 4 variations (sides only)
+ * Generates variations with different camera settings based on count
+ * Images: 4, 8, or 12 variations
+ * Videos: always 4 variations (sides only)
  * Optimized for maximum performance and UX
  */
 export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
@@ -202,6 +225,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     toast,
     variationPrompt,
     variationMode = "image",
+    variationCount = 4,
   } = deps;
 
   // Validate selection early
@@ -230,24 +254,40 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
   const timestamp = Date.now();
 
-  // Determine number of variations based on mode
-  // For video mode, use indices 0, 2, 4, 6 (top, right, bottom, left - the 4 sides in clockwise order starting from top)
-  const variationCount = variationMode === "image" ? 8 : 4;
-  const variationsToGenerate =
-    variationMode === "image"
-      ? CAMERA_VARIATIONS
-      : [
-          CAMERA_VARIATIONS[0],
-          CAMERA_VARIATIONS[2],
-          CAMERA_VARIATIONS[4],
-          CAMERA_VARIATIONS[6],
-        ];
+  // Determine which variations to generate based on count
+  // 4 variations: indices 0, 2, 4, 6 (top, right, bottom, left - cardinal directions)
+  // 8 variations: all indices 0-7 (sides + corners)
+  // 12 variations: indices 0-7 (inner ring) + 8-11 (outer cardinal directions)
+  let variationsToGenerate: string[];
+  let positionIndices: number[];
+
+  if (variationCount === 4) {
+    // 4 cardinal directions
+    variationsToGenerate = [
+      CAMERA_VARIATIONS[0],
+      CAMERA_VARIATIONS[2],
+      CAMERA_VARIATIONS[4],
+      CAMERA_VARIATIONS[6],
+    ];
+    positionIndices = [0, 2, 4, 6];
+  } else if (variationCount === 8) {
+    // All 8 positions (sides + corners)
+    variationsToGenerate = [...CAMERA_VARIATIONS];
+    positionIndices = [0, 1, 2, 3, 4, 5, 6, 7];
+  } else {
+    // 12 variations: 8 inner positions + 4 outer cardinal directions
+    variationsToGenerate = [
+      ...CAMERA_VARIATIONS,
+      CAMERA_VARIATIONS[0], // outer top
+      CAMERA_VARIATIONS[2], // outer right
+      CAMERA_VARIATIONS[4], // outer bottom
+      CAMERA_VARIATIONS[6], // outer left
+    ];
+    positionIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  }
 
   // OPTIMIZATION 1: Create placeholders IMMEDIATELY (optimistic UI)
   // Users see instant feedback before any async operations
-  // For video mode, use position indices 0, 2, 4, 6 (top, right, bottom, left - the 4 cardinal directions)
-  const positionIndices =
-    variationMode === "image" ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 2, 4, 6];
 
   const placeholderImages: PlacedImage[] = variationsToGenerate.map(
     (_, index) => {
@@ -282,7 +322,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // Show immediate feedback
   toast({
     title: "Generating variations",
-    description: `Creating ${variationCount} ${variationMode === "image" ? "image" : "video"} variations...`,
+    description: `Creating ${variationCount} ${variationMode === "video" ? "video" : "image"} variations...`,
   });
 
   try {

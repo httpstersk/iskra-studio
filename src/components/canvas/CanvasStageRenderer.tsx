@@ -71,6 +71,7 @@ interface CanvasStageRendererProps {
   videos: PlacedVideo[];
   viewport: Viewport;
   variationMode?: "image" | "video";
+  generationCount?: number;
 }
 
 /**
@@ -158,6 +159,7 @@ export function CanvasStageRenderer({
   videos,
   viewport,
   variationMode,
+  generationCount,
 }: CanvasStageRendererProps) {
   // Memoize visible items calculation to avoid recalculating on every render
   const visibleImages = useMemo(
@@ -323,6 +325,7 @@ export function CanvasStageRenderer({
           {/* Ghost placeholders for variation mode */}
           {isVariationMode && selectedImageForVariation && (
             <VariationGhostPlaceholders
+              generationCount={generationCount}
               isDragging={interactions.isDraggingImage}
               selectedImage={selectedImageForVariation}
               stageRef={stageRef}
