@@ -16,16 +16,10 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import type {
-  PlacedImage,
-  PlacedVideo,
-  VideoGenerationSettings,
-} from "@/types/canvas";
+import type { PlacedImage, VideoGenerationSettings } from "@/types/canvas";
 import { Check, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import Link from "next/link";
-import { ExtendVideoDialog } from "./ExtendVideoDialog";
 import { ImageToVideoDialog } from "./ImageToVideoDialog";
-import { VideoToVideoDialog } from "./VideoToVideoDialog";
 
 interface CanvasDialogsProps {
   // Settings Dialog
@@ -55,23 +49,6 @@ interface CanvasDialogsProps {
   handleImageToVideoConversion: (settings: VideoGenerationSettings) => void;
   images: PlacedImage[];
   isConvertingToVideo: boolean;
-
-  // Video to Video Dialog
-  isVideoToVideoDialogOpen: boolean;
-  setIsVideoToVideoDialogOpen: (open: boolean) => void;
-  selectedVideoForVideo: string | null;
-  setSelectedVideoForVideo: (id: string | null) => void;
-  handleVideoToVideoTransformation: (settings: VideoGenerationSettings) => void;
-  videos: PlacedVideo[];
-  isTransformingVideo: boolean;
-
-  // Extend Video Dialog
-  isExtendVideoDialogOpen: boolean;
-  setIsExtendVideoDialogOpen: (open: boolean) => void;
-  selectedVideoForExtend: string | null;
-  setSelectedVideoForExtend: (id: string | null) => void;
-  handleVideoExtension: (settings: VideoGenerationSettings) => void;
-  isExtendingVideo: boolean;
 }
 
 export function CanvasDialogs({
@@ -95,19 +72,6 @@ export function CanvasDialogs({
   handleImageToVideoConversion,
   images,
   isConvertingToVideo,
-  isVideoToVideoDialogOpen,
-  setIsVideoToVideoDialogOpen,
-  selectedVideoForVideo,
-  setSelectedVideoForVideo,
-  handleVideoToVideoTransformation,
-  videos,
-  isTransformingVideo,
-  isExtendVideoDialogOpen,
-  setIsExtendVideoDialogOpen,
-  selectedVideoForExtend,
-  setSelectedVideoForExtend,
-  handleVideoExtension,
-  isExtendingVideo,
 }: CanvasDialogsProps) {
   return (
     <>
@@ -307,36 +271,6 @@ export function CanvasDialogs({
             : ""
         }
         isConverting={isConvertingToVideo}
-      />
-
-      <VideoToVideoDialog
-        isOpen={isVideoToVideoDialogOpen}
-        onClose={() => {
-          setIsVideoToVideoDialogOpen(false);
-          setSelectedVideoForVideo(null);
-        }}
-        onConvert={handleVideoToVideoTransformation}
-        videoUrl={
-          selectedVideoForVideo
-            ? videos.find((vid) => vid.id === selectedVideoForVideo)?.src || ""
-            : ""
-        }
-        isConverting={isTransformingVideo}
-      />
-
-      <ExtendVideoDialog
-        isOpen={isExtendVideoDialogOpen}
-        onClose={() => {
-          setIsExtendVideoDialogOpen(false);
-          setSelectedVideoForExtend(null);
-        }}
-        onExtend={handleVideoExtension}
-        videoUrl={
-          selectedVideoForExtend
-            ? videos.find((vid) => vid.id === selectedVideoForExtend)?.src || ""
-            : ""
-        }
-        isExtending={isExtendingVideo}
       />
     </>
   );

@@ -25,6 +25,9 @@ import {
 } from "lucide-react";
 import { ShortcutBadge } from "./ShortcutBadge";
 
+/**
+ * Props for the canvas control panel component.
+ */
 interface CanvasControlPanelProps {
   selectedIds: string[];
   images: PlacedImage[];
@@ -35,8 +38,6 @@ interface CanvasControlPanelProps {
   handleFileUpload: (files: FileList | null) => void;
   activeGenerationsSize: number;
   activeVideoGenerationsSize: number;
-  isExtendingVideo: boolean;
-  isTransformingVideo: boolean;
   showSuccess: boolean;
   canUndo: boolean;
   canRedo: boolean;
@@ -54,6 +55,9 @@ interface CanvasControlPanelProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
 }
 
+/**
+ * Control panel that surfaces primary generation controls and status indicators.
+ */
 export function CanvasControlPanel({
   selectedIds,
   images,
@@ -64,8 +68,6 @@ export function CanvasControlPanel({
   handleFileUpload,
   activeGenerationsSize,
   activeVideoGenerationsSize,
-  isExtendingVideo,
-  isTransformingVideo,
   showSuccess,
   canUndo,
   canRedo,
@@ -93,8 +95,6 @@ export function CanvasControlPanel({
             {(activeGenerationsSize > 0 ||
               activeVideoGenerationsSize > 0 ||
               isGenerating ||
-              isExtendingVideo ||
-              isTransformingVideo ||
               showSuccess) && (
                 <motion.div
                   key={showSuccess ? "success" : "generating"}
@@ -107,9 +107,7 @@ export function CanvasControlPanel({
                     "rounded-xl",
                     showSuccess
                       ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
-                      : activeVideoGenerationsSize > 0 ||
-                        isExtendingVideo ||
-                        isTransformingVideo
+                      : activeVideoGenerationsSize > 0
                         ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
                         : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
                   )}
@@ -119,11 +117,7 @@ export function CanvasControlPanel({
                     isSuccess={showSuccess}
                     className="w-5 h-5"
                     outputType={
-                      activeVideoGenerationsSize > 0 ||
-                        isExtendingVideo ||
-                        isTransformingVideo
-                        ? "video"
-                        : "image"
+                      activeVideoGenerationsSize > 0 ? "video" : "image"
                     }
                   />
                 </motion.div>

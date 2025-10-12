@@ -8,107 +8,114 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  getDefaultVideoModel,
-  getVideoModelById,
-  type VideoModelConfig,
-} from "@/lib/video-models";
-import { VideoGenerationSettings } from "@/types/canvas";
-import { ChevronRight, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { getDefaultVideoModel } from "@/lib/video-models";
+import type { VideoGenerationSettings } from "@/types/canvas";
+import React, { useState } from "react";
+
 import {
   ModelPricingDisplay,
   VideoModelOptions,
   VideoModelSelector,
 } from "./VideoModelComponents";
 
+const IMAGE_TO_VIDEO_COPY = {
+  CANCEL: "Cancel",
+  CONVERTING: "Converting...",
+  DESCRIPTION: "Transform your static image into a dynamic video using AI.",
+  MODEL_LABEL: "Model",
+  RUN: "Run",
+  SHORTCUT_SYMBOL: "↵",
+  TITLE: "Convert Image to Video",
+  VIDEO_PREVIEW_ALT: "Source image",
+} as const;
+
+/**
+ * Props for the image-to-video dialog component.
+ */
 interface ImageToVideoDialogProps {
+  imageUrl: string;
+  isConverting: boolean;
   isOpen: boolean;
   onClose: () => void;
   onConvert: (settings: VideoGenerationSettings) => void;
-  imageUrl: string;
-  isConverting: boolean;
 }
 
+/**
+ * Dialog component for configuring and running Sora image-to-video generations.
+ */
 export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
+  imageUrl,
+  isConverting,
   isOpen,
   onClose,
   onConvert,
-  imageUrl,
-  isConverting,
 }) => {
-  const defaultModel = getDefaultVideoModel("image-to-video");
-  const [selectedModelId, setSelectedModelId] = useState(
-    defaultModel?.id || "seedance-pro"
+  const model = getDefaultVideoModel("image-to-video");
+  const [optionValues, setOptionValues] = useState<Record<string, unknown>>(
+    () => model?.defaults || {}
   );
-  const [selectedModel, setSelectedModel] = useState<
-    VideoModelConfig | undefined
-  >(defaultModel);
-  const [optionValues, setOptionValues] = useState<Record<string, any>>(
-    defaultModel?.defaults || {}
-  );
-  const [showMoreOptions, setShowMoreOptions] = useState(false);
 
-  // Update model when selection changes
-  useEffect(() => {
-    const model = getVideoModelById(selectedModelId);
-    if (model) {
-      setSelectedModel(model);
-      setOptionValues(model.defaults);
-    }
-  }, [selectedModelId]);
+  if (!model) {
+    return null;
+  }
+
+  const handleClose = () => {
+    setOptionValues(model.defaults);
+    onClose();
+  };
 
   const handleOptionChange = (field: string, value: unknown) => {
     setOptionValues((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedModel) return;
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-    // Map the dynamic options to the VideoGenerationSettings format
-    // This maintains backward compatibility with existing code
+    const rawDuration = optionValues.duration;
+    const parsedDuration =
+      typeof rawDuration === "number"
+        ? rawDuration
+        : typeof rawDuration === "string" && rawDuration
+          ? parseInt(rawDuration, 10)
+          : undefined;
+
     const settings: VideoGenerationSettings = {
-      prompt: optionValues.prompt || "",
-      sourceUrl: imageUrl,
-      modelId: selectedModel.id,
-      // Include all option values for new models first
       ...optionValues,
-      // Then override with properly typed values
-      ...(optionValues.duration && {
-        duration: parseInt(optionValues.duration),
-      }),
-      ...(optionValues.seed !== undefined && { seed: optionValues.seed }),
-    };
+      ...(parsedDuration !== undefined ? { duration: parsedDuration } : {}),
+      modelId: model.id,
+      prompt: (optionValues.prompt as string) || "",
+      sourceUrl: imageUrl,
+    } as VideoGenerationSettings;
 
     onConvert(settings);
   };
 
-  if (!selectedModel) return null;
-
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[600px] p-5">
         <DialogHeader>
-          <DialogTitle>Convert Image to Video</DialogTitle>
+          <DialogTitle>{IMAGE_TO_VIDEO_COPY.TITLE}</DialogTitle>
           <DialogDescription>
-            Transform your static image into a dynamic video using AI.
+            {IMAGE_TO_VIDEO_COPY.DESCRIPTION}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="py-2 space-y-4">
-          {/* Model Selection */}
-          <div className="w-full mb-4">
+          <div className="w-full mb-4 space-y-2">
+            <span className="text-sm font-medium text-muted-foreground">
+              {IMAGE_TO_VIDEO_COPY.MODEL_LABEL}
+            </span>
             <VideoModelSelector
-              value={selectedModelId}
-              onChange={setSelectedModelId}
               category="image-to-video"
-              disabled={isConverting}
+              className="pointer-events-none"
+              disabled
+              onChange={() => undefined}
+              value={model.id}
             />
           </div>
 
           {/* Pricing Display */}
-          <ModelPricingDisplay model={selectedModel} className="mb-4" />
+          <ModelPricingDisplay model={model} className="mb-4" />
 
           <div className="flex gap-4">
             {/* Left column - Image Preview */}
@@ -117,7 +124,7 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
                 {imageUrl && (
                   <img
                     src={imageUrl}
-                    alt="Source image"
+                    alt={IMAGE_TO_VIDEO_COPY.VIDEO_PREVIEW_ALT}
                     className="w-full h-full object-contain"
                   />
                 )}
@@ -128,60 +135,43 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
             <div className="w-2/3 space-y-4">
               {/* Main Options */}
               <VideoModelOptions
-                model={selectedModel}
-                values={optionValues}
-                onChange={handleOptionChange}
                 disabled={isConverting}
-                optionKeys={[
-                  "prompt",
-                  "resolution",
-                  "aspectRatio",
-                  "frameRate",
-                  "negativePrompt",
-                ]}
+                model={model}
+                onChange={handleOptionChange}
+                optionKeys={["aspectRatio", "duration", "prompt", "resolution"]}
+                values={optionValues}
               />
-
-              {/* More Options Button */}
-              {selectedModel &&
-                Object.keys(selectedModel.options).length > 5 && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowMoreOptions(true)}
-                    className="px-0 pr-4 flex gap-2 text-sm"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                    More Options
-                  </Button>
-                )}
             </div>
           </div>
 
           <DialogFooter className="mt-4 flex justify-between gap-2">
             <Button
+              disabled={isConverting}
+              onClick={handleClose}
               type="button"
               variant="secondary"
-              onClick={onClose}
-              disabled={isConverting}
             >
-              Cancel
+              {IMAGE_TO_VIDEO_COPY.CANCEL}
             </Button>
             <Button
+              className="flex items-center gap-2"
+              disabled={isConverting}
               type="submit"
               variant="primary"
-              disabled={isConverting}
-              className="flex items-center gap-2"
             >
               {isConverting ? (
                 <>
                   <SpinnerIcon className="h-4 w-4 animate-spin text-white" />
-                  <span className="text-white">Converting...</span>
+                  <span className="text-white">
+                    {IMAGE_TO_VIDEO_COPY.CONVERTING}
+                  </span>
                 </>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-white">Run</span>
+                  <span className="text-white">{IMAGE_TO_VIDEO_COPY.RUN}</span>
                   <span className="flex flex-row space-x-0.5">
                     <kbd className="flex items-center justify-center text-white tracking-tighter rounded-xl border px-1 font-mono bg-white/10 border-white/10 h-6 min-w-6 text-xs">
-                      ↵
+                      {IMAGE_TO_VIDEO_COPY.SHORTCUT_SYMBOL}
                     </kbd>
                   </span>
                 </div>
@@ -190,48 +180,6 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
           </DialogFooter>
         </form>
 
-        {/* Slide-out Panel for More Options */}
-        {showMoreOptions && (
-          <>
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50"
-              onClick={() => setShowMoreOptions(false)}
-            />
-
-            {/* Panel */}
-            <div className="fixed top-0 right-0 h-full w-96 bg-card shadow-xl z-50 transform transition-transform duration-300 ease-in-out">
-              <div className="h-full flex flex-col">
-                <div className="flex items-center justify-between p-3 border-b">
-                  <h3 className="font-semibold text-lg">Advanced Options</h3>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => setShowMoreOptions(false)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-4">
-                  <VideoModelOptions
-                    model={selectedModel}
-                    values={optionValues}
-                    onChange={handleOptionChange}
-                    disabled={isConverting}
-                    excludeKeys={[
-                      "prompt",
-                      "resolution",
-                      "aspectRatio",
-                      "frameRate",
-                      "negativePrompt",
-                    ]}
-                  />
-                </div>
-              </div>
-            </div>
-          </>
-        )}
       </DialogContent>
     </Dialog>
   );

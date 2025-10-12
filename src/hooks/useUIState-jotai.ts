@@ -10,13 +10,9 @@ import {
   generationCountAtom,
   hiddenVideoControlsIdsAtom,
   isApiKeyDialogOpenAtom,
-  isExtendVideoDialogOpenAtom,
   isImageToVideoDialogOpenAtom,
   isSettingsDialogOpenAtom,
-  isVideoToVideoDialogOpenAtom,
   selectedImageForVideoAtom,
-  selectedVideoForExtendAtom,
-  selectedVideoForVideoAtom,
   showChatAtom,
   showGridAtom,
   showMinimapAtom,
@@ -38,26 +34,14 @@ export function useUIState() {
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useAtom(
     isApiKeyDialogOpenAtom
   );
-  const [isExtendVideoDialogOpen, setIsExtendVideoDialogOpen] = useAtom(
-    isExtendVideoDialogOpenAtom
-  );
   const [isImageToVideoDialogOpen, setIsImageToVideoDialogOpen] = useAtom(
     isImageToVideoDialogOpenAtom
   );
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useAtom(
     isSettingsDialogOpenAtom
   );
-  const [isVideoToVideoDialogOpen, setIsVideoToVideoDialogOpen] = useAtom(
-    isVideoToVideoDialogOpenAtom
-  );
   const [selectedImageForVideo, setSelectedImageForVideo] = useAtom(
     selectedImageForVideoAtom
-  );
-  const [selectedVideoForExtend, setSelectedVideoForExtend] = useAtom(
-    selectedVideoForExtendAtom
-  );
-  const [selectedVideoForVideo, setSelectedVideoForVideo] = useAtom(
-    selectedVideoForVideoAtom
   );
   const [showChat, setShowChat] = useAtom(showChatAtom);
   const [showGrid, setShowGrid] = useAtom(showGridAtom);
@@ -117,24 +101,16 @@ export function useUIState() {
     generationCount,
     hiddenVideoControlsIds,
     isApiKeyDialogOpen,
-    isExtendVideoDialogOpen,
     isImageToVideoDialogOpen,
     isSettingsDialogOpen,
-    isVideoToVideoDialogOpen,
     selectedImageForVideo,
-    selectedVideoForExtend,
-    selectedVideoForVideo,
     setCustomApiKey,
     setGenerationCount,
     setHiddenVideoControlsIds,
     setIsApiKeyDialogOpen,
-    setIsExtendVideoDialogOpen,
     setIsImageToVideoDialogOpen,
     setIsSettingsDialogOpen,
-    setIsVideoToVideoDialogOpen,
     setSelectedImageForVideo,
-    setSelectedVideoForExtend,
-    setSelectedVideoForVideo,
     setShowChat,
     setShowGrid,
     setShowMinimap,

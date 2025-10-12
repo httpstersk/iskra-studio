@@ -47,8 +47,6 @@ export interface VideoGenerationSettings {
   aspectRatio?: "auto" | "9:16" | "16:9" | "1:1"; // Aspect ratio
   cameraFixed?: boolean; // Whether to fix the camera position
   seed?: number; // Random seed to control video generation
-  isVideoToVideo?: boolean; // Indicates if this is a video-to-video transformation
-  isVideoExtension?: boolean; // Indicates if this is a video extension (using last frame)
   [key: string]: unknown; // Allow additional model-specific fields
 }
 
@@ -82,9 +80,6 @@ export interface ActiveVideoGeneration {
   cameraFixed?: boolean; // Whether to fix the camera position
   seed?: number; // Random seed to control video generation
   sourceImageId?: string; // ID of the image used for img2vid
-  sourceVideoId?: string; // ID of the video used for vid2vid
-  isVideoToVideo?: boolean; // Indicates if this is a video-to-video transformation
-  isVideoExtension?: boolean; // Indicates if this is a video extension
   toastId?: string; // ID of the toast notification
   [key: string]: unknown; // Allow additional model-specific fields
 }

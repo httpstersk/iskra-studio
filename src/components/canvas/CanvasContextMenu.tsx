@@ -18,7 +18,6 @@ import {
   Combine,
   Copy,
   Download,
-  FilePlus,
   Layers,
   MoveDown,
   MoveUp,
@@ -29,42 +28,44 @@ import {
 import React from "react";
 import { ShortcutBadge } from "./ShortcutBadge";
 
+/**
+ * Props for the canvas context menu component.
+ */
 interface CanvasContextMenuProps {
-  selectedIds: string[];
-  images: PlacedImage[];
-  videos?: PlacedVideo[];
-  isGenerating: boolean;
-  generationSettings: GenerationSettings;
-  handleRun: () => void;
-  handleDuplicate: () => void;
-  handleCombineImages: () => void;
-  handleDelete: () => void;
-  handleConvertToVideo?: (imageId: string) => void;
-  handleVideoToVideo?: (videoId: string) => void;
-  handleExtendVideo?: (videoId: string) => void;
-  sendToFront: () => void;
-  sendToBack: () => void;
   bringForward: () => void;
+  generationSettings: GenerationSettings;
+  handleCombineImages: () => void;
+  handleConvertToVideo?: (imageId: string) => void;
+  handleDelete: () => void;
+  handleDuplicate: () => void;
+  handleRun: () => void;
+  images: PlacedImage[];
+  isGenerating: boolean;
+  selectedIds: string[];
   sendBackward: () => void;
+  sendToBack: () => void;
+  sendToFront: () => void;
+  videos?: PlacedVideo[];
 }
 
+/**
+ * Context menu displayed within the canvas, providing quick actions for selected elements.
+ */
 export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
-  selectedIds,
-  images,
-  videos = [], // Provide a default empty array
-  isGenerating,
-  generationSettings,
-  handleRun,
-  handleDuplicate,
-  handleCombineImages,
-  handleDelete,
-  handleConvertToVideo,
-  handleVideoToVideo,
-  handleExtendVideo,
-  sendToFront,
-  sendToBack,
   bringForward,
+  generationSettings,
+  handleCombineImages,
+  handleConvertToVideo,
+  handleDelete,
+  handleDuplicate,
+  handleRun,
+  images,
+  isGenerating,
+  selectedIds,
   sendBackward,
+  sendToBack,
+  sendToFront,
+  videos = [], // Provide a default empty array
 }) => {
   return (
     <ContextMenuContent>
@@ -110,20 +111,6 @@ export const CanvasContextMenu: React.FC<CanvasContextMenuProps> = ({
           >
             <Video className="h-4 w-4" />
             Image to Video
-          </ContextMenuItem>
-        )}
-
-      {selectedIds.length === 1 &&
-        handleExtendVideo &&
-        videos?.some((v) => v.id === selectedIds[0]) && (
-          <ContextMenuItem
-            onClick={() => {
-              handleExtendVideo(selectedIds[0]);
-            }}
-            className="flex items-center gap-2"
-          >
-            <FilePlus className="h-4 w-4" />
-            Extend Video
           </ContextMenuItem>
         )}
 

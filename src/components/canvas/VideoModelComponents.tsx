@@ -17,15 +17,20 @@ import {
 import { Info, RefreshCw } from "lucide-react";
 import React from "react";
 
-// VideoModelSelector Component
+/**
+ * Props for the video model selector component.
+ */
 interface VideoModelSelectorProps {
-  value: string;
-  onChange: (modelId: string) => void;
   category: VideoModelConfig["category"];
-  disabled?: boolean;
   className?: string;
+  disabled?: boolean;
+  onChange: (modelId: string) => void;
+  value: string;
 }
 
+/**
+ * Renders a model selector dropdown for the provided category.
+ */
 export const VideoModelSelector: React.FC<VideoModelSelectorProps> = ({
   value,
   onChange,
@@ -57,12 +62,17 @@ export const VideoModelSelector: React.FC<VideoModelSelectorProps> = ({
   );
 };
 
-// ModelPricingDisplay Component
+/**
+ * Props for the pricing display component.
+ */
 interface ModelPricingDisplayProps {
-  model: VideoModelConfig;
   className?: string;
+  model: VideoModelConfig;
 }
 
+/**
+ * Displays a pricing summary for the selected model.
+ */
 export const ModelPricingDisplay: React.FC<ModelPricingDisplayProps> = ({
   model,
   className = "",
@@ -89,16 +99,21 @@ export const ModelPricingDisplay: React.FC<ModelPricingDisplayProps> = ({
   );
 };
 
-// VideoModelOptions Component
+/**
+ * Props for the dynamic video model options component.
+ */
 interface VideoModelOptionsProps {
-  model: VideoModelConfig;
-  values: Record<string, unknown>;
-  onChange: (field: string, value: unknown) => void;
   disabled?: boolean;
-  optionKeys?: string[]; // Only show these specific options
-  excludeKeys?: string[]; // Exclude these options
+  excludeKeys?: string[];
+  model: VideoModelConfig;
+  onChange: (field: string, value: unknown) => void;
+  optionKeys?: string[];
+  values: Record<string, unknown>;
 }
 
+/**
+ * Renders form controls for the options defined on the selected model.
+ */
 export const VideoModelOptions: React.FC<VideoModelOptionsProps> = ({
   model,
   values,

@@ -10,9 +10,7 @@ import {
   activeVideoGenerationsAtom,
   generationSettingsAtom,
   isConvertingToVideoAtom,
-  isExtendingVideoAtom,
   isGeneratingAtom,
-  isTransformingVideoAtom,
   previousGenerationCountAtom,
   previousStyleIdAtom,
   showSuccessAtom,
@@ -35,13 +33,7 @@ export function useGenerationState() {
   const [isConvertingToVideo, setIsConvertingToVideo] = useAtom(
     isConvertingToVideoAtom
   );
-  const [isExtendingVideo, setIsExtendingVideo] = useAtom(
-    isExtendingVideoAtom
-  );
   const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom);
-  const [isTransformingVideo, setIsTransformingVideo] = useAtom(
-    isTransformingVideoAtom
-  );
   const [previousGenerationCount, setPreviousGenerationCount] = useAtom(
     previousGenerationCountAtom
   );
@@ -53,9 +45,7 @@ export function useGenerationState() {
     const currentCount =
       activeGenerations.size +
       activeVideoGenerations.size +
-      (isGenerating ? 1 : 0) +
-      (isExtendingVideo ? 1 : 0) +
-      (isTransformingVideo ? 1 : 0);
+      (isGenerating ? 1 : 0);
 
     if (previousGenerationCount > 0 && currentCount === 0) {
       setShowSuccess(true);
@@ -69,9 +59,7 @@ export function useGenerationState() {
   }, [
     activeGenerations.size,
     activeVideoGenerations.size,
-    isExtendingVideo,
     isGenerating,
-    isTransformingVideo,
     previousGenerationCount,
     setPreviousGenerationCount,
     setShowSuccess,
@@ -94,17 +82,13 @@ export function useGenerationState() {
     activeVideoGenerations,
     generationSettings,
     isConvertingToVideo,
-    isExtendingVideo,
     isGenerating,
-    isTransformingVideo,
     previousStyleId,
     setActiveGenerations,
     setActiveVideoGenerations,
     setGenerationSettings,
     setIsConvertingToVideo,
-    setIsExtendingVideo,
     setIsGenerating,
-    setIsTransformingVideo,
     setPreviousStyleId,
     showSuccess,
   };

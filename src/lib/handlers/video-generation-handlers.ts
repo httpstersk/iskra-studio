@@ -1,6 +1,6 @@
 /**
  * Video generation handlers
- * Handles image-to-video, video-to-video, and video extension operations
+ * Handles image-to-video operations
  */
 
 import { CANVAS_DIMENSIONS, VIDEO_DEFAULTS } from "@/constants/canvas";
@@ -46,7 +46,7 @@ export function createImageToVideoConfig(
     cameraFixed: settings.cameraFixed,
     duration: settings.duration || VIDEO_DEFAULTS.DURATION,
     imageUrl,
-    modelId: settings.modelId,
+    modelId: settings.modelId || VIDEO_DEFAULTS.MODEL_ID,
     prompt: settings.prompt || "",
     resolution: settings.resolution || VIDEO_DEFAULTS.RESOLUTION,
     seed: settings.seed,
@@ -55,39 +55,16 @@ export function createImageToVideoConfig(
 }
 
 /**
- * Creates a video generation configuration for video-to-video transformation
- */
-export function createVideoToVideoConfig(
-  videoUrl: string,
-  settings: VideoGenerationSettings,
-  videoDuration: number,
-  sourceVideoId: string,
-  isExtension = false
-) {
-  return {
-    ...settings,
-    duration: videoDuration || settings.duration || VIDEO_DEFAULTS.DURATION,
-    imageUrl: videoUrl,
-    isVideoExtension: isExtension,
-    isVideoToVideo: true,
-    modelId: settings.modelId || VIDEO_DEFAULTS.MODEL_ID,
-    resolution: settings.resolution || VIDEO_DEFAULTS.RESOLUTION,
-    sourceVideoId,
-  };
-}
-
-/**
  * Handles completion of video generation
  */
 export function handleVideoCompletion(
-  videoId: string,
+  _videoId: string,
   videoUrl: string,
   duration: number,
-  generation: { sourceImageId?: string; sourceVideoId?: string } | null,
+  generation: { sourceImageId?: string } | null,
   images: PlacedImage[],
-  videos: PlacedVideo[],
   selectedImageForVideo: string | null
-): { newVideo: PlacedVideo | null; sourceType: "image" | "video" | null } {
+): { newVideo: PlacedVideo | null; sourceType: "image" | null } {
   const sourceImageId = generation?.sourceImageId || selectedImageForVideo;
 
   if (sourceImageId) {
@@ -100,29 +77,6 @@ export function handleVideoCompletion(
         newVideo: { ...video, isVideo: true as const },
         sourceType: "image",
       };
-    }
-  } else if (generation?.sourceVideoId) {
-    const sourceVideo = videos.find(
-      (vid) => vid.id === generation.sourceVideoId
-    );
-    if (sourceVideo) {
-      const newVideo: PlacedVideo = {
-        currentTime: VIDEO_DEFAULTS.CURRENT_TIME,
-        duration,
-        height: sourceVideo.height,
-        id: `video_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-        isLooping: VIDEO_DEFAULTS.IS_LOOPING,
-        isPlaying: VIDEO_DEFAULTS.IS_PLAYING,
-        isVideo: true as const,
-        muted: VIDEO_DEFAULTS.MUTED,
-        rotation: VIDEO_DEFAULTS.ROTATION,
-        src: videoUrl,
-        volume: VIDEO_DEFAULTS.VOLUME,
-        width: sourceVideo.width,
-        x: sourceVideo.x + sourceVideo.width + CANVAS_DIMENSIONS.IMAGE_SPACING,
-        y: sourceVideo.y,
-      };
-      return { newVideo, sourceType: "video" };
     }
   }
 

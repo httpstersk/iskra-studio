@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: openai("gpt-5-mini"),
     system:
-      "You are a helpful assistant that can generate images and videos. When the user asks you to create or generate an image, use the generateTextToImage tool. When they ask for a video or animation, use the generateTextToVideo tool. For images, you can suggest different styles like anime, cartoon, realistic, etc.",
+      "You are a helpful assistant that can generate images. When the user asks you to create or generate an image, use the generateTextToImage tool. For images, you can suggest different styles like anime, cartoon, realistic, etc.",
     messages: convertToModelMessages(messages),
     tools: {
       generateTextToImage: {

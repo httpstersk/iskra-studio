@@ -36,7 +36,6 @@ import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 
 // Handlers
 import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
-import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
 import {
   combineImages,
   deleteElements,
@@ -48,24 +47,19 @@ import {
   sendToBack as sendToBackHandler,
   sendToFront as sendToFrontHandler,
 } from "@/lib/handlers/layer-handlers";
+import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
 import {
   createGenerationId,
   createImageToVideoConfig,
-  createVideoToVideoConfig,
   dismissToast,
   handleVideoCompletion,
   uploadMediaIfNeeded,
 } from "@/lib/handlers/video-generation-handlers";
 
 // Types & Utils
-import {
-  ANIMATION,
-  ARIA_LABELS,
-  CANVAS_DIMENSIONS,
-  CANVAS_STRINGS,
-} from "@/constants/canvas";
+import { ANIMATION, ARIA_LABELS, CANVAS_STRINGS } from "@/constants/canvas";
 import { useDefaultImages } from "@/hooks/useDefaultImages";
-import type { PlacedImage, VideoGenerationSettings } from "@/types/canvas";
+import type { VideoGenerationSettings } from "@/types/canvas";
 
 /**
  * Main Canvas Page Component
@@ -400,14 +394,6 @@ export default function CanvasPage() {
   };
 
   /**
-   * Opens dialog for extending a video
-   */
-  const handleExtendVideo = (videoId: string) => {
-    uiState.setIsExtendVideoDialogOpen(true);
-    uiState.setSelectedVideoForExtend(videoId);
-  };
-
-  /**
    * Handles image-to-video conversion
    */
   const handleImageToVideoConversion = async (
@@ -453,50 +439,6 @@ export default function CanvasPage() {
   };
 
   /**
-   * Handles video extension
-   */
-  const handleVideoExtension = async (settings: VideoGenerationSettings) => {
-    if (!uiState.selectedVideoForExtend) return;
-    const video = canvasState.videos.find(
-      (vid) => vid.id === uiState.selectedVideoForExtend
-    );
-    if (!video) return;
-
-    try {
-      generationState.setIsExtendingVideo(true);
-
-      const videoUrl = await uploadMediaIfNeeded(video.src, falClient);
-      const generationId = createGenerationId("vid_ext");
-      const config = createVideoToVideoConfig(
-        videoUrl,
-        settings,
-        video.duration,
-        uiState.selectedVideoForExtend,
-        true
-      );
-
-      generationState.setActiveVideoGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(generationId, config);
-        return newMap;
-      });
-
-      uiState.setIsExtendVideoDialogOpen(false);
-    } catch (error) {
-      console.error("Error starting video extension:", error);
-      toast({
-        description:
-          error instanceof Error
-            ? error.message
-            : CANVAS_STRINGS.ERRORS.EXTENSION_START_FAILED,
-        title: CANVAS_STRINGS.ERRORS.EXTENSION_FAILED,
-        variant: "destructive",
-      });
-      generationState.setIsExtendingVideo(false);
-    }
-  };
-
-  /**
    * Handles completion of video generation
    */
   const handleVideoGenerationComplete = async (
@@ -513,12 +455,8 @@ export default function CanvasPage() {
 
       // Check if this is a variation - if so, update the placeholder
       if (generation?.isVariation) {
-        console.log(`[Video Variation] Completing video ${videoId}`);
-        console.log(`[Video Variation] Video URL:`, videoUrl);
-        console.log(`[Video Variation] Duration:`, duration);
-        
         canvasState.setVideos((prev) => {
-          const updated = prev.map((video) =>
+          return prev.map((video) =>
             video.id === videoId
               ? {
                   ...video,
@@ -528,18 +466,15 @@ export default function CanvasPage() {
                 }
               : video
           );
-          console.log(`[Video Variation] Updated videos:`, updated.filter(v => v.id.startsWith('sora-video')));
-          return updated;
         });
-        
+
         // Remove from active generations
         generationState.setActiveVideoGenerations((prev) => {
           const newMap = new Map(prev);
           newMap.delete(videoId);
-          console.log(`[Video Variation] Remaining active generations:`, newMap.size);
           return newMap;
         });
-        
+
         // Show success toast only after all variations complete
         if (generationState.activeVideoGenerations.size === 1) {
           // This is the last one
@@ -549,19 +484,18 @@ export default function CanvasPage() {
             description: "All 4 cinematic videos have been generated",
           });
         }
-        
+
         generationState.setIsConvertingToVideo(false);
         return;
       }
 
       // Standard video generation (not variation)
-      const { newVideo, sourceType } = handleVideoCompletion(
+      const { newVideo } = handleVideoCompletion(
         videoId,
         videoUrl,
         duration,
         generation || null,
         canvasState.images,
-        canvasState.videos,
         uiState.selectedImageForVideo
       );
 
@@ -569,10 +503,7 @@ export default function CanvasPage() {
         canvasState.setVideos((prev) => [...prev, newVideo]);
         historyState.saveToHistory();
         toast({
-          title:
-            sourceType === "image"
-              ? CANVAS_STRINGS.SUCCESS.VIDEO_CREATED
-              : CANVAS_STRINGS.SUCCESS.VIDEO_PROCESSED,
+          title: CANVAS_STRINGS.SUCCESS.VIDEO_CREATED,
         });
       }
 
@@ -622,59 +553,6 @@ export default function CanvasPage() {
     status: string
   ) => {
     console.log(`Video generation progress: ${progress}% - ${status}`);
-  };
-
-  /**
-   * Opens dialog for video-to-video transformation
-   */
-  const handleVideoToVideo = (videoId: string) => {
-    uiState.setIsVideoToVideoDialogOpen(true);
-    uiState.setSelectedVideoForVideo(videoId);
-  };
-
-  /**
-   * Handles video-to-video transformation
-   */
-  const handleVideoToVideoTransformation = async (
-    settings: VideoGenerationSettings
-  ) => {
-    if (!uiState.selectedVideoForVideo) return;
-    const video = canvasState.videos.find(
-      (vid) => vid.id === uiState.selectedVideoForVideo
-    );
-    if (!video) return;
-
-    try {
-      generationState.setIsTransformingVideo(true);
-
-      const videoUrl = await uploadMediaIfNeeded(video.src, falClient);
-      const generationId = createGenerationId("vid2vid");
-      const config = createVideoToVideoConfig(
-        videoUrl,
-        settings,
-        video.duration,
-        uiState.selectedVideoForVideo
-      );
-
-      generationState.setActiveVideoGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(generationId, config);
-        return newMap;
-      });
-
-      uiState.setIsVideoToVideoDialogOpen(false);
-    } catch (error) {
-      console.error("Error starting video-to-video transformation:", error);
-      toast({
-        description:
-          error instanceof Error
-            ? error.message
-            : CANVAS_STRINGS.ERRORS.TRANSFORMATION_START_FAILED,
-        title: CANVAS_STRINGS.ERRORS.TRANSFORMATION_FAILED,
-        variant: "destructive",
-      });
-      generationState.setIsTransformingVideo(false);
-    }
   };
 
   // ========================================
@@ -882,9 +760,7 @@ export default function CanvasPage() {
               handleConvertToVideo={handleConvertToVideo}
               handleDelete={handleDelete}
               handleDuplicate={handleDuplicate}
-              handleExtendVideo={handleExtendVideo}
               handleRun={handleRun}
-              handleVideoToVideo={handleVideoToVideo}
               images={canvasState.images}
               isGenerating={generationState.isGenerating}
               selectedIds={canvasState.selectedIds}
@@ -935,9 +811,7 @@ export default function CanvasPage() {
         handleRun={handleRun}
         handleVariationModeChange={handleVariationModeChange}
         images={canvasState.images}
-        isExtendingVideo={generationState.isExtendingVideo}
         isGenerating={generationState.isGenerating}
-        isTransformingVideo={generationState.isTransformingVideo}
         redo={handleRedo}
         selectedIds={canvasState.selectedIds}
         setGenerationSettings={generationState.setGenerationSettings}
@@ -952,27 +826,15 @@ export default function CanvasPage() {
       <CanvasDialogs
         customApiKey={uiState.customApiKey}
         handleImageToVideoConversion={handleImageToVideoConversion}
-        handleVideoExtension={handleVideoExtension}
-        handleVideoToVideoTransformation={handleVideoToVideoTransformation}
         images={canvasState.images}
         isConvertingToVideo={generationState.isConvertingToVideo}
-        isExtendingVideo={generationState.isExtendingVideo}
-        isExtendVideoDialogOpen={uiState.isExtendVideoDialogOpen}
         isImageToVideoDialogOpen={uiState.isImageToVideoDialogOpen}
         isSettingsDialogOpen={uiState.isSettingsDialogOpen}
-        isTransformingVideo={generationState.isTransformingVideo}
-        isVideoToVideoDialogOpen={uiState.isVideoToVideoDialogOpen}
         selectedImageForVideo={uiState.selectedImageForVideo}
-        selectedVideoForExtend={uiState.selectedVideoForExtend}
-        selectedVideoForVideo={uiState.selectedVideoForVideo}
         setCustomApiKey={uiState.setCustomApiKey}
-        setIsExtendVideoDialogOpen={uiState.setIsExtendVideoDialogOpen}
         setIsImageToVideoDialogOpen={uiState.setIsImageToVideoDialogOpen}
         setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
-        setIsVideoToVideoDialogOpen={uiState.setIsVideoToVideoDialogOpen}
         setSelectedImageForVideo={uiState.setSelectedImageForVideo}
-        setSelectedVideoForExtend={uiState.setSelectedVideoForExtend}
-        setSelectedVideoForVideo={uiState.setSelectedVideoForVideo}
         setShowGrid={uiState.setShowGrid}
         setShowMinimap={uiState.setShowMinimap}
         setTempApiKey={uiState.setTempApiKey}
@@ -982,7 +844,6 @@ export default function CanvasPage() {
         tempApiKey={uiState.tempApiKey}
         theme={theme}
         toast={toast}
-        videos={canvasState.videos}
       />
 
       {/* Video Overlays */}

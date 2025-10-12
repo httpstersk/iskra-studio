@@ -1,167 +1,112 @@
+import { SORA_MODEL_ID } from "@/lib/video-models";
 import { useTRPC } from "@/trpc/client";
 import type { ActiveVideoGeneration } from "@/types/canvas";
 import { useSubscription } from "@trpc/tanstack-react-query";
 import React from "react";
 
+const STREAMING_COPY = {
+  ERROR_PREFIX: "Image-to-video conversion error:",
+  ERROR_SUMMARY: "Image-to-video conversion failed",
+  PROGRESS: "Converting image to video...",
+} as const;
+const DEFAULT_DURATION_SECONDS = 4;
+
+/**
+ * Props for the streaming video subscriber component.
+ */
 interface StreamingVideoProps {
-  videoId: string;
+  apiKey?: string;
   generation: ActiveVideoGeneration;
   onComplete: (videoId: string, videoUrl: string, duration: number) => void;
   onError: (videoId: string, error: string) => void;
   onProgress: (videoId: string, progress: number, status: string) => void;
-  apiKey?: string;
+  videoId: string;
 }
 
+/**
+ * Subscribes to the server-side image-to-video stream and relays progress updates.
+ */
 export const StreamingVideo: React.FC<StreamingVideoProps> = ({
-  videoId,
+  apiKey,
   generation,
   onComplete,
   onError,
   onProgress,
-  apiKey,
+  videoId,
 }) => {
-  // Determine which endpoint to use based on the generation type
-  let subscriptionOptions;
+  const trpc = useTRPC();
 
-  // Check if this is a video-to-video transformation
-  const isVideoToVideo = generation.isVideoToVideo || generation.videoUrl;
-  const isVideoExtension = generation.isVideoExtension;
+  const resolvedDuration =
+    typeof generation.duration === "string"
+      ? parseInt(generation.duration, 10)
+      : generation.duration ?? DEFAULT_DURATION_SECONDS;
 
-  if (generation.imageUrl || generation.videoUrl) {
-    // Both image-to-video and video-to-video use the same endpoint with multiconditioning
-    subscriptionOptions = useTRPC().generateImageToVideo.subscriptionOptions(
-      {
-        imageUrl: generation.videoUrl || generation.imageUrl || "", // Use video URL if available, otherwise image URL
-        prompt: generation.prompt,
-        duration: generation.duration || 5,
-        modelId: generation.modelId || "seedance-pro", // Always use multiconditioning model
-        resolution: generation.resolution || "720p",
-        cameraFixed: generation.cameraFixed,
-        seed: generation.seed,
-        isVideoToVideo: isVideoToVideo,
-        isVideoExtension: isVideoExtension,
-        // Include all model-specific fields
-        ...Object.fromEntries(
-          Object.entries(generation).filter(
-            ([key]) =>
-              ![
-                "imageUrl",
-                "videoUrl",
-                "sourceImageId",
-                "sourceVideoId",
-                "toastId",
-              ].includes(key)
-          )
-        ),
-        ...(apiKey ? { apiKey } : {}),
-      },
-      {
-        enabled: true,
-        onData: async (data: { data: unknown }) => {
-          const eventData = data.data as {
-            type: string;
-            progress?: number;
-            status?: string;
-            videoUrl?: string;
-            error?: string;
-            duration?: number;
-          };
+  const additionalFields = Object.fromEntries(
+    Object.entries(generation).filter(
+      ([key, value]) =>
+        value !== undefined &&
+        ![
+          "aspectRatio",
+          "duration",
+          "imageUrl",
+          "modelConfig",
+          "modelId",
+          "prompt",
+          "resolution",
+          "sourceImageId",
+          "sourceVideoId",
+          "toastId",
+          "videoUrl",
+        ].includes(key)
+    )
+  );
 
-          if (eventData.type === "progress") {
-            onProgress(
-              videoId,
-              eventData.progress || 0,
-              eventData.status ||
-                (isVideoExtension
-                  ? "Extending video..."
-                  : isVideoToVideo
-                    ? "Transforming video..."
-                    : "Converting image to video...")
-            );
-          } else if (eventData.type === "complete" && eventData.videoUrl) {
-            const duration =
-              eventData.duration ||
-              (typeof generation.duration === "string"
-                ? parseInt(generation.duration)
-                : generation.duration) ||
-              5;
-            onComplete(videoId, eventData.videoUrl, duration);
-          } else if (eventData.type === "error" && eventData.error) {
-            onError(videoId, eventData.error);
-          }
-        },
-        onError: (error) => {
-          console.error(
-            isVideoExtension
-              ? "Video extension error:"
-              : isVideoToVideo
-                ? "Video-to-video transformation error:"
-                : "Image-to-video conversion error:",
-            error
-          );
-          onError(
+  const subscriptionOptions = trpc.generateImageToVideo.subscriptionOptions(
+    {
+      aspectRatio: generation.aspectRatio,
+      duration: resolvedDuration,
+      imageUrl: generation.imageUrl || "",
+      modelId: generation.modelId || SORA_MODEL_ID,
+      prompt: generation.prompt,
+      resolution: generation.resolution || "auto",
+      ...additionalFields,
+      ...(apiKey ? { apiKey } : {}),
+    },
+    {
+      enabled: true,
+      onData: async (data: { data: unknown }) => {
+        const eventData = data.data as {
+          duration?: number;
+          error?: string;
+          progress?: number;
+          status?: string;
+          type: string;
+          videoUrl?: string;
+        };
+
+        if (eventData.type === "progress") {
+          onProgress(
             videoId,
-            error.message ||
-              (isVideoExtension
-                ? "Video extension failed"
-                : isVideoToVideo
-                  ? "Video-to-video transformation failed"
-                  : "Image-to-video conversion failed")
+            eventData.progress ?? 0,
+            eventData.status || STREAMING_COPY.PROGRESS
           );
-        },
-      }
-    );
-  } else {
-    // Text-to-video generation
-    subscriptionOptions = useTRPC().generateTextToVideo.subscriptionOptions(
-      {
-        prompt: generation.prompt,
-        duration:
-          typeof generation.duration === "string"
-            ? parseInt(generation.duration)
-            : generation.duration || 3,
-        styleId: generation.styleId,
-        ...(apiKey ? { apiKey } : {}),
+        } else if (eventData.type === "complete" && eventData.videoUrl) {
+          onComplete(
+            videoId,
+            eventData.videoUrl,
+            eventData.duration ?? resolvedDuration
+          );
+        } else if (eventData.type === "error" && eventData.error) {
+          onError(videoId, eventData.error);
+        }
       },
-      {
-        enabled: true,
-        onData: async (data: { data: unknown }) => {
-          const eventData = data.data as {
-            type: string;
-            progress?: number;
-            status?: string;
-            videoUrl?: string;
-            error?: string;
-            duration?: number;
-          };
+      onError: (error) => {
+        console.error(STREAMING_COPY.ERROR_PREFIX, error);
+        onError(videoId, error.message || STREAMING_COPY.ERROR_SUMMARY);
+      },
+    }
+  );
 
-          if (eventData.type === "progress") {
-            onProgress(
-              videoId,
-              eventData.progress || 0,
-              eventData.status || "Generating video from text..."
-            );
-          } else if (eventData.type === "complete" && eventData.videoUrl) {
-            const duration =
-              eventData.duration ||
-              (typeof generation.duration === "string"
-                ? parseInt(generation.duration)
-                : generation.duration) ||
-              3;
-            onComplete(videoId, eventData.videoUrl, duration);
-          } else if (eventData.type === "error" && eventData.error) {
-            onError(videoId, eventData.error);
-          }
-        },
-        onError: (error) => {
-          console.error("Text-to-video generation error:", error);
-          onError(videoId, error.message || "Text-to-video generation failed");
-        },
-      }
-    );
-  }
-
-  // Create the subscription
   useSubscription(subscriptionOptions);
 
   return null;

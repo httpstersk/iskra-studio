@@ -13,12 +13,8 @@ export const CANVAS_STRINGS = {
     COMBINE_FAILED: "Failed to combine images",
     CONVERSION_FAILED: "Conversion failed",
     CONVERSION_START_FAILED: "Failed to start conversion",
-    EXTENSION_FAILED: "Extension failed",
-    EXTENSION_START_FAILED: "Failed to start video extension",
     GENERATION_FAILED: "Generation failed",
     PROCESSING_ERROR: "Error processing video",
-    TRANSFORMATION_FAILED: "Transformation failed",
-    TRANSFORMATION_START_FAILED: "Failed to start transformation",
     UNKNOWN_ERROR: "Unknown error",
     VIDEO_CREATION_FAILED: "Error creating video",
     VIDEO_FAILED: "Failed to create video",
@@ -29,7 +25,6 @@ export const CANVAS_STRINGS = {
     IMAGE_GENERATED_DESCRIPTION:
       "The AI-generated image has been added to the canvas",
     VIDEO_CREATED: "Video created successfully",
-    VIDEO_PROCESSED: "Video processed successfully",
   },
 } as const;
 
@@ -56,9 +51,9 @@ export const VIDEO_DEFAULTS = {
   DURATION: 5,
   IS_LOOPING: false,
   IS_PLAYING: false,
-  MODEL_ID: "seedance-pro",
+  MODEL_ID: "sora-2",
   MUTED: false,
-  RESOLUTION: "720p",
+  RESOLUTION: "auto",
   ROTATION: 0,
   VOLUME: 1,
 } as const;

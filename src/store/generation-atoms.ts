@@ -47,16 +47,6 @@ export const activeVideoGenerationsAtom = atom<
  */
 export const isConvertingToVideoAtom = atom(false);
 
-/**
- * Atom to track if video transformation is in progress
- */
-export const isTransformingVideoAtom = atom(false);
-
-/**
- * Atom to track if video extension is in progress
- */
-export const isExtendingVideoAtom = atom(false);
-
 
 /**
  * Atom to track previous generation count for success detection

@@ -1,870 +1,174 @@
+/**
+ * Literal identifier for the Sora model.
+ */
+export const SORA_MODEL_ID = "sora-2" as const;
+
+const SORA_COPY = {
+  ASPECT_RATIO_AUTO: "Auto (from image)",
+  ASPECT_RATIO_DESCRIPTION: "Select the aspect ratio for the generated video",
+  ASPECT_RATIO_LABEL: "Aspect Ratio",
+  ASPECT_RATIO_PORTRAIT: "9:16 (Portrait)",
+  ASPECT_RATIO_WIDESCREEN: "16:9 (Landscape)",
+  CATEGORY: "image-to-video",
+  DURATION_EIGHT_SECONDS: "8 seconds",
+  DURATION_FOUR_SECONDS: "4 seconds",
+  DURATION_LABEL: "Duration",
+  DURATION_TWELVE_SECONDS: "12 seconds",
+  DURATION_WARNING: "Duration of the generated video in seconds",
+  ENDPOINT: "fal-ai/sora-2/image-to-video",
+  NAME: "Sora 2",
+  OPTION_DESCRIPTION:
+    "Describe the motion, action, and camera movement for the video",
+  PLACEHOLDER:
+    "Camera slowly zooms in while the subject looks around...",
+  PRICING_UNIT: "video (4s)",
+  PROMPT_LABEL: "Prompt",
+  RESOLUTION_AUTO: "Auto (from image)",
+  RESOLUTION_DESCRIPTION: "Select the resolution for the generated video",
+  RESOLUTION_LABEL: "Resolution",
+  RESOLUTION_P720: "720p",
+} as const;
+
+/**
+ * Shape of a selectable model option exposed to the UI.
+ */
 export interface VideoModelOption {
-  name: string;
-  type: "select" | "boolean" | "number" | "text";
-  label: string;
-  description?: string;
-  required?: boolean;
   default?: string | number | boolean;
-  options?: Array<{ value: string | number; label: string }>;
-  min?: number;
+  description?: string;
+  label: string;
   max?: number;
-  step?: number;
+  min?: number;
+  name: string;
+  options?: Array<{ label: string; value: string | number }>;
   placeholder?: string;
+  required?: boolean;
+  step?: number;
+  type: "boolean" | "number" | "select" | "text";
 }
 
+/**
+ * Constraints that can be applied to a model configuration.
+ */
 export interface ModelConstraints {
-  resolutionsByModel?: Record<string, string[]>;
   conditionalOptions?: Array<{
-    when: { field: string; value: string | number | boolean };
     then: { field: string; value: string | number | boolean };
+    when: { field: string; value: string | number | boolean };
   }>;
+  resolutionsByModel?: Record<string, string[]>;
 }
 
+/**
+ * Pricing metadata for a model configuration.
+ */
 export interface VideoModelPricing {
   costPerVideo: number;
   currency: string;
   unit: string;
 }
 
+/**
+ * Model configuration exposed to the rest of the application.
+ */
 export interface VideoModelConfig {
-  id: string;
-  name: string;
+  category: "image-to-video";
+  defaults: Record<string, unknown>;
   endpoint: string;
-  category:
-    | "text-to-video"
-    | "image-to-video"
-    | "video-to-video"
-    | "multiconditioning"
-    | "video-extension";
-  pricing: VideoModelPricing;
-  options: Record<string, VideoModelOption>;
-  defaults: Record<string, any>;
-  constraints?: ModelConstraints;
+  id: string;
   isDefault?: boolean;
-  supportsMultipleCategories?: boolean;
+  name: string;
+  options: Record<string, VideoModelOption>;
+  pricing: VideoModelPricing;
 }
 
+/**
+ * Registry of enabled video models keyed by identifier.
+ */
 export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
-  "ltx-video-multiconditioning": {
-    id: "ltx-video-multiconditioning",
-    name: "LTX Video Multiconditioning",
-    endpoint: "fal-ai/ltx-video-13b-dev/multiconditioning",
-    category: "multiconditioning",
-    supportsMultipleCategories: true,
-    pricing: {
-      costPerVideo: 0.2,
-      currency: "USD",
-      unit: "video",
-    },
-    isDefault: false,
-    options: {
-      prompt: {
-        name: "prompt",
-        type: "text",
-        label: "Prompt",
-        description: "Text prompt to guide generation",
-        placeholder: "Describe the motion or transformation...",
-        required: true,
-      },
-      negativePrompt: {
-        name: "negativePrompt",
-        type: "text",
-        label: "Negative Prompt",
-        description: "What to avoid in the generation",
-        default:
-          "worst quality, inconsistent motion, blurry, jittery, distorted",
-        placeholder: "worst quality, inconsistent motion...",
-      },
-      resolution: {
-        name: "resolution",
-        type: "select",
-        label: "Resolution",
-        description: "Video resolution",
-        default: "720p",
-        options: [
-          { value: "480p", label: "480p" },
-          { value: "720p", label: "720p" },
-        ],
-      },
-      aspectRatio: {
-        name: "aspectRatio",
-        type: "select",
-        label: "Aspect Ratio",
-        description: "The aspect ratio of the video",
-        default: "auto",
-        options: [
-          { value: "auto", label: "Auto (from source)" },
-          { value: "9:16", label: "9:16 (Portrait)" },
-          { value: "1:1", label: "1:1 (Square)" },
-          { value: "16:9", label: "16:9 (Landscape)" },
-        ],
-      },
-      numFrames: {
-        name: "numFrames",
-        type: "number",
-        label: "Number of Frames",
-        description: "The number of frames in the video (9-161)",
-        default: 121,
-        min: 9,
-        max: 161,
-        step: 8,
-      },
-      frameRate: {
-        name: "frameRate",
-        type: "number",
-        label: "Frame Rate",
-        description: "The frame rate of the video",
-        default: 30,
-        min: 1,
-        max: 60,
-        step: 1,
-      },
-      firstPassNumInferenceSteps: {
-        name: "firstPassNumInferenceSteps",
-        type: "number",
-        label: "First Pass Inference Steps",
-        description: "Number of inference steps during the first pass",
-        default: 30,
-        min: 2,
-        max: 50,
-        step: 1,
-      },
-      firstPassSkipFinalSteps: {
-        name: "firstPassSkipFinalSteps",
-        type: "number",
-        label: "First Pass Skip Final Steps",
-        description:
-          "Steps to skip at the end of first pass for larger changes",
-        default: 3,
-        min: 0,
-        max: 50,
-        step: 1,
-      },
-      secondPassNumInferenceSteps: {
-        name: "secondPassNumInferenceSteps",
-        type: "number",
-        label: "Second Pass Inference Steps",
-        description: "Number of inference steps during the second pass",
-        default: 30,
-        min: 2,
-        max: 50,
-        step: 1,
-      },
-      secondPassSkipInitialSteps: {
-        name: "secondPassSkipInitialSteps",
-        type: "number",
-        label: "Second Pass Skip Initial Steps",
-        description:
-          "Steps to skip at the beginning of second pass for finer details",
-        default: 17,
-        min: 1,
-        max: 50,
-        step: 1,
-      },
-      seed: {
-        name: "seed",
-        type: "number",
-        label: "Seed",
-        description: "Random seed for generation. Leave empty for random",
-        min: 0,
-        max: 2147483647,
-        placeholder: "random",
-      },
-      expandPrompt: {
-        name: "expandPrompt",
-        type: "boolean",
-        label: "Expand Prompt",
-        description: "Whether to expand the prompt using a language model",
-        default: false,
-      },
-      reverseVideo: {
-        name: "reverseVideo",
-        type: "boolean",
-        label: "Reverse Video",
-        description: "Whether to reverse the video",
-        default: false,
-      },
-      enableSafetyChecker: {
-        name: "enableSafetyChecker",
-        type: "boolean",
-        label: "Enable Safety Checker",
-        description: "Whether to enable the safety checker",
-        default: true,
-      },
-      constantRateFactor: {
-        name: "constantRateFactor",
-        type: "number",
-        label: "Compression Quality",
-        description:
-          "CRF for input compression (20=high quality, 60=low quality)",
-        default: 35,
-        min: 20,
-        max: 60,
-        step: 5,
-      },
-    },
+  [SORA_MODEL_ID]: {
+    category: SORA_COPY.CATEGORY,
     defaults: {
-      prompt: "",
-      negativePrompt:
-        "worst quality, inconsistent motion, blurry, jittery, distorted",
-      resolution: "720p",
       aspectRatio: "auto",
-      numFrames: 121,
-      frameRate: 30,
-      firstPassNumInferenceSteps: 30,
-      firstPassSkipFinalSteps: 3,
-      secondPassNumInferenceSteps: 30,
-      secondPassSkipInitialSteps: 17,
-      expandPrompt: false,
-      reverseVideo: false,
-      enableSafetyChecker: true,
-      constantRateFactor: 35,
-    },
-  },
-  "seedance-lite": {
-    id: "seedance-lite",
-    name: "SeeDANCE 1.0 Lite",
-    endpoint: "fal-ai/bytedance/seedance/v1/lite/image-to-video",
-    category: "image-to-video",
-    pricing: {
-      costPerVideo: 0.18,
-      currency: "USD",
-      unit: "video",
-    },
-    options: {
-      prompt: {
-        name: "prompt",
-        type: "text",
-        label: "Prompt",
-        description: "Describe desired motion or elements to animate",
-        placeholder: "Describe desired motion or elements to animate...",
-        default: "",
-      },
-      resolution: {
-        name: "resolution",
-        type: "select",
-        label: "Resolution",
-        description:
-          "Video resolution - 480p for faster generation, 720p for higher quality",
-        default: "720p",
-        options: [
-          { value: "480p", label: "480p" },
-          { value: "720p", label: "720p" },
-          { value: "1080p", label: "1080p" },
-        ],
-      },
-      duration: {
-        name: "duration",
-        type: "select",
-        label: "Duration",
-        description: "Duration of the video in seconds",
-        default: "5",
-        options: [
-          { value: "5", label: "5 seconds" },
-          { value: "10", label: "10 seconds" },
-        ],
-      },
-      cameraFixed: {
-        name: "cameraFixed",
-        type: "boolean",
-        label: "Camera Fixed",
-        description: "Whether to fix the camera position",
-        default: true,
-      },
-      seed: {
-        name: "seed",
-        type: "number",
-        label: "Seed",
-        description:
-          "Random seed to control video generation. Use -1 for random",
-        default: -1,
-        min: -1,
-        max: 2147483647,
-        placeholder: "random",
-      },
-    },
-    defaults: {
+      duration: "4",
       prompt: "",
-      resolution: "720p",
-      duration: "5",
-      cameraFixed: true,
-      seed: -1,
+      resolution: "auto",
     },
-  },
-  "seedance-pro": {
-    id: "seedance-pro",
-    name: "SeeDANCE 1.0 Pro",
-    endpoint: "fal-ai/bytedance/seedance/v1/pro/image-to-video",
-    category: "image-to-video",
+    endpoint: SORA_COPY.ENDPOINT,
+    id: SORA_MODEL_ID,
     isDefault: true,
-    pricing: {
-      costPerVideo: 0.62,
-      currency: "USD",
-      unit: "video",
-    },
+    name: SORA_COPY.NAME,
     options: {
-      prompt: {
-        name: "prompt",
-        type: "text",
-        label: "Prompt",
-        description: "Describe desired motion or elements to animate",
-        placeholder: "Describe desired motion or elements to animate...",
-        default: "",
-      },
-      resolution: {
-        name: "resolution",
-        type: "select",
-        label: "Resolution",
-        description: "Video resolution - Pro version supports 480p and 1080p",
-        default: "1080p",
+      aspectRatio: {
+        description: SORA_COPY.ASPECT_RATIO_DESCRIPTION,
+        label: SORA_COPY.ASPECT_RATIO_LABEL,
+        name: "aspectRatio",
         options: [
-          { value: "480p", label: "480p" },
-          { value: "1080p", label: "1080p" },
+          { label: SORA_COPY.ASPECT_RATIO_AUTO, value: "auto" },
+          { label: SORA_COPY.ASPECT_RATIO_PORTRAIT, value: "9:16" },
+          { label: SORA_COPY.ASPECT_RATIO_WIDESCREEN, value: "16:9" },
         ],
+        type: "select",
       },
       duration: {
+        default: "4",
+        description: SORA_COPY.DURATION_WARNING,
+        label: SORA_COPY.DURATION_LABEL,
         name: "duration",
-        type: "select",
-        label: "Duration",
-        description: "Duration of the video in seconds",
-        default: "5",
         options: [
-          { value: "5", label: "5 seconds" },
-          { value: "10", label: "10 seconds" },
+          { label: SORA_COPY.DURATION_FOUR_SECONDS, value: "4" },
+          { label: SORA_COPY.DURATION_EIGHT_SECONDS, value: "8" },
+          { label: SORA_COPY.DURATION_TWELVE_SECONDS, value: "12" },
         ],
+        type: "select",
       },
-      cameraFixed: {
-        name: "cameraFixed",
-        type: "boolean",
-        label: "Camera Fixed",
-        description: "Whether to fix the camera position",
-        default: true,
-      },
-      seed: {
-        name: "seed",
-        type: "number",
-        label: "Seed",
-        description:
-          "Random seed to control video generation. Use -1 for random",
-        default: -1,
-        min: -1,
-        max: 2147483647,
-        placeholder: "random",
-      },
-    },
-    defaults: {
-      prompt: "",
-      resolution: "1080p",
-      duration: "5",
-      cameraFixed: true,
-      seed: -1,
-    },
-    constraints: {
-      resolutionsByModel: {
-        pro: ["480p", "1080p"],
-      },
-    },
-  },
-  "ltx-video": {
-    id: "ltx-video",
-    name: "LTX Video-0.9.7 13B",
-    endpoint: "fal-ai/ltx-video-13b-dev/image-to-video",
-    category: "image-to-video",
-    pricing: {
-      costPerVideo: 0.2,
-      currency: "USD",
-      unit: "video",
-    },
-    isDefault: false,
-    options: {
       prompt: {
+        description: SORA_COPY.OPTION_DESCRIPTION,
+        label: SORA_COPY.PROMPT_LABEL,
         name: "prompt",
-        type: "text",
-        label: "Prompt",
-        description: "Text prompt to guide generation",
-        placeholder: "Describe the motion or action...",
+        placeholder: SORA_COPY.PLACEHOLDER,
         required: true,
-      },
-      negativePrompt: {
-        name: "negativePrompt",
         type: "text",
-        label: "Negative Prompt",
-        description: "What to avoid in the generation",
-        default:
-          "worst quality, inconsistent motion, blurry, jittery, distorted",
-        placeholder: "worst quality, inconsistent motion...",
       },
       resolution: {
-        name: "resolution",
-        type: "select",
-        label: "Resolution",
-        description: "Video resolution",
-        default: "720p",
-        options: [
-          { value: "480p", label: "480p" },
-          { value: "720p", label: "720p" },
-        ],
-      },
-      aspectRatio: {
-        name: "aspectRatio",
-        type: "select",
-        label: "Aspect Ratio",
-        description: "The aspect ratio of the video",
         default: "auto",
-        options: [
-          { value: "auto", label: "Auto (from image)" },
-          { value: "9:16", label: "9:16 (Portrait)" },
-          { value: "1:1", label: "1:1 (Square)" },
-          { value: "16:9", label: "16:9 (Landscape)" },
-        ],
-      },
-      numFrames: {
-        name: "numFrames",
-        type: "number",
-        label: "Number of Frames",
-        description: "The number of frames in the video (9-161)",
-        default: 121,
-        min: 9,
-        max: 161,
-        step: 8,
-      },
-      frameRate: {
-        name: "frameRate",
-        type: "number",
-        label: "Frame Rate",
-        description: "The frame rate of the video",
-        default: 30,
-        min: 1,
-        max: 60,
-        step: 1,
-      },
-      seed: {
-        name: "seed",
-        type: "number",
-        label: "Seed",
-        description: "Random seed for generation. Leave empty for random",
-        min: 0,
-        max: 2147483647,
-        placeholder: "random",
-      },
-      expandPrompt: {
-        name: "expandPrompt",
-        type: "boolean",
-        label: "Expand Prompt",
-        description: "Whether to expand the prompt using a language model",
-        default: false,
-      },
-      reverseVideo: {
-        name: "reverseVideo",
-        type: "boolean",
-        label: "Reverse Video",
-        description: "Whether to reverse the video",
-        default: false,
-      },
-      constantRateFactor: {
-        name: "constantRateFactor",
-        type: "number",
-        label: "Compression Quality",
-        description:
-          "CRF for input compression (20=high quality, 60=low quality)",
-        default: 35,
-        min: 20,
-        max: 60,
-        step: 5,
-      },
-    },
-    defaults: {
-      prompt: "",
-      negativePrompt:
-        "worst quality, inconsistent motion, blurry, jittery, distorted",
-      resolution: "720p",
-      aspectRatio: "auto",
-      numFrames: 121,
-      frameRate: 30,
-      expandPrompt: false,
-      reverseVideo: false,
-      constantRateFactor: 35,
-    },
-  },
-  "ltx-video-extend": {
-    id: "ltx-video-extend",
-    name: "LTX Video Extend",
-    endpoint: "fal-ai/ltx-video-13b-dev/extend",
-    category: "video-extension",
-    pricing: {
-      costPerVideo: 0.2,
-      currency: "USD",
-      unit: "extension",
-    },
-    isDefault: false,
-    options: {
-      prompt: {
-        name: "prompt",
-        type: "text",
-        label: "Prompt",
-        description: "Text prompt to guide the video extension",
-        placeholder: "Continue the video naturally...",
-        required: true,
-      },
-      negativePrompt: {
-        name: "negativePrompt",
-        type: "text",
-        label: "Negative Prompt",
-        description: "What to avoid in the generation",
-        default:
-          "worst quality, inconsistent motion, blurry, jittery, distorted",
-        placeholder: "worst quality, inconsistent motion...",
-      },
-      aspectRatio: {
-        name: "aspectRatio",
-        type: "select",
-        label: "Aspect Ratio",
-        description: "The aspect ratio of the extended video",
-        default: "auto",
-        options: [
-          { value: "auto", label: "Auto (from source)" },
-          { value: "9:16", label: "9:16 (Portrait)" },
-          { value: "1:1", label: "1:1 (Square)" },
-          { value: "16:9", label: "16:9 (Landscape)" },
-        ],
-      },
-      resolution: {
+        description: SORA_COPY.RESOLUTION_DESCRIPTION,
+        label: SORA_COPY.RESOLUTION_LABEL,
         name: "resolution",
-        type: "select",
-        label: "Resolution",
-        description: "Video resolution",
-        default: "720p",
         options: [
-          { value: "480p", label: "480p" },
-          { value: "720p", label: "720p" },
+          { label: SORA_COPY.RESOLUTION_AUTO, value: "auto" },
+          { label: SORA_COPY.RESOLUTION_P720, value: "720p" },
         ],
-      },
-      numFrames: {
-        name: "numFrames",
-        type: "number",
-        label: "Number of Frames",
-        description: "The number of frames to extend (9-161)",
-        default: 121,
-        min: 9,
-        max: 161,
-        step: 8,
-      },
-      frameRate: {
-        name: "frameRate",
-        type: "number",
-        label: "Frame Rate",
-        description: "The frame rate of the extended video",
-        default: 30,
-        min: 1,
-        max: 60,
-        step: 1,
-      },
-      seed: {
-        name: "seed",
-        type: "number",
-        label: "Seed",
-        description: "Random seed for generation. Leave empty for random",
-        min: 0,
-        max: 2147483647,
-        placeholder: "random",
-      },
-      expandPrompt: {
-        name: "expandPrompt",
-        type: "boolean",
-        label: "Expand Prompt",
-        description: "Whether to expand the prompt using a language model",
-        default: false,
-      },
-      reverseVideo: {
-        name: "reverseVideo",
-        type: "boolean",
-        label: "Reverse Video",
-        description: "Whether to reverse the extended video",
-        default: false,
-      },
-      enableSafetyChecker: {
-        name: "enableSafetyChecker",
-        type: "boolean",
-        label: "Enable Safety Checker",
-        description: "Whether to enable the safety checker",
-        default: true,
-      },
-      firstPassNumInferenceSteps: {
-        name: "firstPassNumInferenceSteps",
-        type: "number",
-        label: "First Pass Inference Steps",
-        description: "Number of inference steps during the first pass",
-        default: 30,
-        min: 2,
-        max: 50,
-        step: 1,
-      },
-      firstPassSkipFinalSteps: {
-        name: "firstPassSkipFinalSteps",
-        type: "number",
-        label: "First Pass Skip Final Steps",
-        description:
-          "Steps to skip at the end of first pass for larger changes",
-        default: 3,
-        min: 0,
-        max: 50,
-        step: 1,
-      },
-      secondPassNumInferenceSteps: {
-        name: "secondPassNumInferenceSteps",
-        type: "number",
-        label: "Second Pass Inference Steps",
-        description: "Number of inference steps during the second pass",
-        default: 30,
-        min: 2,
-        max: 50,
-        step: 1,
-      },
-      secondPassSkipInitialSteps: {
-        name: "secondPassSkipInitialSteps",
-        type: "number",
-        label: "Second Pass Skip Initial Steps",
-        description:
-          "Steps to skip at the beginning of second pass for finer details",
-        default: 17,
-        min: 1,
-        max: 50,
-        step: 1,
-      },
-      constantRateFactor: {
-        name: "constantRateFactor",
-        type: "number",
-        label: "Compression Quality",
-        description:
-          "CRF for input compression (20=high quality, 60=low quality)",
-        default: 35,
-        min: 20,
-        max: 60,
-        step: 5,
-      },
-      // Video conditioning options
-      conditioningType: {
-        name: "conditioningType",
         type: "select",
-        label: "Conditioning Type",
-        description: "Type of conditioning to use",
-        default: "rgb",
-        options: [{ value: "rgb", label: "RGB" }],
-      },
-      preprocess: {
-        name: "preprocess",
-        type: "boolean",
-        label: "Preprocess",
-        description: "Whether to preprocess the video",
-        default: false,
-      },
-      startFrameNum: {
-        name: "startFrameNum",
-        type: "number",
-        label: "Start Frame Number",
-        description: "Frame to start conditioning from (must be multiple of 8)",
-        default: 32,
-        min: 0,
-        max: 1000,
-        step: 8,
-      },
-      strength: {
-        name: "strength",
-        type: "number",
-        label: "Strength",
-        description: "Conditioning strength",
-        default: 1,
-        min: 0,
-        max: 1,
-        step: 0.1,
-      },
-      limitNumFrames: {
-        name: "limitNumFrames",
-        type: "boolean",
-        label: "Limit Number of Frames",
-        description: "Whether to limit the number of frames",
-        default: false,
-      },
-      maxNumFrames: {
-        name: "maxNumFrames",
-        type: "number",
-        label: "Maximum Number of Frames",
-        description: "Maximum number of frames to use",
-        default: 121,
-        min: 1,
-        max: 161,
-        step: 1,
-      },
-      resampleFps: {
-        name: "resampleFps",
-        type: "boolean",
-        label: "Resample FPS",
-        description: "Whether to resample the FPS",
-        default: false,
-      },
-      targetFps: {
-        name: "targetFps",
-        type: "number",
-        label: "Target FPS",
-        description: "Target FPS for resampling",
-        default: 30,
-        min: 1,
-        max: 60,
-        step: 1,
-      },
-      reverseVideoConditioning: {
-        name: "reverseVideoConditioning",
-        type: "boolean",
-        label: "Reverse Video (Conditioning)",
-        description: "Whether to reverse the video for conditioning",
-        default: false,
       },
     },
-    defaults: {
-      prompt: "",
-      negativePrompt:
-        "worst quality, inconsistent motion, blurry, jittery, distorted",
-      aspectRatio: "auto",
-      resolution: "720p",
-      numFrames: 121,
-      frameRate: 30,
-      firstPassNumInferenceSteps: 30,
-      firstPassSkipFinalSteps: 3,
-      secondPassNumInferenceSteps: 30,
-      secondPassSkipInitialSteps: 17,
-      expandPrompt: false,
-      reverseVideo: false,
-      enableSafetyChecker: true,
-      constantRateFactor: 35,
-      // Video conditioning defaults
-      conditioningType: "rgb",
-      preprocess: false,
-      startFrameNum: 32, // Default to 32 (must be multiple of 8)
-      strength: 1,
-      limitNumFrames: false,
-      maxNumFrames: 121,
-      resampleFps: false,
-      targetFps: 30,
-      reverseVideoConditioning: false,
-    },
-  },
-  "stable-video-diffusion": {
-    id: "stable-video-diffusion",
-    name: "Stable Video Diffusion",
-    endpoint: "fal-ai/stable-video-diffusion",
-    category: "text-to-video",
-    pricing: {
-      costPerVideo: 0.1,
-      currency: "USD",
-      unit: "video",
-    },
-    options: {
-      prompt: {
-        name: "prompt",
-        type: "text",
-        label: "Prompt",
-        description: "Text description of the video to generate",
-        required: true,
-        placeholder: "A cinematic shot of...",
-      },
-      duration: {
-        name: "duration",
-        type: "number",
-        label: "Duration (seconds)",
-        description: "Video duration in seconds",
-        default: 3,
-        min: 1,
-        max: 5,
-        step: 1,
-      },
-    },
-    defaults: {
-      prompt: "",
-      duration: 3,
-    },
-  },
-  "sora-2": {
-    id: "sora-2",
-    name: "Sora 2",
-    endpoint: "fal-ai/sora-2/image-to-video",
-    category: "image-to-video",
     pricing: {
       costPerVideo: 0.4,
       currency: "USD",
-      unit: "video (4s)",
-    },
-    isDefault: false,
-    options: {
-      prompt: {
-        name: "prompt",
-        type: "text",
-        label: "Prompt",
-        description:
-          "Describe the motion, action, and camera movement for the video",
-        placeholder: "Camera slowly zooms in while the subject looks around...",
-        required: true,
-      },
-      resolution: {
-        name: "resolution",
-        type: "select",
-        label: "Resolution",
-        description: "The resolution of the generated video",
-        default: "auto",
-        options: [
-          { value: "auto", label: "Auto (from image)" },
-          { value: "720p", label: "720p" },
-        ],
-      },
-      aspectRatio: {
-        name: "aspectRatio",
-        type: "select",
-        label: "Aspect Ratio",
-        description: "The aspect ratio of the generated video",
-        default: "auto",
-        options: [
-          { value: "auto", label: "Auto (from image)" },
-          { value: "9:16", label: "9:16 (Portrait)" },
-          { value: "16:9", label: "16:9 (Landscape)" },
-        ],
-      },
-      duration: {
-        name: "duration",
-        type: "select",
-        label: "Duration",
-        description: "Duration of the generated video in seconds",
-        default: "8",
-        options: [
-          { value: "4", label: "4 seconds" },
-          { value: "8", label: "8 seconds" },
-          { value: "12", label: "12 seconds" },
-        ],
-      },
-    },
-    defaults: {
-      prompt: "",
-      resolution: "auto",
-      aspectRatio: "auto",
-      duration: "4",
+      unit: SORA_COPY.PRICING_UNIT,
     },
   },
 };
 
+/**
+ * Retrieves a model configuration by identifier.
+ */
 export function getVideoModelById(id: string): VideoModelConfig | undefined {
   return VIDEO_MODELS[id];
 }
 
+/**
+ * Returns all models for the configured category.
+ */
 export function getVideoModelsByCategory(
   category: VideoModelConfig["category"]
 ): VideoModelConfig[] {
   return Object.values(VIDEO_MODELS).filter(
-    (model) =>
-      model.category === category ||
-      (model.supportsMultipleCategories &&
-        category !== "text-to-video" &&
-        category !== "video-extension")
+    (model) => model.category === category
   );
 }
 
+/**
+ * Retrieves the default model for a category.
+ */
 export function getDefaultVideoModel(
   category: VideoModelConfig["category"]
 ): VideoModelConfig | undefined {
@@ -872,6 +176,9 @@ export function getDefaultVideoModel(
   return models.find((model) => model.isDefault) || models[0];
 }
 
+/**
+ * Calculates how many generations fit within the provided budget.
+ */
 export function calculateVideoGenerations(
   model: VideoModelConfig,
   budget: number = 1
@@ -879,6 +186,9 @@ export function calculateVideoGenerations(
   return Math.floor(budget / model.pricing.costPerVideo);
 }
 
+/**
+ * Formats a user-friendly price message for display.
+ */
 export function formatPricingMessage(model: VideoModelConfig): string {
   const approximateTimes = calculateVideoGenerations(model);
   return `Your request will cost $${model.pricing.costPerVideo.toFixed(2)} per ${
