@@ -59,6 +59,13 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
 
   // Create and set up the video element when the component mounts or video src changes
   useEffect(() => {
+    // Don't create video element if src is empty (still loading)
+    if (!video.src) {
+      setVideoElement(null);
+      setIsVideoLoaded(false);
+      return;
+    }
+
     const videoEl = document.createElement("video");
     videoEl.src = video.src;
     videoEl.crossOrigin = "anonymous";
@@ -180,12 +187,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
   // Determine what to display - always use the video element
   // When playing: shows current frame
   // When paused: shows first frame (currentTime = 0)
-  let displayElement: CanvasImageSource | undefined = undefined;
-
-  if (videoElement) {
-    // Use the video element directly - it will show the first frame when paused
-    displayElement = videoElement as unknown as CanvasImageSource;
-  }
+  const displayElement: CanvasImageSource | undefined = undefined;
 
   // Handle keyboard shortcuts for video playback
   useEffect(() => {

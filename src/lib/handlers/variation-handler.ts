@@ -122,10 +122,14 @@ interface VariationHandlerDeps {
   viewport: { x: number; y: number; scale: number };
   falClient: FalClient;
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
+  setVideos?: React.Dispatch<React.SetStateAction<import("@/types/canvas").PlacedVideo[]>>;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   setIsApiKeyDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
+  >;
+  setActiveVideoGenerations?: React.Dispatch<
+    React.SetStateAction<Map<string, any>>
   >;
   toast: (props: {
     title: string;
@@ -136,6 +140,7 @@ interface VariationHandlerDeps {
   variationPrompt?: string;
   variationMode?: "image" | "video";
   variationCount?: number;
+  videoSettings?: import("@/types/canvas").VideoGenerationSettings;
 }
 
 /**
@@ -233,24 +238,59 @@ export function calculateBalancedPosition(
  * Handle variation generation for a selected image
  * Generates variations with different camera settings based on count
  * Images: 4, 8, or 12 variations
- * Videos: always 4 variations (sides only)
+ * Videos: always 4 variations (sides only) using Sora 2
  * Optimized for maximum performance and UX
  */
 export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   const {
     images,
     selectedIds,
+    viewport,
     falClient,
     setImages,
+    setVideos,
     setIsGenerating,
     setIsApiKeyDialogOpen,
     setActiveGenerations,
+    setActiveVideoGenerations,
     toast,
     customApiKey,
     variationPrompt,
     variationMode = "image",
     variationCount = 4,
+    videoSettings,
   } = deps;
+
+  // If video mode, use Sora video variation handler instead
+  if (variationMode === "video") {
+    if (!setVideos || !setActiveVideoGenerations) {
+      toast({
+        title: "Configuration error",
+        description: "Video generation handlers not available",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { handleSoraVideoVariations } = await import(
+      "./sora-video-variation-handler"
+    );
+
+    return handleSoraVideoVariations({
+      images,
+      selectedIds,
+      viewport,
+      falClient,
+      setVideos,
+      setIsGenerating,
+      setIsApiKeyDialogOpen,
+      setActiveVideoGenerations,
+      toast,
+      customApiKey,
+      basePrompt: variationPrompt,
+      videoSettings,
+    });
+  }
 
   // Validate selection early
   if (selectedIds.length !== 1) {
@@ -346,7 +386,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // Show immediate feedback
   toast({
     title: "Generating variations",
-    description: `Creating ${variationCount} ${variationMode === "video" ? "video" : "image"} variations...`,
+    description: `Creating ${variationCount} image variations...`,
   });
 
   try {

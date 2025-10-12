@@ -1,11 +1,12 @@
-import { tracked } from "@trpc/server";
-import { z } from "zod";
-import { publicProcedure, router } from "../init";
 import {
   resolveFalClient,
   standardRateLimiter,
   videoRateLimiter,
 } from "@/lib/fal/utils";
+import { getVideoModelById, VIDEO_MODELS } from "@/lib/video-models";
+import { tracked } from "@trpc/server";
+import { z } from "zod";
+import { publicProcedure, router } from "../init";
 
 // Type helper for video generation input
 type VideoGenerationInput = {
@@ -87,8 +88,6 @@ async function downloadImage(url: string): Promise<Buffer> {
   }
   return Buffer.from(await response.arrayBuffer());
 }
-
-import { getVideoModelById, VIDEO_MODELS } from "@/lib/video-models";
 
 export const appRouter = router({
   transformVideo: publicProcedure
@@ -191,10 +190,10 @@ export const appRouter = router({
         .object({
           imageUrl: z.string().url(),
           prompt: z.string().optional(),
-          duration: z.number().optional().default(5),
+          duration: z.union([z.number(), z.string()]).optional().default(5),
           modelId: z.string().optional(),
           resolution: z
-            .enum(["480p", "720p", "1080p"])
+            .enum(["auto", "480p", "720p", "1080p"])
             .optional()
             .default("720p"),
           cameraFixed: z.boolean().optional().default(false),
@@ -227,7 +226,11 @@ export const appRouter = router({
 
         // Call the SeeDANCE API using subscribe method
         // Convert duration to one of the allowed values: "5" or "10"
-        const duration = input.duration <= 5 ? "5" : "10";
+        const durationNum =
+          typeof input.duration === "string"
+            ? parseInt(input.duration)
+            : input.duration || 5;
+        const duration = durationNum <= 5 ? "5" : "10";
 
         // Ensure prompt is descriptive enough
         const prompt =
@@ -235,10 +238,14 @@ export const appRouter = router({
 
         // Determine model from modelId or use default
         const modelId = input.modelId || "ltx-video"; // Default to ltx-video
+        console.log(`Looking up model ID: ${modelId}`);
+        console.log(`Available models:`, Object.keys(VIDEO_MODELS));
         const model = getVideoModelById(modelId);
         if (!model) {
+          console.error(`Model not found: ${modelId}`);
           throw new Error(`Unknown model ID: ${modelId}`);
         }
+        console.log(`Found model:`, model.name, `endpoint:`, model.endpoint);
         const modelEndpoint = model.endpoint;
 
         // Build input parameters based on model configuration
@@ -427,6 +434,27 @@ export const appRouter = router({
                     ? input.seed
                     : undefined,
                 enable_safety_checker: true,
+              };
+            } else if (model.id === "sora-2") {
+              // Sora 2 model
+              const soraDuration =
+                typeof typedInput.duration === "string"
+                  ? parseInt(typedInput.duration)
+                  : typedInput.duration || parseInt(duration) || 4;
+
+              // Log prompt details for debugging
+              console.log('[Sora 2] Prompt received:', {
+                promptDefined: !!input.prompt,
+                promptLength: input.prompt?.length || 0,
+                promptPreview: input.prompt?.substring(0, 100) || '(empty)',
+              });
+
+              inputParams = {
+                image_url: input.imageUrl,
+                prompt: input.prompt || "", // Use the variation prompt directly, don't fallback
+                duration: soraDuration,
+                resolution: typedInput.resolution || "auto",
+                aspect_ratio: typedInput.aspectRatio || "auto",
               };
             } else {
               // SeeDANCE models and others

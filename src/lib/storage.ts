@@ -66,7 +66,7 @@ class CanvasStorage {
   private db: IDBPDatabase<CanvasDB> | null = null;
   private readonly DB_NAME = "iskra-studio-db";
   private readonly DB_VERSION = 1;
-  private readonly STATE_KEY = "iskraStudioState";
+  private readonly STATE_KEY = "canvas-state";
   private readonly MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB max per image
 
   async init() {
