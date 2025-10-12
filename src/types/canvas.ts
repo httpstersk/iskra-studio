@@ -38,12 +38,13 @@ export interface GenerationSettings {
 
 export interface VideoGenerationSettings {
   prompt: string;
-  duration?: number;
+  duration?: number | string; // Can be number or string for different models
   styleId?: string;
   motion?: string; // For image-to-video
   sourceUrl?: string; // For image-to-video or video-to-video
   modelId?: string; // Model identifier from video-models.ts
-  resolution?: "480p" | "720p" | "1080p"; // Video resolution
+  resolution?: "auto" | "480p" | "720p" | "1080p"; // Video resolution
+  aspectRatio?: "auto" | "9:16" | "16:9" | "1:1"; // Aspect ratio
   cameraFixed?: boolean; // Whether to fix the camera position
   seed?: number; // Random seed to control video generation
   isVideoToVideo?: boolean; // Indicates if this is a video-to-video transformation
@@ -71,12 +72,13 @@ export interface ActiveVideoGeneration {
   videoUrl?: string;
   imageUrl?: string; // For image-to-video
   prompt: string;
-  duration?: number;
+  duration?: number | string; // Can be number or string for different models
   motion?: string;
   styleId?: string;
   modelId?: string; // Model identifier from video-models.ts
   modelConfig?: any; // Model configuration from video-models.ts
-  resolution?: "480p" | "720p" | "1080p"; // Video resolution
+  resolution?: "auto" | "480p" | "720p" | "1080p"; // Video resolution
+  aspectRatio?: "auto" | "9:16" | "16:9" | "1:1"; // Aspect ratio
   cameraFixed?: boolean; // Whether to fix the camera position
   seed?: number; // Random seed to control video generation
   sourceImageId?: string; // ID of the image used for img2vid

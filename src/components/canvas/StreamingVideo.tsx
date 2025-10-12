@@ -79,11 +79,13 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
                     : "Converting image to video...")
             );
           } else if (eventData.type === "complete" && eventData.videoUrl) {
-            onComplete(
-              videoId,
-              eventData.videoUrl,
-              eventData.duration || generation.duration || 5
-            );
+            const duration =
+              eventData.duration ||
+              (typeof generation.duration === "string"
+                ? parseInt(generation.duration)
+                : generation.duration) ||
+              5;
+            onComplete(videoId, eventData.videoUrl, duration);
           } else if (eventData.type === "error" && eventData.error) {
             onError(videoId, eventData.error);
           }
@@ -114,7 +116,10 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
     subscriptionOptions = useTRPC().generateTextToVideo.subscriptionOptions(
       {
         prompt: generation.prompt,
-        duration: generation.duration || 3,
+        duration:
+          typeof generation.duration === "string"
+            ? parseInt(generation.duration)
+            : generation.duration || 3,
         styleId: generation.styleId,
         ...(apiKey ? { apiKey } : {}),
       },
@@ -137,11 +142,13 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
               eventData.status || "Generating video from text..."
             );
           } else if (eventData.type === "complete" && eventData.videoUrl) {
-            onComplete(
-              videoId,
-              eventData.videoUrl,
-              eventData.duration || generation.duration || 3
-            );
+            const duration =
+              eventData.duration ||
+              (typeof generation.duration === "string"
+                ? parseInt(generation.duration)
+                : generation.duration) ||
+              3;
+            onComplete(videoId, eventData.videoUrl, duration);
           } else if (eventData.type === "error" && eventData.error) {
             onError(videoId, eventData.error);
           }

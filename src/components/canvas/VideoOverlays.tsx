@@ -52,7 +52,13 @@ export const VideoOverlays: React.FC<VideoOverlaysProps> = ({
 
   return (
     <>
-      {videos.map((video) => (
+      {videos.map((video) => {
+        // Don't render overlay if video is still loading or has no src
+        if (!video.src || video.isLoading) {
+          return null;
+        }
+        
+        return (
         <React.Fragment key={`controls-${video.id}`}>
           {/* Actual HTML video element overlaid on canvas */}
           <video
@@ -241,7 +247,8 @@ export const VideoOverlays: React.FC<VideoOverlaysProps> = ({
             </div>
           )}
         </React.Fragment>
-      ))}
+        );
+      })}
     </>
   );
 };

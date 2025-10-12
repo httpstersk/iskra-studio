@@ -313,14 +313,23 @@ export default function CanvasPage() {
         viewport: canvasState.viewport,
         falClient,
         setImages: canvasState.setImages,
+        setVideos: canvasState.setVideos,
         setIsGenerating: generationState.setIsGenerating,
         setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
         setActiveGenerations: generationState.setActiveGenerations,
+        setActiveVideoGenerations: generationState.setActiveVideoGenerations,
         toast,
         customApiKey: uiState.customApiKey,
         variationPrompt: generationState.generationSettings.variationPrompt,
         variationMode: uiState.variationMode,
         variationCount: uiState.generationCount,
+        videoSettings: {
+          modelId: "sora-2",
+          prompt: generationState.generationSettings.variationPrompt || "",
+          resolution: "auto",
+          aspectRatio: "auto",
+          duration: "4",
+        },
       });
     } else {
       // Standard generation flow
@@ -502,6 +511,50 @@ export default function CanvasPage() {
         dismissToast(generation.toastId);
       }
 
+      // Check if this is a variation - if so, update the placeholder
+      if (generation?.isVariation) {
+        console.log(`[Video Variation] Completing video ${videoId}`);
+        console.log(`[Video Variation] Video URL:`, videoUrl);
+        console.log(`[Video Variation] Duration:`, duration);
+        
+        canvasState.setVideos((prev) => {
+          const updated = prev.map((video) =>
+            video.id === videoId
+              ? {
+                  ...video,
+                  src: videoUrl,
+                  duration,
+                  isLoading: false,
+                }
+              : video
+          );
+          console.log(`[Video Variation] Updated videos:`, updated.filter(v => v.id.startsWith('sora-video')));
+          return updated;
+        });
+        
+        // Remove from active generations
+        generationState.setActiveVideoGenerations((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(videoId);
+          console.log(`[Video Variation] Remaining active generations:`, newMap.size);
+          return newMap;
+        });
+        
+        // Show success toast only after all variations complete
+        if (generationState.activeVideoGenerations.size === 1) {
+          // This is the last one
+          historyState.saveToHistory();
+          toast({
+            title: "Video variations complete",
+            description: "All 4 cinematic videos have been generated",
+          });
+        }
+        
+        generationState.setIsConvertingToVideo(false);
+        return;
+      }
+
+      // Standard video generation (not variation)
       const { newVideo, sourceType } = handleVideoCompletion(
         videoId,
         videoUrl,

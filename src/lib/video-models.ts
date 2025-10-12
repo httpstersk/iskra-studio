@@ -783,6 +783,70 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
       duration: 3,
     },
   },
+  "sora-2": {
+    id: "sora-2",
+    name: "Sora 2",
+    endpoint: "fal-ai/sora-2/image-to-video",
+    category: "image-to-video",
+    pricing: {
+      costPerVideo: 0.4,
+      currency: "USD",
+      unit: "video (4s)",
+    },
+    isDefault: false,
+    options: {
+      prompt: {
+        name: "prompt",
+        type: "text",
+        label: "Prompt",
+        description:
+          "Describe the motion, action, and camera movement for the video",
+        placeholder: "Camera slowly zooms in while the subject looks around...",
+        required: true,
+      },
+      resolution: {
+        name: "resolution",
+        type: "select",
+        label: "Resolution",
+        description: "The resolution of the generated video",
+        default: "auto",
+        options: [
+          { value: "auto", label: "Auto (from image)" },
+          { value: "720p", label: "720p" },
+        ],
+      },
+      aspectRatio: {
+        name: "aspectRatio",
+        type: "select",
+        label: "Aspect Ratio",
+        description: "The aspect ratio of the generated video",
+        default: "auto",
+        options: [
+          { value: "auto", label: "Auto (from image)" },
+          { value: "9:16", label: "9:16 (Portrait)" },
+          { value: "16:9", label: "16:9 (Landscape)" },
+        ],
+      },
+      duration: {
+        name: "duration",
+        type: "select",
+        label: "Duration",
+        description: "Duration of the generated video in seconds",
+        default: "8",
+        options: [
+          { value: "4", label: "4 seconds" },
+          { value: "8", label: "8 seconds" },
+          { value: "12", label: "12 seconds" },
+        ],
+      },
+    },
+    defaults: {
+      prompt: "",
+      resolution: "auto",
+      aspectRatio: "auto",
+      duration: "4",
+    },
+  },
 };
 
 export function getVideoModelById(id: string): VideoModelConfig | undefined {
