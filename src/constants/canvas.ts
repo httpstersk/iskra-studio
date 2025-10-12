@@ -64,19 +64,15 @@ export const VIDEO_DEFAULTS = {
 } as const;
 
 export const DEFAULT_IMAGES = {
-  PATHS: ["/dream-scenario.jpeg"],
+  PATHS: ["/tv-glow.jpeg"],
 } as const;
 
 export const ANIMATION = {
-  CHAT_DURATION: 0.2,
   SAVE_DELAY: 100,
 } as const;
 
 export const ARIA_LABELS = {
   CANVAS_MAIN: "Interactive canvas workspace",
-  CHAT_BUTTON: "Open AI chat assistant",
-  CHAT_CLOSE: "Close chat panel",
-  CHAT_PANEL: "AI chat assistant panel",
   CONTEXT_MENU: "Canvas context menu",
   STAGE: "Canvas drawing stage",
 } as const;

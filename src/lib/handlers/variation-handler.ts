@@ -6,10 +6,11 @@ import type { FalClient } from "@fal-ai/client";
 
 /**
  * Optimized upload function that accepts blob directly (no FileReader conversion)
+ * Uses server-side proxy to avoid CORS issues
  */
 async function uploadBlobDirect(
   blob: Blob,
-  falClient: FalClient,
+  customApiKey: string | undefined,
   toast: VariationHandlerDeps["toast"],
   setIsApiKeyDialogOpen: VariationHandlerDeps["setIsApiKeyDialogOpen"]
 ): Promise<{ url: string }> {
@@ -18,8 +19,28 @@ async function uploadBlobDirect(
       console.warn("Large image:", (blob.size / 1024 / 1024).toFixed(2) + "MB");
     }
 
-    const uploadResult = await falClient.storage.upload(blob);
-    return { url: uploadResult };
+    // Create FormData to send the blob to our upload proxy
+    const formData = new FormData();
+    formData.append("file", blob, "image.png");
+
+    // Use our server-side upload proxy to avoid CORS
+    const response = await fetch("/api/fal/upload", {
+      method: "POST",
+      body: formData,
+      headers: customApiKey
+        ? { authorization: `Bearer ${customApiKey}` }
+        : {},
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(
+        errorData?.message || `Upload failed with status ${response.status}`
+      );
+    }
+
+    const result = await response.json();
+    return { url: result.url };
   } catch (error: unknown) {
     const isRateLimit =
       (error as { status?: number; message?: string }).status === 429 ||
@@ -110,6 +131,7 @@ interface VariationHandlerDeps {
     description?: string;
     variant?: "default" | "destructive";
   }) => void;
+  customApiKey?: string;
   variationPrompt?: string;
   variationMode?: "image" | "video";
   variationCount?: number;
@@ -223,6 +245,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     setIsApiKeyDialogOpen,
     setActiveGenerations,
     toast,
+    customApiKey,
     variationPrompt,
     variationMode = "image",
     variationCount = 4,
@@ -329,10 +352,10 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     // OPTIMIZATION 2: Process image to blob without FileReader
     const { blob } = await processImageToBlob(selectedImage);
 
-    // OPTIMIZATION 3: Upload blob directly (no FileReader conversion)
+    // OPTIMIZATION 3: Upload blob via server proxy to avoid CORS
     const uploadResult = await uploadBlobDirect(
       blob,
-      falClient,
+      customApiKey,
       toast,
       setIsApiKeyDialogOpen
     );

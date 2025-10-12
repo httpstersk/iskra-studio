@@ -258,10 +258,13 @@ export default function CanvasPage() {
   const handleImageDoubleClick = useCallback(
     (imageId: string) => {
       // Only cycle count if the image is selected and in image mode
-      if (canvasState.selectedIds.includes(imageId) && uiState.variationMode === "image") {
+      if (
+        canvasState.selectedIds.includes(imageId) &&
+        uiState.variationMode === "image"
+      ) {
         const currentCount = uiState.generationCount;
         let newCount: number;
-        
+
         // Cycle: 4 → 8 → 12 → 4
         if (currentCount === 4) {
           newCount = 8;
@@ -270,7 +273,7 @@ export default function CanvasPage() {
         } else {
           newCount = 4;
         }
-        
+
         uiState.setGenerationCount(newCount);
       }
     },
@@ -280,13 +283,16 @@ export default function CanvasPage() {
   /**
    * Handles switching variation mode and ensures video mode always uses 4 variations
    */
-  const handleVariationModeChange = useCallback((mode: "image" | "video") => {
-    uiState.setVariationMode(mode);
-    // Reset count to 4 when switching to video mode
-    if (mode === "video") {
-      uiState.setGenerationCount(4);
-    }
-  }, [uiState]);
+  const handleVariationModeChange = useCallback(
+    (mode: "image" | "video") => {
+      uiState.setVariationMode(mode);
+      // Reset count to 4 when switching to video mode
+      if (mode === "video") {
+        uiState.setGenerationCount(4);
+      }
+    },
+    [uiState]
+  );
 
   /**
    * Handles running image generation
@@ -311,6 +317,7 @@ export default function CanvasPage() {
         setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
         setActiveGenerations: generationState.setActiveGenerations,
         toast,
+        customApiKey: uiState.customApiKey,
         variationPrompt: generationState.generationSettings.variationPrompt,
         variationMode: uiState.variationMode,
         variationCount: uiState.generationCount,
@@ -618,44 +625,6 @@ export default function CanvasPage() {
   };
 
   // ========================================
-  // Chat Handler
-  // ========================================
-
-  /**
-   * Handles image generated from chat
-   */
-  const handleChatImageGenerated = useCallback(
-    (imageUrl: string) => {
-      const id = `chat-generated-${Date.now()}-${Math.random()}`;
-      const viewportCenterX =
-        (canvasState.canvasSize.width / 2 - canvasState.viewport.x) /
-        canvasState.viewport.scale;
-      const viewportCenterY =
-        (canvasState.canvasSize.height / 2 - canvasState.viewport.y) /
-        canvasState.viewport.scale;
-
-      const newImage: PlacedImage = {
-        height: CANVAS_DIMENSIONS.DEFAULT_IMAGE_SIZE,
-        id,
-        isGenerated: true,
-        rotation: 0,
-        src: imageUrl,
-        width: CANVAS_DIMENSIONS.DEFAULT_IMAGE_SIZE,
-        x: viewportCenterX - CANVAS_DIMENSIONS.IMAGE_OFFSET,
-        y: viewportCenterY - CANVAS_DIMENSIONS.IMAGE_OFFSET,
-      };
-
-      canvasState.setImages((prev) => [...prev, newImage]);
-      canvasState.setSelectedIds([id]);
-      toast({
-        description: CANVAS_STRINGS.SUCCESS.IMAGE_GENERATED_DESCRIPTION,
-        title: CANVAS_STRINGS.SUCCESS.IMAGE_GENERATED,
-      });
-    },
-    [canvasState, toast]
-  );
-
-  // ========================================
   // Keyboard Shortcuts
   // ========================================
 
@@ -688,7 +657,9 @@ export default function CanvasPage() {
       aria-label={ARIA_LABELS.CANVAS_MAIN}
       className="bg-background text-foreground font-focal relative flex flex-col w-full overflow-hidden h-screen"
       onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => handleDrop(e, stageRef as React.RefObject<{ container(): HTMLElement }>)}
+      onDrop={(e) =>
+        handleDrop(e, stageRef as React.RefObject<{ container(): HTMLElement }>)
+      }
       role="application"
       style={{ height: "100dvh" }}
     >
@@ -703,7 +674,7 @@ export default function CanvasPage() {
             onComplete={(id, finalUrl) => {
               // Check if this is a variation by looking at the ID pattern
               const isVariation = id.startsWith("variation-");
-              
+
               // Extract timestamp from variation ID to find all variations in the same batch
               let variationBatchTimestamp: string | null = null;
               if (isVariation) {
@@ -729,9 +700,10 @@ export default function CanvasPage() {
                 if (variationBatchTimestamp && newMap.size > 0) {
                   // Check if there are any more variations from the same batch still generating
                   const hasMoreFromBatch = Array.from(newMap.keys()).some(
-                    (key) => key.startsWith(`variation-${variationBatchTimestamp}-`)
+                    (key) =>
+                      key.startsWith(`variation-${variationBatchTimestamp}-`)
                   );
-                  
+
                   // If no more variations from this batch, deselect the source image
                   if (!hasMoreFromBatch) {
                     canvasState.setSelectedIds([]);
@@ -849,6 +821,7 @@ export default function CanvasPage() {
                 />
               </div>
             </ContextMenuTrigger>
+
             <CanvasContextMenu
               bringForward={handleBringForward}
               generationSettings={generationState.generationSettings}

@@ -1,4 +1,4 @@
-import { openDB, DBSchema, IDBPDatabase } from "idb";
+import { DBSchema, IDBPDatabase, openDB } from "idb";
 
 interface CanvasImage {
   id: string;
@@ -64,9 +64,9 @@ interface CanvasDB extends DBSchema {
 
 class CanvasStorage {
   private db: IDBPDatabase<CanvasDB> | null = null;
-  private readonly DB_NAME = "infinite-kanvas-db";
+  private readonly DB_NAME = "iskra-studio-db";
   private readonly DB_VERSION = 1;
-  private readonly STATE_KEY = "canvas-state";
+  private readonly STATE_KEY = "iskraStudioState";
   private readonly MAX_IMAGE_SIZE = 50 * 1024 * 1024; // 50MB max per image
 
   async init() {
@@ -92,7 +92,7 @@ class CanvasStorage {
     const sizeInBytes = new Blob([dataUrl]).size;
     if (sizeInBytes > this.MAX_IMAGE_SIZE) {
       throw new Error(
-        `Image size exceeds maximum allowed size of ${this.MAX_IMAGE_SIZE / 1024 / 1024}MB`,
+        `Image size exceeds maximum allowed size of ${this.MAX_IMAGE_SIZE / 1024 / 1024}MB`
       );
     }
 
@@ -123,7 +123,7 @@ class CanvasStorage {
   async saveVideo(
     videoDataUrl: string,
     duration: number,
-    id?: string,
+    id?: string
   ): Promise<string> {
     if (!this.db) await this.init();
 
@@ -131,7 +131,7 @@ class CanvasStorage {
     const sizeInBytes = new Blob([videoDataUrl]).size;
     if (sizeInBytes > this.MAX_IMAGE_SIZE) {
       throw new Error(
-        `Video size exceeds maximum allowed size of ${this.MAX_IMAGE_SIZE / 1024 / 1024}MB`,
+        `Video size exceeds maximum allowed size of ${this.MAX_IMAGE_SIZE / 1024 / 1024}MB`
       );
     }
 
@@ -215,14 +215,14 @@ class CanvasStorage {
     const usedImageIds = new Set(
       state.elements
         .filter((el) => el.type === "image" && el.imageId)
-        .map((el) => el.imageId!),
+        .map((el) => el.imageId!)
     );
 
     // Get all video IDs currently in use
     const usedVideoIds = new Set(
       state.elements
         .filter((el) => el.type === "video" && el.videoId)
-        .map((el) => el.videoId!),
+        .map((el) => el.videoId!)
     );
 
     // Delete unused images
@@ -292,9 +292,9 @@ class CanvasStorage {
 
 export const canvasStorage = new CanvasStorage();
 export type {
-  CanvasState,
   CanvasElement,
-  ImageTransform,
   CanvasImage,
+  CanvasState,
   CanvasVideo,
+  ImageTransform,
 };
