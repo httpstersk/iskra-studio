@@ -1,16 +1,16 @@
 /**
  * Image interaction state management hook
- * 
+ *
  * Manages hover, selection, and drag interaction states for canvas images.
  * Handles mouse button detection, visual feedback (stroke colors), and
  * auto-selection on drag behavior.
- * 
+ *
  * @module hooks/useImageInteraction
  */
 
-import { useState, useCallback, useMemo } from "react";
-import type Konva from "konva";
 import type { PlacedImage } from "@/types/canvas";
+import type Konva from "konva";
+import { useCallback, useMemo, useState } from "react";
 
 /**
  * Props for useImageInteraction hook
@@ -66,17 +66,17 @@ const STROKE_COLORS = {
 
 /**
  * Custom hook for managing image interaction states and visual feedback.
- * 
+ *
  * Features:
  * - Hover state tracking
  * - Mouse button detection (prevents drag on middle/right click)
  * - Auto-selection on drag
  * - Dynamic stroke colors based on state
  * - Loading state visual feedback
- * 
+ *
  * @param props - Hook configuration
  * @returns Interaction handlers and state values
- * 
+ *
  * @example
  * ```typescript
  * const {
@@ -94,7 +94,7 @@ const STROKE_COLORS = {
  *   onSelect: handleSelect,
  *   onDragStart: handleDragStart
  * });
- * 
+ *
  * <KonvaImage
  *   draggable={isDraggable}
  *   stroke={strokeColor}
@@ -166,7 +166,7 @@ export const useImageInteraction = ({
 
       // Auto-select on drag if not already selected
       if (!isSelected) {
-        onSelect(e as any); // Type casting since Konva types are slightly different
+        onSelect(e as Konva.KonvaEventObject<MouseEvent>); // Type casting since Konva types are slightly different
       }
 
       onDragStart();

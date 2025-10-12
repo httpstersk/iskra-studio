@@ -47,14 +47,14 @@ export interface VideoGenerationSettings {
   seed?: number; // Random seed to control video generation
   isVideoToVideo?: boolean; // Indicates if this is a video-to-video transformation
   isVideoExtension?: boolean; // Indicates if this is a video extension (using last frame)
-  [key: string]: any; // Allow additional model-specific fields
+  [key: string]: unknown; // Allow additional model-specific fields
 }
 
 export interface ActiveGeneration {
   imageUrl: string;
   prompt: string;
   isVariation?: boolean;
-  imageSize?: 
+  imageSize?:
     | "landscape_16_9"
     | "portrait_16_9"
     | "landscape_4_3"
@@ -83,7 +83,7 @@ export interface ActiveVideoGeneration {
   isVideoToVideo?: boolean; // Indicates if this is a video-to-video transformation
   isVideoExtension?: boolean; // Indicates if this is a video extension
   toastId?: string; // ID of the toast notification
-  [key: string]: any; // Allow additional model-specific fields
+  [key: string]: unknown; // Allow additional model-specific fields
 }
 
 export interface SelectionBox {

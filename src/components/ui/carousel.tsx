@@ -8,7 +8,7 @@ export interface CarouselApi {
   scrollPrev: () => void;
   canScrollNext: boolean;
   canScrollPrev: boolean;
-  scrollSnapList: () => any[];
+  scrollSnapList: () => { index: number }[];
   selectedScrollSnap: () => number;
   on: (event: string, callback: () => void) => void;
   off: (event: string, callback: () => void) => void;

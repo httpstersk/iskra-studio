@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
+import { SpinnerIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { VideoGenerationSettings } from "@/types/canvas";
-import { SpinnerIcon } from "@/components/icons";
 import {
-  VideoModelSelector,
-  VideoModelOptions,
-  ModelPricingDisplay,
-} from "./VideoModelComponents";
-import {
-  getVideoModelById,
   getDefaultVideoModel,
+  getVideoModelById,
   type VideoModelConfig,
 } from "@/lib/video-models";
+import { VideoGenerationSettings } from "@/types/canvas";
 import { ChevronRight, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  ModelPricingDisplay,
+  VideoModelOptions,
+  VideoModelSelector,
+} from "./VideoModelComponents";
 
 interface ExtendVideoDialogProps {
   isOpen: boolean;
@@ -39,13 +39,13 @@ export const ExtendVideoDialog: React.FC<ExtendVideoDialogProps> = ({
 }) => {
   const defaultModel = getDefaultVideoModel("video-extension");
   const [selectedModelId, setSelectedModelId] = useState(
-    defaultModel?.id || "ltx-video-extend",
+    defaultModel?.id || "ltx-video-extend"
   );
   const [selectedModel, setSelectedModel] = useState<
     VideoModelConfig | undefined
   >(defaultModel);
   const [optionValues, setOptionValues] = useState<Record<string, any>>(
-    defaultModel?.defaults || {},
+    defaultModel?.defaults || {}
   );
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [lastFrameUrl, setLastFrameUrl] = useState<string | null>(null);
@@ -91,7 +91,7 @@ export const ExtendVideoDialog: React.FC<ExtendVideoDialogProps> = ({
     }
   }, [selectedModelId]);
 
-  const handleOptionChange = (field: string, value: any) => {
+  const handleOptionChange = (field: string, value: unknown) => {
     setOptionValues((prev) => ({ ...prev, [field]: value }));
   };
 

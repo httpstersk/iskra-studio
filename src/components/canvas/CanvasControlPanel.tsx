@@ -43,7 +43,11 @@ interface CanvasControlPanelProps {
   redo: () => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   customApiKey: string;
-  toast: any;
+  toast: (props: {
+    title: string;
+    description?: string;
+    variant?: "default" | "destructive";
+  }) => void;
   variationMode?: "image" | "video";
 }
 

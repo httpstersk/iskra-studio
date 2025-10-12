@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from "react";
+import { SpinnerIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { VideoGenerationSettings } from "@/types/canvas";
-import { SpinnerIcon } from "@/components/icons";
 import {
-  VideoModelSelector,
-  VideoModelOptions,
-  ModelPricingDisplay,
-} from "./VideoModelComponents";
-import {
-  getVideoModelById,
   getDefaultVideoModel,
+  getVideoModelById,
   type VideoModelConfig,
 } from "@/lib/video-models";
+import { VideoGenerationSettings } from "@/types/canvas";
 import { ChevronRight, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  ModelPricingDisplay,
+  VideoModelOptions,
+  VideoModelSelector,
+} from "./VideoModelComponents";
 
 interface ImageToVideoDialogProps {
   isOpen: boolean;
@@ -39,13 +39,13 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
 }) => {
   const defaultModel = getDefaultVideoModel("image-to-video");
   const [selectedModelId, setSelectedModelId] = useState(
-    defaultModel?.id || "seedance-pro",
+    defaultModel?.id || "seedance-pro"
   );
   const [selectedModel, setSelectedModel] = useState<
     VideoModelConfig | undefined
   >(defaultModel);
   const [optionValues, setOptionValues] = useState<Record<string, any>>(
-    defaultModel?.defaults || {},
+    defaultModel?.defaults || {}
   );
   const [showMoreOptions, setShowMoreOptions] = useState(false);
 
@@ -58,7 +58,7 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
     }
   }, [selectedModelId]);
 
-  const handleOptionChange = (field: string, value: any) => {
+  const handleOptionChange = (field: string, value: unknown) => {
     setOptionValues((prev) => ({ ...prev, [field]: value }));
   };
 

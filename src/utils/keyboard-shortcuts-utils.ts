@@ -52,7 +52,7 @@ export function isInputField(event: KeyboardEvent): boolean {
  * @returns True if default should be prevented
  */
 export function shouldPreventDefault(event: KeyboardEvent): boolean {
-  return PREVENTABLE_KEYS.includes(event.code as any);
+  return PREVENTABLE_KEYS.includes(event.code as typeof PREVENTABLE_KEYS[number]);
 }
 
 /**

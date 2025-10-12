@@ -1,6 +1,6 @@
+import type { PlacedVideo } from "@/types/canvas";
 import React, { useEffect, useRef } from "react";
 import { VideoControls } from "./VideoControls";
-import type { PlacedVideo } from "@/types/canvas";
 
 interface VideoOverlaysProps {
   videos: PlacedVideo[];
@@ -121,7 +121,8 @@ export const VideoOverlays: React.FC<VideoOverlaysProps> = ({
                   });
 
                   // Attach the video ID to the event so the parent can handle selection
-                  (event as any).videoId = video.id;
+                  (event as MouseEvent & { videoId?: string }).videoId =
+                    video.id;
 
                   // Dispatch to the canvas
                   canvas.dispatchEvent(event);
@@ -136,15 +137,15 @@ export const VideoOverlays: React.FC<VideoOverlaysProps> = ({
                 videoEl.play();
                 setVideos((prev) =>
                   prev.map((vid) =>
-                    vid.id === video.id ? { ...vid, isPlaying: true } : vid,
-                  ),
+                    vid.id === video.id ? { ...vid, isPlaying: true } : vid
+                  )
                 );
               } else {
                 videoEl.pause();
                 setVideos((prev) =>
                   prev.map((vid) =>
-                    vid.id === video.id ? { ...vid, isPlaying: false } : vid,
-                  ),
+                    vid.id === video.id ? { ...vid, isPlaying: false } : vid
+                  )
                 );
               }
             }}
@@ -160,8 +161,8 @@ export const VideoOverlays: React.FC<VideoOverlaysProps> = ({
                     prev.map((vid) =>
                       vid.id === video.id
                         ? { ...vid, currentTime: videoEl.currentTime }
-                        : vid,
-                    ),
+                        : vid
+                    )
                   );
                 }
               }
@@ -172,8 +173,8 @@ export const VideoOverlays: React.FC<VideoOverlaysProps> = ({
                 prev.map((vid) =>
                   vid.id === video.id
                     ? { ...vid, duration: videoEl.duration, isLoaded: true }
-                    : vid,
-                ),
+                    : vid
+                )
               );
             }}
             onEnded={() => {
@@ -182,8 +183,8 @@ export const VideoOverlays: React.FC<VideoOverlaysProps> = ({
                   prev.map((vid) =>
                     vid.id === video.id
                       ? { ...vid, isPlaying: false, currentTime: 0 }
-                      : vid,
-                  ),
+                      : vid
+                  )
                 );
               }
             }}
@@ -231,8 +232,8 @@ export const VideoOverlays: React.FC<VideoOverlaysProps> = ({
                 onChange={(newAttrs) => {
                   setVideos((prev) =>
                     prev.map((vid) =>
-                      vid.id === video.id ? { ...vid, ...newAttrs } : vid,
-                    ),
+                      vid.id === video.id ? { ...vid, ...newAttrs } : vid
+                    )
                   );
                 }}
                 className="mt-2"

@@ -1,8 +1,51 @@
-import { z } from "zod";
-import { rateLimitedProcedure, publicProcedure, router } from "../init";
-import { tracked } from "@trpc/server";
 import { createFalClient } from "@fal-ai/client";
-import sharp from "sharp";
+import { tracked } from "@trpc/server";
+import { z } from "zod";
+import { publicProcedure, router } from "../init";
+
+// Type helper for video generation input
+type VideoGenerationInput = {
+  aspectRatio?: string;
+  conditioningType?: string;
+  constantRateFactor?: number;
+  duration?: number;
+  enableSafetyChecker?: boolean;
+  expandPrompt?: boolean;
+  firstPassNumInferenceSteps?: number;
+  firstPassSkipFinalSteps?: number;
+  frameRate?: number;
+  isVideoExtension?: boolean;
+  isVideoToVideo?: boolean;
+  limitNumFrames?: boolean;
+  maxNumFrames?: number;
+  modelId?: string;
+  negativePrompt?: string;
+  numFrames?: number;
+  preprocess?: boolean;
+  prompt?: string;
+  resampleFps?: boolean;
+  resolution?: string;
+  reverseVideo?: boolean;
+  reverseVideoConditioning?: boolean;
+  secondPassNumInferenceSteps?: number;
+  secondPassSkipInitialSteps?: number;
+  seed?: number;
+  startFrameNum?: number;
+  strength?: number;
+  targetFps?: number;
+} & Record<string, unknown>;
+
+// Type helper for API responses
+type ApiResponse = {
+  data?: {
+    video?: { url?: string };
+    url?: string;
+    images?: Array<{ url?: string }>;
+  };
+  video_url?: string;
+  duration?: number;
+  [key: string]: unknown;
+} & Record<string, unknown>;
 
 const fal = createFalClient({
   credentials: () => process.env.FAL_KEY as string,
@@ -11,7 +54,10 @@ const fal = createFalClient({
 // Helper function to check rate limits or use custom API key
 async function getFalClient(
   apiKey: string | undefined,
-  ctx: any,
+  ctx: {
+    req?: { ip?: string; headers?: Record<string, string> };
+    user?: { id: string };
+  },
   isVideo: boolean = false
 ) {
   if (apiKey) {
@@ -135,9 +181,9 @@ export const appRouter = router({
 
         // Handle different response formats
         const videoUrl =
-          (result as any).data?.video?.url ||
-          (result as any).data?.url ||
-          (result as any).video_url;
+          (result as ApiResponse).data?.video?.url ||
+          (result as ApiResponse).data?.url ||
+          (result as ApiResponse).video_url;
         if (!videoUrl) {
           yield tracked(`${transformationId}_error`, {
             type: "error",
@@ -150,7 +196,7 @@ export const appRouter = router({
         yield tracked(`${transformationId}_complete`, {
           type: "complete",
           videoUrl: videoUrl,
-          duration: (result as any).duration || 3, // Default to 3 seconds if not provided
+          duration: (result as ApiResponse).duration || 3, // Default to 3 seconds if not provided
         });
       } catch (error) {
         console.error("Error in video transformation:", error);
@@ -220,7 +266,8 @@ export const appRouter = router({
         const modelEndpoint = model.endpoint;
 
         // Build input parameters based on model configuration
-        let inputParams: any = {};
+        let inputParams: Record<string, unknown> = {};
+        const typedInput = input as VideoGenerationInput;
 
         if (input.modelId) {
           const model = getVideoModelById(input.modelId);
@@ -228,14 +275,14 @@ export const appRouter = router({
             // Map our generic field names to model-specific field names
             if (model.id === "ltx-video-extend") {
               // Use the dedicated extend endpoint format
-              let startFrame = (input as any).startFrameNum ?? 32;
+              let startFrame = typedInput.startFrameNum ?? 32;
 
               // Ensure startFrame is a multiple of 8
               if (startFrame % 8 !== 0) {
                 // Round to nearest multiple of 8
                 startFrame = Math.round(startFrame / 8) * 8;
                 console.log(
-                  `Adjusted start frame from ${(input as any).startFrameNum} to ${startFrame} (must be multiple of 8)`
+                  `Adjusted start frame from ${typedInput.startFrameNum} to ${startFrame} (must be multiple of 8)`
                 );
               }
 
@@ -244,44 +291,40 @@ export const appRouter = router({
                   video_url: input.imageUrl, // imageUrl contains the video URL for extension
                   // Use the validated startFrame (already defaulted and rounded)
                   start_frame_num: startFrame,
-                  reverse_video:
-                    (input as any).reverseVideoConditioning ?? false,
-                  limit_num_frames: (input as any).limitNumFrames ?? false,
-                  resample_fps: (input as any).resampleFps ?? false,
-                  strength: (input as any).strength ?? 1,
-                  target_fps: (input as any).targetFps ?? 30,
-                  max_num_frames: (input as any).maxNumFrames ?? 121,
-                  conditioning_type: (input as any).conditioningType ?? "rgb",
-                  preprocess: (input as any).preprocess ?? false,
+                  reverse_video: typedInput.reverseVideoConditioning ?? false,
+                  limit_num_frames: typedInput.limitNumFrames ?? false,
+                  resample_fps: typedInput.resampleFps ?? false,
+                  strength: typedInput.strength ?? 1,
+                  target_fps: typedInput.targetFps ?? 30,
+                  max_num_frames: typedInput.maxNumFrames ?? 121,
+                  conditioning_type: typedInput.conditioningType ?? "rgb",
+                  preprocess: typedInput.preprocess ?? false,
                 },
                 prompt: input.prompt || model.defaults.prompt,
                 negative_prompt:
-                  (input as any).negativePrompt ||
-                  model.defaults.negativePrompt,
+                  typedInput.negativePrompt || model.defaults.negativePrompt,
                 resolution: input.resolution || model.defaults.resolution,
                 aspect_ratio:
-                  (input as any).aspectRatio || model.defaults.aspectRatio,
-                num_frames:
-                  (input as any).numFrames || model.defaults.numFrames,
+                  typedInput.aspectRatio || model.defaults.aspectRatio,
+                num_frames: typedInput.numFrames || model.defaults.numFrames,
                 first_pass_num_inference_steps:
-                  (input as any).firstPassNumInferenceSteps || 30,
+                  typedInput.firstPassNumInferenceSteps || 30,
                 first_pass_skip_final_steps:
-                  (input as any).firstPassSkipFinalSteps || 3,
+                  typedInput.firstPassSkipFinalSteps || 3,
                 second_pass_num_inference_steps:
-                  (input as any).secondPassNumInferenceSteps || 30,
+                  typedInput.secondPassNumInferenceSteps || 30,
                 second_pass_skip_initial_steps:
-                  (input as any).secondPassSkipInitialSteps || 17,
-                frame_rate:
-                  (input as any).frameRate || model.defaults.frameRate,
+                  typedInput.secondPassSkipInitialSteps || 17,
+                frame_rate: typedInput.frameRate || model.defaults.frameRate,
                 expand_prompt:
-                  (input as any).expandPrompt ?? model.defaults.expandPrompt,
+                  typedInput.expandPrompt ?? model.defaults.expandPrompt,
                 reverse_video:
-                  (input as any).reverseVideo ?? model.defaults.reverseVideo,
+                  typedInput.reverseVideo ?? model.defaults.reverseVideo,
                 enable_safety_checker:
-                  (input as any).enableSafetyChecker ??
+                  typedInput.enableSafetyChecker ??
                   model.defaults.enableSafetyChecker,
                 constant_rate_factor:
-                  (input as any).constantRateFactor ||
+                  typedInput.constantRateFactor ||
                   model.defaults.constantRateFactor,
                 seed:
                   input.seed !== undefined && input.seed !== -1
@@ -290,14 +333,13 @@ export const appRouter = router({
               };
             } else if (model.id === "ltx-video-multiconditioning") {
               // Handle multiconditioning model with support for video-to-video
-              const isVideoToVideo = (input as any).isVideoToVideo;
-              const isVideoExtension = (input as any).isVideoExtension;
+              const isVideoToVideo = typedInput.isVideoToVideo;
+              const isVideoExtension = typedInput.isVideoExtension;
 
               inputParams = {
                 prompt: input.prompt || "",
                 negative_prompt:
-                  (input as any).negativePrompt ||
-                  model.defaults.negativePrompt,
+                  typedInput.negativePrompt || model.defaults.negativePrompt,
                 resolution: input.resolution || model.defaults.resolution,
                 aspect_ratio:
                   (input as any).aspectRatio || model.defaults.aspectRatio,
@@ -384,8 +426,7 @@ export const appRouter = router({
                 image_url: input.imageUrl,
                 prompt: input.prompt || "",
                 negative_prompt:
-                  (input as any).negativePrompt ||
-                  model.defaults.negativePrompt,
+                  typedInput.negativePrompt || model.defaults.negativePrompt,
                 resolution: input.resolution || model.defaults.resolution,
                 aspect_ratio:
                   (input as any).aspectRatio || model.defaults.aspectRatio,
@@ -442,22 +483,31 @@ export const appRouter = router({
           result = await falClient.subscribe(modelEndpoint, {
             input: inputParams,
           });
-        } catch (apiError: any) {
+        } catch (apiError: unknown) {
+          const error = apiError as {
+            message?: string;
+            status?: string;
+            statusText?: string;
+            body?: string;
+          };
           console.error("FAL API Error Details:", {
-            message: apiError.message,
-            status: apiError.status,
-            statusText: apiError.statusText,
-            body: apiError.body,
-            response: apiError.response,
-            data: apiError.data,
+            message: error.message,
+            status: error.status,
+            statusText: error.statusText,
+            body: error.body,
+            response: apiError,
+            data: apiError,
             // Log the exact parameters that were sent
             sentParameters: inputParams,
             endpoint: modelEndpoint,
           });
 
           // Log specific validation errors if available
-          if (apiError.body?.detail) {
-            console.error("Validation error details:", apiError.body.detail);
+          if ((apiError as { body?: { detail?: unknown } }).body?.detail) {
+            console.error(
+              "Validation error details:",
+              (apiError as { body?: { detail?: unknown } }).body.detail
+            );
           }
 
           // Re-throw with more context
@@ -491,8 +541,8 @@ export const appRouter = router({
         const videoUrl =
           result.data?.video?.url ||
           result.data?.url ||
-          (result as any).video?.url ||
-          (result as any).url;
+          (result as ApiResponse).video?.url ||
+          (result as ApiResponse).url;
         if (!videoUrl) {
           console.error("No video URL found in response:", result);
           yield tracked(`${generationId}_error`, {
@@ -593,9 +643,9 @@ export const appRouter = router({
 
         // Handle different response formats
         const videoUrl =
-          (result as any).data?.video?.url ||
-          (result as any).data?.url ||
-          (result as any).video_url;
+          (result as ApiResponse).data?.video?.url ||
+          (result as ApiResponse).data?.url ||
+          (result as ApiResponse).video_url;
         if (!videoUrl) {
           yield tracked(`${generationId}_error`, {
             type: "error",
@@ -641,23 +691,20 @@ export const appRouter = router({
       try {
         const falClient = await getFalClient(input.apiKey, ctx);
 
-        const result = await falClient.subscribe(
-          "fal-ai/flux/dev",
-          {
-            input: {
-              prompt: input.prompt,
-              image_size: input.imageSize || "square",
-              num_inference_steps: 4,
-              num_images: 1,
-              enable_safety_checker: true,
-              output_format: "png",
-              seed: input.seed,
-            },
-          }
-        );
+        const result = await falClient.subscribe("fal-ai/flux/dev", {
+          input: {
+            prompt: input.prompt,
+            image_size: input.imageSize || "square",
+            num_inference_steps: 4,
+            num_images: 1,
+            enable_safety_checker: true,
+            output_format: "png",
+            seed: input.seed,
+          },
+        });
 
         // Handle different possible response structures
-        const resultData = (result as any).data || result;
+        const resultData = (result as ApiResponse).data || result;
         if (!resultData.images?.[0]) {
           throw new Error("No image generated");
         }
@@ -694,16 +741,19 @@ export const appRouter = router({
         const generationId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
         // Start streaming from fal.ai
-        const stream = await falClient.stream("fal-ai/flux/dev/image-to-image", {
-          input: {
-            image_url: input.imageUrl,
-            prompt: input.prompt,
-            num_inference_steps: 4,
-            num_images: 1,
-            enable_safety_checker: true,
-            seed: input.seed,
-          },
-        });
+        const stream = await falClient.stream(
+          "fal-ai/flux/dev/image-to-image",
+          {
+            input: {
+              image_url: input.imageUrl,
+              prompt: input.prompt,
+              num_inference_steps: 4,
+              num_images: 1,
+              enable_safety_checker: true,
+              seed: input.seed,
+            },
+          }
+        );
 
         let eventIndex = 0;
 
@@ -725,7 +775,7 @@ export const appRouter = router({
         const result = await stream.done();
 
         // Handle different possible response structures
-        const resultData = (result as any).data || result;
+        const resultData = (result as ApiResponse).data || result;
         const images = resultData.images || [];
         if (!images?.[0]) {
           yield tracked(`${generationId}_error`, {
@@ -838,7 +888,7 @@ export const appRouter = router({
         }
 
         // Handle different possible response structures
-        const resultData = (result as any).data || result;
+        const resultData = (result as ApiResponse).data || result;
         const images = resultData.images || [];
         if (!images?.[0]) {
           yield tracked(`${generationId}_error`, {

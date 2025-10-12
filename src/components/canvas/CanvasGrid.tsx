@@ -1,6 +1,6 @@
+import { useTheme } from "next-themes";
 import React, { useMemo } from "react";
 import { Group, Rect } from "react-konva";
-import { useTheme } from "next-themes";
 
 import { CANVAS_GRID } from "@/constants/canvas";
 
@@ -34,7 +34,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       : CANVAS_GRID.LIGHT_COLOR);
   const dotRadius = CANVAS_GRID.DOT_RADIUS;
 
-  const patternConfig = useMemo(() => {
+  const patternConfig = useMemo((): { image: HTMLCanvasElement; scale: { x: number; y: number } } | null => {
     if (typeof document === "undefined") {
       return null;
     }
@@ -53,7 +53,13 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
     context.clearRect(0, 0, size, size);
     context.fillStyle = effectiveGridColor;
     context.beginPath();
-    context.arc(dotRadius * scale, dotRadius * scale, dotRadius * scale, 0, Math.PI * 2);
+    context.arc(
+      dotRadius * scale,
+      dotRadius * scale,
+      dotRadius * scale,
+      0,
+      Math.PI * 2
+    );
     context.fill();
 
     return {
@@ -83,7 +89,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
         y={startY - dotRadius}
         width={endX - startX + dotRadius * 2}
         height={endY - startY + dotRadius * 2}
-        fillPatternImage={patternConfig.image as any}
+        fillPatternImage={patternConfig.image as CanvasImageSource}
         fillPatternRepeat="repeat"
         fillPatternScaleX={patternConfig.scale.x}
         fillPatternScaleY={patternConfig.scale.y}

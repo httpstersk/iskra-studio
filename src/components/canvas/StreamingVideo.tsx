@@ -1,7 +1,7 @@
-import React from "react";
-import { useSubscription } from "@trpc/tanstack-react-query";
 import { useTRPC } from "@/trpc/client";
 import type { ActiveVideoGeneration } from "@/types/canvas";
+import { useSubscription } from "@trpc/tanstack-react-query";
+import React from "react";
 
 interface StreamingVideoProps {
   videoId: string;
@@ -50,14 +50,14 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
                 "sourceImageId",
                 "sourceVideoId",
                 "toastId",
-              ].includes(key),
-          ),
+              ].includes(key)
+          )
         ),
         ...(apiKey ? { apiKey } : {}),
       },
       {
         enabled: true,
-        onData: async (data: any) => {
+        onData: async (data: { data: unknown }) => {
           const eventData = data.data;
 
           if (eventData.type === "progress") {
@@ -69,13 +69,13 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
                   ? "Extending video..."
                   : isVideoToVideo
                     ? "Transforming video..."
-                    : "Converting image to video..."),
+                    : "Converting image to video...")
             );
           } else if (eventData.type === "complete") {
             onComplete(
               videoId,
               eventData.videoUrl,
-              eventData.duration || generation.duration || 5,
+              eventData.duration || generation.duration || 5
             );
           } else if (eventData.type === "error") {
             onError(videoId, eventData.error);
@@ -88,7 +88,7 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
               : isVideoToVideo
                 ? "Video-to-video transformation error:"
                 : "Image-to-video conversion error:",
-            error,
+            error
           );
           onError(
             videoId,
@@ -97,10 +97,10 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
                 ? "Video extension failed"
                 : isVideoToVideo
                   ? "Video-to-video transformation failed"
-                  : "Image-to-video conversion failed"),
+                  : "Image-to-video conversion failed")
           );
         },
-      },
+      }
     );
   } else {
     // Text-to-video generation
@@ -113,20 +113,20 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
       },
       {
         enabled: true,
-        onData: async (data: any) => {
+        onData: async (data: { data: unknown }) => {
           const eventData = data.data;
 
           if (eventData.type === "progress") {
             onProgress(
               videoId,
               eventData.progress || 0,
-              eventData.status || "Generating video from text...",
+              eventData.status || "Generating video from text..."
             );
           } else if (eventData.type === "complete") {
             onComplete(
               videoId,
               eventData.videoUrl,
-              eventData.duration || generation.duration || 3,
+              eventData.duration || generation.duration || 3
             );
           } else if (eventData.type === "error") {
             onError(videoId, eventData.error);
@@ -136,7 +136,7 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
           console.error("Text-to-video generation error:", error);
           onError(videoId, error.message || "Text-to-video generation failed");
         },
-      },
+      }
     );
   }
 

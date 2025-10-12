@@ -1,8 +1,8 @@
-import type { PlacedImage } from "@/types/canvas";
-import type { FalClient } from "@fal-ai/client";
 import { CAMERA_VARIATIONS } from "@/constants/camera-variations";
-import { snapPosition } from "@/utils/snap-utils";
+import type { PlacedImage } from "@/types/canvas";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
+import { snapPosition } from "@/utils/snap-utils";
+import type { FalClient } from "@fal-ai/client";
 
 /**
  * Optimized upload function that accepts blob directly (no FileReader conversion)
@@ -20,12 +20,12 @@ async function uploadBlobDirect(
 
     const uploadResult = await falClient.storage.upload(blob);
     return { url: uploadResult };
-  } catch (error: any) {
+  } catch (error: unknown) {
     const isRateLimit =
-      error.status === 429 ||
-      error.message?.includes("429") ||
-      error.message?.includes("rate limit") ||
-      error.message?.includes("Rate limit");
+      (error as { status?: number; message?: string }).status === 429 ||
+      (error as { message?: string }).message?.includes("429") ||
+      (error as { message?: string }).message?.includes("rate limit") ||
+      (error as { message?: string }).message?.includes("Rate limit");
 
     if (isRateLimit) {
       toast({

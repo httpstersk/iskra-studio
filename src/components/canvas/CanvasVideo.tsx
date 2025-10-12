@@ -1,26 +1,20 @@
+import type { PlacedVideo } from "@/types/canvas";
+import { throttleRAF } from "@/utils/performance";
+import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
+import Konva from "konva";
 import React, {
+  useCallback,
+  useEffect,
+  useMemo,
   useRef,
   useState,
-  useEffect,
-  useCallback,
-  useMemo,
 } from "react";
-import {
-  Image as KonvaImage,
-  Transformer,
-  Group,
-  Rect,
-  Path,
-} from "react-konva";
-import Konva from "konva";
-import type { PlacedVideo } from "@/types/canvas";
-import { throttle, throttleRAF } from "@/utils/performance";
-import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
+import { Image as KonvaImage, Transformer } from "react-konva";
 
 interface CanvasVideoProps {
   video: PlacedVideo;
   isSelected: boolean;
-  onSelect: (e: any) => void;
+  onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void;
   onChange: (newAttrs: Partial<PlacedVideo>) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
@@ -321,7 +315,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
 
   // Handle drag move with snap-to-grid
   const handleDragMove = useCallback(
-    (e: any) => {
+    (e: Konva.KonvaEventObject<DragEvent>) => {
       const node = e.target;
       const nodeX = node.x();
       const nodeY = node.y();

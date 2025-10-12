@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
@@ -8,14 +8,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Info, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
-  getVideoModelsByCategory,
   formatPricingMessage,
+  getVideoModelsByCategory,
   type VideoModelConfig,
   type VideoModelOption,
 } from "@/lib/video-models";
+import { Info, RefreshCw } from "lucide-react";
+import React from "react";
 
 // VideoModelSelector Component
 interface VideoModelSelectorProps {
@@ -76,12 +76,12 @@ export const ModelPricingDisplay: React.FC<ModelPricingDisplayProps> = ({
           __html: pricingMessage
             .replace(
               /\$[\d.]+/,
-              (match) => `<strong class="text-foreground">${match}</strong>`,
+              (match) => `<strong class="text-foreground">${match}</strong>`
             )
             .replace(
               /(\d+) times/,
               (match, num) =>
-                `<strong class="text-foreground">${num} times</strong>`,
+                `<strong class="text-foreground">${num} times</strong>`
             ),
         }}
       />
@@ -92,8 +92,8 @@ export const ModelPricingDisplay: React.FC<ModelPricingDisplayProps> = ({
 // VideoModelOptions Component
 interface VideoModelOptionsProps {
   model: VideoModelConfig;
-  values: Record<string, any>;
-  onChange: (field: string, value: any) => void;
+  values: Record<string, unknown>;
+  onChange: (field: string, value: unknown) => void;
   disabled?: boolean;
   optionKeys?: string[]; // Only show these specific options
   excludeKeys?: string[]; // Exclude these options
@@ -142,7 +142,7 @@ export const VideoModelOptions: React.FC<VideoModelOptionsProps> = ({
             <Input
               id={key}
               placeholder={option.placeholder}
-              value={value}
+              value={typeof value === "string" ? value : String(value || "")}
               onChange={(e) => onChange(key, e.target.value)}
               disabled={disabled}
               className="mt-1"
@@ -188,7 +188,7 @@ export const VideoModelOptions: React.FC<VideoModelOptionsProps> = ({
                   paddingTop: "0.5rem",
                   paddingBottom: "0.5rem",
                 }}
-                value={value}
+                value={typeof value === "string" ? value : String(value || "")}
                 onChange={(e) => onChange(key, e.target.value)}
                 disabled={disabled}
               >
@@ -249,7 +249,7 @@ export const VideoModelOptions: React.FC<VideoModelOptionsProps> = ({
               </div>
               <Switch
                 id={key}
-                checked={value}
+                checked={typeof value === "boolean" ? value : Boolean(value)}
                 onCheckedChange={(checked) => onChange(key, checked)}
                 disabled={disabled}
                 aria-label={option.label}
@@ -327,11 +327,13 @@ export const VideoModelOptions: React.FC<VideoModelOptionsProps> = ({
                 className="flex-1"
                 required={option.required}
               />
-              {key === "startFrameNum" && value % 8 !== 0 && (
-                <span className="ml-2 text-xs text-orange-600">
-                  Will be rounded to {Math.round(value / 8) * 8}
-                </span>
-              )}
+              {key === "startFrameNum" &&
+                typeof value === "number" &&
+                value % 8 !== 0 && (
+                  <span className="ml-2 text-xs text-orange-600">
+                    Will be rounded to {Math.round(value / 8) * 8}
+                  </span>
+                )}
               {key === "seed" && (
                 <Button
                   type="button"

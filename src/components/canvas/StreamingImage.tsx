@@ -1,7 +1,7 @@
-import React from "react";
-import { useSubscription } from "@trpc/tanstack-react-query";
 import { useTRPC } from "@/trpc/client";
 import type { ActiveGeneration } from "@/types/canvas";
+import { useSubscription } from "@trpc/tanstack-react-query";
+import React from "react";
 
 interface StreamingImageProps {
   imageId: string;
@@ -22,8 +22,17 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
 }) => {
   const trpc = useTRPC();
 
-  const onData = (data: any) => {
-    const eventData = data.data;
+  const onData = (data: { data: unknown }) => {
+    const eventData = data.data as {
+      type: string;
+      data?: {
+        images?: Array<{ url: string }>;
+      };
+      imageUrl?: string;
+      error?: string;
+      progress?: number;
+      status?: string;
+    };
 
     if (eventData.type === "progress") {
       const event = eventData.data;
@@ -37,7 +46,7 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
     }
   };
 
-  const onErrorHandler = (error: any) => {
+  const onErrorHandler = (error: { message?: string }) => {
     console.error("Subscription error:", error);
     onError(imageId, error.message || "Generation failed");
   };

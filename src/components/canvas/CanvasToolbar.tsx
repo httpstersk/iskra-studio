@@ -1,25 +1,19 @@
 "use client";
 
+import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
-  Undo,
-  Redo,
-  ImageIcon,
-  SlidersHorizontal,
-  Trash2,
-} from "lucide-react";
-import Link from "next/link";
-import { Logo } from "@/components/icons";
-import { MobileToolbar } from "./MobileToolbar";
-import {
-  TooltipProvider,
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { canvasStorage } from "@/lib/storage";
-import type { PlacedImage, GenerationSettings } from "@/types/canvas";
 import type { Viewport } from "@/hooks/useCanvasState";
+import { canvasStorage } from "@/lib/storage";
+import type { GenerationSettings, PlacedImage } from "@/types/canvas";
+import { ImageIcon, Redo, SlidersHorizontal, Trash2, Undo } from "lucide-react";
+import Link from "next/link";
+import { MobileToolbar } from "./MobileToolbar";
 
 interface CanvasToolbarProps {
   selectedIds: string[];
@@ -40,7 +34,11 @@ interface CanvasToolbarProps {
   bringForward: () => void;
   sendBackward: () => void;
   customApiKey: string;
-  toast: any;
+  toast: (props: {
+    title: string;
+    description?: string;
+    variant?: "default" | "destructive";
+  }) => void;
   setImages: (images: PlacedImage[]) => void;
   setViewport: (viewport: Viewport) => void;
 }
@@ -160,11 +158,7 @@ export function CanvasToolbar({
                 variant="secondary"
                 size="icon-sm"
                 onClick={async () => {
-                  if (
-                    confirm(
-                      "Clear all saved data? This cannot be undone."
-                    )
-                  ) {
+                  if (confirm("Clear all saved data? This cannot be undone.")) {
                     await canvasStorage.clearAll();
                     setImages([]);
                     setViewport({ x: 0, y: 0, scale: 1 });

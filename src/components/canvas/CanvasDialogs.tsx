@@ -1,13 +1,12 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,16 +14,18 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Check, SunIcon, MoonIcon, MonitorIcon } from "lucide-react";
+import type {
+  PlacedImage,
+  PlacedVideo,
+  VideoGenerationSettings,
+} from "@/types/canvas";
+import { Check, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { ExtendVideoDialog } from "./ExtendVideoDialog";
 import { ImageToVideoDialog } from "./ImageToVideoDialog";
 import { VideoToVideoDialog } from "./VideoToVideoDialog";
-import { ExtendVideoDialog } from "./ExtendVideoDialog";
-import type { VideoGenerationSettings } from "@/types/canvas";
 
 interface CanvasDialogsProps {
   // Settings Dialog
@@ -40,8 +41,11 @@ interface CanvasDialogsProps {
   setShowGrid: (show: boolean) => void;
   showMinimap: boolean;
   setShowMinimap: (show: boolean) => void;
-  toast: any;
-
+  toast: (props: {
+    title: string;
+    description?: string;
+    variant?: "default" | "destructive";
+  }) => void;
 
   // Image to Video Dialog
   isImageToVideoDialogOpen: boolean;
@@ -49,7 +53,7 @@ interface CanvasDialogsProps {
   selectedImageForVideo: string | null;
   setSelectedImageForVideo: (id: string | null) => void;
   handleImageToVideoConversion: (settings: VideoGenerationSettings) => void;
-  images: any[];
+  images: PlacedImage[];
   isConvertingToVideo: boolean;
 
   // Video to Video Dialog
@@ -58,7 +62,7 @@ interface CanvasDialogsProps {
   selectedVideoForVideo: string | null;
   setSelectedVideoForVideo: (id: string | null) => void;
   handleVideoToVideoTransformation: (settings: VideoGenerationSettings) => void;
-  videos: any[];
+  videos: PlacedVideo[];
   isTransformingVideo: boolean;
 
   // Extend Video Dialog
@@ -68,7 +72,6 @@ interface CanvasDialogsProps {
   setSelectedVideoForExtend: (id: string | null) => void;
   handleVideoExtension: (settings: VideoGenerationSettings) => void;
   isExtendingVideo: boolean;
-
 }
 
 export function CanvasDialogs({
@@ -290,7 +293,6 @@ export function CanvasDialogs({
         </DialogContent>
       </Dialog>
 
-
       {/* Video Dialogs */}
       <ImageToVideoDialog
         isOpen={isImageToVideoDialogOpen}
@@ -336,7 +338,6 @@ export function CanvasDialogs({
         }
         isExtending={isExtendingVideo}
       />
-
     </>
   );
 }

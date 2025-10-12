@@ -1,7 +1,7 @@
 import type {
-  PlacedImage,
-  GenerationSettings,
   ActiveGeneration,
+  GenerationSettings,
+  PlacedImage,
 } from "@/types/canvas";
 import type { FalClient } from "@fal-ai/client";
 
@@ -25,14 +25,16 @@ interface GenerationHandlerDeps {
     description?: string;
     variant?: "default" | "destructive";
   }) => void;
-  generateTextToImage: (params: any) => Promise<any>;
+  generateTextToImage: (
+    params: Record<string, unknown>
+  ) => Promise<{ width: number; height: number; url: string }>;
 }
 
 export const uploadImageDirect = async (
   dataUrl: string,
   falClient: FalClient,
   toast: GenerationHandlerDeps["toast"],
-  setIsApiKeyDialogOpen: GenerationHandlerDeps["setIsApiKeyDialogOpen"],
+  setIsApiKeyDialogOpen: GenerationHandlerDeps["setIsApiKeyDialogOpen"]
 ) => {
   // Convert data URL to blob first
   const response = await fetch(dataUrl);
@@ -44,7 +46,7 @@ export const uploadImageDirect = async (
       // 10MB warning
       console.warn(
         "Large image detected:",
-        (blob.size / 1024 / 1024).toFixed(2) + "MB",
+        (blob.size / 1024 / 1024).toFixed(2) + "MB"
       );
     }
 
@@ -52,13 +54,13 @@ export const uploadImageDirect = async (
     const uploadResult = await falClient.storage.upload(blob);
 
     return { url: uploadResult };
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Check for rate limit error
     const isRateLimit =
-      error.status === 429 ||
-      error.message?.includes("429") ||
-      error.message?.includes("rate limit") ||
-      error.message?.includes("Rate limit");
+      (error as { status?: number; message?: string }).status === 429 ||
+      (error as { message?: string }).message?.includes("429") ||
+      (error as { message?: string }).message?.includes("rate limit") ||
+      (error as { message?: string }).message?.includes("Rate limit");
 
     if (isRateLimit) {
       toast({
@@ -91,7 +93,7 @@ export const generateImage = (
   setImages: GenerationHandlerDeps["setImages"],
   setActiveGenerations: GenerationHandlerDeps["setActiveGenerations"],
   width: number = 300,
-  height: number = 300,
+  height: number = 300
 ) => {
   const placeholderId = `generated-${Date.now()}`;
   setImages((prev) => [
@@ -114,7 +116,7 @@ export const generateImage = (
     new Map(prev).set(placeholderId, {
       imageUrl,
       prompt: generationSettings.prompt,
-    }),
+    })
   );
 };
 
@@ -151,11 +153,11 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
   // If no images are selected, do text-to-image generation
   if (selectedImages.length === 0) {
     try {
-      const result = await generateTextToImage({
+      const result = (await generateTextToImage({
         prompt: generationSettings.prompt,
         imageSize: "square",
         apiKey: customApiKey || undefined,
-      });
+      })) as { width: number; height: number; url: string };
 
       // Add the generated image to the canvas
       const id = `generated-${Date.now()}-${Math.random()}`;
@@ -242,7 +244,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
           dataUrl,
           falClient,
           toast,
-          setIsApiKeyDialogOpen,
+          setIsApiKeyDialogOpen
         );
       } catch (uploadError) {
         console.error("Failed to upload image:", uploadError);
@@ -280,7 +282,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
         setImages,
         setActiveGenerations,
         img.width,
-        img.height,
+        img.height
       );
       successCount++;
     } catch (error) {

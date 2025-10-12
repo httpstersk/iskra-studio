@@ -4,7 +4,7 @@ export interface VideoModelOption {
   label: string;
   description?: string;
   required?: boolean;
-  default?: any;
+  default?: string | number | boolean;
   options?: Array<{ value: string | number; label: string }>;
   min?: number;
   max?: number;
@@ -15,8 +15,8 @@ export interface VideoModelOption {
 export interface ModelConstraints {
   resolutionsByModel?: Record<string, string[]>;
   conditionalOptions?: Array<{
-    when: { field: string; value: any };
-    then: { field: string; value: any };
+    when: { field: string; value: string | number | boolean };
+    then: { field: string; value: string | number | boolean };
   }>;
 }
 
@@ -790,19 +790,19 @@ export function getVideoModelById(id: string): VideoModelConfig | undefined {
 }
 
 export function getVideoModelsByCategory(
-  category: VideoModelConfig["category"],
+  category: VideoModelConfig["category"]
 ): VideoModelConfig[] {
   return Object.values(VIDEO_MODELS).filter(
     (model) =>
       model.category === category ||
       (model.supportsMultipleCategories &&
         category !== "text-to-video" &&
-        category !== "video-extension"),
+        category !== "video-extension")
   );
 }
 
 export function getDefaultVideoModel(
-  category: VideoModelConfig["category"],
+  category: VideoModelConfig["category"]
 ): VideoModelConfig | undefined {
   const models = getVideoModelsByCategory(category);
   return models.find((model) => model.isDefault) || models[0];
@@ -810,7 +810,7 @@ export function getDefaultVideoModel(
 
 export function calculateVideoGenerations(
   model: VideoModelConfig,
-  budget: number = 1,
+  budget: number = 1
 ): number {
   return Math.floor(budget / model.pricing.costPerVideo);
 }

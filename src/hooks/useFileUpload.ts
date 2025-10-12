@@ -1,10 +1,10 @@
-import { useCallback } from "react";
 import type { PlacedImage } from "@/types/canvas";
-import type { Viewport } from "./useCanvasState";
 import {
-  determineAspectRatio,
   cropImageToAspectRatio,
+  determineAspectRatio,
 } from "@/utils/image-crop-utils";
+import { useCallback } from "react";
+import type { Viewport } from "./useCanvasState";
 
 export function useFileUpload(
   setImages: (fn: (prev: PlacedImage[]) => PlacedImage[]) => void,
@@ -102,7 +102,10 @@ export function useFileUpload(
   );
 
   const handleDrop = useCallback(
-    (e: React.DragEvent, stageRef: React.RefObject<any>) => {
+    (
+      e: React.DragEvent,
+      stageRef: React.RefObject<{ container: () => HTMLElement }>
+    ) => {
       e.preventDefault();
 
       const stage = stageRef.current;

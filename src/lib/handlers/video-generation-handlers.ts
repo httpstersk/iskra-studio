@@ -3,9 +3,13 @@
  * Handles image-to-video, video-to-video, and video extension operations
  */
 
-import type { PlacedImage, PlacedVideo, VideoGenerationSettings } from "@/types/canvas";
+import { CANVAS_DIMENSIONS, VIDEO_DEFAULTS } from "@/constants/canvas";
+import type {
+  PlacedImage,
+  PlacedVideo,
+  VideoGenerationSettings,
+} from "@/types/canvas";
 import { convertImageToVideo } from "@/utils/video-utils";
-import { VIDEO_DEFAULTS, CANVAS_DIMENSIONS } from "@/constants/canvas";
 
 /**
  * Creates a unique generation ID with prefix
@@ -19,7 +23,7 @@ export function createGenerationId(prefix: string): string {
  */
 export async function uploadMediaIfNeeded(
   url: string,
-  falClient: any
+  falClient: { storage: { upload: (blob: Blob) => Promise<string> } }
 ): Promise<string> {
   if (url.startsWith("data:") || url.startsWith("blob:")) {
     const uploadResult = await falClient.storage.upload(
@@ -79,7 +83,7 @@ export function handleVideoCompletion(
   videoId: string,
   videoUrl: string,
   duration: number,
-  generation: any,
+  generation: { sourceImageId?: string; sourceVideoId?: string } | null,
   images: PlacedImage[],
   videos: PlacedVideo[],
   selectedImageForVideo: string | null
@@ -98,7 +102,9 @@ export function handleVideoCompletion(
       };
     }
   } else if (generation?.sourceVideoId) {
-    const sourceVideo = videos.find((vid) => vid.id === generation.sourceVideoId);
+    const sourceVideo = videos.find(
+      (vid) => vid.id === generation.sourceVideoId
+    );
     if (sourceVideo) {
       const newVideo: PlacedVideo = {
         currentTime: VIDEO_DEFAULTS.CURRENT_TIME,
