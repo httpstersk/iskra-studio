@@ -39,7 +39,6 @@ export async function POST(req: NextRequest) {
   const limiterResult = await checkRateLimit({
     limiter: standardRateLimiter,
     headers: req.headers,
-    hasCustomApiKey: false,
   });
 
     if (limiterResult.shouldLimitRequest) {

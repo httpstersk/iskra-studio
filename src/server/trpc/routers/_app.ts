@@ -22,7 +22,7 @@ type ApiResponse = {
   [key: string]: unknown;
 } & Record<string, unknown>;
 
-// Helper function to check rate limits or use custom API key
+// Helper function to check rate limits
 async function getFalClient(
   ctx: { req?: any; user?: { id: string } },
   isVideo: boolean = false
@@ -39,8 +39,8 @@ async function getFalClient(
 
   if (resolved.limited) {
     const errorMessage = isVideo
-      ? `Video generation rate limit exceeded: 1 video per ${resolved.period}. Add your FAL API key to bypass rate limits.`
-      : `Rate limit exceeded per ${resolved.period}. Add your FAL API key to bypass rate limits.`;
+      ? `Video generation rate limit exceeded: 1 video per ${resolved.period}.`
+      : `Rate limit exceeded per ${resolved.period}.`;
     throw new Error(errorMessage);
   }
 
@@ -223,7 +223,7 @@ export const appRouter = router({
       } catch (error) {
         console.error("Error in text-to-image generation:", error);
         throw new Error(
-          error instanceof Error ? error.message : "Failed to generate image",
+          error instanceof Error ? error.message : "Failed to generate image"
         );
       }
     }),
@@ -256,7 +256,7 @@ export const appRouter = router({
               enable_safety_checker: true,
               seed: input.seed,
             },
-          },
+          }
         );
 
         let eventIndex = 0;
@@ -386,7 +386,7 @@ export const appRouter = router({
             },
             pollInterval: 1000,
             logs: true,
-          },
+          }
         );
 
         if (signal?.aborted) {
