@@ -28,9 +28,7 @@ async function uploadBlobDirect(
     const response = await fetch(FAL_UPLOAD_PATH, {
       method: "POST",
       body: formData,
-      headers: customApiKey
-        ? { authorization: `Bearer ${customApiKey}` }
-        : {},
+      headers: customApiKey ? { authorization: `Bearer ${customApiKey}` } : {},
     });
 
     if (!response.ok) {
@@ -122,7 +120,9 @@ interface VariationHandlerDeps {
   viewport: { x: number; y: number; scale: number };
   falClient: FalClient;
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
-  setVideos?: React.Dispatch<React.SetStateAction<import("@/types/canvas").PlacedVideo[]>>;
+  setVideos?: React.Dispatch<
+    React.SetStateAction<import("@/types/canvas").PlacedVideo[]>
+  >;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   setIsApiKeyDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setActiveGenerations: React.Dispatch<
@@ -261,7 +261,11 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     videoSettings,
   } = deps;
 
-  // If video mode, use Sora video variation handler instead
+  console.log("[Variation Handler] Mode:", variationMode);
+
+  // Route to appropriate handler based on variation mode:
+  // - Video mode: Uses Sora 2 with AI analysis (image analysis + storyline generation)
+  // - Image mode: Uses Seedream without AI analysis (continues below)
   if (variationMode === "video") {
     if (!setVideos || !setActiveVideoGenerations) {
       toast({
@@ -291,6 +295,9 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       videoSettings,
     });
   }
+
+  // IMAGE MODE: Generate variations using Seedream (no AI analysis)
+  // This path is taken when variationMode === "image"
 
   // Validate selection early
   if (selectedIds.length !== 1) {

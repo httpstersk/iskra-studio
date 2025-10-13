@@ -76,7 +76,7 @@ export const appRouter = router({
     .subscription(async function* ({ input, signal, ctx }) {
       try {
         console.log("tRPC generateImageToVideo - Input received:", input);
-        
+
         const falClient = await getFalClient(input.apiKey, ctx, true);
         const generationId = `img2vid_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
@@ -310,6 +310,10 @@ export const appRouter = router({
       }
     }),
 
+  /**
+   * Generate image variations using Seedream model
+   * Used for image mode variations (no AI analysis/storylines)
+   */
   generateImageVariation: publicProcedure
     .input(
       z.object({
