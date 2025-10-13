@@ -6,6 +6,8 @@
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
 import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schema";
 
 export const maxDuration = 30;
@@ -56,14 +58,32 @@ NARRATIVE TONE:
 
 Focus on visual language, style, and mood that can inspire cinematic video sequences.`;
 
-interface AnalyzeImageRequest {
-  imageUrl: string;
-}
+const analyzeImageRequestSchema = z.object({
+  imageUrl: z
+    .string()
+    .trim()
+    .url()
+    .max(2048)
+    .refine(
+      (value) => value.startsWith("https://") || value.startsWith("http://"),
+      {
+        message: "Image URL must use http or https",
+      }
+    ),
+});
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as AnalyzeImageRequest;
-    const { imageUrl } = body;
+    const parseResult = analyzeImageRequestSchema.safeParse(await req.json());
+
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: parseResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { imageUrl } = parseResult.data;
 
     if (!imageUrl) {
       return NextResponse.json(

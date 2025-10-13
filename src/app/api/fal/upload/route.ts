@@ -11,6 +11,9 @@ import {
   standardRateLimiter,
 } from "@/lib/fal/utils";
 
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+const ALLOWED_MIME_PREFIXES = ["image/", "video/"];
+
 /**
  * POST handler for uploading files to fal.ai through server-side proxy
  * This bypasses CORS issues by handling the upload on the server
@@ -56,17 +59,35 @@ export async function POST(req: NextRequest) {
 
     // Get the file from the request body
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file");
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json(
         { error: "No file provided" },
         { status: 400 }
       );
     }
 
-    // Convert file to blob
-    const blob = new Blob([await file.arrayBuffer()], { type: file.type });
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: "File too large" },
+        { status: 413 }
+      );
+    }
+
+    const mimeType = (file.type || "").toLowerCase();
+    const isAllowedType = ALLOWED_MIME_PREFIXES.some((prefix) =>
+      mimeType.startsWith(prefix)
+    );
+
+    if (!isAllowedType) {
+      return NextResponse.json(
+        { error: "Unsupported file type" },
+        { status: 415 }
+      );
+    }
+
+    const blob: Blob = file;
 
     // Create fal client with API key from environment or user-provided key
     const falClient = createServerFalClient(bearerToken);

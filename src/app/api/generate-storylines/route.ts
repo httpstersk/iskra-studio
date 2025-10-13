@@ -6,16 +6,19 @@
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
 import { storylineSetSchema } from "@/lib/schemas/storyline-schema";
+import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schema";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import { STORYLINE_GENERATION_SYSTEM_PROMPT } from "@/lib/storyline-generator";
 
 export const maxDuration = 30;
 
-interface GenerateStorylinesRequest {
-  styleAnalysis: ImageStyleMoodAnalysis;
-  duration: number;
-}
+const generateStorylinesRequestSchema = z.object({
+  styleAnalysis: imageStyleMoodAnalysisSchema,
+  duration: z.number().int().min(1).max(60).optional(),
+});
 
 /**
  * Builds a readable context string from style analysis
@@ -81,15 +84,29 @@ DURATION: ${duration} seconds (${duration} rapid cuts at 1 cut per second)
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as GenerateStorylinesRequest;
-    const { styleAnalysis, duration } = body;
+    const rawBody = await req.json();
+    const normalizedBody = {
+      styleAnalysis: rawBody?.styleAnalysis,
+      duration:
+        rawBody?.duration === undefined
+          ? undefined
+          : typeof rawBody.duration === "string"
+            ? Number.parseInt(rawBody.duration, 10)
+            : rawBody.duration,
+    } satisfies Partial<Record<string, unknown>>;
 
-    if (!styleAnalysis) {
+    const parseResult = generateStorylinesRequestSchema.safeParse(
+      normalizedBody,
+    );
+
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: "Style analysis is required" },
-        { status: 400 }
+        { error: "Invalid request", details: parseResult.error.flatten() },
+        { status: 400 },
       );
     }
+
+    const { styleAnalysis, duration } = parseResult.data;
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -99,7 +116,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const styleContext = buildStyleContext(styleAnalysis, duration || 4);
+    const styleContext = buildStyleContext(styleAnalysis, duration ?? 4);
 
     const result = await generateObject({
       model: openai("gpt-5"),
@@ -111,7 +128,7 @@ export async function POST(req: Request) {
         },
         {
           role: "user",
-          content: `Generate 4 unique storyline concepts for a ${duration || 4}-second rapid-cut video sequence.
+          content: `Generate 4 unique storyline concepts for a ${duration ?? 4}-second rapid-cut video sequence.
 
 STYLE/MOOD ANALYSIS:
 ${styleContext}

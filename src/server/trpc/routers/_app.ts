@@ -97,10 +97,26 @@ export const appRouter = router({
           endpoint: model.endpoint,
         });
 
-        const resolvedDuration =
+        const parsedDuration =
           typeof input.duration === "string"
-            ? parseInt(input.duration, 10)
-            : input.duration ?? 4;
+            ? Number.parseInt(input.duration, 10)
+            : input.duration;
+
+        const resolvedDuration = (() => {
+          if (parsedDuration === undefined || parsedDuration === null) {
+            return 4;
+          }
+
+          if (!Number.isFinite(parsedDuration) || parsedDuration % 1 !== 0) {
+            throw new Error("Invalid duration value");
+          }
+
+          if (parsedDuration < 1 || parsedDuration > 60) {
+            throw new Error("Duration must be between 1 and 60 seconds");
+          }
+
+          return parsedDuration;
+        })();
 
         const soraInput: Record<string, unknown> = {
           aspect_ratio:
