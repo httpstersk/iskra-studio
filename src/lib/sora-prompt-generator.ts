@@ -19,7 +19,10 @@ function cleanText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
-function truncatePrompt(value: string, limit: number = PROMPT_CHAR_LIMIT): string {
+function truncatePrompt(
+  value: string,
+  limit: number = PROMPT_CHAR_LIMIT
+): string {
   if (value.length <= limit) return value;
   const sliced = value.slice(0, limit - 1);
   const lastSpace = sliced.lastIndexOf(" ");
@@ -28,11 +31,7 @@ function truncatePrompt(value: string, limit: number = PROMPT_CHAR_LIMIT): strin
 }
 
 function joinList(values: string[], max: number, joiner: string): string {
-  return values
-    .filter(Boolean)
-    .slice(0, max)
-    .map(cleanText)
-    .join(joiner);
+  return values.filter(Boolean).slice(0, max).map(cleanText).join(joiner);
 }
 
 /**
@@ -49,7 +48,7 @@ export function expandStorylineToPrompt(
   const paletteMood = cleanText(styleAnalysis.colorPalette.mood);
   const lighting = cleanText(styleAnalysis.lighting.quality);
   const energy = cleanText(styleAnalysis.mood.primary);
-  const beats = joinList(storyline.keyMoments, 3, " -> ")
+  const beats = joinList(storyline.keyMoments, 4, " → ")
     .replace(/\b(\d)(?:-?second)?\b/gi, "$1-second")
     .trim();
   const motifs = joinList(storyline.visualMotifs, 3, ", ");
@@ -77,9 +76,7 @@ export function expandStorylinesToPrompts(
   styleAnalysis: ImageStyleMoodAnalysis,
   duration: number
 ): string[] {
-  return storylines.map(storyline => 
+  return storylines.map((storyline) =>
     expandStorylineToPrompt({ storyline, styleAnalysis, duration })
   );
 }
-
-

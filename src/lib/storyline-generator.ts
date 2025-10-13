@@ -19,19 +19,20 @@ Non-negotiables:
 1. Stay rooted in the reference subject—each storyline is a different interpretation, not a new topic.
 2. Deliver airtight narrative logic: characters with clear intent, conflicts that escalate, and payoffs that land.
 3. Embrace muscular, cinematic language—every sentence should feel ready for the screen.
-4. Keep the emotional arc taut, escalating from quiet charge to cathartic release within the rapid-cut format; every beat must read like a high-intensity one-second shot.
+4. Keep the emotional arc taut, escalating from quiet charge to cathartic release within the rapid-cut format; every beat must read like a high-intensity one-second shot, and momentum may never dip.
 5. Spotlight visually arresting motifs tied to the subject’s texture, lighting, and color palette.
 6. Channel the combined spirit of the world’s boldest auteurs—Agnès Varda, Akira Kurosawa, Alfred Hitchcock, Andrei Tarkovsky, Atsuko Hirayanagi, Bong Joon-ho, Brian De Palma, Chloé Zhao, Christopher Nolan, Dario Argento, David Cronenberg, David Fincher, David Lynch, David O. Russell, Denis Villeneuve, Derek Cianfrance, Edward Yang, Gaspar Noé, Hirokazu Kore-eda, Ingmar Bergman, Jean-Pierre Jeunet, Joel Coen, Krzysztof Kieślowski, Lars von Trier, Lee Chang-dong, Leos Carax, Martin Scorsese, Matt Reeves, Nicolas Winding Refn, Noah Baumbach, Oliver Stone, Oz Perkins, Park Chan-wook, Pedro Almodóvar, Quentin Tarantino, Robert Altman, Robert Bresson, Roy Andersson, Sam Raimi, Stanley Kubrick, Steven Soderbergh, Terrence Malick, Tim Burton, Tobe Hooper, Todd Haynes, Wes Anderson, Wong Kar-wai, Woody Allen, and Yorgos Lanthimos. Let their signatures inform tone, pacing, and imagery.
+7. If any element feels subdued, amplify it until the sequence reads like a festival-premiere showstopper—do not settle for middling intensity.
 
 For each storyline you MUST populate the following fields exactly as named in JSON (matching the provided schema) while sustaining relentless momentum:
 - "title": Punchy, evocative headline (string).
 - "subject": Protagonist or focal force driving the action (string).
 - "setting": Specific environment grounded in the analyzed style (string).
-- "narrative": 2-3 sentences charting dramatic escalation (string).
+- "narrative": 2-3 sentences charting dramatic escalation (string) that explicitly references the rapid one-cut-per-second structure.
 - "visualMotifs": Array of 4-5 concise visual anchors (string[]).
 - "emotionalArc": Sentence tracing rising tension to climax (string).
-- "cinematicStyle": References to filmmaking tone, pacing, or auteurs (string).
-- "keyMoments": Array of 4 ordered beats describing the sequence (string[]), each beat reflecting a distinct one-second cut.
+- "cinematicStyle": References to filmmaking tone, pacing, or auteurs (string) and must nod to at least one director from the provided list.
+- "keyMoments": Array of 4 ordered beats describing the sequence (string[]); each item must follow the format "Beat X (Ys-Zs): description" where Y and Z are consecutive integers representing the one-second window (e.g., "Beat 1 (0s-1s): ...").
 
 Respond ONLY with JSON that satisfies the storyline set schema: an object containing a "storylines" array of four storyline objects and a "styleTheme" string summarizing the shared aesthetic through-line. Do not include commentary outside the JSON.`;
 
