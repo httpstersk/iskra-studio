@@ -69,7 +69,7 @@ export const appRouter = router({
           imageUrl: z.string().url(),
           modelId: z.string().optional(),
           prompt: z.string().optional(),
-          resolution: z.enum(["auto", "720p"]).optional(),
+          resolution: z.enum(["auto", "720p", "1080p"]).optional(),
         })
         .passthrough()
     )

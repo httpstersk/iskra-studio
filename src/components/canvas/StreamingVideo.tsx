@@ -63,14 +63,14 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
 
   // Ensure values match tRPC schema
   const validAspectRatios = ["auto", "9:16", "16:9"] as const;
-  const validResolutions = ["auto", "720p"] as const;
+  const validResolutions = ["auto", "720p", "1080p"] as const;
   
   const aspectRatio = generation.aspectRatio && validAspectRatios.includes(generation.aspectRatio as any)
     ? (generation.aspectRatio as "auto" | "9:16" | "16:9")
     : undefined;
   
   const resolution = generation.resolution && validResolutions.includes(generation.resolution as any)
-    ? (generation.resolution as "auto" | "720p")
+    ? (generation.resolution as "auto" | "720p" | "1080p")
     : "auto";
 
   const subscriptionOptions = trpc.generateImageToVideo.subscriptionOptions(

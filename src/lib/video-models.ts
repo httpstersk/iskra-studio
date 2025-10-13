@@ -1,50 +1,60 @@
 /**
- * Literal identifiers for Sora models.
+ * Model identifiers
  */
-export const SORA_1_MODEL_ID = "sora-1" as const;
 export const SORA_2_MODEL_ID = "sora-2" as const;
 export const SORA_2_PRO_MODEL_ID = "sora-2-pro" as const;
 
-const SORA_1_COPY = {
-  ENDPOINT: "fal-ai/sora/image-to-video",
-  NAME: "Sora 1",
-  PRICING_UNIT: "video (4s)",
+/**
+ * Model-specific configuration
+ */
+const SORA_2_ENDPOINT = "fal-ai/sora-2/image-to-video";
+const SORA_2_NAME = "Sora 2";
+const SORA_2_COST = 0.4;
+
+const SORA_2_PRO_ENDPOINT = "fal-ai/sora-2/image-to-video/pro";
+const SORA_2_PRO_NAME = "Sora 2 Pro";
+const SORA_2_PRO_COST = 0.6;
+
+/**
+ * Shared UI copy and configuration
+ */
+const MODEL_CATEGORY = "image-to-video";
+const PRICING_UNIT = "video (4s)";
+
+const ASPECT_RATIO_OPTIONS = {
+  AUTO: { label: "Auto (from image)", value: "auto" },
+  PORTRAIT: { label: "9:16 (Portrait)", value: "9:16" },
+  LANDSCAPE: { label: "16:9 (Landscape)", value: "16:9" },
 } as const;
 
-const SORA_2_COPY = {
-  ENDPOINT: "fal-ai/sora-2/image-to-video",
-  NAME: "Sora 2",
-  PRICING_UNIT: "video (4s)",
+const DURATION_OPTIONS = {
+  FOUR: { label: "4 seconds", value: "4" },
+  EIGHT: { label: "8 seconds", value: "8" },
+  TWELVE: { label: "12 seconds", value: "12" },
 } as const;
 
-const SORA_2_PRO_COPY = {
-  ENDPOINT: "fal-ai/sora-2/image-to-video/pro",
-  NAME: "Sora 2 Pro",
-  PRICING_UNIT: "video (4s)",
+const RESOLUTION_OPTIONS = {
+  AUTO: { label: "Auto (from image)", value: "auto" },
+  P720: { label: "720p", value: "720p" },
+  P1080: { label: "1080p", value: "1080p" },
 } as const;
 
-const SORA_COPY = {
-  ASPECT_RATIO_AUTO: "Auto (from image)",
-  ASPECT_RATIO_DESCRIPTION: "Select the aspect ratio for the generated video",
-  ASPECT_RATIO_LABEL: "Aspect Ratio",
-  ASPECT_RATIO_PORTRAIT: "9:16 (Portrait)",
-  ASPECT_RATIO_WIDESCREEN: "16:9 (Landscape)",
-  CATEGORY: "image-to-video",
-  DURATION_EIGHT_SECONDS: "8 seconds",
-  DURATION_FOUR_SECONDS: "4 seconds",
-  DURATION_LABEL: "Duration",
-  DURATION_TWELVE_SECONDS: "12 seconds",
-  DURATION_WARNING: "Duration of the generated video in seconds",
-  OPTION_DESCRIPTION:
-    "Describe the motion, action, and camera movement for the video",
-  PLACEHOLDER:
-    "Camera slowly zooms in while the subject looks around...",
-  PROMPT_LABEL: "Prompt",
-  RESOLUTION_AUTO: "Auto (from image)",
-  RESOLUTION_DESCRIPTION: "Select the resolution for the generated video",
-  RESOLUTION_LABEL: "Resolution",
-  RESOLUTION_P720: "720p",
+const FIELD_LABELS = {
+  ASPECT_RATIO: "Aspect Ratio",
+  DURATION: "Duration",
+  PROMPT: "Prompt",
+  RESOLUTION: "Resolution",
 } as const;
+
+const FIELD_DESCRIPTIONS = {
+  ASPECT_RATIO: "Select the aspect ratio for the generated video",
+  DURATION: "Duration of the generated video in seconds",
+  PROMPT: "Describe the motion, action, and camera movement for the video",
+  RESOLUTION: "Select the resolution for the generated video",
+} as const;
+
+const PROMPT_PLACEHOLDER =
+  "Camera slowly zooms in while the subject looks around...";
 
 /**
  * Shape of a selectable model option exposed to the UI.
@@ -101,190 +111,130 @@ export interface VideoModelConfig {
  * Registry of enabled video models keyed by identifier.
  */
 export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
-  [SORA_1_MODEL_ID]: {
-    category: SORA_COPY.CATEGORY,
-    defaults: {
-      aspectRatio: "auto",
-      duration: "4",
-      prompt: "",
-      resolution: "auto",
-    },
-    endpoint: SORA_1_COPY.ENDPOINT,
-    id: SORA_1_MODEL_ID,
-    isDefault: false,
-    name: SORA_1_COPY.NAME,
-    options: {
-      aspectRatio: {
-        description: SORA_COPY.ASPECT_RATIO_DESCRIPTION,
-        label: SORA_COPY.ASPECT_RATIO_LABEL,
-        name: "aspectRatio",
-        options: [
-          { label: SORA_COPY.ASPECT_RATIO_AUTO, value: "auto" },
-          { label: SORA_COPY.ASPECT_RATIO_PORTRAIT, value: "9:16" },
-          { label: SORA_COPY.ASPECT_RATIO_WIDESCREEN, value: "16:9" },
-        ],
-        type: "select",
-      },
-      duration: {
-        default: "4",
-        description: SORA_COPY.DURATION_WARNING,
-        label: SORA_COPY.DURATION_LABEL,
-        name: "duration",
-        options: [
-          { label: SORA_COPY.DURATION_FOUR_SECONDS, value: "4" },
-          { label: SORA_COPY.DURATION_EIGHT_SECONDS, value: "8" },
-          { label: SORA_COPY.DURATION_TWELVE_SECONDS, value: "12" },
-        ],
-        type: "select",
-      },
-      prompt: {
-        description: SORA_COPY.OPTION_DESCRIPTION,
-        label: SORA_COPY.PROMPT_LABEL,
-        name: "prompt",
-        placeholder: SORA_COPY.PLACEHOLDER,
-        required: true,
-        type: "text",
-      },
-      resolution: {
-        default: "auto",
-        description: SORA_COPY.RESOLUTION_DESCRIPTION,
-        label: SORA_COPY.RESOLUTION_LABEL,
-        name: "resolution",
-        options: [
-          { label: SORA_COPY.RESOLUTION_AUTO, value: "auto" },
-          { label: SORA_COPY.RESOLUTION_P720, value: "720p" },
-        ],
-        type: "select",
-      },
-    },
-    pricing: {
-      costPerVideo: 0.3,
-      currency: "USD",
-      unit: SORA_1_COPY.PRICING_UNIT,
-    },
-  },
   [SORA_2_MODEL_ID]: {
-    category: SORA_COPY.CATEGORY,
+    category: MODEL_CATEGORY,
     defaults: {
       aspectRatio: "auto",
       duration: "4",
       prompt: "",
       resolution: "auto",
     },
-    endpoint: SORA_2_COPY.ENDPOINT,
+    endpoint: SORA_2_ENDPOINT,
     id: SORA_2_MODEL_ID,
     isDefault: true,
-    name: SORA_2_COPY.NAME,
+    name: SORA_2_NAME,
     options: {
       aspectRatio: {
-        description: SORA_COPY.ASPECT_RATIO_DESCRIPTION,
-        label: SORA_COPY.ASPECT_RATIO_LABEL,
+        description: FIELD_DESCRIPTIONS.ASPECT_RATIO,
+        label: FIELD_LABELS.ASPECT_RATIO,
         name: "aspectRatio",
         options: [
-          { label: SORA_COPY.ASPECT_RATIO_AUTO, value: "auto" },
-          { label: SORA_COPY.ASPECT_RATIO_PORTRAIT, value: "9:16" },
-          { label: SORA_COPY.ASPECT_RATIO_WIDESCREEN, value: "16:9" },
+          ASPECT_RATIO_OPTIONS.AUTO,
+          ASPECT_RATIO_OPTIONS.PORTRAIT,
+          ASPECT_RATIO_OPTIONS.LANDSCAPE,
         ],
         type: "select",
       },
       duration: {
         default: "4",
-        description: SORA_COPY.DURATION_WARNING,
-        label: SORA_COPY.DURATION_LABEL,
+        description: FIELD_DESCRIPTIONS.DURATION,
+        label: FIELD_LABELS.DURATION,
         name: "duration",
         options: [
-          { label: SORA_COPY.DURATION_FOUR_SECONDS, value: "4" },
-          { label: SORA_COPY.DURATION_EIGHT_SECONDS, value: "8" },
-          { label: SORA_COPY.DURATION_TWELVE_SECONDS, value: "12" },
+          DURATION_OPTIONS.FOUR,
+          DURATION_OPTIONS.EIGHT,
+          DURATION_OPTIONS.TWELVE,
         ],
         type: "select",
       },
       prompt: {
-        description: SORA_COPY.OPTION_DESCRIPTION,
-        label: SORA_COPY.PROMPT_LABEL,
+        description: FIELD_DESCRIPTIONS.PROMPT,
+        label: FIELD_LABELS.PROMPT,
         name: "prompt",
-        placeholder: SORA_COPY.PLACEHOLDER,
+        placeholder: PROMPT_PLACEHOLDER,
         required: true,
         type: "text",
       },
       resolution: {
         default: "auto",
-        description: SORA_COPY.RESOLUTION_DESCRIPTION,
-        label: SORA_COPY.RESOLUTION_LABEL,
+        description: FIELD_DESCRIPTIONS.RESOLUTION,
+        label: FIELD_LABELS.RESOLUTION,
         name: "resolution",
         options: [
-          { label: SORA_COPY.RESOLUTION_AUTO, value: "auto" },
-          { label: SORA_COPY.RESOLUTION_P720, value: "720p" },
+          RESOLUTION_OPTIONS.AUTO,
+          RESOLUTION_OPTIONS.P720,
+          RESOLUTION_OPTIONS.P1080,
         ],
         type: "select",
       },
     },
     pricing: {
-      costPerVideo: 0.4,
+      costPerVideo: SORA_2_COST,
       currency: "USD",
-      unit: SORA_2_COPY.PRICING_UNIT,
+      unit: PRICING_UNIT,
     },
   },
   [SORA_2_PRO_MODEL_ID]: {
-    category: SORA_COPY.CATEGORY,
+    category: MODEL_CATEGORY,
     defaults: {
       aspectRatio: "auto",
       duration: "4",
       prompt: "",
       resolution: "auto",
     },
-    endpoint: SORA_2_PRO_COPY.ENDPOINT,
+    endpoint: SORA_2_PRO_ENDPOINT,
     id: SORA_2_PRO_MODEL_ID,
     isDefault: false,
-    name: SORA_2_PRO_COPY.NAME,
+    name: SORA_2_PRO_NAME,
     options: {
       aspectRatio: {
-        description: SORA_COPY.ASPECT_RATIO_DESCRIPTION,
-        label: SORA_COPY.ASPECT_RATIO_LABEL,
+        description: FIELD_DESCRIPTIONS.ASPECT_RATIO,
+        label: FIELD_LABELS.ASPECT_RATIO,
         name: "aspectRatio",
         options: [
-          { label: SORA_COPY.ASPECT_RATIO_AUTO, value: "auto" },
-          { label: SORA_COPY.ASPECT_RATIO_PORTRAIT, value: "9:16" },
-          { label: SORA_COPY.ASPECT_RATIO_WIDESCREEN, value: "16:9" },
+          ASPECT_RATIO_OPTIONS.AUTO,
+          ASPECT_RATIO_OPTIONS.PORTRAIT,
+          ASPECT_RATIO_OPTIONS.LANDSCAPE,
         ],
         type: "select",
       },
       duration: {
         default: "4",
-        description: SORA_COPY.DURATION_WARNING,
-        label: SORA_COPY.DURATION_LABEL,
+        description: FIELD_DESCRIPTIONS.DURATION,
+        label: FIELD_LABELS.DURATION,
         name: "duration",
         options: [
-          { label: SORA_COPY.DURATION_FOUR_SECONDS, value: "4" },
-          { label: SORA_COPY.DURATION_EIGHT_SECONDS, value: "8" },
-          { label: SORA_COPY.DURATION_TWELVE_SECONDS, value: "12" },
+          DURATION_OPTIONS.FOUR,
+          DURATION_OPTIONS.EIGHT,
+          DURATION_OPTIONS.TWELVE,
         ],
         type: "select",
       },
       prompt: {
-        description: SORA_COPY.OPTION_DESCRIPTION,
-        label: SORA_COPY.PROMPT_LABEL,
+        description: FIELD_DESCRIPTIONS.PROMPT,
+        label: FIELD_LABELS.PROMPT,
         name: "prompt",
-        placeholder: SORA_COPY.PLACEHOLDER,
+        placeholder: PROMPT_PLACEHOLDER,
         required: true,
         type: "text",
       },
       resolution: {
         default: "auto",
-        description: SORA_COPY.RESOLUTION_DESCRIPTION,
-        label: SORA_COPY.RESOLUTION_LABEL,
+        description: FIELD_DESCRIPTIONS.RESOLUTION,
+        label: FIELD_LABELS.RESOLUTION,
         name: "resolution",
         options: [
-          { label: SORA_COPY.RESOLUTION_AUTO, value: "auto" },
-          { label: SORA_COPY.RESOLUTION_P720, value: "720p" },
+          RESOLUTION_OPTIONS.AUTO,
+          RESOLUTION_OPTIONS.P720,
+          RESOLUTION_OPTIONS.P1080,
         ],
         type: "select",
       },
     },
     pricing: {
-      costPerVideo: 0.6,
+      costPerVideo: SORA_2_PRO_COST,
       currency: "USD",
-      unit: SORA_2_PRO_COPY.PRICING_UNIT,
+      unit: PRICING_UNIT,
     },
   },
 };
