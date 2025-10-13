@@ -1,123 +1,113 @@
 /**
  * Sora 2 Prompt Generator - OPTIMIZED FOR API
- * Generates HIGH-INTENSITY creative prompts with 1 CUT PER SECOND
+ * Expands storyline concepts into full Sora prompts with 1 CUT PER SECOND
  * Prompts optimized for Sora API character limits (~800 chars max)
  */
 
+import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import type { StorylineConcept } from "@/lib/schemas/storyline-schema";
+
 interface PromptGenerationOptions {
-  imageAnalysis: string;
+  storyline: StorylineConcept;
+  styleAnalysis: ImageStyleMoodAnalysis;
   duration: number;
 }
 
 /**
- * Extracts brief visual summary from analysis
+ * Builds a concise style descriptor from analysis
  */
-function extractVisualSummary(analysis: string): string {
-  const summary = analysis
-    .substring(0, 150)
-    .replace(/\n+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return summary + (analysis.length > 150 ? "..." : "");
+function buildStyleDescriptor(analysis: ImageStyleMoodAnalysis): string {
+  const { colorPalette, lighting, mood, visualStyle } = analysis;
+  
+  const colors = colorPalette.dominant.slice(0, 3).join(", ");
+  const colorMood = `${colorPalette.saturation}, ${colorPalette.temperature}`;
+  const lightQuality = `${lighting.quality} lighting with ${lighting.mood} mood`;
+  const aesthetic = visualStyle.aesthetic.slice(0, 2).join(", ");
+  const energy = `${mood.energy} energy, ${mood.primary}`;
+  
+  return `${colors} palette (${colorMood}). ${lightQuality}. ${aesthetic} aesthetic. ${energy}.`;
 }
 
 /**
- * Generates 4 INTENSE cinematic prompts optimized for API constraints
+ * Generates camera/technical specifications based on cinematic style
  */
-export function generateSoraPromptsFromAnalysis(
+function buildTechnicalSpec(
+  styleAnalysis: ImageStyleMoodAnalysis,
+  storylineCinematicStyle: string
+): string {
+  const { cinematicPotential } = styleAnalysis;
+  
+  // Map cinematic style to technical approach
+  const styleMap: Record<string, string> = {
+    "commercial high-energy": "120fps high-speed. Anamorphic flares, motion blur streaks.",
+    "surreal dreamlike": "Mixed frame rates. Heavy chromatic aberration, prism effects, glitch artifacts.",
+    "editorial fashion": "RED 8K 60fps. Razor-sharp. Wind machine effects. Geometric light patterns.",
+    "experimental time-based": "Mixed frame rates 12fps-240fps. Speed ramps, light streaks, motion trails.",
+  };
+  
+  // Find matching style or default
+  const matchingKey = Object.keys(styleMap).find(key => 
+    storylineCinematicStyle.toLowerCase().includes(key)
+  );
+  
+  return matchingKey 
+    ? styleMap[matchingKey]
+    : `High-quality cinematography. ${cinematicPotential.editingPace} pacing.`;
+}
+
+/**
+ * Expands a single storyline concept into a complete Sora prompt
+ */
+export function expandStorylineToPrompt(
   options: PromptGenerationOptions
+): string {
+  const { storyline, styleAnalysis, duration } = options;
+  
+  const styleDesc = buildStyleDescriptor(styleAnalysis);
+  const technicalSpec = buildTechnicalSpec(styleAnalysis, storyline.cinematicStyle);
+  const effects = styleAnalysis.cinematicPotential.visualEffects.slice(0, 3).join(", ");
+  
+  // Build shot list from key moments
+  const shotList = storyline.keyMoments.map((moment, index) => {
+    const shotNumber = index + 1;
+    return `${shotNumber}. ${moment}`;
+  }).join("\n");
+  
+  // Build visual motifs list
+  const motifs = storyline.visualMotifs.join(", ");
+  
+  return `${storyline.cinematicStyle.toUpperCase()}. ${technicalSpec} ${duration} RAPID 1-SECOND CUTS.
+
+Style reference: ${styleDesc}
+
+STORYLINE: ${storyline.narrative}
+Setting: ${storyline.setting}
+
+KEY SHOTS (${duration}s sequence):
+${shotList}
+
+Camera techniques: ${styleAnalysis.cinematicPotential.camerawork.slice(0, 4).join(", ")}
+Visual motifs: ${motifs}
+Effects: ${effects}
+
+Lighting: ${styleAnalysis.lighting.direction}, ${styleAnalysis.lighting.quality}. ${styleAnalysis.lighting.mood} mood.
+
+Emotional arc: ${storyline.emotionalArc}
+
+INTENSITY: Every cut = VISUAL PUNCH. ${storyline.subject} commands the frame.`.trim();
+}
+
+/**
+ * Expands multiple storylines into Sora prompts
+ */
+export function expandStorylinesToPrompts(
+  storylines: StorylineConcept[],
+  styleAnalysis: ImageStyleMoodAnalysis,
+  duration: number
 ): string[] {
-  const { imageAnalysis, duration } = options;
-  const visualSummary = extractVisualSummary(imageAnalysis);
-
-  return [
-    generateExplosiveEnergyPrompt(visualSummary, duration),
-    generateKaleidoscopeRealityPrompt(visualSummary, duration),
-    generateFashionStormPrompt(visualSummary, duration),
-    generateTimeCollapsePrompt(visualSummary, duration),
-  ];
+  return storylines.map(storyline => 
+    expandStorylineToPrompt({ storyline, styleAnalysis, duration })
+  );
 }
 
-/**
- * Style 1: EXPLOSIVE ENERGY
- */
-function generateExplosiveEnergyPrompt(
-  visualSummary: string,
-  duration: number
-): string {
-  return `EXPLOSIVE commercial cinematography. 120fps. ${duration} RAPID 1-SECOND CUTS. Anamorphic flares, motion blur streaks, hyper-saturated colors, crushed blacks, blown highlights.
 
-Image: ${visualSummary}
-
-Each second = NEW DRAMATIC ANGLE:
-Violent zoom-ins → orbital camera spins → extreme macro details → overhead plunges → whip pans to profile → low-angle power shots → mirror reflections → wide pullback reveals → dutch tilt rotations → slow-mo explosions → tracking parallels → final lens flare.
-
-Camera WHIPS between: extreme close-ups, wide reveals, macro textures. Strobing key light, cyan/magenta gels, practical bursts.
-
-Subject actions: Snap attention → head whip → sharp gestures → body rotation → fabric flare → power step → intense expression → geometric poses.
-
-CONTROLLED CHAOS. Subject sharp, environment explodes. Every cut = VISUAL PUNCH.`;
-}
-
-/**
- * Style 2: KALEIDOSCOPE REALITY
- */
-function generateKaleidoscopeRealityPrompt(
-  visualSummary: string,
-  duration: number
-): string {
-  return `KALEIDOSCOPE surreal cinematography. ${duration} 1-SECOND CUTS. Reality SPLINTERS. Heavy chromatic aberration, prism effects, glitch artifacts. Colors shift: teal → magenta → toxic green → amber.
-
-Image: ${visualSummary}
-
-Each cut = IMPOSSIBLE PERSPECTIVE:
-Still subject/moving background → mirrors multiply → gravity inverts → dutch 45° tilts → reflection paradoxes → fisheye distortion → color inversions → temporal splits → spiral zoom vertigo → digital glitches → prism rainbows → radial collapse.
-
-Contradictory lighting. Colored practicals fighting. Volumetric chaos.
-
-Actions: Perfect stillness → impossible symmetry → fragments multiply → gravity defies → temporal doubles → spiral motion → glitch reconstruction.
-
-FEVER DREAM aesthetic. Subject recognizable but TRANSFORMED. Physics optional. Hypnotic rhythm.`;
-}
-
-/**
- * Style 3: FASHION STORM
- */
-function generateFashionStormPrompt(
-  visualSummary: string,
-  duration: number
-): string {
-  return `ULTRA high-fashion editorial. RED 8K 60fps. ${duration} 1-SECOND CUTS. Razor-sharp. Wind machine BLASTING. Geometric light patterns. Bold color blocking, neon accents.
-
-Image: ${visualSummary}
-
-Each cut = POWER EDITORIAL ANGLE:
-Emergence with wind → whip to profile → overhead symmetry → macro worship → low dominance → 360° spinning reveal → back mystery → dutch tilt edge → mirror doubles → fabric explosion → spotlight isolation → walk-off exit.
-
-Hard key 45°, rim lights carving silhouette, gold/electric blue spots. Dramatic shadows, geometric patterns slash frame.
-
-Actions: Power stance → sharp 90° turn → fierce eye contact → editorial gestures → hair flip → confident stride → sculptural poses.
-
-FASHION WEAPON aesthetic. Subject OWNS frame. Every shot = magazine cover quality. Diagonal lines, triangular composition.`;
-}
-
-/**
- * Style 4: TIME COLLAPSE
- */
-function generateTimeCollapsePrompt(
-  visualSummary: string,
-  duration: number
-): string {
-  return `TEMPORAL WARFARE cinematography. Mixed frame rates 12fps-240fps. ${duration} 1-SECOND CUTS. Time NON-LINEAR. Speed ramps MID-SHOT. Light streaks, motion trails, past/present/future collapse.
-
-Image: ${visualSummary}
-
-Each cut = TEMPORAL EFFECT:
-Dawn rushes sunrise in 1s → sun arcs/shadow spins → crowd time-lapse blur → slow subject/fast world → reverse time flow → golden hour compression → day-to-night collapse → speed ramp stutter → motion trail echoes → frozen background/moving subject → weather transformation → temporal convergence (past/present/future versions coexist).
-
-Natural light accelerated. Shadows move wrong. Sources rush through day-night in ${duration} cuts.
-
-Subject = ANCHOR in temporal storm. Frozen while world rushes → slow-mo in accelerated reality → forward in backward time.
-
-IMPOSSIBLE yet beautiful. Time is the special effect.`;
-}

@@ -5,13 +5,15 @@
  */
 
 import { VIDEO_DEFAULTS } from "@/constants/canvas";
+import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import { expandStorylinesToPrompts } from "@/lib/sora-prompt-generator";
+import { generateStorylines } from "@/lib/storyline-generator";
 import type {
   PlacedImage,
   PlacedVideo,
   VideoGenerationSettings,
 } from "@/types/canvas";
 import { snapPosition } from "@/utils/snap-utils";
-import { generateSoraPromptsFromAnalysis } from "@/lib/sora-prompt-generator";
 import { calculateBalancedPosition } from "./variation-handler";
 
 interface SoraVideoVariationHandlerDeps {
@@ -170,9 +172,9 @@ const FALLBACK_VIDEO_PROMPTS = [
 ] as const;
 
 /**
- * Analyzes an image using OpenAI's vision model
+ * Analyzes an image using OpenAI's vision model with structured output
  */
-async function analyzeImage(imageUrl: string): Promise<string> {
+async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
   const response = await fetch("/api/analyze-image", {
     method: "POST",
     headers: {
@@ -339,19 +341,52 @@ export const handleSoraVideoVariations = async (
     let videoPrompts: string[];
 
     try {
+      // Stage 1: Analyze image style/mood
       const imageAnalysis = await analyzeImage(imageUrl);
-      console.log("[Sora Variations] Image analysis completed:", {
-        analysisLength: imageAnalysis.length,
-        analysisPreview: imageAnalysis.substring(0, 200),
+      console.log("[Sora Variations] Stage 1: Image analysis completed:", {
+        colorPalette: imageAnalysis.colorPalette.dominant,
+        mood: imageAnalysis.mood.primary,
+        energy: imageAnalysis.mood.energy,
+        aesthetics: imageAnalysis.visualStyle.aesthetic,
       });
 
-      // Generate Sora 2 prompts based on analysis
-      videoPrompts = generateSoraPromptsFromAnalysis({
+      toast({
+        title: "Generating storylines",
+        description: "Creating unique cinematic narratives...",
+      });
+
+      // Stage 2: Generate storyline concepts using AI
+      const duration = parseInt(videoSettings.duration as string) || 4;
+      const storylineSet = await generateStorylines({
+        styleAnalysis: imageAnalysis,
+        duration,
+      });
+
+      console.log("[Sora Variations] Stage 2: Generated storylines:", {
+        count: storylineSet.storylines.length,
+        styleTheme: storylineSet.styleTheme,
+        titles: storylineSet.storylines.map((s) => s.title),
+      });
+
+      toast({
+        title: "Expanding into prompts",
+        description: "Building shot-by-shot sequences...",
+      });
+
+      // Stage 3: Expand storylines into full Sora prompts
+      videoPrompts = expandStorylinesToPrompts(
+        storylineSet.storylines,
         imageAnalysis,
-        duration: parseInt(videoSettings.duration as string) || 4,
-      });
+        duration
+      );
 
-      console.log("[Sora Variations] Generated prompts from analysis");
+      console.log("[Sora Variations] Stage 3: Expanded prompts:", {
+        promptCount: videoPrompts.length,
+        avgLength: Math.round(
+          videoPrompts.reduce((sum, p) => sum + p.length, 0) /
+            videoPrompts.length
+        ),
+      });
     } catch (analysisError) {
       console.error(
         "[Sora Variations] Image analysis failed, using fallback prompts:",
