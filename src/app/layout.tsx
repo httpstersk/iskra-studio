@@ -1,6 +1,6 @@
 import { commitMono, focal, hal, halMono, inconsolata } from "@/lib/fonts";
 import { BotIdClient } from "botid/client";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { CoreProviders } from "./core-providers";
 import "./globals.css";
 
@@ -19,12 +19,6 @@ export const metadata: Metadata = {
   authors: [{ name: "" }],
   creator: "",
   publisher: "",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    viewportFit: "cover",
-  },
   formatDetection: {
     email: false,
     address: false,
@@ -62,6 +56,13 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
