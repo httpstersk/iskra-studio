@@ -32,18 +32,26 @@ Comprehensive Zod schema for structured style/mood analysis:
 - Cinematic potential (motion styles, camerawork, editing pace, effects)
 - Narrative tone (genres, intensity, storytelling approach)
 
-### 3. Storyline Generator (`src/lib/storyline-generator.ts`) ✨ NEW
-AI-powered storyline generation using `generateObject()`:
-- Takes style/mood analysis as input
-- Generates 4 unique storyline concepts via GPT-4o
+### 3. Storyline Generation API (`src/app/api/generate-storylines/route.ts`) ✨ NEW
+Server-side API route for storyline generation:
+- Receives style analysis and duration from client
+- Calls OpenAI's `generateObject()` with GPT-4o
+- Has secure access to `OPENAI_API_KEY` environment variable
+- Returns 4 unique storyline concepts
 - Ensures variety across genres, subjects, and narratives
-- Returns structured storyline data
+
+### 4. Storyline Generator Client (`src/lib/storyline-generator.ts`) ✨ NEW
+Client-side wrapper that calls the API:
+- Simple fetch wrapper to `/api/generate-storylines`
+- Maintains same interface as before
+- No API key needed on client side
+- Type-safe with proper error handling
 
 ---
 
 ## Updated Files
 
-### 4. Image Analysis API (`src/app/api/analyze-image/route.ts`)
+### 5. Image Analysis API (`src/app/api/analyze-image/route.ts`)
 **Changed from:**
 - `generateText()` with subject/pose focus
 - Returns unstructured text string
@@ -54,7 +62,7 @@ AI-powered storyline generation using `generateObject()`:
 - Returns structured `ImageStyleMoodAnalysis` object
 - Provides reusable visual language for any scene
 
-### 5. Prompt Generator (`src/lib/sora-prompt-generator.ts`)
+### 6. Prompt Generator (`src/lib/sora-prompt-generator.ts`)
 **Completely refactored:**
 - Removed 4 hardcoded storyline templates (150+ lines)
 - Added `expandStorylineToPrompt()`: converts storyline concept → full Sora prompt
@@ -71,7 +79,7 @@ AI-powered storyline generation using `generateObject()`:
 - Lighting and emotional arc
 - Optimized for Sora API (~800 chars)
 
-### 6. Video Variation Handler (`src/lib/handlers/sora-video-variation-handler.ts`)
+### 7. Video Variation Handler (`src/lib/handlers/sora-video-variation-handler.ts`)
 **Three-stage flow:**
 1. **Analyze Image**: Get structured style/mood data
 2. **Generate Storylines**: Create 4 unique narratives via AI
@@ -133,6 +141,7 @@ AI-powered storyline generation using `generateObject()`:
 - **Methods**: `generateObject()` for structured outputs
 - **Schemas**: Zod schemas ensure type safety and valid AI responses
 - **Error Handling**: Fallback prompts if AI generation fails
+- **API Routes**: Both analysis and storyline generation run server-side with secure API key access
 
 ### Performance
 - Two AI API calls per generation (analysis + storylines)

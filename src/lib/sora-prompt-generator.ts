@@ -56,45 +56,23 @@ function buildTechnicalSpec(
 }
 
 /**
- * Expands a single storyline concept into a complete Sora prompt
+ * Expands a single storyline concept into a concise Sora-optimized prompt
+ * Keeps prompts under 400 characters for API compatibility
  */
 export function expandStorylineToPrompt(
   options: PromptGenerationOptions
 ): string {
   const { storyline, styleAnalysis, duration } = options;
   
-  const styleDesc = buildStyleDescriptor(styleAnalysis);
-  const technicalSpec = buildTechnicalSpec(styleAnalysis, storyline.cinematicStyle);
-  const effects = styleAnalysis.cinematicPotential.visualEffects.slice(0, 3).join(", ");
+  // Extract key visual elements
+  const colors = styleAnalysis.colorPalette.dominant.slice(0, 2).join(" and ");
+  const mood = styleAnalysis.mood.primary;
+  const lighting = styleAnalysis.lighting.quality;
+  const topMotifs = storyline.visualMotifs.slice(0, 2).join(", ");
+  const topMoments = storyline.keyMoments.slice(0, 3).join(". ");
   
-  // Build shot list from key moments
-  const shotList = storyline.keyMoments.map((moment, index) => {
-    const shotNumber = index + 1;
-    return `${shotNumber}. ${moment}`;
-  }).join("\n");
-  
-  // Build visual motifs list
-  const motifs = storyline.visualMotifs.join(", ");
-  
-  return `${storyline.cinematicStyle.toUpperCase()}. ${technicalSpec} ${duration} RAPID 1-SECOND CUTS.
-
-Style reference: ${styleDesc}
-
-STORYLINE: ${storyline.narrative}
-Setting: ${storyline.setting}
-
-KEY SHOTS (${duration}s sequence):
-${shotList}
-
-Camera techniques: ${styleAnalysis.cinematicPotential.camerawork.slice(0, 4).join(", ")}
-Visual motifs: ${motifs}
-Effects: ${effects}
-
-Lighting: ${styleAnalysis.lighting.direction}, ${styleAnalysis.lighting.quality}. ${styleAnalysis.lighting.mood} mood.
-
-Emotional arc: ${storyline.emotionalArc}
-
-INTENSITY: Every cut = VISUAL PUNCH. ${storyline.subject} commands the frame.`.trim();
+  // Build ultra-concise prompt focusing on visual storytelling
+  return `${storyline.narrative} ${colors} color palette. ${lighting} lighting, ${mood} mood. ${storyline.setting}. ${topMoments}. Visual style: ${topMotifs}. ${storyline.cinematicStyle} cinematography with rapid ${duration}-second cuts.`.trim();
 }
 
 /**
