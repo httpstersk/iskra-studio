@@ -25,7 +25,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Clock,
   ImagesIcon,
-  Monitor,
   Paperclip,
   PlayIcon,
   Redo,
@@ -279,47 +278,6 @@ export function CanvasControlPanel({
                               className="text-xs rounded-lg"
                             >
                               12s
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {/* Resolution selector */}
-                      <div
-                        className={cn(
-                          "h-9 rounded-xl overflow-clip flex items-center gap-2 px-2",
-                          "bg-slate-500/10 dark:bg-slate-500/15 shadow-[0_0_0_1px_rgba(100,116,139,0.2),0_4px_8px_-0.5px_rgba(100,116,139,0.08),0_8px_16px_-2px_rgba(100,116,139,0.04)] dark:shadow-none dark:border dark:border-slate-500/30"
-                        )}
-                      >
-                        <Monitor className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
-                        <Select
-                          value={videoResolution}
-                          onValueChange={(value) =>
-                            setVideoResolution(
-                              value as "auto" | "720p" | "1080p"
-                            )
-                          }
-                        >
-                          <SelectTrigger className="h-6 border-none shadow-none bg-transparent text-xs font-medium text-slate-600 dark:text-slate-400 w-[70px] px-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            <SelectItem
-                              value="auto"
-                              className="text-xs rounded-lg"
-                            >
-                              Auto
-                            </SelectItem>
-                            <SelectItem
-                              value="720p"
-                              className="text-xs rounded-lg"
-                            >
-                              720p
-                            </SelectItem>
-                            <SelectItem
-                              value="1080p"
-                              className="text-xs rounded-lg"
-                            >
-                              1080p
                             </SelectItem>
                           </SelectContent>
                         </Select>

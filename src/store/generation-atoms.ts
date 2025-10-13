@@ -66,7 +66,7 @@ export const useSoraProAtom = atom(false);
 /**
  * Atom to track selected video duration (4, 8, or 12 seconds)
  */
-export const videoDurationAtom = atom<"4" | "8" | "12">("4");
+export const videoDurationAtom = atom<"4" | "8" | "12">("8");
 
 /**
  * Atom to track selected video resolution (auto, 720p, or 1080p)
