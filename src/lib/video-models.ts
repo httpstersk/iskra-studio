@@ -267,22 +267,3 @@ export function getDefaultVideoModel(
   return models.find((model) => model.isDefault) || models[0];
 }
 
-/**
- * Calculates how many generations fit within the provided budget.
- */
-export function calculateVideoGenerations(
-  model: VideoModelConfig,
-  budget: number = 1,
-): number {
-  return Math.floor(budget / model.pricing.costPerVideo);
-}
-
-/**
- * Formats a user-friendly price message for display.
- */
-export function formatPricingMessage(model: VideoModelConfig): string {
-  const approximateTimes = calculateVideoGenerations(model);
-  return `Your request will cost $${model.pricing.costPerVideo.toFixed(2)} per ${
-    model.pricing.unit
-  }. For $1 you can run this model approximately ${approximateTimes} times.`;
-}

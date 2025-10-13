@@ -17,11 +17,7 @@ import {
 import type { VideoGenerationSettings } from "@/types/canvas";
 import React, { useEffect, useState } from "react";
 
-import {
-  ModelPricingDisplay,
-  VideoModelOptions,
-  VideoModelSelector,
-} from "./VideoModelComponents";
+import { VideoModelOptions, VideoModelSelector } from "./VideoModelComponents";
 
 const IMAGE_TO_VIDEO_COPY = {
   CANCEL: "Cancel",
@@ -214,8 +210,6 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
             />
           </div>
 
-          {/* Pricing Display */}
-          <ModelPricingDisplay model={model} className="mb-4" />
 
           <div className="flex gap-4">
             {/* Left column - Image Preview */}

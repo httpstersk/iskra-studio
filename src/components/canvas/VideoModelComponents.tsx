@@ -9,7 +9,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  formatPricingMessage,
   getVideoModelsByCategory,
   type VideoModelConfig,
   type VideoModelOption,
@@ -54,7 +53,7 @@ export const VideoModelSelector: React.FC<VideoModelSelectorProps> = ({
     >
       {models.map((model) => (
         <option key={model.id} value={model.id}>
-          {model.name} — ${model.pricing.costPerVideo.toFixed(2)}/video
+          {model.name}
           {model.isDefault ? "" : ""}
         </option>
       ))}
@@ -62,42 +61,6 @@ export const VideoModelSelector: React.FC<VideoModelSelectorProps> = ({
   );
 };
 
-/**
- * Props for the pricing display component.
- */
-interface ModelPricingDisplayProps {
-  className?: string;
-  model: VideoModelConfig;
-}
-
-/**
- * Displays a pricing summary for the selected model.
- */
-export const ModelPricingDisplay: React.FC<ModelPricingDisplayProps> = ({
-  model,
-  className = "",
-}) => {
-  const pricingMessage = formatPricingMessage(model);
-
-  return (
-    <div className={`text-sm text-muted-foreground ${className}`}>
-      <p
-        dangerouslySetInnerHTML={{
-          __html: pricingMessage
-            .replace(
-              /\$[\d.]+/,
-              (match) => `<strong class="text-foreground">${match}</strong>`,
-            )
-            .replace(
-              /(\d+) times/,
-              (match, num) =>
-                `<strong class="text-foreground">${num} times</strong>`,
-            ),
-        }}
-      />
-    </div>
-  );
-};
 
 /**
  * Props for the dynamic video model options component.
