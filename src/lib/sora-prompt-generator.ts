@@ -55,13 +55,13 @@ export function expandStorylineToPrompt(
   const cinematicStyle = cleanText(storyline.cinematicStyle);
 
   const segments = [
+    `Camera: ${cinematicStyle}`,
     narrative,
     setting,
-    palette ? `Palette: ${palette} | ${paletteMood}` : "",
+    beats ? `Motion: ${beats}` : "",
+    palette ? `Colors: ${palette} | ${paletteMood}` : "",
     `${lighting} lighting | ${energy} energy`,
-    beats ? `Beats: ${beats}` : "",
     motifs ? `Visuals: ${motifs}` : "",
-    `Style: ${cinematicStyle} | rapid ${duration}-second cuts | auteur-level intensity`,
   ].filter(Boolean);
 
   const rawPrompt = segments.map(cleanText).join(". ");
