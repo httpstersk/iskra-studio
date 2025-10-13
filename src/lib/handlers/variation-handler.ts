@@ -392,7 +392,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       const newMap = new Map(prev);
       variationsToGenerate.forEach((cameraDirective, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
-        // Format prompt with Fincher-style cinematography instructions
         const formattedPrompt = formatImageVariationPrompt(
           cameraDirective,
           variationPrompt

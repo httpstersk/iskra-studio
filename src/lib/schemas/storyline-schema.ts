@@ -1,12 +1,50 @@
 import { z } from "zod";
 
+/**
+ * Narrative beat types following cinematic story structure
+ */
+export const NARRATIVE_BEAT_TYPES = [
+  "OPEN / HOOK",
+  "TRANSITION / BUILD",
+  "RUN / DEVELOPMENT",
+  "IMPACT / REVEAL",
+  "OUTRO / BUTTON",
+] as const;
+
+/**
+ * Single narrative beat with timing, description, and transition
+ */
+export const narrativeBeatSchema = z.object({
+  beatType: z
+    .string()
+    .describe("Beat type (e.g., 'OPEN / HOOK', 'TRANSITION / BUILD')"),
+
+  description: z
+    .string()
+    .describe(
+      "Detailed shot description including camera work, subject action, visual details (150-200 chars)"
+    ),
+
+  timeSegment: z
+    .string()
+    .describe(
+      "Time range for this beat (e.g., '0–2s', '0–4s', '2–5s'). Varies based on pacing: slow cinema uses longer segments, high-intensity uses rapid cuts"
+    ),
+
+  transition: z
+    .string()
+    .describe(
+      "Transition method to next beat (e.g., 'Cut: slow dissolve', 'Transition: crossfade dust flare', 'Cut: whip of dust')"
+    ),
+});
+
 export const storylineConceptSchema = z.object({
   title: z.string().describe("Short evocative title for the storyline"),
 
   subject: z
     .string()
     .describe(
-      "Main subject/character (e.g., 'street dancer', 'cyber warrior', 'fashion icon')",
+      "Main subject/character (e.g., 'female bounty hunter', 'street dancer', 'cyber warrior')"
     ),
 
   setting: z.string().describe("Environment/location where story takes place"),
@@ -15,25 +53,16 @@ export const storylineConceptSchema = z.object({
     .string()
     .describe("Brief 1-2 sentence story arc describing what happens"),
 
-  visualMotifs: z
-    .array(z.string())
-    .describe(
-      "3-5 key visual elements that appear throughout (e.g., 'neon reflections', 'fabric motion', 'light trails')",
-    ),
-
-  emotionalArc: z
-    .string()
-    .describe("How the emotional intensity builds across the cuts"),
-
   cinematicStyle: z
     .string()
     .describe(
-      "Overall cinematic approach (e.g., 'commercial high-energy', 'surreal dreamlike', 'editorial fashion', 'experimental time-based')",
+      "Overall cinematic approach with director/cinematographer influence (e.g., 'Leone + Storaro: operatic tension with bold shadows')"
     ),
 
-  keyMoments: z
-    .array(z.string())
-    .describe("4-6 pivotal moments/beats in the sequence"),
+  beats: z
+    .array(narrativeBeatSchema)
+    .length(5)
+    .describe("Five narrative beats following cinematic story structure"),
 });
 
 export const storylineSetSchema = z.object({
@@ -41,7 +70,7 @@ export const storylineSetSchema = z.object({
     .array(storylineConceptSchema)
     .length(4)
     .describe(
-      "Four distinct storyline concepts matching the style/mood analysis",
+      "Four distinct storyline concepts matching the style/mood analysis"
     ),
 
   styleTheme: z
@@ -49,5 +78,6 @@ export const storylineSetSchema = z.object({
     .describe("Common style thread that connects all four storylines"),
 });
 
+export type NarrativeBeat = z.infer<typeof narrativeBeatSchema>;
 export type StorylineConcept = z.infer<typeof storylineConceptSchema>;
 export type StorylineSet = z.infer<typeof storylineSetSchema>;

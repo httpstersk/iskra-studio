@@ -1,12 +1,11 @@
 /**
- * Sora 2 Prompt Generator - CINEMATIC FORMAT
- * Expands storyline concepts into structured Sora prompts following cinematic guidelines:
- * 1. Global descriptors (Setting, Subject, Lighting, Vibe)
- * 2. Timestamps [00:00-00:01] for each shot
- * 3. Explicit shot types and camera motion
- * 4. SFX: and VFX: labels
+ * Sora 2 Prompt Generator - CINEMATIC BEAT FORMAT
+ * Expands storyline concepts into structured Sora prompts following professional film format:
+ * 1. Time-segmented narrative beats with labels (OPEN/HOOK, TRANSITION/BUILD, etc.)
+ * 2. Detailed shot descriptions with camera work and transitions
+ * 3. Visual cues & vibe section with technical specs and atmosphere
  *
- * All prompts naturally fit within 1000 chars by design (no truncation needed)
+ * Format matches professional film prompts used in production.
  */
 
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
@@ -37,58 +36,43 @@ function limitText(text: string, maxLength: number): string {
 }
 
 /**
- * Formats timestamp in [MM:SS-MM:SS] format
+ * Formats a narrative beat into cinematic prompt format
+ * Example: [0–2s] — OPEN / HOOK\nExtreme close-up on...
  */
-function formatTimestamp(startSec: number, endSec: number): string {
-  const formatTime = (sec: number) => {
-    const minutes = Math.floor(sec / 60);
-    const seconds = sec % 60;
-    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-  };
-
-  return `[${formatTime(startSec)}-${formatTime(endSec)}]`;
+function formatBeat(
+  beatType: string,
+  description: string,
+  timeSegment: string,
+  transition: string
+): string {
+  return `[${timeSegment}] — ${beatType}\n${description} ${transition}`;
 }
 
 /**
  * Expands a single storyline concept into a cinematic Sora prompt
- * Structured to naturally fit within 1000 chars:
- * - Global descriptors: ~200 chars
- * - 4 shots × 140 chars each: ~560 chars
- * - Formatting overhead: ~40 chars
- * - Total: ~800 chars (safe margin under 1000)
+ * Follows professional film prompt format with time-segmented beats and visual cues
  */
 export function expandStorylineToPrompt(
-  options: PromptGenerationOptions,
+  options: PromptGenerationOptions
 ): string {
-  const { storyline, styleAnalysis } = options;
+  const { storyline } = options;
 
-  // Global descriptors (target: ~200 chars total)
-  const setting = limitText(storyline.setting, 40);
-  const subject = limitText(storyline.subject, 20);
-  const lighting = limitText(styleAnalysis.lighting.quality, 20);
-  const vibe = limitText(styleAnalysis.mood.primary, 20);
-  const cinematography = limitText(storyline.cinematicStyle, 80);
+  // Format narrative beats
+  const beatSections = storyline.beats.map((beat) =>
+    formatBeat(
+      beat.beatType,
+      cleanText(beat.description),
+      beat.timeSegment,
+      cleanText(beat.transition)
+    )
+  );
 
-  const globalDesc = `Setting: ${setting}. Subject: ${subject}. Lighting: ${lighting}. Vibe: ${vibe}. Cinematography: ${cinematography}.`;
-
-  // Timestamp-based shots (target: ~140 chars each)
-  const moments = storyline.keyMoments.slice(0, 4);
-  const shots: string[] = [];
-
-  for (let i = 0; i < moments.length; i++) {
-    const startSec = i;
-    const endSec = i + 1;
-    const timestamp = formatTimestamp(startSec, endSec);
-    const momentDesc = limitText(moments[i], 140);
-    shots.push(`${timestamp} ${momentDesc}`);
-  }
-
-  const fullPrompt = `${globalDesc} ${shots.join(" ")}`;
+  const fullPrompt = beatSections.join("\n\n");
 
   // Safety check: should never hit this if input follows guidelines
   if (fullPrompt.length > PROMPT_CHAR_LIMIT) {
     console.warn(
-      `Prompt exceeded ${PROMPT_CHAR_LIMIT} chars: ${fullPrompt.length} chars`,
+      `Prompt exceeded ${PROMPT_CHAR_LIMIT} chars: ${fullPrompt.length} chars`
     );
   }
 
@@ -101,9 +85,9 @@ export function expandStorylineToPrompt(
 export function expandStorylinesToPrompts(
   storylines: StorylineConcept[],
   styleAnalysis: ImageStyleMoodAnalysis,
-  duration: number,
+  duration: number
 ): string[] {
   return storylines.map((storyline) =>
-    expandStorylineToPrompt({ storyline, styleAnalysis, duration }),
+    expandStorylineToPrompt({ storyline, styleAnalysis, duration })
   );
 }
