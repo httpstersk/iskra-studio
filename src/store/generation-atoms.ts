@@ -62,3 +62,13 @@ export const showSuccessAtom = atom(false);
  * Atom to track whether Sora Pro is enabled (for video generation)
  */
 export const useSoraProAtom = atom(false);
+
+/**
+ * Atom to track selected video duration (4, 8, or 12 seconds)
+ */
+export const videoDurationAtom = atom<"4" | "8" | "12">("4");
+
+/**
+ * Atom to track selected video resolution (auto, 720p, or 1080p)
+ */
+export const videoResolutionAtom = atom<"auto" | "720p" | "1080p">("auto");

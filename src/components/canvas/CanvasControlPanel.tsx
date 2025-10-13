@@ -3,6 +3,13 @@
 import { GenerationsIndicator } from "@/components/generations-indicator";
 import { SpinnerIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -16,7 +23,9 @@ import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 import { checkOS } from "@/utils/os-utils";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Clock,
   ImagesIcon,
+  Monitor,
   Paperclip,
   PlayIcon,
   Redo,
@@ -55,6 +64,10 @@ interface CanvasControlPanelProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   useSoraPro: boolean;
   setUseSoraPro: (value: boolean) => void;
+  videoDuration: "4" | "8" | "12";
+  setVideoDuration: (value: "4" | "8" | "12") => void;
+  videoResolution: "auto" | "720p" | "1080p";
+  setVideoResolution: (value: "auto" | "720p" | "1080p") => void;
 }
 
 /**
@@ -83,6 +96,10 @@ export function CanvasControlPanel({
   handleVariationModeChange,
   useSoraPro,
   setUseSoraPro,
+  videoDuration,
+  setVideoDuration,
+  videoResolution,
+  setVideoResolution,
 }: CanvasControlPanelProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:p-0 md:pb-0 md:max-w-[648px]">
@@ -100,32 +117,32 @@ export function CanvasControlPanel({
               activeVideoGenerationsSize > 0 ||
               isGenerating ||
               showSuccess) && (
-                <motion.div
-                  key={showSuccess ? "success" : "generating"}
-                  initial={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
-                  animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-                  exit={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
-                  transition={{ duration: 0.2, ease: "easeInOut" }}
-                  className={cn(
-                    "absolute z-50 -top-16 left-1/2",
-                    "rounded-xl",
-                    showSuccess
-                      ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
-                      : activeVideoGenerationsSize > 0
-                        ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
-                        : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
-                  )}
-                >
-                  <GenerationsIndicator
-                    isAnimating={!showSuccess}
-                    isSuccess={showSuccess}
-                    className="w-5 h-5"
-                    outputType={
-                      activeVideoGenerationsSize > 0 ? "video" : "image"
-                    }
-                  />
-                </motion.div>
-              )}
+              <motion.div
+                key={showSuccess ? "success" : "generating"}
+                initial={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
+                animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+                exit={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className={cn(
+                  "absolute z-50 -top-16 left-1/2",
+                  "rounded-xl",
+                  showSuccess
+                    ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
+                    : activeVideoGenerationsSize > 0
+                      ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
+                      : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
+                )}
+              >
+                <GenerationsIndicator
+                  isAnimating={!showSuccess}
+                  isSuccess={showSuccess}
+                  className="w-5 h-5"
+                  outputType={
+                    activeVideoGenerationsSize > 0 ? "video" : "image"
+                  }
+                />
+              </motion.div>
+            )}
           </AnimatePresence>
 
           {/* Action buttons row */}
@@ -197,34 +214,117 @@ export function CanvasControlPanel({
                       className="h-5 w-9 data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-blue-600"
                     />
                   </div>
-                  {/* Sora Pro toggle - only show when in video mode */}
+                  {/* Video settings - only show when in video mode */}
                   {variationMode === "video" && (
-                    <div
-                      className={cn(
-                        "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
-                        useSoraPro
-                          ? "bg-amber-500/10 dark:bg-amber-500/15 shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_4px_8px_-0.5px_rgba(245,158,11,0.08),0_8px_16px_-2px_rgba(245,158,11,0.04)] dark:shadow-none dark:border dark:border-amber-500/30"
-                          : "bg-gray-500/10 dark:bg-gray-500/15 shadow-[0_0_0_1px_rgba(107,114,128,0.2),0_4px_8px_-0.5px_rgba(107,114,128,0.08),0_8px_16px_-2px_rgba(107,114,128,0.04)] dark:shadow-none dark:border dark:border-gray-500/30"
-                      )}
-                    >
-                      <div className="flex items-center gap-2 text-xs font-medium">
-                        <span
-                          className={cn(
-                            "font-semibold",
-                            useSoraPro
-                              ? "text-amber-600 dark:text-amber-500"
-                              : "text-gray-600 dark:text-gray-400"
-                          )}
-                        >
-                          Pro
-                        </span>
+                    <>
+                      {/* Sora Pro toggle */}
+                      <div
+                        className={cn(
+                          "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
+                          useSoraPro
+                            ? "bg-amber-500/10 dark:bg-amber-500/15 shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_4px_8px_-0.5px_rgba(245,158,11,0.08),0_8px_16px_-2px_rgba(245,158,11,0.04)] dark:shadow-none dark:border dark:border-amber-500/30"
+                            : "bg-gray-500/10 dark:bg-gray-500/15 shadow-[0_0_0_1px_rgba(107,114,128,0.2),0_4px_8px_-0.5px_rgba(107,114,128,0.08),0_8px_16px_-2px_rgba(107,114,128,0.04)] dark:shadow-none dark:border dark:border-gray-500/30"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 text-xs font-medium">
+                          <span
+                            className={cn(
+                              "font-semibold",
+                              useSoraPro
+                                ? "text-amber-600 dark:text-amber-500"
+                                : "text-gray-600 dark:text-gray-400"
+                            )}
+                          >
+                            Pro
+                          </span>
+                        </div>
+                        <Switch
+                          checked={useSoraPro}
+                          onCheckedChange={setUseSoraPro}
+                          className="h-5 w-9 data-[state=checked]:bg-amber-600 data-[state=unchecked]:bg-gray-500"
+                        />
                       </div>
-                      <Switch
-                        checked={useSoraPro}
-                        onCheckedChange={setUseSoraPro}
-                        className="h-5 w-9 data-[state=checked]:bg-amber-600 data-[state=unchecked]:bg-gray-500"
-                      />
-                    </div>
+                      {/* Duration selector */}
+                      <div
+                        className={cn(
+                          "h-9 rounded-xl overflow-clip flex items-center gap-2 px-2",
+                          "bg-slate-500/10 dark:bg-slate-500/15 shadow-[0_0_0_1px_rgba(100,116,139,0.2),0_4px_8px_-0.5px_rgba(100,116,139,0.08),0_8px_16px_-2px_rgba(100,116,139,0.04)] dark:shadow-none dark:border dark:border-slate-500/30"
+                        )}
+                      >
+                        <Clock className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                        <Select
+                          value={videoDuration}
+                          onValueChange={(value) =>
+                            setVideoDuration(value as "4" | "8" | "12")
+                          }
+                        >
+                          <SelectTrigger className="h-6 border-none shadow-none bg-transparent text-xs font-medium text-slate-600 dark:text-slate-400 w-[60px] px-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl">
+                            <SelectItem
+                              value="4"
+                              className="text-xs rounded-lg"
+                            >
+                              4s
+                            </SelectItem>
+                            <SelectItem
+                              value="8"
+                              className="text-xs rounded-lg"
+                            >
+                              8s
+                            </SelectItem>
+                            <SelectItem
+                              value="12"
+                              className="text-xs rounded-lg"
+                            >
+                              12s
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {/* Resolution selector */}
+                      <div
+                        className={cn(
+                          "h-9 rounded-xl overflow-clip flex items-center gap-2 px-2",
+                          "bg-slate-500/10 dark:bg-slate-500/15 shadow-[0_0_0_1px_rgba(100,116,139,0.2),0_4px_8px_-0.5px_rgba(100,116,139,0.08),0_8px_16px_-2px_rgba(100,116,139,0.04)] dark:shadow-none dark:border dark:border-slate-500/30"
+                        )}
+                      >
+                        <Monitor className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
+                        <Select
+                          value={videoResolution}
+                          onValueChange={(value) =>
+                            setVideoResolution(
+                              value as "auto" | "720p" | "1080p"
+                            )
+                          }
+                        >
+                          <SelectTrigger className="h-6 border-none shadow-none bg-transparent text-xs font-medium text-slate-600 dark:text-slate-400 w-[70px] px-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl">
+                            <SelectItem
+                              value="auto"
+                              className="text-xs rounded-lg"
+                            >
+                              Auto
+                            </SelectItem>
+                            <SelectItem
+                              value="720p"
+                              className="text-xs rounded-lg"
+                            >
+                              720p
+                            </SelectItem>
+                            <SelectItem
+                              value="1080p"
+                              className="text-xs rounded-lg"
+                            >
+                              1080p
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
                   )}
                 </>
               ) : (
@@ -354,10 +454,7 @@ export function CanvasControlPanel({
                 onKeyDown={(e) => {
                   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
                     e.preventDefault();
-                    if (
-                      !isGenerating &&
-                      generationSettings.prompt.trim()
-                    ) {
+                    if (!isGenerating && generationSettings.prompt.trim()) {
                       handleRun();
                     }
                   }
@@ -483,7 +580,7 @@ export function CanvasControlPanel({
                     <div className="flex items-center gap-2">
                       <span>
                         {selectedIds.length === 1 &&
-                          !generationSettings.prompt.trim()
+                        !generationSettings.prompt.trim()
                           ? "Generate Variations"
                           : "Run"}
                       </span>

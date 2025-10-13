@@ -39,6 +39,8 @@ interface ImageToVideoDialogProps {
   onClose: () => void;
   onConvert: (settings: VideoGenerationSettings) => void;
   useSoraPro: boolean;
+  videoDuration: "4" | "8" | "12";
+  videoResolution: "auto" | "720p" | "1080p";
 }
 
 /**
@@ -51,6 +53,8 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
   onClose,
   onConvert,
   useSoraPro,
+  videoDuration,
+  videoResolution,
 }) => {
   const defaultModel = getDefaultVideoModel("image-to-video");
   
@@ -61,7 +65,11 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
   const [optionValues, setOptionValues] = useState<Record<string, unknown>>(
     () => {
       const initialModel = getVideoModelById(autoSelectedModelId) || defaultModel;
-      return initialModel?.defaults || {};
+      return {
+        ...(initialModel?.defaults || {}),
+        duration: videoDuration,
+        resolution: videoResolution,
+      };
     }
   );
 
@@ -71,9 +79,13 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
     setSelectedModelId(newModelId);
     const newModel = getVideoModelById(newModelId);
     if (newModel) {
-      setOptionValues(newModel.defaults);
+      setOptionValues({
+        ...newModel.defaults,
+        duration: videoDuration,
+        resolution: videoResolution,
+      });
     }
-  }, [useSoraPro]);
+  }, [useSoraPro, videoDuration, videoResolution]);
 
   const model = getVideoModelById(selectedModelId) || defaultModel;
 
@@ -86,7 +98,11 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
     setSelectedModelId(resetModelId);
     const resetModel = getVideoModelById(resetModelId);
     if (resetModel) {
-      setOptionValues(resetModel.defaults);
+      setOptionValues({
+        ...resetModel.defaults,
+        duration: videoDuration,
+        resolution: videoResolution,
+      });
     }
     onClose();
   };

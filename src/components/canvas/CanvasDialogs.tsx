@@ -50,6 +50,8 @@ interface CanvasDialogsProps {
   images: PlacedImage[];
   isConvertingToVideo: boolean;
   useSoraPro: boolean;
+  videoDuration: "4" | "8" | "12";
+  videoResolution: "auto" | "720p" | "1080p";
 }
 
 export function CanvasDialogs({
@@ -74,6 +76,8 @@ export function CanvasDialogs({
   images,
   isConvertingToVideo,
   useSoraPro,
+  videoDuration,
+  videoResolution,
 }: CanvasDialogsProps) {
   return (
     <>
@@ -274,6 +278,8 @@ export function CanvasDialogs({
         }
         isConverting={isConvertingToVideo}
         useSoraPro={useSoraPro}
+        videoDuration={videoDuration}
+        videoResolution={videoResolution}
       />
     </>
   );

@@ -817,11 +817,15 @@ export default function CanvasPage() {
         setGenerationSettings={generationState.setGenerationSettings}
         setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
         setUseSoraPro={generationState.setUseSoraPro}
+        setVideoDuration={generationState.setVideoDuration}
+        setVideoResolution={generationState.setVideoResolution}
         showSuccess={generationState.showSuccess}
         toast={toast}
         undo={handleUndo}
         useSoraPro={generationState.useSoraPro}
         variationMode={uiState.variationMode}
+        videoDuration={generationState.videoDuration}
+        videoResolution={generationState.videoResolution}
       />
 
       {/* All Dialogs */}
@@ -847,6 +851,8 @@ export default function CanvasPage() {
         theme={theme}
         toast={toast}
         useSoraPro={generationState.useSoraPro}
+        videoDuration={generationState.videoDuration}
+        videoResolution={generationState.videoResolution}
       />
 
       {/* Video Overlays */}
