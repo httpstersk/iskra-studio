@@ -111,7 +111,15 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
     setSelectedModelId(modelId);
     const newModel = getVideoModelById(modelId);
     if (newModel) {
-      setOptionValues(newModel.defaults);
+      // Merge new model defaults while preserving user-selected shared controls
+      setOptionValues((prev) => ({
+        ...newModel.defaults,
+        ...prev,
+        // Explicitly retain shared/global controls
+        duration: prev.duration,
+        resolution: prev.resolution,
+        prompt: prev.prompt,
+      }));
     }
   };
 
