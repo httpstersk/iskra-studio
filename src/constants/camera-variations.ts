@@ -1,16 +1,51 @@
 /**
  * Camera setting variation prompts for image generation
- * Ordered clockwise starting from top center position
- * For image mode (8): top, top-right corner, right, bottom-right corner, bottom, bottom-left corner, left, top-left corner
- * For video mode (4): uses indices 0, 2, 4, 6 (top, right, bottom, left)
+ * Includes diverse camera angles, movements, and B-roll footage options
+ * Ordered to provide maximum variety in perspective and style
  */
 export const CAMERA_VARIATIONS = [
-  "EXTREME LOW‑ANGLE HERO — CAMERA JUST ABOVE GROUND, TILTED UP; architecture looms while SILHOUETTE STAYS READABLE.", // 0: Top
-  "OVERHEAD BIRD'S EYE VIEW — CAMERA DIRECTLY ABOVE looking down; flattens perspective and creates geometric patterns.", // 1: Top-right corner
-  "PROFILE EXTREME CLOSE‑UP — NOSE‑LIP‑CHIN CONTOUR in relief; single kicker light sculpts the edge.", // 2: Right
-  "CINEMATIC TELEPHOTO COMPRESSION — LONG LENS, SHALLOW DEPTH; subject isolated with beautifully blurred foreground and background.", // 3: Bottom-right corner
-  "GOLDEN HOUR BACKLIGHTING — SUBJECT ILLUMINATED FROM BEHIND with warm rim lighting; creates atmospheric depth with glowing edges and soft shadows.", // 4: Bottom
-  "WORM'S EYE ULTRA-WIDE — EXTREME LOW ANGLE with wide lens; dramatic distortion emphasizes height and power.", // 5: Bottom-left corner
-  "WIDE-ANGLE ENVIRONMENTAL SHOT — SUBJECT IN CONTEXT with surrounding space; captures relationship between subject and environment with expansive field of view.", // 6: Left
-  "DUTCH ANGLE DYNAMIC — CAMERA TILTED 25-45 DEGREES; creates tension and energy while maintaining subject clarity.", // 7: Top-left corner
+  "AMERICAN SHOT — FRAMING FROM KNEES UP; versatile composition showing body language while maintaining facial detail.",
+  "B-ROLL: ATMOSPHERIC ELEMENTS — CAPTURE of light rays, dust particles, steam, or weather effects; adds mood and cinematic quality.",
+  "B-ROLL: ENVIRONMENTAL TEXTURE — DETAIL SHOT of surfaces, materials, or patterns in scene; establishes atmosphere and production value.",
+  "B-ROLL: ESTABLISHING WIDE — EXPANSIVE SHOT showing location and context; orients viewer to space before closer shots.",
+  "B-ROLL: HANDS IN ACTION — CLOSE-UP of hands performing task or gesture; adds human element and narrative detail.",
+  "B-ROLL: TRANSITION ELEMENT — ABSTRACT MOVEMENT or color that serves as visual bridge; smooth cuts between main footage.",
+  "CANTED HORIZON EXTREME — CAMERA TILTED 60-90 DEGREES; creates surreal, disorienting perspective for dramatic effect.",
+  "CINEMATIC TELEPHOTO COMPRESSION — LONG LENS, SHALLOW DEPTH; subject isolated with beautifully blurred foreground and background.",
+  "COWBOY SHOT — FRAMING FROM MID-THIGH UP; classic western composition balancing character and environment.",
+  "CRANE SHOT ASCENDING — CAMERA RISES SMOOTHLY from ground level to elevated view; reveals scale and context progressively.",
+  "DOLLY ZOOM VERTIGO — CAMERA PULLS BACK while zooming in; creates disorienting perspective shift that emphasizes emotional moment.",
+  "DRONE AERIAL DESCENT — CAMERA DESCENDS FROM HIGH ALTITUDE toward subject; reveals environment scale before intimate framing.",
+  "DRONE FLYOVER SWEEP — LOW-ALTITUDE PASS over landscape or subject; creates immersive sense of speed and spatial relationship.",
+  "DRONE ORBITAL RISE — CIRCULAR MOVEMENT while ascending; combines rotation with elevation for dynamic reveal.",
+  "DRONE TOP-DOWN TRACKING — BIRD'S EYE VIEW following subject movement; creates abstract patterns and emphasizes path or journey.",
+  "DUTCH ANGLE DYNAMIC — CAMERA TILTED 25-45 DEGREES; creates tension and energy while maintaining subject clarity.",
+  "EXTREME LOW‑ANGLE HERO — CAMERA JUST ABOVE GROUND, TILTED UP; architecture looms while SILHOUETTE STAYS READABLE.",
+  "GIMBAL CHASE — DYNAMIC FOLLOWING SHOT with stabilized movement; maintains smooth framing during fast-paced action.",
+  "GOLDEN HOUR BACKLIGHTING — SUBJECT ILLUMINATED FROM BEHIND with warm rim lighting; creates atmospheric depth with glowing edges and soft shadows.",
+  "HANDHELD INTIMATE — SUBTLE CAMERA SHAKE with close framing; creates documentary-style authenticity and immediacy.",
+  "JIB ARM SWEEP — SMOOTH ARCING MOVEMENT on extended arm; combines horizontal and vertical motion for elegant reveals.",
+  "LOCKED-OFF STATIC — COMPLETELY STILL CAMERA on tripod; creates formal, composed frame emphasizing subject movement.",
+  "MACRO DETAIL SHOT — EXTREME CLOSE-UP of texture or small object; reveals intricate details invisible to naked eye.",
+  "ORBITAL ROTATION — CAMERA CIRCLES AROUND SUBJECT at consistent distance; showcases subject from all angles while maintaining focus.",
+  "OVERHEAD BIRD'S EYE VIEW — CAMERA DIRECTLY ABOVE looking down; flattens perspective and creates geometric patterns.",
+  "PROFILE EXTREME CLOSE‑UP — NOSE‑LIP‑CHIN CONTOUR in relief; single kicker light sculpts the edge.",
+  "PULL-OUT REVEAL — CAMERA MOVES BACKWARD to reveal wider context; creates surprise by showing previously hidden information.",
+  "PUSH-IN SLOW — GRADUAL CAMERA MOVEMENT toward subject; builds tension and draws viewer's attention to specific detail.",
+  "RACK FOCUS SHIFT — FOCUS TRANSITIONS from foreground to background or vice versa; directs attention and reveals narrative layers.",
+  "REFLECTION SHOT — SUBJECT CAPTURED IN MIRROR, WATER, or glass surface; adds visual depth and symbolic layering.",
+  "SILHOUETTE CONTRE-JOUR — SUBJECT BACKLIT INTO DARK SHAPE against bright background; emphasizes form and creates dramatic contrast.",
+  "SLIDER LATERAL MOVE — HORIZONTAL CAMERA GLIDE parallel to subject; adds subtle production value and dimensional depth.",
+  "SNORRICAM POV — CAMERA MOUNTED TO SUBJECT facing them; creates intense subjective perspective with moving background.",
+  "SPLIT DIOPTER FOCUS — TWO FOCAL PLANES IN SHARP FOCUS simultaneously; foreground and background both clear despite distance.",
+  "STEADICAM FLOWING — SMOOTH GLIDING MOVEMENT through space; elegant navigation around obstacles with fluid motion.",
+  "THROUGH-FRAME COMPOSITION — CAMERA SHOOTS THROUGH FOREGROUND ELEMENT like doorway, window, or foliage; creates natural framing and depth.",
+  "TILT-SHIFT MINIATURE — SELECTIVE FOCUS creating toy-like effect; transforms real scenes into surreal miniature appearance.",
+  "TRACKING SHOT PARALLEL — CAMERA MOVES ALONGSIDE SUBJECT at matching speed; maintains consistent framing while revealing environment.",
+  "ULTRA-WIDE ESTABLISHING — EXPANSIVE FIELD OF VIEW capturing entire scene; emphasizes scale and environmental context.",
+  "WHIP PAN TRANSITION — RAPID HORIZONTAL CAMERA MOVEMENT with motion blur; creates energetic connection between scenes.",
+  "WIDE SHOT TWO-SHOT — MEDIUM-WIDE FRAMING of two subjects in space; shows interaction and spatial relationship clearly.",
+  "WIDE-ANGLE ENVIRONMENTAL SHOT — SUBJECT IN CONTEXT with surrounding space; captures relationship between subject and environment with expansive field of view.",
+  "WORM'S EYE ULTRA-WIDE — EXTREME LOW ANGLE with wide lens; dramatic distortion emphasizes height and power.",
+  "ZOOM-IN PUNCH — RAPID ZOOM toward subject or detail; creates emphasis and urgency without camera movement.",
 ] as const;

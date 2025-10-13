@@ -1,6 +1,6 @@
-import { CAMERA_VARIATIONS } from "@/constants/camera-variations";
 import { FAL_UPLOAD_PATH } from "@/lib/fal/constants";
 import type { PlacedImage } from "@/types/canvas";
+import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
 import { snapPosition } from "@/utils/snap-utils";
 import type { FalClient } from "@fal-ai/client";
@@ -11,7 +11,7 @@ import type { FalClient } from "@fal-ai/client";
  */
 async function uploadBlobDirect(
   blob: Blob,
-  toast: VariationHandlerDeps["toast"],
+  toast: VariationHandlerDeps["toast"]
 ): Promise<{ url: string }> {
   try {
     if (blob.size > 10 * 1024 * 1024) {
@@ -31,7 +31,7 @@ async function uploadBlobDirect(
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       throw new Error(
-        errorData?.message || `Upload failed with status ${response.status}`,
+        errorData?.message || `Upload failed with status ${response.status}`
       );
     }
 
@@ -65,7 +65,7 @@ async function uploadBlobDirect(
  * Process image to blob efficiently without FileReader
  */
 async function processImageToBlob(
-  selectedImage: PlacedImage,
+  selectedImage: PlacedImage
 ): Promise<{ blob: Blob; dimensions: { width: number; height: number } }> {
   // Load image
   const imgElement = new window.Image();
@@ -100,7 +100,7 @@ async function processImageToBlob(
         else reject(new Error("Failed to create blob"));
       },
       hasTransparency ? "image/png" : "image/jpeg",
-      0.95,
+      0.95
     );
   });
 
@@ -158,7 +158,7 @@ export function calculateBalancedPosition(
   sourceWidth: number,
   sourceHeight: number,
   variationWidth: number,
-  variationHeight: number,
+  variationHeight: number
 ) {
   // Clockwise positions starting from top center
   switch (angleIndex) {
@@ -315,35 +315,19 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
   const timestamp = Date.now();
 
-  // Determine which variations to generate based on count
-  // 4 variations: indices 0, 2, 4, 6 (top, right, bottom, left - cardinal directions)
-  // 8 variations: all indices 0-7 (sides + corners)
-  // 12 variations: indices 0-7 (inner ring) + 8-11 (outer cardinal directions)
-  let variationsToGenerate: string[];
+  // Randomly select camera variations from the expanded set
+  // Position indices are assigned sequentially based on variation count:
+  // 4 variations: cardinal directions (0, 2, 4, 6)
+  // 8 variations: all 8 positions (0-7)
+  // 12 variations: inner ring (0-7) + outer cardinal directions (8-11)
+  const variationsToGenerate = selectRandomCameraVariations(variationCount);
   let positionIndices: number[];
 
   if (variationCount === 4) {
-    // 4 cardinal directions
-    variationsToGenerate = [
-      CAMERA_VARIATIONS[0],
-      CAMERA_VARIATIONS[2],
-      CAMERA_VARIATIONS[4],
-      CAMERA_VARIATIONS[6],
-    ];
     positionIndices = [0, 2, 4, 6];
   } else if (variationCount === 8) {
-    // All 8 positions (sides + corners)
-    variationsToGenerate = [...CAMERA_VARIATIONS];
     positionIndices = [0, 1, 2, 3, 4, 5, 6, 7];
   } else {
-    // 12 variations: 8 inner positions + 4 outer cardinal directions
-    variationsToGenerate = [
-      ...CAMERA_VARIATIONS,
-      CAMERA_VARIATIONS[0], // outer top
-      CAMERA_VARIATIONS[2], // outer right
-      CAMERA_VARIATIONS[4], // outer bottom
-      CAMERA_VARIATIONS[6], // outer left
-    ];
     positionIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
   }
 
@@ -360,7 +344,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         selectedImage.width,
         selectedImage.height,
         selectedImage.width,
-        selectedImage.height,
+        selectedImage.height
       );
 
       return {
@@ -374,7 +358,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         isGenerated: true,
         isLoading: true,
       };
-    },
+    }
   );
 
   // Add placeholders immediately - single state update
@@ -391,10 +375,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     const { blob } = await processImageToBlob(selectedImage);
 
     // OPTIMIZATION 3: Upload blob via server proxy to avoid CORS
-  const blobUpload = await uploadBlobDirect(
-      blob,
-      toast,
-    );
+    const blobUpload = await uploadBlobDirect(blob, toast);
 
     // Snap source image position for consistent alignment
     const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
@@ -402,7 +383,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
     const imageSizeDimensions = getOptimalImageDimensions(
       selectedImage.width,
-      selectedImage.height,
+      selectedImage.height
     );
 
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update

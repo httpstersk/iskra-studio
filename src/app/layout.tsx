@@ -6,7 +6,7 @@ import "./globals.css";
 
 import { FAL_PROXY_PATH, FAL_UPLOAD_PATH } from "@/lib/fal/constants";
 
-const TITLE = "Iskra Studio";
+const TITLE = "Iskra ✸";
 const DESCRIPTION = "✸";
 
 export const metadata: Metadata = {
