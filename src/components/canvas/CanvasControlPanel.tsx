@@ -1,557 +1,147 @@
 "use client";
 
-import { GenerationsIndicator } from "@/components/generations-indicator";
-import { SpinnerIcon } from "@/components/icons";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ActionButtons } from "@/components/canvas/control-panel/ActionButtons";
+import { ControlActions } from "@/components/canvas/control-panel/ControlActions";
+import { GenerationsIndicatorWrapper } from "@/components/canvas/control-panel/GenerationsIndicatorWrapper";
+import { ModeIndicator } from "@/components/canvas/control-panel/ModeIndicator";
+import { PromptInput } from "@/components/canvas/control-panel/PromptInput";
+import { VideoSettings } from "@/components/canvas/control-panel/VideoSettings";
+import { CONTROL_PANEL_STYLES } from "@/constants/control-panel";
 import { cn } from "@/lib/utils";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
-import { checkOS } from "@/utils/os-utils";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  Clock,
-  ImagesIcon,
-  Paperclip,
-  PlayIcon,
-  Redo,
-  SlidersHorizontal,
-  Undo,
-} from "lucide-react";
-import { ShortcutBadge } from "./ShortcutBadge";
 
 /**
  * Props for the canvas control panel component.
  */
 interface CanvasControlPanelProps {
-  selectedIds: string[];
-  images: PlacedImage[];
-  generationSettings: GenerationSettings;
-  setGenerationSettings: (settings: GenerationSettings) => void;
-  isGenerating: boolean;
-  handleRun: () => void;
-  handleFileUpload: (files: FileList | null) => void;
   activeGenerationsSize: number;
   activeVideoGenerationsSize: number;
-  showSuccess: boolean;
-  canUndo: boolean;
   canRedo: boolean;
-  undo: () => void;
+  canUndo: boolean;
+  generationCount: number;
+  generationSettings: GenerationSettings;
+  handleFileUpload: (files: FileList | null) => void;
+  handleRun: () => void;
+  handleVariationModeChange: (mode: "image" | "video") => void;
+  images: PlacedImage[];
+  isGenerating: boolean;
   redo: () => void;
+  selectedIds: string[];
+  setGenerationSettings: (settings: GenerationSettings) => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
+  setUseSoraPro: (value: boolean) => void;
+  setVideoDuration: (value: "4" | "8" | "12") => void;
+  setVideoResolution: (value: "auto" | "720p" | "1080p") => void;
+  showSuccess: boolean;
   toast: (props: {
-    title: string;
     description?: string;
+    title: string;
     variant?: "default" | "destructive";
   }) => void;
-  variationMode?: "image" | "video";
-  generationCount: number;
-  handleVariationModeChange: (mode: "image" | "video") => void;
+  undo: () => void;
   useSoraPro: boolean;
-  setUseSoraPro: (value: boolean) => void;
+  variationMode?: "image" | "video";
   videoDuration: "4" | "8" | "12";
-  setVideoDuration: (value: "4" | "8" | "12") => void;
   videoResolution: "auto" | "720p" | "1080p";
-  setVideoResolution: (value: "auto" | "720p" | "1080p") => void;
 }
 
 /**
  * Control panel that surfaces primary generation controls and status indicators.
  */
 export function CanvasControlPanel({
-  selectedIds,
-  images,
-  generationSettings,
-  setGenerationSettings,
-  isGenerating,
-  handleRun,
-  handleFileUpload,
   activeGenerationsSize,
   activeVideoGenerationsSize,
-  showSuccess,
-  canUndo,
   canRedo,
-  undo,
-  redo,
-  setIsSettingsDialogOpen,
-  toast,
-  variationMode = "image",
+  canUndo,
   generationCount,
+  generationSettings,
+  handleFileUpload,
+  handleRun,
   handleVariationModeChange,
-  useSoraPro,
+  images,
+  isGenerating,
+  redo,
+  selectedIds,
+  setGenerationSettings,
+  setIsSettingsDialogOpen,
   setUseSoraPro,
-  videoDuration,
   setVideoDuration,
-  videoResolution,
   setVideoResolution,
+  showSuccess,
+  toast,
+  undo,
+  useSoraPro,
+  variationMode = "image",
+  videoDuration,
+  videoResolution,
 }: CanvasControlPanelProps) {
+  const hasSelection = selectedIds.length > 0;
   return (
     <div className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:p-0 md:pb-0 md:max-w-[648px]">
       <div
         className={cn(
           "bg-card/95 backdrop-blur-lg rounded-3xl",
-          "shadow-[0_0_0_1px_rgba(50,50,50,0.16),0_4px_8px_-0.5px_rgba(50,50,50,0.08),0_8px_16px_-2px_rgba(50,50,50,0.04)]",
-          "dark:shadow-none dark:outline dark:outline-1 dark:outline-border"
+          CONTROL_PANEL_STYLES.CARD_SHADOW,
+          CONTROL_PANEL_STYLES.DARK_OUTLINE
         )}
       >
         <div className="flex flex-col gap-3 px-3 md:px-3 py-2 md:py-3 relative">
           {/* Active generations indicator */}
-          <AnimatePresence mode="wait">
-            {(activeGenerationsSize > 0 ||
-              activeVideoGenerationsSize > 0 ||
-              isGenerating ||
-              showSuccess) && (
-              <motion.div
-                key={showSuccess ? "success" : "generating"}
-                initial={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
-                animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
-                exit={{ opacity: 0, y: -10, scale: 0.9, x: "-50%" }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
-                className={cn(
-                  "absolute z-50 -top-16 left-1/2",
-                  "rounded-xl",
-                  showSuccess
-                    ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
-                    : activeVideoGenerationsSize > 0
-                      ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
-                      : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
-                )}
-              >
-                <GenerationsIndicator
-                  isAnimating={!showSuccess}
-                  isSuccess={showSuccess}
-                  className="w-5 h-5"
-                  outputType={
-                    activeVideoGenerationsSize > 0 ? "video" : "image"
-                  }
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <GenerationsIndicatorWrapper
+            activeGenerationsSize={activeGenerationsSize}
+            activeVideoGenerationsSize={activeVideoGenerationsSize}
+            isGenerating={isGenerating}
+            showSuccess={showSuccess}
+          />
 
           {/* Action buttons row */}
           <div className="flex items-center gap-1">
             <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  "rounded-xl overflow-clip flex items-center",
-                  "shadow-[0_0_0_1px_rgba(50,50,50,0.12),0_4px_8px_-0.5px_rgba(50,50,50,0.04),0_8px_16px_-2px_rgba(50,50,50,0.02)]",
-                  "dark:shadow-none dark:border dark:border-border"
-                )}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={undo}
-                  disabled={!canUndo}
-                  className="rounded-none"
-                  title="Undo"
-                >
-                  <Undo className="h-4 w-4" />
-                </Button>
-                <div className="h-6 w-px bg-border" />
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={redo}
-                  disabled={!canRedo}
-                  className="rounded-none"
-                  title="Redo"
-                >
-                  <Redo className="h-4 w-4" strokeWidth={2} />
-                </Button>
-              </div>
+              <ActionButtons
+                canRedo={canRedo}
+                canUndo={canUndo}
+                redo={redo}
+                undo={undo}
+              />
 
               {/* Mode indicator badge with switch */}
-              {selectedIds.length > 0 ? (
-                <>
-                  <div
-                    className={cn(
-                      "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
-                      variationMode === "image"
-                        ? "bg-blue-500/10 dark:bg-blue-500/15 shadow-[0_0_0_1px_rgba(59,130,246,0.2),0_4px_8px_-0.5px_rgba(59,130,246,0.08),0_8px_16px_-2px_rgba(59,130,246,0.04)] dark:shadow-none dark:border dark:border-blue-500/30"
-                        : "bg-purple-500/10 dark:bg-purple-500/15 shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
-                    )}
-                  >
-                    <div className="flex items-center gap-2 text-xs font-medium">
-                      {variationMode === "image" ? (
-                        <>
-                          <ImagesIcon className="w-4 h-4 text-blue-600 dark:text-blue-500" />
-                          <span className="text-blue-600 dark:text-blue-500">
-                            Image Mode
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <PlayIcon className="w-4 h-4 text-purple-600 dark:text-purple-500 fill-purple-600 dark:fill-purple-500" />
-                          <span className="text-purple-600 dark:text-purple-500">
-                            Video Mode
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <Switch
-                      checked={variationMode === "video"}
-                      onCheckedChange={(checked) => {
-                        handleVariationModeChange(checked ? "video" : "image");
-                      }}
-                      className="h-5 w-9 data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-blue-600"
-                    />
-                  </div>
-                  {/* Video settings - only show when in video mode */}
-                  {variationMode === "video" && (
-                    <>
-                      {/* Sora Pro toggle */}
-                      <div
-                        className={cn(
-                          "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
-                          useSoraPro
-                            ? "bg-amber-500/10 dark:bg-amber-500/15 shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_4px_8px_-0.5px_rgba(245,158,11,0.08),0_8px_16px_-2px_rgba(245,158,11,0.04)] dark:shadow-none dark:border dark:border-amber-500/30"
-                            : "bg-gray-500/10 dark:bg-gray-500/15 shadow-[0_0_0_1px_rgba(107,114,128,0.2),0_4px_8px_-0.5px_rgba(107,114,128,0.08),0_8px_16px_-2px_rgba(107,114,128,0.04)] dark:shadow-none dark:border dark:border-gray-500/30"
-                        )}
-                      >
-                        <div className="flex items-center gap-2 text-xs font-medium">
-                          <span
-                            className={cn(
-                              "font-semibold",
-                              useSoraPro
-                                ? "text-amber-600 dark:text-amber-500"
-                                : "text-gray-600 dark:text-gray-400"
-                            )}
-                          >
-                            Pro
-                          </span>
-                        </div>
-                        <Switch
-                          checked={useSoraPro}
-                          onCheckedChange={setUseSoraPro}
-                          className="h-5 w-9 data-[state=checked]:bg-amber-600 data-[state=unchecked]:bg-gray-500"
-                        />
-                      </div>
-                      {/* Duration selector */}
-                      <div
-                        className={cn(
-                          "h-9 rounded-xl overflow-clip flex items-center gap-2 px-2",
-                          "bg-slate-500/10 dark:bg-slate-500/15 shadow-[0_0_0_1px_rgba(100,116,139,0.2),0_4px_8px_-0.5px_rgba(100,116,139,0.08),0_8px_16px_-2px_rgba(100,116,139,0.04)] dark:shadow-none dark:border dark:border-slate-500/30"
-                        )}
-                      >
-                        <Clock className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
-                        <Select
-                          value={videoDuration}
-                          onValueChange={(value) =>
-                            setVideoDuration(value as "4" | "8" | "12")
-                          }
-                        >
-                          <SelectTrigger className="h-6 border-none shadow-none bg-transparent text-xs font-medium text-slate-600 dark:text-slate-400 w-[60px] px-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            <SelectItem
-                              value="4"
-                              className="text-xs rounded-lg"
-                            >
-                              4s
-                            </SelectItem>
-                            <SelectItem
-                              value="8"
-                              className="text-xs rounded-lg"
-                            >
-                              8s
-                            </SelectItem>
-                            <SelectItem
-                              value="12"
-                              className="text-xs rounded-lg"
-                            >
-                              12s
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  )}
-                </>
-              ) : (
-                <div
-                  className={cn(
-                    "h-9 rounded-xl overflow-clip flex items-center px-3",
-                    "pointer-events-none select-none",
-                    "bg-orange-500/10 dark:bg-orange-500/15 shadow-[0_0_0_1px_rgba(249,115,22,0.2),0_4px_8px_-0.5px_rgba(249,115,22,0.08),0_8px_16px_-2px_rgba(249,115,22,0.04)] dark:shadow-none dark:border dark:border-orange-500/30"
-                  )}
-                >
-                  <div className="flex items-center gap-2 text-xs font-medium">
-                    <span className="text-orange-600 dark:text-orange-500 font-bold text-sm">
-                      T
-                    </span>
-                    <span className="text-orange-600 dark:text-orange-500">
-                      Text to Image
-                    </span>
-                  </div>
-                </div>
+              <ModeIndicator
+                handleVariationModeChange={handleVariationModeChange}
+                hasSelection={hasSelection}
+                variationMode={variationMode}
+              />
+
+              {/* Video settings - only show when in video mode */}
+              {hasSelection && variationMode === "video" && (
+                <VideoSettings
+                  setUseSoraPro={setUseSoraPro}
+                  setVideoDuration={setVideoDuration}
+                  useSoraPro={useSoraPro}
+                  videoDuration={videoDuration}
+                />
               )}
             </div>
             <div className="flex-1" />
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="secondary"
-                      size="icon-sm"
-                      className="relative"
-                      onClick={() => setIsSettingsDialogOpen(true)}
-                    >
-                      <SlidersHorizontal className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <span>Settings</span>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+            <ControlActions
+              generationSettings={generationSettings}
+              handleFileUpload={handleFileUpload}
+              handleRun={handleRun}
+              isGenerating={isGenerating}
+              selectedIds={selectedIds}
+              setIsSettingsDialogOpen={setIsSettingsDialogOpen}
+              toast={toast}
+            />
           </div>
 
-          {selectedIds.length > 0 && (
-            <div className="relative">
-              <Textarea
-                value={generationSettings.variationPrompt || ""}
-                onChange={(e) =>
-                  setGenerationSettings({
-                    ...generationSettings,
-                    variationPrompt: e.target.value,
-                  })
-                }
-                placeholder="Enter edit instructions for variations (optional)..."
-                className="w-full h-16 resize-none border-none p-2 pr-24"
-                style={{ fontSize: "16px" }}
-                onKeyDown={(e) => {
-                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                    e.preventDefault();
-                    if (!isGenerating) {
-                      handleRun();
-                    }
-                  }
-                }}
-              />
-
-              <div className="absolute top-1 right-2 flex items-center justify-end">
-                <div className="relative h-12 w-20">
-                  {selectedIds.slice(0, 3).map((id, index) => {
-                    const image = images.find((img) => img.id === id);
-                    if (!image) return null;
-
-                    const isLast =
-                      index === Math.min(selectedIds.length - 1, 2);
-                    const offset = index * 8;
-                    const size = 40 - index * 4;
-                    const topOffset = index * 2;
-
-                    return (
-                      <div
-                        key={id}
-                        className="absolute rounded-lg border border-border/20 bg-background overflow-hidden"
-                        style={{
-                          right: `${offset}px`,
-                          top: `${topOffset}px`,
-                          zIndex: 3 - index,
-                          width: `${size}px`,
-                          height: `${size}px`,
-                        }}
-                      >
-                        <img
-                          src={image.src}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                        {isLast && selectedIds.length > 3 && (
-                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                            <span className="text-white text-xs font-medium">
-                              +{selectedIds.length - 3}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {selectedIds.length === 0 && (
-            <div className="relative">
-              <Textarea
-                value={generationSettings.prompt}
-                onChange={(e) =>
-                  setGenerationSettings({
-                    ...generationSettings,
-                    prompt: e.target.value,
-                  })
-                }
-                placeholder={`Enter a prompt... (${checkOS("Win") || checkOS("Linux") ? "Ctrl" : "⌘"}+Enter to run)`}
-                className="w-full h-20 resize-none border-none p-2"
-                style={{ fontSize: "16px" }}
-                onKeyDown={(e) => {
-                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                    e.preventDefault();
-                    if (!isGenerating && generationSettings.prompt.trim()) {
-                      handleRun();
-                    }
-                  }
-                }}
-              />
-            </div>
-          )}
-
-          {/* Style dropdown and Run button */}
-          <div className="flex items-center justify-between">
-            <div></div>
-
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="border-none"
-                      onClick={() => {
-                        const input = document.createElement("input");
-                        input.type = "file";
-                        input.accept = "image/*";
-                        input.multiple = true;
-                        input.style.position = "fixed";
-                        input.style.top = "-1000px";
-                        input.style.left = "-1000px";
-                        input.style.opacity = "0";
-                        input.style.pointerEvents = "none";
-                        input.style.width = "1px";
-                        input.style.height = "1px";
-
-                        input.onchange = (e) => {
-                          try {
-                            handleFileUpload(
-                              (e.target as HTMLInputElement).files
-                            );
-                          } catch (error) {
-                            console.error("File upload error:", error);
-                            toast({
-                              title: "Upload failed",
-                              description: "Failed to process selected files",
-                              variant: "destructive",
-                            });
-                          } finally {
-                            if (input.parentNode) {
-                              document.body.removeChild(input);
-                            }
-                          }
-                        };
-
-                        input.onerror = () => {
-                          console.error("File input error");
-                          if (input.parentNode) {
-                            document.body.removeChild(input);
-                          }
-                        };
-
-                        document.body.appendChild(input);
-                        setTimeout(() => {
-                          try {
-                            input.click();
-                          } catch (error) {
-                            console.error(
-                              "Failed to trigger file dialog:",
-                              error
-                            );
-                            toast({
-                              title: "Upload unavailable",
-                              description:
-                                "File upload is not available. Try using drag & drop instead.",
-                              variant: "destructive",
-                            });
-                            if (input.parentNode) {
-                              document.body.removeChild(input);
-                            }
-                          }
-                        }, 10);
-
-                        setTimeout(() => {
-                          if (input.parentNode) {
-                            document.body.removeChild(input);
-                          }
-                        }, 30000);
-                      }}
-                      title="Upload images"
-                    >
-                      <Paperclip className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <span>Upload</span>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      onClick={handleRun}
-                      variant="primary"
-                      size="icon"
-                      disabled={
-                        isGenerating ||
-                        (selectedIds.length === 0 &&
-                          !generationSettings.prompt.trim())
-                      }
-                      className={cn(
-                        "gap-2 font-medium transition-all",
-                        isGenerating && "bg-secondary"
-                      )}
-                    >
-                      {isGenerating ? (
-                        <SpinnerIcon className="h-4 w-4 animate-spin text-white" />
-                      ) : (
-                        <PlayIcon className="h-4 w-4 text-white fill-white" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="flex items-center gap-2">
-                      <span>
-                        {selectedIds.length === 1 &&
-                        !generationSettings.prompt.trim()
-                          ? "Generate Variations"
-                          : "Run"}
-                      </span>
-                      <ShortcutBadge
-                        variant="default"
-                        size="xs"
-                        shortcut={
-                          checkOS("Win") || checkOS("Linux")
-                            ? "ctrl+enter"
-                            : "meta+enter"
-                        }
-                      />
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </div>
+          {/* Prompt input */}
+          <PromptInput
+            generationSettings={generationSettings}
+            handleRun={handleRun}
+            images={images}
+            isGenerating={isGenerating}
+            selectedIds={selectedIds}
+            setGenerationSettings={setGenerationSettings}
+          />
         </div>
       </div>
     </div>
