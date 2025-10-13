@@ -1,7 +1,10 @@
 /**
- * Sora 2 Prompt Generator - OPTIMIZED FOR API
- * Expands storyline concepts into full Sora prompts with 1 CUT PER SECOND
- * Prompts optimized for Sora API character limits (~800 chars max)
+ * Sora 2 Prompt Generator - CINEMATIC FORMAT
+ * Expands storyline concepts into structured Sora prompts following cinematic guidelines:
+ * 1. Global descriptors (Setting, Subject, Lighting, Vibe)
+ * 2. Timestamps [00:00-00:01] for each shot
+ * 3. Explicit shot types and camera motion
+ * 4. SFX: and VFX: labels
  */
 
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
@@ -13,7 +16,7 @@ interface PromptGenerationOptions {
   duration: number;
 }
 
-const PROMPT_CHAR_LIMIT = 450;
+const PROMPT_CHAR_LIMIT = 1000;
 
 function cleanText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
@@ -30,42 +33,50 @@ function truncatePrompt(
   return `${safeSlice.trim()}…`;
 }
 
-function joinList(values: string[], max: number, joiner: string): string {
-  return values.filter(Boolean).slice(0, max).map(cleanText).join(joiner);
+/**
+ * Formats timestamp in [MM:SS-MM:SS] format
+ */
+function formatTimestamp(startSec: number, endSec: number): string {
+  const formatTime = (sec: number) => {
+    const minutes = Math.floor(sec / 60);
+    const seconds = sec % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  return `[${formatTime(startSec)}-${formatTime(endSec)}]`;
 }
 
 /**
- * Expands a single storyline concept into a concise Sora-optimized prompt
+ * Expands a single storyline concept into a cinematic Sora prompt
  */
 export function expandStorylineToPrompt(
   options: PromptGenerationOptions
 ): string {
   const { storyline, styleAnalysis, duration } = options;
 
-  const narrative = cleanText(storyline.narrative);
+  // 1. Global descriptors
   const setting = cleanText(storyline.setting);
-  const palette = joinList(styleAnalysis.colorPalette.dominant, 2, " / ");
-  const paletteMood = cleanText(styleAnalysis.colorPalette.mood);
+  const subject = cleanText(storyline.subject);
   const lighting = cleanText(styleAnalysis.lighting.quality);
-  const energy = cleanText(styleAnalysis.mood.primary);
-  const beats = joinList(storyline.keyMoments, 4, " → ")
-    .replace(/\b(\d)(?:-?second)?\b/gi, "$1-second")
-    .trim();
-  const motifs = joinList(storyline.visualMotifs, 3, ", ");
-  const cinematicStyle = cleanText(storyline.cinematicStyle);
+  const vibe = cleanText(styleAnalysis.mood.primary);
+  const cinematography = cleanText(storyline.cinematicStyle);
 
-  const segments = [
-    `Camera: ${cinematicStyle}`,
-    narrative,
-    setting,
-    beats ? `Motion: ${beats}` : "",
-    palette ? `Colors: ${palette} | ${paletteMood}` : "",
-    `${lighting} lighting | ${energy} energy`,
-    motifs ? `Visuals: ${motifs}` : "",
-  ].filter(Boolean);
+  const globalDesc = `Setting: ${setting}. Subject: ${subject}. Lighting: ${lighting}. Vibe: ${vibe}. Cinematography: ${cinematography}.`;
 
-  const rawPrompt = segments.map(cleanText).join(". ");
-  return truncatePrompt(rawPrompt);
+  // 2. Timestamp-based shots from keyMoments
+  const moments = storyline.keyMoments.slice(0, 4);
+  const shots: string[] = [];
+
+  for (let i = 0; i < moments.length; i++) {
+    const startSec = i;
+    const endSec = i + 1;
+    const timestamp = formatTimestamp(startSec, endSec);
+    const momentDesc = cleanText(moments[i]);
+    shots.push(`${timestamp} ${momentDesc}`);
+  }
+
+  const fullPrompt = `${globalDesc} ${shots.join(" ")}`;
+  return truncatePrompt(fullPrompt);
 }
 
 /**
