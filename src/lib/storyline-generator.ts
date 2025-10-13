@@ -25,8 +25,20 @@ Non-negotiables:
 5. Spotlight visually arresting motifs tied to the subject's texture, lighting, and color palette.
 6. Channel the combined spirit of the world's boldest auteurs.
 7. If any element feels subdued, amplify it until the sequence reads like a festival-premiere showstopper.
-8. SELECT ONE CINEMATOGRAPHER randomly from this master list for each storyline: John F. Seitz, James Wong Howe, Roger Deakins, Hoyte van Hoytema, Emmanuel Lubezki, Vittorio Storaro, Gordon Willis, Conrad Hall, Winton Hoch, Robert Burks, Janusz Kamiński, Michael Ballhaus, Caleb Deschanel, Russell Carpenter, Dean Cundey, Owen Roizman, Sven Nykvist, Karl Freund, Harris Savides, Dudley Nichols. Use a DIFFERENT cinematographer for each of the four storylines.
-9. Every keyMoment beat MUST be CONCISE (120-140 chars max) and include: [SHOT+MOTION] [action] SFX: [sound] VFX: [effect]. NO STATIC SHOTS.
+8. SELECT FOUR DIFFERENT CINEMATOGRAPHERS from this master list, one for each storyline: John F. Seitz, James Wong Howe, Roger Deakins, Hoyte van Hoytema, Emmanuel Lubezki, Vittorio Storaro, Gordon Willis, Conrad Hall, Winton Hoch, Robert Burks, Janusz Kamiński, Michael Ballhaus, Caleb Deschanel, Russell Carpenter, Dean Cundey, Owen Roizman, Sven Nykvist, Karl Freund, Harris Savides, Dudley Nichols. Each storyline MUST use a UNIQUE cinematographer. NO REPEATS.
+9. Each cinematographer should produce a VISUALLY DISTINCT OUTPUT based on their signature style:
+   - Roger Deakins: naturalistic lighting, Steadicam precision, subtle camera moves
+   - Emmanuel Lubezki: fluid long takes, natural light, immersive camera flow
+   - Vittorio Storaro: bold color symbolism, dramatic shadows, expressive lighting
+   - Gordon Willis: high contrast, underexposure, controlled darkness ("Prince of Darkness")
+   - Janusz Kamiński: diffused light, flares, ethereal atmosphere
+   - Hoyte van Hoytema: IMAX scale, practical lighting, grounded realism
+   - Conrad Hall: deep focus, silhouettes, poetic framing
+   - James Wong Howe: low angles, deep focus, innovative rigging
+   - Sven Nykvist: soft natural light, intimate close-ups, Bergman influence
+   - Harris Savides: desaturated palettes, cool tones, alienation
+   Match camera movements, lighting, and framing to the chosen cinematographer's known techniques.
+10. Every keyMoment beat MUST be CONCISE (120-140 chars max) and include: [SHOT+MOTION] [action] SFX: [sound] VFX: [effect]. NO STATIC SHOTS.
 
 For each storyline you MUST populate the following fields exactly as named in JSON (matching the provided schema):
 - "title": Punchy headline (3-5 words max) (string)
@@ -49,6 +61,9 @@ LENGTH REQUIREMENTS (enforce strictly):
 - Narrative: 150 chars max
 - Emotional Arc: 80 chars max
 - Each Key Moment: 140 chars max
+
+VARIATION REQUIREMENTS:
+The four storylines should be VISUALLY DISTINCT VARIATIONS based on the four different cinematographers selected. Each should feel like it was shot by that specific cinematographer, with different lighting approaches, camera movements, framing styles, and overall aesthetic. Someone viewing all four outputs should immediately recognize they were shot by different master cinematographers.
 
 Respond ONLY with JSON that satisfies the storyline set schema: an object containing a "storylines" array of four storyline objects and a "styleTheme" string summarizing the shared aesthetic through-line. No commentary outside the JSON.`;
 
