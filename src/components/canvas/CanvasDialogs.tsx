@@ -25,10 +25,6 @@ interface CanvasDialogsProps {
   // Settings Dialog
   isSettingsDialogOpen: boolean;
   setIsSettingsDialogOpen: (open: boolean) => void;
-  customApiKey: string;
-  setCustomApiKey: (key: string) => void;
-  tempApiKey: string;
-  setTempApiKey: (key: string) => void;
   theme: string | undefined;
   setTheme: (theme: "system" | "light" | "dark") => void;
   showGrid: boolean;
@@ -57,10 +53,6 @@ interface CanvasDialogsProps {
 export function CanvasDialogs({
   isSettingsDialogOpen,
   setIsSettingsDialogOpen,
-  customApiKey,
-  setCustomApiKey,
-  tempApiKey,
-  setTempApiKey,
   theme,
   setTheme,
   showGrid,
@@ -92,95 +84,7 @@ export function CanvasDialogs({
           </DialogHeader>
 
           <div className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="api-key">FAL API Key</Label>
-                <p className="text-sm text-muted-foreground">
-                  Add your own FAL API key to bypass rate limits and use your
-                  own quota.
-                </p>
-                <Input
-                  id="api-key"
-                  type="password"
-                  placeholder="Enter your API key"
-                  value={tempApiKey}
-                  onChange={(e) => setTempApiKey(e.target.value)}
-                  className="font-mono"
-                  style={{ fontSize: "16px" }}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Get your API key from{" "}
-                  <Link
-                    href="https://fal.ai/dashboard/keys"
-                    target="_blank"
-                    className="underline hover:text-foreground"
-                  >
-                    fal.ai/dashboard/keys
-                  </Link>
-                </p>
-              </div>
-
-              {customApiKey && (
-                <div className="rounded-xl bg-green-500/10 border border-green-500/20 p-3">
-                  <div className="flex items-center gap-2 text-sm text-green-600">
-                    <Check className="h-4 w-4" />
-                    <span>Currently using custom API key</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-between gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setCustomApiKey("");
-                    setTempApiKey("");
-                    toast({
-                      title: "API key removed",
-                      description: "Using default rate-limited API",
-                    });
-                  }}
-                  disabled={!customApiKey}
-                >
-                  Remove Key
-                </Button>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setTempApiKey(customApiKey);
-                      setIsSettingsDialogOpen(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={() => {
-                      const trimmedKey = tempApiKey.trim();
-                      if (trimmedKey) {
-                        setCustomApiKey(trimmedKey);
-                        setIsSettingsDialogOpen(false);
-                        toast({
-                          title: "API key saved",
-                          description: "Your custom API key is now active",
-                        });
-                      } else if (trimmedKey) {
-                        toast({
-                          title: "Invalid API key",
-                          description: "FAL API keys should start with 'fal_'",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    disabled={!tempApiKey.trim()}
-                  >
-                    Save Key
-                  </Button>
-                </div>
-              </div>
-            </div>
+            {/* Appearance and display settings only; API key input removed */}
 
             <div className="h-px bg-border/40" />
 

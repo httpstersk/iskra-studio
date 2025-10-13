@@ -6,17 +6,14 @@
 import { useEffect } from "react";
 import { useAtom } from "jotai";
 import {
-  customApiKeyAtom,
   generationCountAtom,
   hiddenVideoControlsIdsAtom,
-  isApiKeyDialogOpenAtom,
   isImageToVideoDialogOpenAtom,
   isSettingsDialogOpenAtom,
   selectedImageForVideoAtom,
   showChatAtom,
   showGridAtom,
   showMinimapAtom,
-  tempApiKeyAtom,
   variationModeAtom,
   visibleIndicatorsAtom,
 } from "@/store/ui-atoms";
@@ -26,13 +23,9 @@ import {
  * Handles localStorage persistence for settings
  */
 export function useUIState() {
-  const [customApiKey, setCustomApiKey] = useAtom(customApiKeyAtom);
   const [generationCount, setGenerationCount] = useAtom(generationCountAtom);
   const [hiddenVideoControlsIds, setHiddenVideoControlsIds] = useAtom(
     hiddenVideoControlsIdsAtom,
-  );
-  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useAtom(
-    isApiKeyDialogOpenAtom,
   );
   const [isImageToVideoDialogOpen, setIsImageToVideoDialogOpen] = useAtom(
     isImageToVideoDialogOpenAtom,
@@ -46,20 +39,11 @@ export function useUIState() {
   const [showChat, setShowChat] = useAtom(showChatAtom);
   const [showGrid, setShowGrid] = useAtom(showGridAtom);
   const [showMinimap, setShowMinimap] = useAtom(showMinimapAtom);
-  const [tempApiKey, setTempApiKey] = useAtom(tempApiKeyAtom);
   const [variationMode, setVariationMode] = useAtom(variationModeAtom);
   const [visibleIndicators, setVisibleIndicators] = useAtom(
     visibleIndicatorsAtom,
   );
 
-  // Load API key from localStorage on mount
-  useEffect(() => {
-    const savedKey = localStorage.getItem("fal-api-key");
-    if (savedKey) {
-      setCustomApiKey(savedKey);
-      setTempApiKey(savedKey);
-    }
-  }, [setCustomApiKey, setTempApiKey]);
 
   // Load grid setting from localStorage on mount
   useEffect(() => {
@@ -87,40 +71,26 @@ export function useUIState() {
     localStorage.setItem("showMinimap", showMinimap.toString());
   }, [showMinimap]);
 
-  // Save API key to localStorage when it changes
-  useEffect(() => {
-    if (customApiKey) {
-      localStorage.setItem("fal-api-key", customApiKey);
-    } else {
-      localStorage.removeItem("fal-api-key");
-    }
-  }, [customApiKey]);
 
   return {
-    customApiKey,
     generationCount,
     hiddenVideoControlsIds,
-    isApiKeyDialogOpen,
     isImageToVideoDialogOpen,
     isSettingsDialogOpen,
     selectedImageForVideo,
-    setCustomApiKey,
     setGenerationCount,
     setHiddenVideoControlsIds,
-    setIsApiKeyDialogOpen,
     setIsImageToVideoDialogOpen,
     setIsSettingsDialogOpen,
     setSelectedImageForVideo,
     setShowChat,
     setShowGrid,
     setShowMinimap,
-    setTempApiKey,
     setVariationMode,
     setVisibleIndicators,
     showChat,
     showGrid,
     showMinimap,
-    tempApiKey,
     variationMode,
     visibleIndicators,
   };

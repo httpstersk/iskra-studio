@@ -9,7 +9,6 @@ interface GenerationHandlerDeps {
   images: PlacedImage[];
   selectedIds: string[];
   generationSettings: GenerationSettings;
-  customApiKey?: string;
   canvasSize: { width: number; height: number };
   viewport: { x: number; y: number; scale: number };
   falClient: FalClient;
@@ -19,7 +18,6 @@ interface GenerationHandlerDeps {
     React.SetStateAction<Map<string, ActiveGeneration>>
   >;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsApiKeyDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   toast: (props: {
     title: string;
     description?: string;
@@ -34,7 +32,6 @@ interface GenerationHandlerDeps {
       | "square"
       | "landscape_16_9"
       | "portrait_16_9";
-    apiKey?: string;
   }) => Promise<{ width: number; height: number; url: string }>;
 }
 
@@ -42,7 +39,6 @@ export const uploadImageDirect = async (
   dataUrl: string,
   falClient: FalClient,
   toast: GenerationHandlerDeps["toast"],
-  setIsApiKeyDialogOpen: GenerationHandlerDeps["setIsApiKeyDialogOpen"],
 ) => {
   // Convert data URL to blob first
   const response = await fetch(dataUrl);
@@ -73,12 +69,9 @@ export const uploadImageDirect = async (
     if (isRateLimit) {
       toast({
         title: "Rate limit exceeded",
-        description:
-          "Add your FAL API key to bypass rate limits. Without an API key, uploads are limited.",
+        description: "Please try again later.",
         variant: "destructive",
       });
-      // Open API key dialog automatically
-      setIsApiKeyDialogOpen(true);
     } else {
       toast({
         title: "Failed to upload image",
@@ -133,7 +126,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
     images,
     selectedIds,
     generationSettings,
-    customApiKey,
     canvasSize,
     viewport,
     falClient,
@@ -141,7 +133,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
     setSelectedIds,
     setActiveGenerations,
     setIsGenerating,
-    setIsApiKeyDialogOpen,
     toast,
     generateTextToImage,
   } = deps;
@@ -164,7 +155,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       const result = (await generateTextToImage({
         prompt: generationSettings.prompt,
         imageSize: "square",
-        apiKey: customApiKey || undefined,
       })) as { width: number; height: number; url: string };
 
       // Add the generated image to the canvas
@@ -252,7 +242,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
           dataUrl,
           falClient,
           toast,
-          setIsApiKeyDialogOpen,
         );
       } catch (uploadError) {
         console.error("Failed to upload image:", uploadError);

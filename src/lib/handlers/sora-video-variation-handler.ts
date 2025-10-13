@@ -23,7 +23,6 @@ interface SoraVideoVariationHandlerDeps {
   falClient: { storage: { upload: (blob: Blob) => Promise<string> } };
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsApiKeyDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setActiveVideoGenerations: React.Dispatch<
     React.SetStateAction<Map<string, any>>
   >;
@@ -32,7 +31,6 @@ interface SoraVideoVariationHandlerDeps {
     description?: string;
     variant?: "default" | "destructive";
   }) => void;
-  customApiKey?: string;
   basePrompt?: string;
   videoSettings?: Partial<VideoGenerationSettings>;
 }
@@ -65,9 +63,7 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
  */
 async function uploadImageToFal(
   blob: Blob,
-  customApiKey: string | undefined,
   toast: SoraVideoVariationHandlerDeps["toast"],
-  setIsApiKeyDialogOpen: SoraVideoVariationHandlerDeps["setIsApiKeyDialogOpen"],
 ): Promise<string> {
   try {
     const formData = new FormData();
@@ -76,7 +72,6 @@ async function uploadImageToFal(
     const response = await fetch("/api/fal/upload", {
       method: "POST",
       body: formData,
-      headers: customApiKey ? { authorization: `Bearer ${customApiKey}` } : {},
     });
 
     if (!response.ok) {
@@ -97,10 +92,9 @@ async function uploadImageToFal(
     if (isRateLimit) {
       toast({
         title: "Rate limit exceeded",
-        description: "Add your FAL API key to bypass rate limits.",
+        description: "Please try again later.",
         variant: "destructive",
       });
-      setIsApiKeyDialogOpen(true);
     } else {
       toast({
         title: "Upload failed",
@@ -158,10 +152,8 @@ export const handleSoraVideoVariations = async (
     falClient,
     setVideos,
     setIsGenerating,
-    setIsApiKeyDialogOpen,
     setActiveVideoGenerations,
     toast,
-    customApiKey,
     basePrompt = "",
     videoSettings = {},
   } = deps;
@@ -196,12 +188,10 @@ export const handleSoraVideoVariations = async (
       description: "Uploading reference image...",
     });
 
-    const blob = await imageToBlob(selectedImage.src);
+    const selectedImageBlob = await imageToBlob(selectedImage.src);
     const imageUrl = await uploadImageToFal(
-      blob,
-      customApiKey,
+      selectedImageBlob,
       toast,
-      setIsApiKeyDialogOpen,
     );
 
     // Stage 1: Analyze image style/mood

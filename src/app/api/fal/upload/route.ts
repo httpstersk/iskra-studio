@@ -26,27 +26,25 @@ export async function POST(req: NextRequest) {
       return new Response("Access denied", { status: 403 });
     }
 
-    // Check if user has provided their own API key
-    const authHeader = req.headers.get("authorization");
-    const bearerToken = extractBearerToken(authHeader);
-    if (authHeader && !bearerToken) {
-      return NextResponse.json(
-        { error: "Invalid authorization header" },
-        { status: 400 },
-      );
-    }
-    const hasCustomApiKey = Boolean(bearerToken);
+  // Disallow user-provided FAL API keys via Authorization header
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) {
+    return NextResponse.json(
+      { error: "Custom FAL API keys are not accepted." },
+      { status: 400 },
+    );
+  }
 
-    // Only apply rate limiting if no custom API key is provided
-    const limiterResult = await checkRateLimit({
-      limiter: standardRateLimiter,
-      headers: req.headers,
-      hasCustomApiKey,
-    });
+  // Always apply rate limiting
+  const limiterResult = await checkRateLimit({
+    limiter: standardRateLimiter,
+    headers: req.headers,
+    hasCustomApiKey: false,
+  });
 
     if (limiterResult.shouldLimitRequest) {
       return new Response(
-        `Rate limit exceeded per ${limiterResult.period}. Add your FAL API key to bypass rate limits.`,
+        `Rate limit exceeded per ${limiterResult.period}. Please try again later.`,
         {
           status: 429,
           headers: buildRateLimitHeaders(
@@ -83,8 +81,8 @@ export async function POST(req: NextRequest) {
 
     const blob: Blob = file;
 
-    // Create fal client with API key from environment or user-provided key
-    const falClient = createServerFalClient(bearerToken);
+    // Create fal client using server environment key
+    const falClient = createServerFalClient();
 
     // Upload the file server-side
     const uploadResult = await falClient.storage.upload(blob);
@@ -104,7 +102,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: "Rate limit exceeded",
-          message: "Add your FAL API key to bypass rate limits.",
+          message: "Please try again later.",
         },
         { status: 429 },
       );

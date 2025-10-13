@@ -8,7 +8,6 @@ import { atom } from "jotai";
 /**
  * Dialog visibility atoms
  */
-export const isApiKeyDialogOpenAtom = atom(false);
 export const isImageToVideoDialogOpenAtom = atom(false);
 export const isSettingsDialogOpenAtom = atom(false);
 
@@ -24,11 +23,6 @@ export const showChatAtom = atom(false);
 export const showGridAtom = atom(true);
 export const showMinimapAtom = atom(true);
 
-/**
- * API key atoms
- */
-export const customApiKeyAtom = atom<string>("");
-export const tempApiKeyAtom = atom<string>("");
 
 /**
  * Visibility control atoms

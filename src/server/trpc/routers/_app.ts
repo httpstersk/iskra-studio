@@ -24,15 +24,13 @@ type ApiResponse = {
 
 // Helper function to check rate limits or use custom API key
 async function getFalClient(
-  apiKey: string | undefined,
   ctx: { req?: any; user?: { id: string } },
-  isVideo: boolean = false,
+  isVideo: boolean = false
 ) {
   const headersSource =
     ctx.req?.headers instanceof Headers ? ctx.req.headers : ctx.req?.headers;
 
   const resolved = await resolveFalClient({
-    apiKey,
     limiter: isVideo ? videoRateLimiter : standardRateLimiter,
     headers: headersSource,
     bucketId: isVideo ? "video" : undefined,
@@ -63,7 +61,6 @@ export const appRouter = router({
     .input(
       z
         .object({
-          apiKey: z.string().optional(),
           aspectRatio: z.enum(["auto", "9:16", "16:9"]).optional(),
           duration: z.union([z.number(), z.string()]).optional(),
           imageUrl: z.string().url(),
@@ -71,13 +68,13 @@ export const appRouter = router({
           prompt: z.string().optional(),
           resolution: z.enum(["auto", "720p", "1080p"]).optional(),
         })
-        .passthrough(),
+        .passthrough()
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
         console.log("tRPC generateImageToVideo - Input received:", input);
 
-        const falClient = await getFalClient(input.apiKey, ctx, true);
+        const falClient = await getFalClient(ctx, true);
         const generationId = `img2vid_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
         yield tracked(`${generationId}_start`, {
@@ -192,12 +189,11 @@ export const appRouter = router({
             "portrait_16_9",
           ])
           .optional(),
-        apiKey: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        const falClient = await getFalClient(input.apiKey, ctx);
+        const falClient = await getFalClient(ctx);
 
         const result = await falClient.subscribe("fal-ai/flux/dev", {
           input: {
@@ -239,12 +235,11 @@ export const appRouter = router({
         prompt: z.string(),
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
-        apiKey: z.string().optional(),
-      }),
+      })
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
-        const falClient = await getFalClient(input.apiKey, ctx);
+        const falClient = await getFalClient(ctx);
 
         // Create a unique ID for this generation
         const generationId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
@@ -336,12 +331,11 @@ export const appRouter = router({
           .optional(),
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
-        apiKey: z.string().optional(),
-      }),
+      })
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
-        const falClient = await getFalClient(input.apiKey, ctx);
+        const falClient = await getFalClient(ctx);
 
         // Create a unique ID for this generation
         const generationId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;

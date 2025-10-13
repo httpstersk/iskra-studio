@@ -52,7 +52,6 @@ interface CanvasControlPanelProps {
   undo: () => void;
   redo: () => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
-  customApiKey: string;
   toast: (props: {
     title: string;
     description?: string;
@@ -88,7 +87,6 @@ export function CanvasControlPanel({
   undo,
   redo,
   setIsSettingsDialogOpen,
-  customApiKey,
   toast,
   variationMode = "image",
   generationCount,
@@ -316,9 +314,6 @@ export function CanvasControlPanel({
                       onClick={() => setIsSettingsDialogOpen(true)}
                     >
                       <SlidersHorizontal className="h-4 w-4" />
-                      {customApiKey && (
-                        <div className="absolute size-2.5 -top-0.5 -right-0.5 bg-blue-500 rounded-full" />
-                      )}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>

@@ -15,7 +15,6 @@ const DEFAULT_DURATION_SECONDS = 4;
  * Props for the streaming video subscriber component.
  */
 interface StreamingVideoProps {
-  apiKey?: string;
   generation: ActiveVideoGeneration;
   onComplete: (videoId: string, videoUrl: string, duration: number) => void;
   onError: (videoId: string, error: string) => void;
@@ -27,7 +26,6 @@ interface StreamingVideoProps {
  * Subscribes to the server-side image-to-video stream and relays progress updates.
  */
 export const StreamingVideo: React.FC<StreamingVideoProps> = ({
-  apiKey,
   generation,
   onComplete,
   onError,
@@ -86,7 +84,6 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
       prompt: generation.prompt,
       resolution,
       ...additionalFields,
-      ...(apiKey ? { apiKey } : {}),
     },
     {
       enabled: true,

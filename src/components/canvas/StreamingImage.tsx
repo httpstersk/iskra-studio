@@ -9,7 +9,6 @@ interface StreamingImageProps {
   onComplete: (imageId: string, finalUrl: string) => void;
   onError: (imageId: string, error: string) => void;
   onStreamingUpdate: (imageId: string, url: string) => void;
-  apiKey?: string;
 }
 
 export const StreamingImage: React.FC<StreamingImageProps> = ({
@@ -18,7 +17,6 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
   onComplete,
   onError,
   onStreamingUpdate,
-  apiKey,
 }) => {
   const trpc = useTRPC();
 
@@ -61,7 +59,6 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
         imageUrl: generation.imageUrl,
         prompt: generation.prompt,
         ...(generation.imageSize ? { imageSize: generation.imageSize } : {}),
-        ...(apiKey ? { apiKey } : {}),
       },
       {
         enabled: !!generation.isVariation,
@@ -76,7 +73,6 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
       {
         imageUrl: generation.imageUrl,
         prompt: generation.prompt,
-        ...(apiKey ? { apiKey } : {}),
       },
       {
         enabled: !generation.isVariation,

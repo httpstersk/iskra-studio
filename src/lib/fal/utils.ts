@@ -65,10 +65,8 @@ export function ensureDefaultFalKey(): string {
   return key;
 }
 
-export function createProxyFalClient(apiKey?: string): FalClient {
-  const credentials = apiKey ? () => apiKey : undefined;
+export function createProxyFalClient(): FalClient {
   return createFalClient({
-    credentials,
     proxyUrl: FAL_PROXY_PATH,
   });
 }
@@ -85,23 +83,16 @@ function getDefaultServerClient(): FalClient {
   return defaultServerClient;
 }
 
-export function createServerFalClient(apiKey?: string): FalClient {
-  if (apiKey) {
-    return createFalClient({
-      credentials: () => apiKey,
-    });
-  }
+export function createServerFalClient(): FalClient {
   return getDefaultServerClient();
 }
 
 export async function resolveFalClient({
-  apiKey,
   limiter,
   headers,
   bucketId,
   fallbackIp,
 }: {
-  apiKey?: string;
   limiter: RateLimiter;
   headers: HeaderSource;
   bucketId?: string;
@@ -109,10 +100,6 @@ export async function resolveFalClient({
 }): Promise<
   { client: FalClient; limited: false } | { limited: true; period: LimitPeriod }
 > {
-  if (apiKey) {
-    return { client: createServerFalClient(apiKey), limited: false };
-  }
-
   const rateLimit = await checkRateLimit({
     limiter,
     headers,

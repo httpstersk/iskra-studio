@@ -5,7 +5,6 @@ import { checkBotId } from "botid/server";
 
 import {
   checkRateLimit,
-  extractBearerToken,
   standardRateLimiter,
   buildRateLimitHeaders,
 } from "@/lib/fal/utils";
@@ -17,19 +16,19 @@ export const POST = async (req: NextRequest) => {
     return new Response("Access denied", { status: 403 });
   }
 
-  // Check if user has provided their own API key
   const authHeader = req.headers.get("authorization");
-  const bearerToken = extractBearerToken(authHeader);
-  if (authHeader && !bearerToken) {
-    return new Response("Invalid authorization header", { status: 400 });
-  }
-  const customApiKeyPresent = Boolean(bearerToken);
 
-  // Only apply rate limiting if no custom API key is provided
+  if (authHeader) {
+    return new Response("Custom FAL API keys are not accepted.", {
+      status: 400,
+    });
+  }
+
+  // Always apply rate limiting
   const rateLimitResult = await checkRateLimit({
     limiter: standardRateLimiter,
     headers: req.headers,
-    hasCustomApiKey: customApiKeyPresent,
+    hasCustomApiKey: false,
   });
 
   if (rateLimitResult.shouldLimitRequest) {
@@ -38,12 +37,13 @@ export const POST = async (req: NextRequest) => {
       perHour: "30",
       perDay: "100",
     });
+
     return new Response(
-      `Rate limit exceeded per ${rateLimitResult.period}. Add your FAL API key to bypass rate limits.`,
+      `Rate limit exceeded per ${rateLimitResult.period}. Please try again later.`,
       {
         status: 429,
         headers,
-      },
+      }
     );
   }
 

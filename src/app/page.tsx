@@ -309,11 +309,9 @@ export default function CanvasPage() {
         setImages: canvasState.setImages,
         setVideos: canvasState.setVideos,
         setIsGenerating: generationState.setIsGenerating,
-        setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
         setActiveGenerations: generationState.setActiveGenerations,
         setActiveVideoGenerations: generationState.setActiveVideoGenerations,
         toast,
-        customApiKey: uiState.customApiKey,
         variationPrompt: generationState.generationSettings.variationPrompt,
         variationMode: uiState.variationMode,
         variationCount: uiState.generationCount,
@@ -329,7 +327,6 @@ export default function CanvasPage() {
       // Standard generation flow
       await handleRunHandler({
         canvasSize: canvasState.canvasSize,
-        customApiKey: uiState.customApiKey,
         falClient,
         generateTextToImage,
         generationSettings: generationState.generationSettings,
@@ -337,7 +334,6 @@ export default function CanvasPage() {
         selectedIds: canvasState.selectedIds,
         setActiveGenerations: generationState.setActiveGenerations,
         setImages: canvasState.setImages,
-        setIsApiKeyDialogOpen: uiState.setIsApiKeyDialogOpen,
         setIsGenerating: generationState.setIsGenerating,
         setSelectedIds: canvasState.setSelectedIds,
         toast,
@@ -598,7 +594,6 @@ export default function CanvasPage() {
       {Array.from(generationState.activeGenerations.entries()).map(
         ([imageId, generation]) => (
           <StreamingImage
-            apiKey={uiState.customApiKey}
             generation={generation}
             imageId={imageId}
             key={imageId}
@@ -700,7 +695,6 @@ export default function CanvasPage() {
       {Array.from(generationState.activeVideoGenerations.entries()).map(
         ([id, generation]) => (
           <StreamingVideo
-            apiKey={uiState.customApiKey}
             generation={generation}
             key={id}
             onComplete={handleVideoGenerationComplete}
@@ -804,7 +798,6 @@ export default function CanvasPage() {
         activeVideoGenerationsSize={generationState.activeVideoGenerations.size}
         canRedo={historyState.canRedo}
         canUndo={historyState.canUndo}
-        customApiKey={uiState.customApiKey}
         generationCount={uiState.generationCount}
         generationSettings={generationState.generationSettings}
         handleFileUpload={handleFileUpload}
@@ -830,24 +823,20 @@ export default function CanvasPage() {
 
       {/* All Dialogs */}
       <CanvasDialogs
-        customApiKey={uiState.customApiKey}
         handleImageToVideoConversion={handleImageToVideoConversion}
         images={canvasState.images}
         isConvertingToVideo={generationState.isConvertingToVideo}
         isImageToVideoDialogOpen={uiState.isImageToVideoDialogOpen}
         isSettingsDialogOpen={uiState.isSettingsDialogOpen}
         selectedImageForVideo={uiState.selectedImageForVideo}
-        setCustomApiKey={uiState.setCustomApiKey}
         setIsImageToVideoDialogOpen={uiState.setIsImageToVideoDialogOpen}
         setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
         setSelectedImageForVideo={uiState.setSelectedImageForVideo}
         setShowGrid={uiState.setShowGrid}
         setShowMinimap={uiState.setShowMinimap}
-        setTempApiKey={uiState.setTempApiKey}
         setTheme={setTheme}
         showGrid={uiState.showGrid}
         showMinimap={uiState.showMinimap}
-        tempApiKey={uiState.tempApiKey}
         theme={theme}
         toast={toast}
         useSoraPro={generationState.useSoraPro}

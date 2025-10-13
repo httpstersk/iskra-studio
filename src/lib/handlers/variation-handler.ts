@@ -11,9 +11,7 @@ import type { FalClient } from "@fal-ai/client";
  */
 async function uploadBlobDirect(
   blob: Blob,
-  customApiKey: string | undefined,
   toast: VariationHandlerDeps["toast"],
-  setIsApiKeyDialogOpen: VariationHandlerDeps["setIsApiKeyDialogOpen"],
 ): Promise<{ url: string }> {
   try {
     if (blob.size > 10 * 1024 * 1024) {
@@ -28,7 +26,6 @@ async function uploadBlobDirect(
     const response = await fetch(FAL_UPLOAD_PATH, {
       method: "POST",
       body: formData,
-      headers: customApiKey ? { authorization: `Bearer ${customApiKey}` } : {},
     });
 
     if (!response.ok) {
@@ -50,10 +47,9 @@ async function uploadBlobDirect(
     if (isRateLimit) {
       toast({
         title: "Rate limit exceeded",
-        description: "Add your FAL API key to bypass rate limits.",
+        description: "Please try again later.",
         variant: "destructive",
       });
-      setIsApiKeyDialogOpen(true);
     } else {
       toast({
         title: "Upload failed",
@@ -124,7 +120,6 @@ interface VariationHandlerDeps {
     React.SetStateAction<import("@/types/canvas").PlacedVideo[]>
   >;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsApiKeyDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
   >;
@@ -136,7 +131,6 @@ interface VariationHandlerDeps {
     description?: string;
     variant?: "default" | "destructive";
   }) => void;
-  customApiKey?: string;
   variationPrompt?: string;
   variationMode?: "image" | "video";
   variationCount?: number;
@@ -250,11 +244,9 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     setImages,
     setVideos,
     setIsGenerating,
-    setIsApiKeyDialogOpen,
     setActiveGenerations,
     setActiveVideoGenerations,
     toast,
-    customApiKey,
     variationPrompt,
     variationMode = "image",
     variationCount = 4,
@@ -287,10 +279,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       falClient,
       setVideos,
       setIsGenerating,
-      setIsApiKeyDialogOpen,
       setActiveVideoGenerations,
       toast,
-      customApiKey,
       basePrompt: variationPrompt,
       videoSettings,
     });
@@ -401,11 +391,9 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     const { blob } = await processImageToBlob(selectedImage);
 
     // OPTIMIZATION 3: Upload blob via server proxy to avoid CORS
-    const uploadResult = await uploadBlobDirect(
+  const blobUpload = await uploadBlobDirect(
       blob,
-      customApiKey,
       toast,
-      setIsApiKeyDialogOpen,
     );
 
     // Snap source image position for consistent alignment
@@ -428,7 +416,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
           : cameraPrompt;
 
         newMap.set(placeholderId, {
-          imageUrl: uploadResult.url,
+          imageUrl: blobUpload.url,
           prompt: combinedPrompt,
           isVariation: true,
           imageSize: imageSizeDimensions,

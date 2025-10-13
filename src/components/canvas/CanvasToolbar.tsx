@@ -33,7 +33,6 @@ interface CanvasToolbarProps {
   sendToBack: () => void;
   bringForward: () => void;
   sendBackward: () => void;
-  customApiKey: string;
   toast: (props: {
     title: string;
     description?: string;
@@ -61,7 +60,6 @@ export function CanvasToolbar({
   sendToBack,
   bringForward,
   sendBackward,
-  customApiKey,
   toast,
   setImages,
   setViewport,
@@ -190,9 +188,6 @@ export function CanvasToolbar({
                 onClick={() => setIsSettingsDialogOpen(true)}
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                {customApiKey && (
-                  <div className="absolute size-2.5 -top-0.5 -right-0.5 bg-blue-500 rounded-full" />
-                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
