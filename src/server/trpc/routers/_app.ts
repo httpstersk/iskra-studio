@@ -75,6 +75,8 @@ export const appRouter = router({
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
+        console.log("tRPC generateImageToVideo - Input received:", input);
+        
         const falClient = await getFalClient(input.apiKey, ctx, true);
         const generationId = `img2vid_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
@@ -88,6 +90,12 @@ export const appRouter = router({
         if (!model) {
           throw new Error(`Unknown model ID: ${input.modelId ?? "undefined"}`);
         }
+
+        console.log("tRPC generateImageToVideo - Model selected:", {
+          modelId: model.id,
+          modelName: model.name,
+          endpoint: model.endpoint,
+        });
 
         const resolvedDuration =
           typeof input.duration === "string"
@@ -105,6 +113,11 @@ export const appRouter = router({
           resolution:
             input.resolution || (model.defaults.resolution as string) || "auto",
         };
+
+        console.log("tRPC generateImageToVideo - Calling FAL with:", {
+          endpoint: model.endpoint,
+          input: soraInput,
+        });
 
         const result = (await falClient.subscribe(model.endpoint, {
           input: soraInput,

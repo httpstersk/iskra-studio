@@ -318,11 +318,11 @@ export default function CanvasPage() {
         variationMode: uiState.variationMode,
         variationCount: uiState.generationCount,
         videoSettings: {
-          modelId: "sora-2",
+          modelId: generationState.useSoraPro ? "sora-2-pro" : "sora-2",
           prompt: generationState.generationSettings.variationPrompt || "",
-          resolution: "auto",
+          resolution: generationState.videoResolution,
           aspectRatio: "auto",
-          duration: "4",
+          duration: generationState.videoDuration,
         },
       });
     } else {

@@ -48,7 +48,7 @@ export const CANVAS_GRID = {
 
 export const VIDEO_DEFAULTS = {
   CURRENT_TIME: 0,
-  DURATION: 5,
+  DURATION: 8,
   IS_LOOPING: false,
   IS_PLAYING: false,
   MODEL_ID: "sora-2",

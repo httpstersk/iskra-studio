@@ -115,7 +115,7 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
     category: MODEL_CATEGORY,
     defaults: {
       aspectRatio: "auto",
-      duration: "4",
+      duration: "8",
       prompt: "",
       resolution: "auto",
     },
@@ -136,7 +136,7 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
         type: "select",
       },
       duration: {
-        default: "4",
+        default: "8",
         description: FIELD_DESCRIPTIONS.DURATION,
         label: FIELD_LABELS.DURATION,
         name: "duration",
@@ -178,7 +178,7 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
     category: MODEL_CATEGORY,
     defaults: {
       aspectRatio: "auto",
-      duration: "4",
+      duration: "8",
       prompt: "",
       resolution: "auto",
     },
@@ -199,7 +199,7 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
         type: "select",
       },
       duration: {
-        default: "4",
+        default: "8",
         description: FIELD_DESCRIPTIONS.DURATION,
         label: FIELD_LABELS.DURATION,
         name: "duration",

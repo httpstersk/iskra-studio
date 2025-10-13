@@ -220,7 +220,14 @@ export const handleSoraVideoVariations = async (
     });
 
     // Stage 2: Generate storyline concepts using AI
-    const duration = parseInt(videoSettings.duration as string) || 4;
+    const duration = typeof videoSettings.duration === "string"
+      ? parseInt(videoSettings.duration, 10)
+      : typeof videoSettings.duration === "number"
+        ? videoSettings.duration
+        : 8;
+    
+    console.log("[Sora Variations] Using duration:", duration, "from settings:", videoSettings.duration);
+    
     const storylineSet = await generateStorylines({
       styleAnalysis: imageAnalysis,
       duration,
@@ -281,7 +288,7 @@ export const handleSoraVideoVariations = async (
           height: selectedImage.height,
           rotation: 0,
           isVideo: true as const,
-          duration: parseInt(videoSettings.duration as string) || 4,
+          duration,
           currentTime: VIDEO_DEFAULTS.CURRENT_TIME,
           isPlaying: VIDEO_DEFAULTS.IS_PLAYING,
           isLooping: VIDEO_DEFAULTS.IS_LOOPING,
@@ -295,10 +302,16 @@ export const handleSoraVideoVariations = async (
     // Add placeholders to canvas
     setVideos((prev) => [...prev, ...videoPlaceholders]);
 
+    // Determine model ID based on Pro setting
+    const modelId = videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID;
+    const modelName = modelId === "sora-2-pro" ? "Sora 2 Pro" : "Sora 2";
+    
+    console.log("[Sora Variations] Using model:", { modelId, modelName, duration });
+
     // Show generation started toast
     toast({
       title: "Generating video variations",
-      description: `Creating 4 AI-analyzed cinematic videos with Sora 2 (${videoSettings.duration || 4}s each)...`,
+      description: `Creating 4 AI-analyzed cinematic videos with ${modelName} (${duration}s each)...`,
     });
 
     // Set up active video generations
@@ -321,10 +334,10 @@ export const handleSoraVideoVariations = async (
         newMap.set(videoId, {
           imageUrl,
           prompt: variationPrompt,
-          modelId: "sora-2",
+          modelId,
           resolution: videoSettings.resolution || "auto",
           aspectRatio: videoSettings.aspectRatio || "auto",
-          duration: parseInt(videoSettings.duration as string) || 4,
+          duration,
           sourceImageId: selectedIds[0],
           isVariation: true,
           ...restVideoSettings, // Spread remaining settings without prompt

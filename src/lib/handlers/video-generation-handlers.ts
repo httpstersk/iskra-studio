@@ -42,7 +42,8 @@ export function createImageToVideoConfig(
   settings: VideoGenerationSettings,
   sourceImageId: string
 ) {
-  return {
+  const config = {
+    aspectRatio: settings.aspectRatio || "auto",
     cameraFixed: settings.cameraFixed,
     duration: settings.duration || VIDEO_DEFAULTS.DURATION,
     imageUrl,
@@ -52,6 +53,13 @@ export function createImageToVideoConfig(
     seed: settings.seed,
     sourceImageId,
   };
+  
+  console.log("createImageToVideoConfig - Creating config:", {
+    inputSettings: settings,
+    outputConfig: config,
+  });
+  
+  return config;
 }
 
 /**

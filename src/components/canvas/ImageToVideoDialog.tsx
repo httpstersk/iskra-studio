@@ -8,9 +8,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getDefaultVideoModel, getVideoModelById, SORA_2_MODEL_ID, SORA_2_PRO_MODEL_ID } from "@/lib/video-models";
+import {
+  getDefaultVideoModel,
+  getVideoModelById,
+  SORA_2_MODEL_ID,
+  SORA_2_PRO_MODEL_ID,
+} from "@/lib/video-models";
 import type { VideoGenerationSettings } from "@/types/canvas";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   ModelPricingDisplay,
@@ -57,35 +62,54 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
   videoResolution,
 }) => {
   const defaultModel = getDefaultVideoModel("image-to-video");
-  
+
   // Automatically select model based on useSoraPro
-  const autoSelectedModelId = useSoraPro ? SORA_2_PRO_MODEL_ID : SORA_2_MODEL_ID;
-  
-  const [selectedModelId, setSelectedModelId] = useState<string>(autoSelectedModelId);
+  const autoSelectedModelId = useSoraPro
+    ? SORA_2_PRO_MODEL_ID
+    : SORA_2_MODEL_ID;
+
+  console.log("ImageToVideoDialog - Props received:", {
+    useSoraPro,
+    videoDuration,
+    videoResolution,
+    autoSelectedModelId,
+  });
+
+  const [selectedModelId, setSelectedModelId] =
+    useState<string>(autoSelectedModelId);
   const [optionValues, setOptionValues] = useState<Record<string, unknown>>(
     () => {
-      const initialModel = getVideoModelById(autoSelectedModelId) || defaultModel;
-      return {
+      const initialModel =
+        getVideoModelById(autoSelectedModelId) || defaultModel;
+      const initialValues = {
         ...(initialModel?.defaults || {}),
         duration: videoDuration,
         resolution: videoResolution,
       };
+      console.log("ImageToVideoDialog - Initial option values:", initialValues);
+      return initialValues;
     }
   );
 
-  // Update selected model when useSoraPro changes
+  // Update selected model and values when props change OR when dialog opens
   useEffect(() => {
+    if (!isOpen) return;
+    
     const newModelId = useSoraPro ? SORA_2_PRO_MODEL_ID : SORA_2_MODEL_ID;
+    console.log("ImageToVideoDialog - useEffect triggered, updating to model:", newModelId);
     setSelectedModelId(newModelId);
     const newModel = getVideoModelById(newModelId);
     if (newModel) {
-      setOptionValues({
+      const newValues = {
         ...newModel.defaults,
         duration: videoDuration,
         resolution: videoResolution,
-      });
+        prompt: "", // Reset prompt each time
+      };
+      console.log("ImageToVideoDialog - Setting new option values:", newValues);
+      setOptionValues(newValues);
     }
-  }, [useSoraPro, videoDuration, videoResolution]);
+  }, [isOpen, useSoraPro, videoDuration, videoResolution]);
 
   const model = getVideoModelById(selectedModelId) || defaultModel;
 
@@ -97,6 +121,7 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
     const resetModelId = useSoraPro ? SORA_2_PRO_MODEL_ID : SORA_2_MODEL_ID;
     setSelectedModelId(resetModelId);
     const resetModel = getVideoModelById(resetModelId);
+
     if (resetModel) {
       setOptionValues({
         ...resetModel.defaults,
@@ -110,6 +135,7 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
   const handleModelChange = (modelId: string) => {
     setSelectedModelId(modelId);
     const newModel = getVideoModelById(modelId);
+
     if (newModel) {
       // Merge new model defaults while preserving user-selected shared controls
       setOptionValues((prev) => ({
@@ -139,13 +165,26 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
           : undefined;
 
     const settings: VideoGenerationSettings = {
-      ...optionValues,
-      ...(parsedDuration !== undefined ? { duration: parsedDuration } : {}),
+      aspectRatio:
+        (optionValues.aspectRatio as "auto" | "9:16" | "16:9" | "1:1") ||
+        "auto",
+      duration: parsedDuration,
       modelId: model.id,
       prompt: (optionValues.prompt as string) || "",
+      resolution:
+        (optionValues.resolution as "auto" | "480p" | "720p" | "1080p") ||
+        "auto",
       sourceUrl: imageUrl,
+      cameraFixed: optionValues.cameraFixed as boolean | undefined,
+      seed: optionValues.seed as number | undefined,
     } as VideoGenerationSettings;
 
+    console.log("ImageToVideoDialog - Final settings before submit:", {
+      settings,
+      modelId: model.id,
+      modelEndpoint: model.endpoint,
+      optionValues,
+    });
     onConvert(settings);
   };
 
@@ -237,7 +276,6 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
             </Button>
           </DialogFooter>
         </form>
-
       </DialogContent>
     </Dialog>
   );
