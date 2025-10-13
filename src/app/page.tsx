@@ -816,9 +816,11 @@ export default function CanvasPage() {
         selectedIds={canvasState.selectedIds}
         setGenerationSettings={generationState.setGenerationSettings}
         setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
+        setUseSoraPro={generationState.setUseSoraPro}
         showSuccess={generationState.showSuccess}
         toast={toast}
         undo={handleUndo}
+        useSoraPro={generationState.useSoraPro}
         variationMode={uiState.variationMode}
       />
 
@@ -844,6 +846,7 @@ export default function CanvasPage() {
         tempApiKey={uiState.tempApiKey}
         theme={theme}
         toast={toast}
+        useSoraPro={generationState.useSoraPro}
       />
 
       {/* Video Overlays */}

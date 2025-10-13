@@ -147,7 +147,7 @@ export async function checkRateLimit({
   }
 
   const ip = getClientIp(headers, fallbackIp);
-  return shouldLimitRequest(limiter, ip, bucketId) as RateLimitCheck;
+  return shouldLimitRequest(limiter, ip, bucketId);
 }
 
 export function getClientIp(headers: HeaderSource, fallback?: string): string {

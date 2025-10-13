@@ -8,9 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getDefaultVideoModel } from "@/lib/video-models";
+import { getDefaultVideoModel, getVideoModelById, SORA_2_MODEL_ID, SORA_2_PRO_MODEL_ID } from "@/lib/video-models";
 import type { VideoGenerationSettings } from "@/types/canvas";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   ModelPricingDisplay,
@@ -38,6 +38,7 @@ interface ImageToVideoDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConvert: (settings: VideoGenerationSettings) => void;
+  useSoraPro: boolean;
 }
 
 /**
@@ -49,19 +50,53 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
   isOpen,
   onClose,
   onConvert,
+  useSoraPro,
 }) => {
-  const model = getDefaultVideoModel("image-to-video");
+  const defaultModel = getDefaultVideoModel("image-to-video");
+  
+  // Automatically select model based on useSoraPro
+  const autoSelectedModelId = useSoraPro ? SORA_2_PRO_MODEL_ID : SORA_2_MODEL_ID;
+  
+  const [selectedModelId, setSelectedModelId] = useState<string>(autoSelectedModelId);
   const [optionValues, setOptionValues] = useState<Record<string, unknown>>(
-    () => model?.defaults || {}
+    () => {
+      const initialModel = getVideoModelById(autoSelectedModelId) || defaultModel;
+      return initialModel?.defaults || {};
+    }
   );
+
+  // Update selected model when useSoraPro changes
+  useEffect(() => {
+    const newModelId = useSoraPro ? SORA_2_PRO_MODEL_ID : SORA_2_MODEL_ID;
+    setSelectedModelId(newModelId);
+    const newModel = getVideoModelById(newModelId);
+    if (newModel) {
+      setOptionValues(newModel.defaults);
+    }
+  }, [useSoraPro]);
+
+  const model = getVideoModelById(selectedModelId) || defaultModel;
 
   if (!model) {
     return null;
   }
 
   const handleClose = () => {
-    setOptionValues(model.defaults);
+    const resetModelId = useSoraPro ? SORA_2_PRO_MODEL_ID : SORA_2_MODEL_ID;
+    setSelectedModelId(resetModelId);
+    const resetModel = getVideoModelById(resetModelId);
+    if (resetModel) {
+      setOptionValues(resetModel.defaults);
+    }
     onClose();
+  };
+
+  const handleModelChange = (modelId: string) => {
+    setSelectedModelId(modelId);
+    const newModel = getVideoModelById(modelId);
+    if (newModel) {
+      setOptionValues(newModel.defaults);
+    }
   };
 
   const handleOptionChange = (field: string, value: unknown) => {
@@ -107,10 +142,9 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
             </span>
             <VideoModelSelector
               category="image-to-video"
-              className="pointer-events-none"
-              disabled
-              onChange={() => undefined}
-              value={model.id}
+              disabled={isConverting}
+              onChange={handleModelChange}
+              value={selectedModelId}
             />
           </div>
 

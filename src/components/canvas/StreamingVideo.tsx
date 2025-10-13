@@ -1,4 +1,4 @@
-import { SORA_MODEL_ID } from "@/lib/video-models";
+import { SORA_2_MODEL_ID } from "@/lib/video-models";
 import { useTRPC } from "@/trpc/client";
 import type { ActiveVideoGeneration } from "@/types/canvas";
 import { useSubscription } from "@trpc/tanstack-react-query";
@@ -61,14 +61,26 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
     )
   );
 
+  // Ensure values match tRPC schema
+  const validAspectRatios = ["auto", "9:16", "16:9"] as const;
+  const validResolutions = ["auto", "720p"] as const;
+  
+  const aspectRatio = generation.aspectRatio && validAspectRatios.includes(generation.aspectRatio as any)
+    ? (generation.aspectRatio as "auto" | "9:16" | "16:9")
+    : undefined;
+  
+  const resolution = generation.resolution && validResolutions.includes(generation.resolution as any)
+    ? (generation.resolution as "auto" | "720p")
+    : "auto";
+
   const subscriptionOptions = trpc.generateImageToVideo.subscriptionOptions(
     {
-      aspectRatio: generation.aspectRatio,
+      aspectRatio,
       duration: resolvedDuration,
       imageUrl: generation.imageUrl || "",
-      modelId: generation.modelId || SORA_MODEL_ID,
+      modelId: generation.modelId || SORA_2_MODEL_ID,
       prompt: generation.prompt,
-      resolution: generation.resolution || "auto",
+      resolution,
       ...additionalFields,
       ...(apiKey ? { apiKey } : {}),
     },

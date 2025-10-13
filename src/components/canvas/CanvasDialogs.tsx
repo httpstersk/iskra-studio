@@ -49,6 +49,7 @@ interface CanvasDialogsProps {
   handleImageToVideoConversion: (settings: VideoGenerationSettings) => void;
   images: PlacedImage[];
   isConvertingToVideo: boolean;
+  useSoraPro: boolean;
 }
 
 export function CanvasDialogs({
@@ -72,6 +73,7 @@ export function CanvasDialogs({
   handleImageToVideoConversion,
   images,
   isConvertingToVideo,
+  useSoraPro,
 }: CanvasDialogsProps) {
   return (
     <>
@@ -271,6 +273,7 @@ export function CanvasDialogs({
             : ""
         }
         isConverting={isConvertingToVideo}
+        useSoraPro={useSoraPro}
       />
     </>
   );

@@ -293,4 +293,4 @@ The project uses Husky and lint-staged for automated formatting:
 - Choose to derive data rather than using useEffect. Only use useEffect to synchronise with an external system (e.g. document-level events). This can cause confusion over what the logic is doing. Explicitly define logic rather than depending on implicit reactive behaviour.
 - Treat `setTimeout` as a last resort and always comment on why.
 - Do not add useless comments. Avoid adding comments unless you are clarifying a race condition (e.g. setTimeout), a long-term TODO or a confusing piece of code that even a senior engineer wouldn't initially understand.
-
+- Before hardcoding any values, consider whether they might be used elsewhere in the code. All of our code should adhere to the DRY principle.

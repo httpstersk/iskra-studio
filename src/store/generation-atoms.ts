@@ -57,3 +57,8 @@ export const previousGenerationCountAtom = atom(0);
  * Atom to show success indicator after generation completes
  */
 export const showSuccessAtom = atom(false);
+
+/**
+ * Atom to track whether Sora Pro is enabled (for video generation)
+ */
+export const useSoraProAtom = atom(false);

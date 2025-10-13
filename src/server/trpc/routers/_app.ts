@@ -3,7 +3,7 @@ import {
   standardRateLimiter,
   videoRateLimiter,
 } from "@/lib/fal/utils";
-import { getVideoModelById, SORA_MODEL_ID } from "@/lib/video-models";
+import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { tracked } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "../init";
@@ -14,6 +14,7 @@ type ApiResponse = {
     video?: { url?: string };
     url?: string;
     images?: Array<{ url?: string }>;
+    duration?: number;
   };
   video_url?: string;
   video?: { url?: string };
@@ -83,7 +84,7 @@ export const appRouter = router({
           type: "progress",
         });
 
-        const model = getVideoModelById(input.modelId || SORA_MODEL_ID);
+        const model = getVideoModelById(input.modelId || SORA_2_MODEL_ID);
         if (!model) {
           throw new Error(`Unknown model ID: ${input.modelId ?? "undefined"}`);
         }

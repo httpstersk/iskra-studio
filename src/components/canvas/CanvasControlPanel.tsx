@@ -53,6 +53,8 @@ interface CanvasControlPanelProps {
   variationMode?: "image" | "video";
   generationCount: number;
   handleVariationModeChange: (mode: "image" | "video") => void;
+  useSoraPro: boolean;
+  setUseSoraPro: (value: boolean) => void;
 }
 
 /**
@@ -79,6 +81,8 @@ export function CanvasControlPanel({
   variationMode = "image",
   generationCount,
   handleVariationModeChange,
+  useSoraPro,
+  setUseSoraPro,
 }: CanvasControlPanelProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:p-0 md:pb-0 md:max-w-[648px]">
@@ -159,39 +163,70 @@ export function CanvasControlPanel({
 
               {/* Mode indicator badge with switch */}
               {selectedIds.length > 0 ? (
-                <div
-                  className={cn(
-                    "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
-                    variationMode === "image"
-                      ? "bg-blue-500/10 dark:bg-blue-500/15 shadow-[0_0_0_1px_rgba(59,130,246,0.2),0_4px_8px_-0.5px_rgba(59,130,246,0.08),0_8px_16px_-2px_rgba(59,130,246,0.04)] dark:shadow-none dark:border dark:border-blue-500/30"
-                      : "bg-purple-500/10 dark:bg-purple-500/15 shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
-                  )}
-                >
-                  <div className="flex items-center gap-2 text-xs font-medium">
-                    {variationMode === "image" ? (
-                      <>
-                        <ImagesIcon className="w-4 h-4 text-blue-600 dark:text-blue-500" />
-                        <span className="text-blue-600 dark:text-blue-500">
-                          Image ({generationCount})
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <PlayIcon className="w-4 h-4 text-purple-600 dark:text-purple-500 fill-purple-600 dark:fill-purple-500" />
-                        <span className="text-purple-600 dark:text-purple-500">
-                          Video (4)
-                        </span>
-                      </>
+                <>
+                  <div
+                    className={cn(
+                      "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
+                      variationMode === "image"
+                        ? "bg-blue-500/10 dark:bg-blue-500/15 shadow-[0_0_0_1px_rgba(59,130,246,0.2),0_4px_8px_-0.5px_rgba(59,130,246,0.08),0_8px_16px_-2px_rgba(59,130,246,0.04)] dark:shadow-none dark:border dark:border-blue-500/30"
+                        : "bg-purple-500/10 dark:bg-purple-500/15 shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
                     )}
+                  >
+                    <div className="flex items-center gap-2 text-xs font-medium">
+                      {variationMode === "image" ? (
+                        <>
+                          <ImagesIcon className="w-4 h-4 text-blue-600 dark:text-blue-500" />
+                          <span className="text-blue-600 dark:text-blue-500">
+                            Image ({generationCount})
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <PlayIcon className="w-4 h-4 text-purple-600 dark:text-purple-500 fill-purple-600 dark:fill-purple-500" />
+                          <span className="text-purple-600 dark:text-purple-500">
+                            Video (4)
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <Switch
+                      checked={variationMode === "video"}
+                      onCheckedChange={(checked) => {
+                        handleVariationModeChange(checked ? "video" : "image");
+                      }}
+                      className="h-5 w-9 data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-blue-600"
+                    />
                   </div>
-                  <Switch
-                    checked={variationMode === "video"}
-                    onCheckedChange={(checked) => {
-                      handleVariationModeChange(checked ? "video" : "image");
-                    }}
-                    className="h-5 w-9 data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-blue-600"
-                  />
-                </div>
+                  {/* Sora Pro toggle - only show when in video mode */}
+                  {variationMode === "video" && (
+                    <div
+                      className={cn(
+                        "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
+                        useSoraPro
+                          ? "bg-amber-500/10 dark:bg-amber-500/15 shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_4px_8px_-0.5px_rgba(245,158,11,0.08),0_8px_16px_-2px_rgba(245,158,11,0.04)] dark:shadow-none dark:border dark:border-amber-500/30"
+                          : "bg-gray-500/10 dark:bg-gray-500/15 shadow-[0_0_0_1px_rgba(107,114,128,0.2),0_4px_8px_-0.5px_rgba(107,114,128,0.08),0_8px_16px_-2px_rgba(107,114,128,0.04)] dark:shadow-none dark:border dark:border-gray-500/30"
+                      )}
+                    >
+                      <div className="flex items-center gap-2 text-xs font-medium">
+                        <span
+                          className={cn(
+                            "font-semibold",
+                            useSoraPro
+                              ? "text-amber-600 dark:text-amber-500"
+                              : "text-gray-600 dark:text-gray-400"
+                          )}
+                        >
+                          Pro
+                        </span>
+                      </div>
+                      <Switch
+                        checked={useSoraPro}
+                        onCheckedChange={setUseSoraPro}
+                        className="h-5 w-9 data-[state=checked]:bg-amber-600 data-[state=unchecked]:bg-gray-500"
+                      />
+                    </div>
+                  )}
+                </>
               ) : (
                 <div
                   className={cn(

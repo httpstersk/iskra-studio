@@ -14,6 +14,7 @@ import {
   previousGenerationCountAtom,
   previousStyleIdAtom,
   showSuccessAtom,
+  useSoraProAtom,
 } from "@/store/generation-atoms";
 
 /**
@@ -39,6 +40,7 @@ export function useGenerationState() {
   );
   const [previousStyleId, setPreviousStyleId] = useAtom(previousStyleIdAtom);
   const [showSuccess, setShowSuccess] = useAtom(showSuccessAtom);
+  const [useSoraPro, setUseSoraPro] = useAtom(useSoraProAtom);
 
   // Track when generation completes
   useEffect(() => {
@@ -90,6 +92,8 @@ export function useGenerationState() {
     setIsConvertingToVideo,
     setIsGenerating,
     setPreviousStyleId,
+    setUseSoraPro,
     showSuccess,
+    useSoraPro,
   };
 }
