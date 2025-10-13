@@ -8,42 +8,9 @@ import { generateObject } from "ai";
 import { NextResponse } from "next/server";
 import { storylineSetSchema } from "@/lib/schemas/storyline-schema";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import { STORYLINE_GENERATION_SYSTEM_PROMPT } from "@/lib/storyline-generator";
 
 export const maxDuration = 30;
-
-const STORYLINE_GENERATION_PROMPT = `You are a visionary cinematographer and storytelling director creating HIGH-INTENSITY video concepts.
-
-Based on the provided style/mood analysis and REFERENCE IMAGE SUBJECT, generate 4 DISTINCT storyline concepts that:
-- Match the visual aesthetic and emotional tone of the reference
-- Are THEMATICALLY RELATED to the reference subject (variations on the theme, not completely different topics)
-- Have different specific narratives and settings while staying connected to the subject theme
-
-CRITICAL REQUIREMENTS:
-1. Each storyline must be UNIQUE but thematically connected to the reference subject
-2. All storylines must match the analyzed style/mood (colors, lighting, energy, atmosphere)
-3. Storylines should feel like variations/interpretations of the reference subject, not random different topics
-4. Design for RAPID-CUT cinematography with 1 cut per second
-5. Each storyline should escalate in intensity
-6. Focus on visual storytelling - every moment must be visually striking
-7. Vary the approaches: experimental, artistic, dramatic, abstract interpretations of the theme
-
-INSPIRATION FOR VARIETY:
-- Urban action: warriors, dancers, athletes in motion
-- Fashion/editorial: models, designers, style icons
-- Artistic: painters, sculptors, creators at work
-- Experimental: abstract figures, surreal characters, dream sequences
-- Nature: elemental forces, transformation, metamorphosis
-- Technology: cyber beings, digital avatars, future humans
-
-Each storyline should:
-- Have a clear subject/character type
-- Take place in a specific environment
-- Include a brief narrative arc (what happens)
-- List visual motifs that repeat throughout
-- Describe the emotional progression
-- Define key pivotal moments for the sequence
-
-Make each storyline feel like a complete mini-film concept that could be shot in 4-10 seconds with rapid cuts.`;
 
 interface GenerateStorylinesRequest {
   styleAnalysis: ImageStyleMoodAnalysis;
@@ -135,12 +102,12 @@ export async function POST(req: Request) {
     const styleContext = buildStyleContext(styleAnalysis, duration || 4);
 
     const result = await generateObject({
-      model: openai("gpt-4o"),
+      model: openai("gpt-5"),
       schema: storylineSetSchema,
       messages: [
         {
           role: "system",
-          content: STORYLINE_GENERATION_PROMPT,
+          content: STORYLINE_GENERATION_SYSTEM_PROMPT,
         },
         {
           role: "user",

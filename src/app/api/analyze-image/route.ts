@@ -12,7 +12,7 @@ export const maxDuration = 30;
 
 const IMAGE_STYLE_MOOD_PROMPT = `You are analyzing an image to extract structured data for cinematic video generation.
 
-Provide a detailed analysis in the following categories. Be specific and creative with descriptive language.
+Provide a detailed analysis in the following categories. Be specific and creative with descriptive language. When lists are requested, ALWAYS supply at least the minimum number of items indicated.
 
 SUBJECT/SCENE:
 - Identify the main subject type (person, object, landscape, cityscape, abstract, nature, architecture, etc.)
@@ -44,10 +44,10 @@ MOOD & ATMOSPHERE:
 - Describe the overall atmospheric feeling
 
 CINEMATIC POTENTIAL:
-- List motion styles that fit (e.g., smooth, frenetic, slow, rhythmic)
-- List camera techniques (e.g., push-in, orbit, tilt, dolly, pan)
+- List AT LEAST TWO motion styles that fit (e.g., smooth, frenetic, slow, rhythmic)
+- List AT LEAST TWO camera techniques (e.g., push-in, orbit, tilt, dolly, pan)
 - Editing pace: choose from slow-contemplative, measured, fast-cuts, or rapid-fire
-- List visual effects that would amplify the mood (e.g., light streaks, particles, bloom)
+- List AT LEAST TWO visual effects that would amplify the mood (e.g., light streaks, particles, bloom)
 
 NARRATIVE TONE:
 - List 2-4 cinematic genres this evokes (e.g., thriller, fashion, experimental, noir, drama)
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     }
 
     const result = await generateObject({
-      model: openai("gpt-4o"),
+      model: openai("gpt-5"),
       schema: imageStyleMoodAnalysisSchema,
       messages: [
         {
@@ -91,7 +91,10 @@ export async function POST(req: Request) {
         {
           role: "user",
           content: [
-            { type: "text", text: "Analyze this image according to the structured format." },
+            {
+              type: "text",
+              text: "Analyze this image according to the structured format.",
+            },
             { type: "image", image: imageUrl },
           ],
         },
@@ -104,12 +107,12 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Error analyzing image:", error);
-    
+
     // Log detailed error for debugging
-    if (error && typeof error === 'object') {
+    if (error && typeof error === "object") {
       console.error("Error details:", JSON.stringify(error, null, 2));
     }
-    
+
     return NextResponse.json(
       {
         error: "Failed to analyze image",
