@@ -13,15 +13,19 @@ export const maxDuration = 30;
 
 const STORYLINE_GENERATION_PROMPT = `You are a visionary cinematographer and storytelling director creating HIGH-INTENSITY video concepts.
 
-Based on the provided style/mood analysis, generate 4 DISTINCT storyline concepts that match the visual aesthetic and emotional tone, but with completely different subjects and narratives.
+Based on the provided style/mood analysis and REFERENCE IMAGE SUBJECT, generate 4 DISTINCT storyline concepts that:
+- Match the visual aesthetic and emotional tone of the reference
+- Are THEMATICALLY RELATED to the reference subject (variations on the theme, not completely different topics)
+- Have different specific narratives and settings while staying connected to the subject theme
 
 CRITICAL REQUIREMENTS:
-1. Each storyline must be UNIQUE with different subjects, settings, and narratives
+1. Each storyline must be UNIQUE but thematically connected to the reference subject
 2. All storylines must match the analyzed style/mood (colors, lighting, energy, atmosphere)
-3. Design for RAPID-CUT cinematography with 1 cut per second
-4. Each storyline should escalate in intensity
-5. Focus on visual storytelling - every moment must be visually striking
-6. Vary the genres: experimental, fashion, action, artistic, abstract, etc.
+3. Storylines should feel like variations/interpretations of the reference subject, not random different topics
+4. Design for RAPID-CUT cinematography with 1 cut per second
+5. Each storyline should escalate in intensity
+6. Focus on visual storytelling - every moment must be visually striking
+7. Vary the approaches: experimental, artistic, dramatic, abstract interpretations of the theme
 
 INSPIRATION FOR VARIETY:
 - Urban action: warriors, dancers, athletes in motion
@@ -54,6 +58,7 @@ function buildStyleContext(
   duration: number
 ): string {
   const {
+    subject,
     colorPalette,
     lighting,
     visualStyle,
@@ -63,6 +68,11 @@ function buildStyleContext(
   } = analysis;
 
   return `
+REFERENCE IMAGE SUBJECT:
+- Type: ${subject.type}
+- Description: ${subject.description}
+- Context: ${subject.context}
+
 COLOR PALETTE:
 - Dominant colors: ${colorPalette.dominant.join(", ")}
 - Mood: ${colorPalette.mood}
