@@ -19,10 +19,11 @@ Non-negotiables:
 1. Stay rooted in the reference subject—each storyline is a different interpretation, not a new topic.
 2. Deliver airtight narrative logic: characters with clear intent, conflicts that escalate, and payoffs that land.
 3. Embrace muscular, cinematic language—every sentence should feel ready for the screen.
-4. Keep the emotional arc taut, escalating from quiet charge to cathartic release within the rapid-cut format.
+4. Keep the emotional arc taut, escalating from quiet charge to cathartic release within the rapid-cut format; every beat must read like a high-intensity one-second shot.
 5. Spotlight visually arresting motifs tied to the subject’s texture, lighting, and color palette.
+6. Channel the combined spirit of the world’s boldest auteurs—Agnès Varda, Akira Kurosawa, Alfred Hitchcock, Andrei Tarkovsky, Atsuko Hirayanagi, Bong Joon-ho, Brian De Palma, Chloé Zhao, Christopher Nolan, Dario Argento, David Cronenberg, David Fincher, David Lynch, David O. Russell, Denis Villeneuve, Derek Cianfrance, Edward Yang, Gaspar Noé, Hirokazu Kore-eda, Ingmar Bergman, Jean-Pierre Jeunet, Joel Coen, Krzysztof Kieślowski, Lars von Trier, Lee Chang-dong, Leos Carax, Martin Scorsese, Matt Reeves, Nicolas Winding Refn, Noah Baumbach, Oliver Stone, Oz Perkins, Park Chan-wook, Pedro Almodóvar, Quentin Tarantino, Robert Altman, Robert Bresson, Roy Andersson, Sam Raimi, Stanley Kubrick, Steven Soderbergh, Terrence Malick, Tim Burton, Tobe Hooper, Todd Haynes, Wes Anderson, Wong Kar-wai, Woody Allen, and Yorgos Lanthimos. Let their signatures inform tone, pacing, and imagery.
 
-For each storyline you MUST populate the following fields exactly as named in JSON (matching the provided schema):
+For each storyline you MUST populate the following fields exactly as named in JSON (matching the provided schema) while sustaining relentless momentum:
 - "title": Punchy, evocative headline (string).
 - "subject": Protagonist or focal force driving the action (string).
 - "setting": Specific environment grounded in the analyzed style (string).
@@ -30,7 +31,7 @@ For each storyline you MUST populate the following fields exactly as named in JS
 - "visualMotifs": Array of 4-5 concise visual anchors (string[]).
 - "emotionalArc": Sentence tracing rising tension to climax (string).
 - "cinematicStyle": References to filmmaking tone, pacing, or auteurs (string).
-- "keyMoments": Array of 4 ordered beats describing the sequence (string[]).
+- "keyMoments": Array of 4 ordered beats describing the sequence (string[]), each beat reflecting a distinct one-second cut.
 
 Respond ONLY with JSON that satisfies the storyline set schema: an object containing a "storylines" array of four storyline objects and a "styleTheme" string summarizing the shared aesthetic through-line. Do not include commentary outside the JSON.`;
 

@@ -13,66 +13,60 @@ interface PromptGenerationOptions {
   duration: number;
 }
 
-/**
- * Builds a concise style descriptor from analysis
- */
-function buildStyleDescriptor(analysis: ImageStyleMoodAnalysis): string {
-  const { colorPalette, lighting, mood, visualStyle } = analysis;
-  
-  const colors = colorPalette.dominant.slice(0, 3).join(", ");
-  const colorMood = `${colorPalette.saturation}, ${colorPalette.temperature}`;
-  const lightQuality = `${lighting.quality} lighting with ${lighting.mood} mood`;
-  const aesthetic = visualStyle.aesthetic.slice(0, 2).join(", ");
-  const energy = `${mood.energy} energy, ${mood.primary}`;
-  
-  return `${colors} palette (${colorMood}). ${lightQuality}. ${aesthetic} aesthetic. ${energy}.`;
+const PROMPT_CHAR_LIMIT = 450;
+
+function cleanText(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
 }
 
-/**
- * Generates camera/technical specifications based on cinematic style
- */
-function buildTechnicalSpec(
-  styleAnalysis: ImageStyleMoodAnalysis,
-  storylineCinematicStyle: string
-): string {
-  const { cinematicPotential } = styleAnalysis;
-  
-  // Map cinematic style to technical approach
-  const styleMap: Record<string, string> = {
-    "commercial high-energy": "120fps high-speed. Anamorphic flares, motion blur streaks.",
-    "surreal dreamlike": "Mixed frame rates. Heavy chromatic aberration, prism effects, glitch artifacts.",
-    "editorial fashion": "RED 8K 60fps. Razor-sharp. Wind machine effects. Geometric light patterns.",
-    "experimental time-based": "Mixed frame rates 12fps-240fps. Speed ramps, light streaks, motion trails.",
-  };
-  
-  // Find matching style or default
-  const matchingKey = Object.keys(styleMap).find(key => 
-    storylineCinematicStyle.toLowerCase().includes(key)
-  );
-  
-  return matchingKey 
-    ? styleMap[matchingKey]
-    : `High-quality cinematography. ${cinematicPotential.editingPace} pacing.`;
+function truncatePrompt(value: string, limit: number = PROMPT_CHAR_LIMIT): string {
+  if (value.length <= limit) return value;
+  const sliced = value.slice(0, limit - 1);
+  const lastSpace = sliced.lastIndexOf(" ");
+  const safeSlice = lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced;
+  return `${safeSlice.trim()}…`;
+}
+
+function joinList(values: string[], max: number, joiner: string): string {
+  return values
+    .filter(Boolean)
+    .slice(0, max)
+    .map(cleanText)
+    .join(joiner);
 }
 
 /**
  * Expands a single storyline concept into a concise Sora-optimized prompt
- * Keeps prompts under 400 characters for API compatibility
  */
 export function expandStorylineToPrompt(
   options: PromptGenerationOptions
 ): string {
   const { storyline, styleAnalysis, duration } = options;
-  
-  // Extract key visual elements
-  const colors = styleAnalysis.colorPalette.dominant.slice(0, 2).join(" and ");
-  const mood = styleAnalysis.mood.primary;
-  const lighting = styleAnalysis.lighting.quality;
-  const topMotifs = storyline.visualMotifs.slice(0, 2).join(", ");
-  const topMoments = storyline.keyMoments.slice(0, 3).join(". ");
-  
-  // Build ultra-concise prompt focusing on visual storytelling
-  return `${storyline.narrative} ${colors} color palette. ${lighting} lighting, ${mood} mood. ${storyline.setting}. ${topMoments}. Visual style: ${topMotifs}. ${storyline.cinematicStyle} cinematography with rapid ${duration}-second cuts.`.trim();
+
+  const narrative = cleanText(storyline.narrative);
+  const setting = cleanText(storyline.setting);
+  const palette = joinList(styleAnalysis.colorPalette.dominant, 2, " / ");
+  const paletteMood = cleanText(styleAnalysis.colorPalette.mood);
+  const lighting = cleanText(styleAnalysis.lighting.quality);
+  const energy = cleanText(styleAnalysis.mood.primary);
+  const beats = joinList(storyline.keyMoments, 3, " -> ")
+    .replace(/\b(\d)(?:-?second)?\b/gi, "$1-second")
+    .trim();
+  const motifs = joinList(storyline.visualMotifs, 3, ", ");
+  const cinematicStyle = cleanText(storyline.cinematicStyle);
+
+  const segments = [
+    narrative,
+    setting,
+    palette ? `Palette: ${palette} | ${paletteMood}` : "",
+    `${lighting} lighting | ${energy} energy`,
+    beats ? `Beats: ${beats}` : "",
+    motifs ? `Visuals: ${motifs}` : "",
+    `Style: ${cinematicStyle} | rapid ${duration}-second cuts | auteur-level intensity`,
+  ].filter(Boolean);
+
+  const rawPrompt = segments.map(cleanText).join(". ");
+  return truncatePrompt(rawPrompt);
 }
 
 /**
