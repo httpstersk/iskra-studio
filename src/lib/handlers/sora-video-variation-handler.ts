@@ -1,7 +1,7 @@
 /**
  * Sora 2 Video Variation Handler
  * Generates 4 cinematic video variations from a reference image using Sora 2 model
- * with different camera movements
+ * with AI-generated prompts based on image analysis
  */
 
 import { VIDEO_DEFAULTS } from "@/constants/canvas";
@@ -11,6 +11,7 @@ import type {
   VideoGenerationSettings,
 } from "@/types/canvas";
 import { snapPosition } from "@/utils/snap-utils";
+import { generateSoraPromptsFromAnalysis } from "@/lib/sora-prompt-generator";
 import { calculateBalancedPosition } from "./variation-handler";
 
 interface SoraVideoVariationHandlerDeps {
@@ -35,10 +36,10 @@ interface SoraVideoVariationHandlerDeps {
 }
 
 /**
- * High-intensity creative prompts for Sora 2 video variations
+ * Fallback prompts for Sora 2 video variations (used if image analysis fails)
  * Based on Sora 2 prompting guide - creates dynamic videos with one cut per second
  */
-const VIDEO_CAMERA_MOVEMENTS = [
+const FALLBACK_VIDEO_PROMPTS = [
   `Style: High-energy commercial cinematography, 120fps slow-motion mixed with real-time cuts. Anamorphic flares, shallow depth of field, saturated color grade with crushed blacks and lifted highlights. Sharp motion blur on fast movements; lens breathing for intensity.
 
   [Reference image subject] becomes the focal point of a rapid-fire sequence. Environment adapts to create maximum visual drama: reflective surfaces, atmospheric haze, directional lighting that carves shadows and highlights. Each beat escalates energy.
@@ -167,6 +168,29 @@ const VIDEO_CAMERA_MOVEMENTS = [
   Background Sound:
   Time-stretch ambient—birds to crickets, city wakes to sleeps, wind shifts pitch`,
 ] as const;
+
+/**
+ * Analyzes an image using OpenAI's vision model
+ */
+async function analyzeImage(imageUrl: string): Promise<string> {
+  const response = await fetch("/api/analyze-image", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ imageUrl }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(
+      error?.error || `Image analysis failed with status ${response.status}`
+    );
+  }
+
+  const result = await response.json();
+  return result.analysis;
+}
 
 /**
  * Uploads an image blob to fal.ai storage
@@ -312,6 +336,37 @@ export const handleSoraVideoVariations = async (
       setIsApiKeyDialogOpen
     );
 
+    let videoPrompts: string[];
+
+    try {
+      const imageAnalysis = await analyzeImage(imageUrl);
+      console.log("[Sora Variations] Image analysis completed:", {
+        analysisLength: imageAnalysis.length,
+        analysisPreview: imageAnalysis.substring(0, 200),
+      });
+
+      // Generate Sora 2 prompts based on analysis
+      videoPrompts = generateSoraPromptsFromAnalysis({
+        imageAnalysis,
+        duration: parseInt(videoSettings.duration as string) || 4,
+      });
+
+      console.log("[Sora Variations] Generated prompts from analysis");
+    } catch (analysisError) {
+      console.error(
+        "[Sora Variations] Image analysis failed, using fallback prompts:",
+        analysisError
+      );
+
+      toast({
+        title: "Using fallback prompts",
+        description:
+          "Image analysis unavailable, using preset cinematic styles",
+      });
+
+      videoPrompts = [...FALLBACK_VIDEO_PROMPTS];
+    }
+
     // Create video placeholders immediately for optimistic UI
     const timestamp = Date.now();
     const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
@@ -319,8 +374,8 @@ export const handleSoraVideoVariations = async (
     // Position indices for 4 variations: top, right, bottom, left
     const positionIndices = [0, 2, 4, 6];
 
-    const videoPlaceholders: PlacedVideo[] = VIDEO_CAMERA_MOVEMENTS.map(
-      (cameraMovement, index) => {
+    const videoPlaceholders: PlacedVideo[] = videoPrompts.map(
+      (promptText, index) => {
         const positionIndex = positionIndices[index];
         const position = calculateBalancedPosition(
           snappedSource.x,
@@ -358,21 +413,20 @@ export const handleSoraVideoVariations = async (
     // Show generation started toast
     toast({
       title: "Generating video variations",
-      description: `Creating 4 cinematic videos with Sora 2 (${videoSettings.duration || 4}s each)...`,
+      description: `Creating 4 AI-analyzed cinematic videos with Sora 2 (${videoSettings.duration || 4}s each)...`,
     });
 
     // Set up active video generations
     setActiveVideoGenerations((prev) => {
       const newMap = new Map(prev);
 
-      VIDEO_CAMERA_MOVEMENTS.forEach((variationPrompt, index) => {
+      videoPrompts.forEach((variationPrompt, index) => {
         const videoId = `sora-video-${timestamp}-${index}`;
 
-        // Use the complete variation prompt directly as it's already a comprehensive,
-        // standalone prompt optimized for Sora 2 (includes style, cinematography, shots, etc.)
-        console.log(`[Sora Variation ${index}] Setting prompt:`, {
+        // Use the AI-generated variation prompt based on image analysis
+        console.log(`[Sora Variation ${index}] Setting AI-generated prompt:`, {
           promptLength: variationPrompt.length,
-          promptPreview: variationPrompt.substring(0, 100),
+          promptPreview: variationPrompt.substring(0, 150),
         });
 
         // Extract prompt from videoSettings to prevent overwriting our variation prompt
