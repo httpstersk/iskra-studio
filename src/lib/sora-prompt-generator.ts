@@ -5,6 +5,8 @@
  * 2. Timestamps [00:00-00:01] for each shot
  * 3. Explicit shot types and camera motion
  * 4. SFX: and VFX: labels
+ * 
+ * All prompts naturally fit within 1000 chars by design (no truncation needed)
  */
 
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
@@ -22,15 +24,16 @@ function cleanText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
-function truncatePrompt(
-  value: string,
-  limit: number = PROMPT_CHAR_LIMIT
-): string {
-  if (value.length <= limit) return value;
-  const sliced = value.slice(0, limit - 1);
+/**
+ * Limits text to max length, cutting at word boundary
+ */
+function limitText(text: string, maxLength: number): string {
+  const cleaned = cleanText(text);
+  if (cleaned.length <= maxLength) return cleaned;
+  
+  const sliced = cleaned.slice(0, maxLength);
   const lastSpace = sliced.lastIndexOf(" ");
-  const safeSlice = lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced;
-  return `${safeSlice.trim()}…`;
+  return lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced;
 }
 
 /**
@@ -48,22 +51,27 @@ function formatTimestamp(startSec: number, endSec: number): string {
 
 /**
  * Expands a single storyline concept into a cinematic Sora prompt
+ * Structured to naturally fit within 1000 chars:
+ * - Global descriptors: ~200 chars
+ * - 4 shots × 140 chars each: ~560 chars
+ * - Formatting overhead: ~40 chars
+ * - Total: ~800 chars (safe margin under 1000)
  */
 export function expandStorylineToPrompt(
   options: PromptGenerationOptions
 ): string {
-  const { storyline, styleAnalysis, duration } = options;
+  const { storyline, styleAnalysis } = options;
 
-  // 1. Global descriptors
-  const setting = cleanText(storyline.setting);
-  const subject = cleanText(storyline.subject);
-  const lighting = cleanText(styleAnalysis.lighting.quality);
-  const vibe = cleanText(styleAnalysis.mood.primary);
-  const cinematography = cleanText(storyline.cinematicStyle);
+  // Global descriptors (target: ~200 chars total)
+  const setting = limitText(storyline.setting, 40);
+  const subject = limitText(storyline.subject, 20);
+  const lighting = limitText(styleAnalysis.lighting.quality, 20);
+  const vibe = limitText(styleAnalysis.mood.primary, 20);
+  const cinematography = limitText(storyline.cinematicStyle, 80);
 
   const globalDesc = `Setting: ${setting}. Subject: ${subject}. Lighting: ${lighting}. Vibe: ${vibe}. Cinematography: ${cinematography}.`;
 
-  // 2. Timestamp-based shots from keyMoments
+  // Timestamp-based shots (target: ~140 chars each)
   const moments = storyline.keyMoments.slice(0, 4);
   const shots: string[] = [];
 
@@ -71,12 +79,18 @@ export function expandStorylineToPrompt(
     const startSec = i;
     const endSec = i + 1;
     const timestamp = formatTimestamp(startSec, endSec);
-    const momentDesc = cleanText(moments[i]);
+    const momentDesc = limitText(moments[i], 140);
     shots.push(`${timestamp} ${momentDesc}`);
   }
 
   const fullPrompt = `${globalDesc} ${shots.join(" ")}`;
-  return truncatePrompt(fullPrompt);
+  
+  // Safety check: should never hit this if input follows guidelines
+  if (fullPrompt.length > PROMPT_CHAR_LIMIT) {
+    console.warn(`Prompt exceeded ${PROMPT_CHAR_LIMIT} chars: ${fullPrompt.length} chars`);
+  }
+  
+  return fullPrompt;
 }
 
 /**
