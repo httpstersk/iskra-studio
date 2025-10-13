@@ -26,7 +26,7 @@ type ApiResponse = {
 async function getFalClient(
   apiKey: string | undefined,
   ctx: { req?: any; user?: { id: string } },
-  isVideo: boolean = false
+  isVideo: boolean = false,
 ) {
   const headersSource =
     ctx.req?.headers instanceof Headers ? ctx.req.headers : ctx.req?.headers;
@@ -71,7 +71,7 @@ export const appRouter = router({
           prompt: z.string().optional(),
           resolution: z.enum(["auto", "720p", "1080p"]).optional(),
         })
-        .passthrough()
+        .passthrough(),
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -193,7 +193,7 @@ export const appRouter = router({
           ])
           .optional(),
         apiKey: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       try {
@@ -227,7 +227,7 @@ export const appRouter = router({
       } catch (error) {
         console.error("Error in text-to-image generation:", error);
         throw new Error(
-          error instanceof Error ? error.message : "Failed to generate image"
+          error instanceof Error ? error.message : "Failed to generate image",
         );
       }
     }),
@@ -240,7 +240,7 @@ export const appRouter = router({
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
         apiKey: z.string().optional(),
-      })
+      }),
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -261,7 +261,7 @@ export const appRouter = router({
               enable_safety_checker: true,
               seed: input.seed,
             },
-          }
+          },
         );
 
         let eventIndex = 0;
@@ -337,7 +337,7 @@ export const appRouter = router({
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
         apiKey: z.string().optional(),
-      })
+      }),
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -392,7 +392,7 @@ export const appRouter = router({
             },
             pollInterval: 1000,
             logs: true,
-          }
+          },
         );
 
         if (signal?.aborted) {

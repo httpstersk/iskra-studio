@@ -13,7 +13,7 @@ async function uploadBlobDirect(
   blob: Blob,
   customApiKey: string | undefined,
   toast: VariationHandlerDeps["toast"],
-  setIsApiKeyDialogOpen: VariationHandlerDeps["setIsApiKeyDialogOpen"]
+  setIsApiKeyDialogOpen: VariationHandlerDeps["setIsApiKeyDialogOpen"],
 ): Promise<{ url: string }> {
   try {
     if (blob.size > 10 * 1024 * 1024) {
@@ -34,7 +34,7 @@ async function uploadBlobDirect(
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       throw new Error(
-        errorData?.message || `Upload failed with status ${response.status}`
+        errorData?.message || `Upload failed with status ${response.status}`,
       );
     }
 
@@ -69,7 +69,7 @@ async function uploadBlobDirect(
  * Process image to blob efficiently without FileReader
  */
 async function processImageToBlob(
-  selectedImage: PlacedImage
+  selectedImage: PlacedImage,
 ): Promise<{ blob: Blob; dimensions: { width: number; height: number } }> {
   // Load image
   const imgElement = new window.Image();
@@ -104,7 +104,7 @@ async function processImageToBlob(
         else reject(new Error("Failed to create blob"));
       },
       hasTransparency ? "image/png" : "image/jpeg",
-      0.95
+      0.95,
     );
   });
 
@@ -164,7 +164,7 @@ export function calculateBalancedPosition(
   sourceWidth: number,
   sourceHeight: number,
   variationWidth: number,
-  variationHeight: number
+  variationHeight: number,
 ) {
   // Clockwise positions starting from top center
   switch (angleIndex) {
@@ -370,7 +370,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         selectedImage.width,
         selectedImage.height,
         selectedImage.width,
-        selectedImage.height
+        selectedImage.height,
       );
 
       return {
@@ -384,7 +384,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         isGenerated: true,
         isLoading: true,
       };
-    }
+    },
   );
 
   // Add placeholders immediately - single state update
@@ -405,7 +405,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       blob,
       customApiKey,
       toast,
-      setIsApiKeyDialogOpen
+      setIsApiKeyDialogOpen,
     );
 
     // Snap source image position for consistent alignment
@@ -414,7 +414,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
     const imageSizeDimensions = getOptimalImageDimensions(
       selectedImage.width,
-      selectedImage.height
+      selectedImage.height,
     );
 
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update

@@ -6,10 +6,10 @@
  */
 export function determineAspectRatio(
   width: number,
-  height: number
+  height: number,
 ): "landscape_16_9" | "portrait_16_9" {
   const aspectRatio = width / height;
-  
+
   // If aspect ratio is greater than 1, it's landscape (wider than tall)
   // If aspect ratio is less than 1, it's portrait (taller than wide)
   // The threshold is 1.0 (square)
@@ -25,10 +25,10 @@ export function determineAspectRatio(
  */
 export function getOptimalImageDimensions(
   width: number,
-  height: number
+  height: number,
 ): { width: number; height: number } {
   const aspectRatioMode = determineAspectRatio(width, height);
-  
+
   // Use 4K dimensions (3840x2160 for 16:9, 2160x3840 for 9:16)
   return aspectRatioMode === "landscape_16_9"
     ? { width: 3840, height: 2160 }
@@ -45,7 +45,7 @@ export function getOptimalImageDimensions(
 export function calculateCropDimensions(
   originalWidth: number,
   originalHeight: number,
-  targetAspectRatio: "16:9" | "9:16"
+  targetAspectRatio: "16:9" | "9:16",
 ): { width: number; height: number; x: number; y: number } {
   const targetRatio = targetAspectRatio === "16:9" ? 16 / 9 : 9 / 16;
   const currentRatio = originalWidth / originalHeight;
@@ -85,13 +85,13 @@ export function calculateCropDimensions(
  */
 export async function cropImageToAspectRatio(
   imageElement: HTMLImageElement,
-  targetAspectRatio: "landscape_16_9" | "portrait_16_9"
+  targetAspectRatio: "landscape_16_9" | "portrait_16_9",
 ): Promise<string> {
   const aspectRatio = targetAspectRatio === "landscape_16_9" ? "16:9" : "9:16";
   const cropDimensions = calculateCropDimensions(
     imageElement.naturalWidth,
     imageElement.naturalHeight,
-    aspectRatio
+    aspectRatio,
   );
 
   // Create canvas with crop dimensions
@@ -114,7 +114,7 @@ export async function cropImageToAspectRatio(
     0,
     0,
     cropDimensions.width,
-    cropDimensions.height
+    cropDimensions.height,
   );
 
   // Convert to data URL

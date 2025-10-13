@@ -29,19 +29,19 @@ export function useUIState() {
   const [customApiKey, setCustomApiKey] = useAtom(customApiKeyAtom);
   const [generationCount, setGenerationCount] = useAtom(generationCountAtom);
   const [hiddenVideoControlsIds, setHiddenVideoControlsIds] = useAtom(
-    hiddenVideoControlsIdsAtom
+    hiddenVideoControlsIdsAtom,
   );
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useAtom(
-    isApiKeyDialogOpenAtom
+    isApiKeyDialogOpenAtom,
   );
   const [isImageToVideoDialogOpen, setIsImageToVideoDialogOpen] = useAtom(
-    isImageToVideoDialogOpenAtom
+    isImageToVideoDialogOpenAtom,
   );
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useAtom(
-    isSettingsDialogOpenAtom
+    isSettingsDialogOpenAtom,
   );
   const [selectedImageForVideo, setSelectedImageForVideo] = useAtom(
-    selectedImageForVideoAtom
+    selectedImageForVideoAtom,
   );
   const [showChat, setShowChat] = useAtom(showChatAtom);
   const [showGrid, setShowGrid] = useAtom(showGridAtom);
@@ -49,7 +49,7 @@ export function useUIState() {
   const [tempApiKey, setTempApiKey] = useAtom(tempApiKeyAtom);
   const [variationMode, setVariationMode] = useAtom(variationModeAtom);
   const [visibleIndicators, setVisibleIndicators] = useAtom(
-    visibleIndicatorsAtom
+    visibleIndicatorsAtom,
   );
 
   // Load API key from localStorage on mount

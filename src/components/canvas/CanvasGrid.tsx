@@ -61,7 +61,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
       dotRadius * scale,
       dotRadius * scale,
       0,
-      Math.PI * 2
+      Math.PI * 2,
     );
     context.fill();
 

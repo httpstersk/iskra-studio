@@ -9,7 +9,7 @@ import type { Viewport } from "./useCanvasState";
 export function useFileUpload(
   setImages: (fn: (prev: PlacedImage[]) => PlacedImage[]) => void,
   viewport: Viewport,
-  canvasSize: { width: number; height: number }
+  canvasSize: { width: number; height: number },
 ) {
   const handleFileUpload = useCallback(
     (files: FileList | null, position?: { x: number; y: number }) => {
@@ -26,13 +26,13 @@ export function useFileUpload(
               // Determine best aspect ratio and crop the image
               const targetAspectRatio = determineAspectRatio(
                 img.naturalWidth,
-                img.naturalHeight
+                img.naturalHeight,
               );
 
               // Crop image to 16:9 or 9:16
               const croppedImageSrc = await cropImageToAspectRatio(
                 img,
-                targetAspectRatio
+                targetAspectRatio,
               );
 
               // Create a new image element to get the cropped dimensions
@@ -98,13 +98,13 @@ export function useFileUpload(
         }
       });
     },
-    [setImages, viewport, canvasSize]
+    [setImages, viewport, canvasSize],
   );
 
   const handleDrop = useCallback(
     (
       e: React.DragEvent,
-      stageRef: React.RefObject<{ container(): HTMLElement }>
+      stageRef: React.RefObject<{ container(): HTMLElement }>,
     ) => {
       e.preventDefault();
 
@@ -121,7 +121,7 @@ export function useFileUpload(
         handleFileUpload(e.dataTransfer.files);
       }
     },
-    [handleFileUpload]
+    [handleFileUpload],
   );
 
   return {

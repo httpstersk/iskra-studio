@@ -1,10 +1,10 @@
 /**
  * Image drag behavior hook
- * 
+ *
  * Provides optimized drag handling for canvas images with grid snapping,
  * haptic feedback, and multi-selection support. Implements throttling
  * to prevent excessive state updates during drag operations.
- * 
+ *
  * @module hooks/useImageDrag
  */
 
@@ -43,17 +43,17 @@ interface UseImageDragReturn {
 
 /**
  * Custom hook for optimized image dragging with grid snapping and multi-selection support.
- * 
+ *
  * Features:
  * - Automatic grid snapping with configurable grid size
  * - Haptic feedback on snap position changes
  * - Single and multi-selection drag support
  * - Throttled state updates to prevent performance issues
  * - Synchronized movement of all selected images
- * 
+ *
  * @param props - Hook configuration
  * @returns Drag event handlers
- * 
+ *
  * @example
  * ```typescript
  * const { handleDragMove, handleDragEnd } = useImageDrag({
@@ -64,7 +64,7 @@ interface UseImageDragReturn {
  *   setImages: setAllImages,
  *   throttleFrame: () => true
  * });
- * 
+ *
  * <KonvaImage
  *   onDragMove={handleDragMove}
  *   onDragEnd={handleDragEnd}
@@ -116,7 +116,8 @@ export const useImageDrag = ({
       lastSnapPos.current = snapped;
 
       // Handle multi-selection vs single-selection drag
-      const isMultiDrag = selectedIds.includes(image.id) && selectedIds.length > 1;
+      const isMultiDrag =
+        selectedIds.includes(image.id) && selectedIds.length > 1;
 
       if (isMultiDrag) {
         // Multi-selection drag: move all selected items together
@@ -160,7 +161,14 @@ export const useImageDrag = ({
         });
       }
     },
-    [image.id, selectedIds, dragStartPositions, onChange, setImages, throttleFrame]
+    [
+      image.id,
+      selectedIds,
+      dragStartPositions,
+      onChange,
+      setImages,
+      throttleFrame,
+    ],
   );
 
   const handleDragEnd = useCallback(() => {

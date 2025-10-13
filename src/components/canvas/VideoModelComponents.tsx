@@ -86,12 +86,12 @@ export const ModelPricingDisplay: React.FC<ModelPricingDisplayProps> = ({
           __html: pricingMessage
             .replace(
               /\$[\d.]+/,
-              (match) => `<strong class="text-foreground">${match}</strong>`
+              (match) => `<strong class="text-foreground">${match}</strong>`,
             )
             .replace(
               /(\d+) times/,
               (match, num) =>
-                `<strong class="text-foreground">${num} times</strong>`
+                `<strong class="text-foreground">${num} times</strong>`,
             ),
         }}
       />
@@ -309,7 +309,13 @@ export const VideoModelOptions: React.FC<VideoModelOptionsProps> = ({
                 id={key}
                 type={key === "seed" ? "text" : "number"}
                 placeholder={option.placeholder}
-                value={isSeedException ? "random" : (typeof value === 'string' || typeof value === 'number' ? String(value) : '')}
+                value={
+                  isSeedException
+                    ? "random"
+                    : typeof value === "string" || typeof value === "number"
+                      ? String(value)
+                      : ""
+                }
                 onChange={(e) => {
                   if (key === "seed") {
                     const val = e.target.value;

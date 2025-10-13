@@ -1,13 +1,13 @@
 /**
  * Canvas image component with interaction and animation support
- * 
+ *
  * Renders images on the Konva canvas with support for:
  * - Drag and drop with grid snapping
  * - Selection and multi-selection
  * - Streaming image loading
  * - Loading animations
  * - Rotation and transformation
- * 
+ *
  * @module components/canvas/CanvasImage
  */
 
@@ -53,7 +53,7 @@ interface CanvasImageProps {
  * Custom hook to get the appropriate image source (streaming or normal).
  * Uses streaming image hook for generated images to show progressive loading,
  * and regular image loading for uploaded images.
- * 
+ *
  * @param src - Image source URL
  * @param isGenerated - Whether the image was AI-generated
  * @returns Loaded image element or undefined
@@ -64,14 +64,14 @@ const useCanvasImageSource = (src: string, isGenerated: boolean) => {
 
   return useMemo(
     () => (isGenerated ? streamingImg : normalImg),
-    [isGenerated, normalImg, streamingImg]
+    [isGenerated, normalImg, streamingImg],
   );
 };
 
 /**
  * Custom hook to throttle updates to 60fps for optimal performance.
  * Returns a function that checks if enough time has passed since last update.
- * 
+ *
  * @param limitMs - Minimum milliseconds between updates (default: 16ms for ~60fps)
  * @returns Function that returns true if update should proceed
  */
@@ -90,7 +90,7 @@ const useFrameThrottle = (limitMs = 16) => {
 
 /**
  * CanvasImage component renders an image on the Konva canvas with full interaction support.
- * 
+ *
  * This component integrates multiple hooks to provide a complete image editing experience:
  * - Loading states with pulsing animation
  * - Fade-in animation when loaded
@@ -99,7 +99,7 @@ const useFrameThrottle = (limitMs = 16) => {
  * - Hover and selection visual feedback
  * - Double-click for variation mode
  * - Mouse button detection
- * 
+ *
  * @component
  * @example
  * ```tsx
@@ -144,7 +144,8 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   });
 
   // Use explicit opacity if set, otherwise use animation opacity
-  const finalOpacity = image.opacity !== undefined ? image.opacity : displayOpacity;
+  const finalOpacity =
+    image.opacity !== undefined ? image.opacity : displayOpacity;
 
   // Handle drag behavior
   const { handleDragMove, handleDragEnd: handleDragEndInternal } = useImageDrag(
@@ -155,7 +156,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       onChange,
       setImages,
       throttleFrame,
-    }
+    },
   );
 
   // Handle interaction states
@@ -181,7 +182,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       handleDragEndInternal();
       onDragEnd();
     },
-    [handleDragEndInternal, onDragEnd]
+    [handleDragEndInternal, onDragEnd],
   );
 
   // Handle double-click to toggle variation mode
@@ -192,7 +193,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
         onDoubleClick(image.id);
       }
     },
-    [onDoubleClick, image.id]
+    [onDoubleClick, image.id],
   );
 
   return (

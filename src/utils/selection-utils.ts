@@ -1,14 +1,14 @@
 /**
  * Selection state management utilities
- * 
+ *
  * This module provides utilities for managing element selection in canvas applications,
  * including selection box calculations, multi-selection handling, and selection state
  * determination.
- * 
+ *
  * @module selection-utils
  */
 
-import type { CanvasElement, BoundingBox } from './viewport-utils';
+import type { CanvasElement, BoundingBox } from "./viewport-utils";
 
 /**
  * Selection box representing a rectangular selection area
@@ -28,9 +28,9 @@ export interface SelectionBox {
 
 /**
  * Creates an empty/invisible selection box.
- * 
+ *
  * @returns Empty selection box
- * 
+ *
  * @example
  * ```typescript
  * const [selectionBox, setSelectionBox] = useState(createEmptySelectionBox());
@@ -49,10 +49,10 @@ export function createEmptySelectionBox(): SelectionBox {
 /**
  * Converts a selection box to a normalized bounding box with
  * left, top, right, bottom coordinates.
- * 
+ *
  * @param selectionBox - Selection box to convert
  * @returns Normalized bounding box
- * 
+ *
  * @example
  * ```typescript
  * const selectionBox = { x1: 100, y1: 200, x2: 50, y2: 150, visible: true };
@@ -71,11 +71,11 @@ export function selectionBoxToBounds(selectionBox: SelectionBox): BoundingBox {
 
 /**
  * Checks if an element intersects with a selection box.
- * 
+ *
  * @param element - Canvas element to check
  * @param selectionBox - Selection box to check against
  * @returns True if the element intersects with the selection box
- * 
+ *
  * @example
  * ```typescript
  * const image = { x: 100, y: 100, width: 50, height: 50 };
@@ -85,7 +85,7 @@ export function selectionBoxToBounds(selectionBox: SelectionBox): BoundingBox {
  */
 export function isElementInSelection(
   element: CanvasElement,
-  selectionBox: SelectionBox
+  selectionBox: SelectionBox,
 ): boolean {
   if (!selectionBox.visible) {
     return false;
@@ -103,11 +103,11 @@ export function isElementInSelection(
 
 /**
  * Finds all elements within a selection box.
- * 
+ *
  * @param elements - Array of canvas elements to check
  * @param selectionBox - Selection box to check against
  * @returns Array of element IDs that intersect with the selection box
- * 
+ *
  * @example
  * ```typescript
  * const images = [
@@ -118,10 +118,9 @@ export function isElementInSelection(
  * const selectedIds = getElementsInSelection(images, selectionBox); // ['1']
  * ```
  */
-export function getElementsInSelection<T extends CanvasElement & { id: string }>(
-  elements: T[],
-  selectionBox: SelectionBox
-): string[] {
+export function getElementsInSelection<
+  T extends CanvasElement & { id: string },
+>(elements: T[], selectionBox: SelectionBox): string[] {
   if (!selectionBox.visible) {
     return [];
   }
@@ -133,12 +132,12 @@ export function getElementsInSelection<T extends CanvasElement & { id: string }>
 
 /**
  * Checks if a point is within an element's bounds.
- * 
+ *
  * @param pointX - X coordinate of the point
  * @param pointY - Y coordinate of the point
  * @param element - Canvas element to check
  * @returns True if the point is within the element
- * 
+ *
  * @example
  * ```typescript
  * const element = { x: 100, y: 100, width: 50, height: 50 };
@@ -148,7 +147,7 @@ export function getElementsInSelection<T extends CanvasElement & { id: string }>
 export function isPointInElement(
   pointX: number,
   pointY: number,
-  element: CanvasElement
+  element: CanvasElement,
 ): boolean {
   return (
     pointX >= element.x &&
@@ -161,12 +160,12 @@ export function isPointInElement(
 /**
  * Finds the topmost element at a given point (in reverse render order).
  * Elements later in the array are considered "on top".
- * 
+ *
  * @param pointX - X coordinate to check
  * @param pointY - Y coordinate to check
  * @param elements - Array of canvas elements (in render order)
  * @returns The topmost element at the point, or null if none found
- * 
+ *
  * @example
  * ```typescript
  * const elements = [
@@ -179,7 +178,7 @@ export function isPointInElement(
 export function getElementAtPoint<T extends CanvasElement>(
   pointX: number,
   pointY: number,
-  elements: T[]
+  elements: T[],
 ): T | null {
   for (let i = elements.length - 1; i >= 0; i--) {
     const element = elements[i];
@@ -192,11 +191,11 @@ export function getElementAtPoint<T extends CanvasElement>(
 
 /**
  * Toggles selection of an element (adds if not selected, removes if selected).
- * 
+ *
  * @param elementId - ID of the element to toggle
  * @param currentSelection - Current array of selected IDs
  * @returns New selection array
- * 
+ *
  * @example
  * ```typescript
  * const selected = ['id1', 'id2'];
@@ -206,7 +205,7 @@ export function getElementAtPoint<T extends CanvasElement>(
  */
 export function toggleSelection(
   elementId: string,
-  currentSelection: string[]
+  currentSelection: string[],
 ): string[] {
   if (currentSelection.includes(elementId)) {
     return currentSelection.filter((id) => id !== elementId);
@@ -216,11 +215,11 @@ export function toggleSelection(
 
 /**
  * Adds elements to selection without duplicates.
- * 
+ *
  * @param elementIds - IDs to add to selection
  * @param currentSelection - Current array of selected IDs
  * @returns New selection array
- * 
+ *
  * @example
  * ```typescript
  * const selected = ['id1', 'id2'];
@@ -229,7 +228,7 @@ export function toggleSelection(
  */
 export function addToSelection(
   elementIds: string[],
-  currentSelection: string[]
+  currentSelection: string[],
 ): string[] {
   const uniqueIds = new Set([...currentSelection, ...elementIds]);
   return Array.from(uniqueIds);
@@ -237,11 +236,11 @@ export function addToSelection(
 
 /**
  * Removes elements from selection.
- * 
+ *
  * @param elementIds - IDs to remove from selection
  * @param currentSelection - Current array of selected IDs
  * @returns New selection array
- * 
+ *
  * @example
  * ```typescript
  * const selected = ['id1', 'id2', 'id3'];
@@ -250,7 +249,7 @@ export function addToSelection(
  */
 export function removeFromSelection(
   elementIds: string[],
-  currentSelection: string[]
+  currentSelection: string[],
 ): string[] {
   const idsToRemove = new Set(elementIds);
   return currentSelection.filter((id) => !idsToRemove.has(id));
@@ -258,13 +257,13 @@ export function removeFromSelection(
 
 /**
  * Handles click selection with modifier key support.
- * 
+ *
  * @param elementId - ID of the clicked element (null for background click)
  * @param currentSelection - Current array of selected IDs
  * @param isMultiSelectKey - Whether Cmd/Ctrl key is pressed
  * @param isShiftKey - Whether Shift key is pressed
  * @returns New selection array
- * 
+ *
  * @example
  * ```typescript
  * const selected = ['id1'];
@@ -277,7 +276,7 @@ export function handleClickSelection(
   elementId: string | null,
   currentSelection: string[],
   isMultiSelectKey: boolean,
-  isShiftKey: boolean
+  isShiftKey: boolean,
 ): string[] {
   if (elementId === null) {
     return [];
@@ -296,11 +295,11 @@ export function handleClickSelection(
 
 /**
  * Filters elements to only those that are currently selected.
- * 
+ *
  * @param elements - Array of elements with IDs
  * @param selectedIds - Array of selected IDs
  * @returns Array of selected elements
- * 
+ *
  * @example
  * ```typescript
  * const allImages = [
@@ -312,7 +311,7 @@ export function handleClickSelection(
  */
 export function getSelectedElements<T extends { id: string }>(
   elements: T[],
-  selectedIds: string[]
+  selectedIds: string[],
 ): T[] {
   const idSet = new Set(selectedIds);
   return elements.filter((element) => idSet.has(element.id));
@@ -320,27 +319,29 @@ export function getSelectedElements<T extends { id: string }>(
 
 /**
  * Gets IDs of all elements.
- * 
+ *
  * @param elements - Array of elements with IDs
  * @returns Array of all element IDs
- * 
+ *
  * @example
  * ```typescript
  * const elements = [{ id: 'id1', ... }, { id: 'id2', ... }];
  * const allIds = getAllElementIds(elements); // ['id1', 'id2']
  * ```
  */
-export function getAllElementIds<T extends { id: string }>(elements: T[]): string[] {
+export function getAllElementIds<T extends { id: string }>(
+  elements: T[],
+): string[] {
   return elements.map((element) => element.id);
 }
 
 /**
  * Checks if an element is currently selected.
- * 
+ *
  * @param elementId - ID of the element to check
  * @param selectedIds - Array of selected IDs
  * @returns True if the element is selected
- * 
+ *
  * @example
  * ```typescript
  * const isSelected = isElementSelected('id1', ['id1', 'id2']); // true
@@ -348,7 +349,7 @@ export function getAllElementIds<T extends { id: string }>(elements: T[]): strin
  */
 export function isElementSelected(
   elementId: string,
-  selectedIds: string[]
+  selectedIds: string[],
 ): boolean {
   return selectedIds.includes(elementId);
 }

@@ -16,7 +16,7 @@ import type { PlacedImage, PlacedVideo, HistoryState } from "@/types/canvas";
 /**
  * Hook to manage history state using Jotai atoms
  * Provides undo/redo functionality
- * 
+ *
  * @param images - Current images array
  * @param videos - Current videos array
  * @param selectedIds - Currently selected element IDs
@@ -24,7 +24,7 @@ import type { PlacedImage, PlacedVideo, HistoryState } from "@/types/canvas";
 export function useHistoryState(
   images: PlacedImage[],
   videos: PlacedVideo[],
-  selectedIds: string[]
+  selectedIds: string[],
 ) {
   const [history, setHistory] = useAtom(historyAtom);
   const [historyIndex, setHistoryIndex] = useAtom(historyIndexAtom);
@@ -44,7 +44,15 @@ export function useHistoryState(
     newHistory.push(newState);
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
-  }, [history, historyIndex, images, selectedIds, setHistory, setHistoryIndex, videos]);
+  }, [
+    history,
+    historyIndex,
+    images,
+    selectedIds,
+    setHistory,
+    setHistoryIndex,
+    videos,
+  ]);
 
   /**
    * Undoes the last action

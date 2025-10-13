@@ -25,21 +25,24 @@ interface GenerationHandlerDeps {
     description?: string;
     variant?: "default" | "destructive";
   }) => void;
-  generateTextToImage: (
-    params: {
-      prompt: string;
-      seed?: number;
-      imageSize?: "landscape_4_3" | "portrait_4_3" | "square" | "landscape_16_9" | "portrait_16_9";
-      apiKey?: string;
-    }
-  ) => Promise<{ width: number; height: number; url: string }>;
+  generateTextToImage: (params: {
+    prompt: string;
+    seed?: number;
+    imageSize?:
+      | "landscape_4_3"
+      | "portrait_4_3"
+      | "square"
+      | "landscape_16_9"
+      | "portrait_16_9";
+    apiKey?: string;
+  }) => Promise<{ width: number; height: number; url: string }>;
 }
 
 export const uploadImageDirect = async (
   dataUrl: string,
   falClient: FalClient,
   toast: GenerationHandlerDeps["toast"],
-  setIsApiKeyDialogOpen: GenerationHandlerDeps["setIsApiKeyDialogOpen"]
+  setIsApiKeyDialogOpen: GenerationHandlerDeps["setIsApiKeyDialogOpen"],
 ) => {
   // Convert data URL to blob first
   const response = await fetch(dataUrl);
@@ -51,7 +54,7 @@ export const uploadImageDirect = async (
       // 10MB warning
       console.warn(
         "Large image detected:",
-        (blob.size / 1024 / 1024).toFixed(2) + "MB"
+        (blob.size / 1024 / 1024).toFixed(2) + "MB",
       );
     }
 
@@ -98,7 +101,7 @@ export const generateImage = (
   setImages: GenerationHandlerDeps["setImages"],
   setActiveGenerations: GenerationHandlerDeps["setActiveGenerations"],
   width: number = 300,
-  height: number = 300
+  height: number = 300,
 ) => {
   const placeholderId = `generated-${Date.now()}`;
   setImages((prev) => [
@@ -121,7 +124,7 @@ export const generateImage = (
     new Map(prev).set(placeholderId, {
       imageUrl,
       prompt: generationSettings.prompt,
-    })
+    }),
   );
 };
 
@@ -249,7 +252,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
           dataUrl,
           falClient,
           toast,
-          setIsApiKeyDialogOpen
+          setIsApiKeyDialogOpen,
         );
       } catch (uploadError) {
         console.error("Failed to upload image:", uploadError);
@@ -287,7 +290,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
         setImages,
         setActiveGenerations,
         img.width,
-        img.height
+        img.height,
       );
       successCount++;
     } catch (error) {

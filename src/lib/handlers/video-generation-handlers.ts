@@ -23,11 +23,11 @@ export function createGenerationId(prefix: string): string {
  */
 export async function uploadMediaIfNeeded(
   url: string,
-  falClient: { storage: { upload: (blob: Blob) => Promise<string> } }
+  falClient: { storage: { upload: (blob: Blob) => Promise<string> } },
 ): Promise<string> {
   if (url.startsWith("data:") || url.startsWith("blob:")) {
     const uploadResult = await falClient.storage.upload(
-      await (await fetch(url)).blob()
+      await (await fetch(url)).blob(),
     );
     return uploadResult;
   }
@@ -40,7 +40,7 @@ export async function uploadMediaIfNeeded(
 export function createImageToVideoConfig(
   imageUrl: string,
   settings: VideoGenerationSettings,
-  sourceImageId: string
+  sourceImageId: string,
 ) {
   const config = {
     aspectRatio: settings.aspectRatio || "auto",
@@ -53,12 +53,12 @@ export function createImageToVideoConfig(
     seed: settings.seed,
     sourceImageId,
   };
-  
+
   console.log("createImageToVideoConfig - Creating config:", {
     inputSettings: settings,
     outputConfig: config,
   });
-  
+
   return config;
 }
 
@@ -71,7 +71,7 @@ export function handleVideoCompletion(
   duration: number,
   generation: { sourceImageId?: string } | null,
   images: PlacedImage[],
-  selectedImageForVideo: string | null
+  selectedImageForVideo: string | null,
 ): { newVideo: PlacedVideo | null; sourceType: "image" | null } {
   const sourceImageId = generation?.sourceImageId || selectedImageForVideo;
 

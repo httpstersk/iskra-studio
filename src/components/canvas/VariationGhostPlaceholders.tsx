@@ -34,10 +34,10 @@ export const VariationGhostPlaceholders: React.FC<
 }) => {
   const nodeRef = useRef<Konva.Node | null>(null);
   const [anchor, setAnchor] = useState(() =>
-    snapPosition(selectedImage.x, selectedImage.y)
+    snapPosition(selectedImage.x, selectedImage.y),
   );
   const [blurredClone, setBlurredClone] = useState<HTMLCanvasElement | null>(
-    null
+    null,
   );
   const [sourceImage] = useImage(selectedImage.src, "anonymous");
 
@@ -73,7 +73,7 @@ export const VariationGhostPlaceholders: React.FC<
           lastY = y;
           const snapped = snapPosition(x, y);
           setAnchor((prev) =>
-            prev.x === snapped.x && prev.y === snapped.y ? prev : snapped
+            prev.x === snapped.x && prev.y === snapped.y ? prev : snapped,
           );
         }
       }
@@ -109,7 +109,7 @@ export const VariationGhostPlaceholders: React.FC<
       sourceImage,
       selectedImage.width,
       selectedImage.height,
-      BLUR_SIGMA
+      BLUR_SIGMA,
     );
 
     if (!cancelled) {
@@ -145,7 +145,7 @@ export const VariationGhostPlaceholders: React.FC<
       selectedImage.width,
       selectedImage.height,
       selectedImage.width,
-      selectedImage.height
+      selectedImage.height,
     );
 
     return {

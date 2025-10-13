@@ -10,7 +10,7 @@ export function useCanvasInteractions(
   images: PlacedImage[],
   videos: PlacedVideo[],
   selectedIds: string[],
-  setSelectedIds: (ids: string[]) => void
+  setSelectedIds: (ids: string[]) => void,
 ) {
   const [selectionBox, setSelectionBox] = useState<SelectionBox>({
     startX: 0,
@@ -29,7 +29,7 @@ export function useCanvasInteractions(
 
   // Touch event states for mobile
   const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(
-    null
+    null,
   );
   const [lastTouchCenter, setLastTouchCenter] = useState<{
     x: number;
@@ -43,13 +43,13 @@ export function useCanvasInteractions(
         setSelectedIds(
           selectedIds.includes(id)
             ? selectedIds.filter((i) => i !== id)
-            : [...selectedIds, id]
+            : [...selectedIds, id],
         );
       } else {
         setSelectedIds([id]);
       }
     },
-    [selectedIds, setSelectedIds]
+    [selectedIds, setSelectedIds],
   );
 
   const handleWheel = useCallback(
@@ -96,7 +96,7 @@ export function useCanvasInteractions(
         });
       }
     },
-    [viewport, setViewport]
+    [viewport, setViewport],
   );
 
   const handleMouseDown = useCallback(
@@ -133,7 +133,7 @@ export function useCanvasInteractions(
         }
       }
     },
-    [setSelectedIds]
+    [setSelectedIds],
   );
 
   // Use refs to avoid recreating callbacks on every viewport change
@@ -177,7 +177,7 @@ export function useCanvasInteractions(
         }));
       }
     },
-    [isPanningCanvas, lastPanPosition, isSelecting, setViewport]
+    [isPanningCanvas, lastPanPosition, isSelecting, setViewport],
   );
 
   const handleMouseUp = useCallback(
@@ -235,7 +235,7 @@ export function useCanvasInteractions(
       images,
       videos,
       setSelectedIds,
-    ]
+    ],
   );
 
   const handleTouchStart = useCallback(
@@ -248,7 +248,7 @@ export function useCanvasInteractions(
         const touch2 = { x: touches[1].clientX, y: touches[1].clientY };
 
         const distance = Math.sqrt(
-          Math.pow(touch2.x - touch1.x, 2) + Math.pow(touch2.y - touch1.y, 2)
+          Math.pow(touch2.x - touch1.x, 2) + Math.pow(touch2.y - touch1.y, 2),
         );
 
         const center = {
@@ -285,7 +285,7 @@ export function useCanvasInteractions(
         setLastTouchCenter(touch);
       }
     },
-    [viewport, images]
+    [viewport, images],
   );
 
   const handleTouchMove = useCallback(
@@ -299,7 +299,7 @@ export function useCanvasInteractions(
         const touch2 = { x: touches[1].clientX, y: touches[1].clientY };
 
         const distance = Math.sqrt(
-          Math.pow(touch2.x - touch1.x, 2) + Math.pow(touch2.y - touch1.y, 2)
+          Math.pow(touch2.x - touch1.x, 2) + Math.pow(touch2.y - touch1.y, 2),
         );
 
         const center = {
@@ -308,7 +308,10 @@ export function useCanvasInteractions(
         };
 
         const scaleFactor = distance / lastTouchDistance;
-        const newScale = Math.max(0.1, Math.min(5, viewport.scale * scaleFactor));
+        const newScale = Math.max(
+          0.1,
+          Math.min(5, viewport.scale * scaleFactor),
+        );
 
         const stage = e.target.getStage();
         if (stage) {
@@ -366,7 +369,7 @@ export function useCanvasInteractions(
       isDraggingImage,
       isTouchingImage,
       setViewport,
-    ]
+    ],
   );
 
   const handleTouchEnd = useCallback(
@@ -375,7 +378,7 @@ export function useCanvasInteractions(
       setLastTouchCenter(null);
       setIsTouchingImage(false);
     },
-    []
+    [],
   );
 
   return {

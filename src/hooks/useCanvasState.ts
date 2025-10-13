@@ -45,20 +45,17 @@ export function useCanvasState() {
     }
   }, [canvasSize]);
 
-  const setImages = useCallback(
-    (value: SetStateAction<PlacedImage[]>) => {
-      setImagesState((prev) => {
-        const nextState =
-          typeof value === "function"
-            ? (value as (prev: PlacedImage[]) => PlacedImage[])(prev)
-            : value;
+  const setImages = useCallback((value: SetStateAction<PlacedImage[]>) => {
+    setImagesState((prev) => {
+      const nextState =
+        typeof value === "function"
+          ? (value as (prev: PlacedImage[]) => PlacedImage[])(prev)
+          : value;
 
-        const snapped = snapImagesToGrid(nextState);
-        return snapped;
-      });
-    },
-    []
-  );
+      const snapped = snapImagesToGrid(nextState);
+      return snapped;
+    });
+  }, []);
 
   return {
     images,

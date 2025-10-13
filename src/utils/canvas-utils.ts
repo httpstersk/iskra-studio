@@ -1,10 +1,10 @@
 /**
  * Canvas element conversion and coordinate utilities
- * 
+ *
  * This module provides utilities for converting between canvas element types
  * and storage formats, coordinate transformations, and bounding box calculations
  * for rotated elements.
- * 
+ *
  * @module canvas-utils
  */
 
@@ -23,10 +23,10 @@ export interface Viewport {
 
 /**
  * Converts a PlacedImage to storage format (CanvasElement).
- * 
+ *
  * @param image - The placed image to convert
  * @returns Canvas element in storage format
- * 
+ *
  * @example
  * ```typescript
  * const image = { id: '1', x: 100, y: 100, width: 200, height: 150, rotation: 0 };
@@ -50,10 +50,10 @@ export const imageToCanvasElement = (image: PlacedImage): CanvasElement => ({
 
 /**
  * Converts a PlacedVideo to storage format (CanvasElement).
- * 
+ *
  * @param video - The placed video to convert
  * @returns Canvas element in storage format
- * 
+ *
  * @example
  * ```typescript
  * const video = { id: '1', x: 100, y: 100, width: 200, height: 150, rotation: 0, ... };
@@ -83,12 +83,12 @@ export const videoToCanvasElement = (video: PlacedVideo): CanvasElement => ({
 /**
  * Converts canvas coordinates to screen coordinates based on viewport.
  * @deprecated Use canvasToScreen from viewport-utils instead
- * 
+ *
  * @param canvasX - X coordinate in canvas space
  * @param canvasY - Y coordinate in canvas space
  * @param viewport - Current viewport state
  * @returns Screen coordinates
- * 
+ *
  * @example
  * ```typescript
  * const viewport = { x: 100, y: 50, scale: 1.5 };
@@ -110,10 +110,10 @@ export const canvasToScreen = (
  * Calculates axis-aligned bounding box for an image considering rotation.
  * Returns the smallest rectangle that fully contains the rotated image.
  * @deprecated Use calculateRotatedBoundingBox from transform-utils instead
- * 
+ *
  * @param image - The placed image with rotation
  * @returns Bounding box dimensions
- * 
+ *
  * @example
  * ```typescript
  * const image = { x: 100, y: 100, width: 100, height: 50, rotation: 45, ... };

@@ -1,20 +1,20 @@
 /**
  * Video placement and metadata utilities
- * 
+ *
  * This module provides utilities for working with video elements on the canvas,
  * including duration retrieval, video placement calculations, and conversion
  * between images and videos.
- * 
+ *
  * @module video-utils
  */
 
 /**
  * Retrieves the duration of a video from its URL by loading metadata.
  * Creates a temporary video element to extract duration information.
- * 
+ *
  * @param videoUrl - URL of the video
  * @returns Promise that resolves to the duration in seconds
- * 
+ *
  * @example
  * ```typescript
  * const duration = await getVideoDuration('https://example.com/video.mp4');
@@ -46,7 +46,7 @@ export const getVideoDuration = async (videoUrl: string): Promise<number> => {
 
 /**
  * Creates a new PlacedVideo object with default playback settings.
- * 
+ *
  * @param id - Unique ID for the video
  * @param src - Video source URL
  * @param x - X position on canvas
@@ -55,7 +55,7 @@ export const getVideoDuration = async (videoUrl: string): Promise<number> => {
  * @param height - Height on canvas
  * @param duration - Video duration in seconds
  * @returns PlacedVideo object with default settings
- * 
+ *
  * @example
  * ```typescript
  * const video = createPlacedVideo(
@@ -95,13 +95,13 @@ export const createPlacedVideo = (
 /**
  * Places a generated video on the canvas, centered in the current viewport.
  * Automatically calculates appropriate dimensions based on video aspect ratio.
- * 
+ *
  * @param videoUrl - URL of the generated video
  * @param duration - Duration of the video in seconds
  * @param canvasSize - Canvas dimensions
  * @param viewport - Current viewport position and scale
  * @returns Promise that resolves to a PlacedVideo object
- * 
+ *
  * @example
  * ```typescript
  * const video = await placeGeneratedVideo(
@@ -180,13 +180,13 @@ export const placeGeneratedVideo = async (
 /**
  * Converts an image to a video while preserving position, dimensions, and rotation.
  * Useful for image-to-video generation workflows.
- * 
+ *
  * @param image - The source image to convert
  * @param videoUrl - URL of the generated video
  * @param duration - Duration of the video in seconds
  * @param replaceOriginal - Whether to reuse the image ID (true) or generate new ID (false)
  * @returns The placed video object
- * 
+ *
  * @example
  * ```typescript
  * const video = convertImageToVideo(

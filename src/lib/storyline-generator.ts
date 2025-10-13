@@ -101,7 +101,7 @@ interface GenerateStorylinesOptions {
  * Calls the API route which has access to OpenAI API key
  */
 export async function generateStorylines(
-  options: GenerateStorylinesOptions
+  options: GenerateStorylinesOptions,
 ): Promise<StorylineSet> {
   const { styleAnalysis, duration } = options;
 
@@ -120,7 +120,7 @@ export async function generateStorylines(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `Storyline generation failed with status ${response.status}`
+        `Storyline generation failed with status ${response.status}`,
     );
   }
 

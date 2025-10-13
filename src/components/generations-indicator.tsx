@@ -688,7 +688,7 @@ export function GenerationsIndicator({
           ? "bg-green-500/10 dark:bg-green-500/15 text-green-600 dark:text-green-500"
           : outputType === "video"
             ? "bg-purple-500/10 dark:bg-purple-500/15 text-purple-600 dark:text-purple-500"
-            : "bg-[#EC0648]/10 dark:bg-[#EC0648]/15 text-[#EC0648] dark:text-[#EC0648]"
+            : "bg-[#EC0648]/10 dark:bg-[#EC0648]/15 text-[#EC0648] dark:text-[#EC0648]",
       )}
     >
       {isSuccess ? (

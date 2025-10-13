@@ -40,7 +40,9 @@ export const { limiter: standardRateLimiter, headers: standardLimitHeaders } =
 export const { limiter: videoRateLimiter, headers: videoLimitHeaders } =
   createFalRateLimiter(VIDEO_RATE_LIMITS);
 
-export function extractBearerToken(authHeader: string | null): string | undefined {
+export function extractBearerToken(
+  authHeader: string | null,
+): string | undefined {
   if (!authHeader) return undefined;
   const match = authHeader.match(/^Bearer\s+([^\s]+)$/i);
   if (!match) return undefined;
@@ -105,8 +107,7 @@ export async function resolveFalClient({
   bucketId?: string;
   fallbackIp?: string;
 }): Promise<
-  | { client: FalClient; limited: false }
-  | { limited: true; period: LimitPeriod }
+  { client: FalClient; limited: false } | { limited: true; period: LimitPeriod }
 > {
   if (apiKey) {
     return { client: createServerFalClient(apiKey), limited: false };
@@ -164,7 +165,10 @@ export function getClientIp(headers: HeaderSource, fallback?: string): string {
   return fallback || "unknown";
 }
 
-export function buildRateLimitHeaders(period: LimitPeriod, headers: LimitHeaders) {
+export function buildRateLimitHeaders(
+  period: LimitPeriod,
+  headers: LimitHeaders,
+) {
   return {
     "X-RateLimit-Limit": headers[period],
     "X-RateLimit-Period": period,
@@ -194,16 +198,10 @@ function createFalRateLimiter(config: RateLimitConfig): {
     limiter: {
       perMinute: createRateLimiter(
         config.perMinute.tokens,
-        config.perMinute.window
+        config.perMinute.window,
       ),
-      perHour: createRateLimiter(
-        config.perHour.tokens,
-        config.perHour.window
-      ),
-      perDay: createRateLimiter(
-        config.perDay.tokens,
-        config.perDay.window
-      ),
+      perHour: createRateLimiter(config.perHour.tokens, config.perHour.window),
+      perDay: createRateLimiter(config.perDay.tokens, config.perDay.window),
     },
     headers: {
       perMinute: config.perMinute.header,

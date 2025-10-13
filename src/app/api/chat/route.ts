@@ -1,9 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import {
-  convertToModelMessages,
-  streamText,
-  type UIMessage,
-} from "ai";
+import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -89,22 +85,24 @@ export async function POST(req: Request) {
   const normalizedMessages: Array<Omit<UIMessage, "id">> = [];
 
   for (const message of messages) {
-    const baseParts = message.parts ?? (() => {
-      if (typeof message.content === "string") {
-        return [
-          {
-            type: "text",
-            text: message.content,
-          },
-        ];
-      }
+    const baseParts =
+      message.parts ??
+      (() => {
+        if (typeof message.content === "string") {
+          return [
+            {
+              type: "text",
+              text: message.content,
+            },
+          ];
+        }
 
-      if (Array.isArray(message.content)) {
-        return message.content;
-      }
+        if (Array.isArray(message.content)) {
+          return message.content;
+        }
 
-      return [];
-    })();
+        return [];
+      })();
 
     if (!Array.isArray(baseParts) || baseParts.length === 0) {
       return NextResponse.json(
@@ -125,7 +123,9 @@ export async function POST(req: Request) {
     });
 
     normalizedMessages.push({
-      role: (message.role === "tool" ? "assistant" : message.role) as UIMessage["role"],
+      role: (message.role === "tool"
+        ? "assistant"
+        : message.role) as UIMessage["role"],
       parts: sanitizedParts as UIMessage["parts"],
     });
   }
@@ -146,7 +146,7 @@ export async function POST(req: Request) {
             .enum(["square"])
             .default("square")
             .describe(
-              "The aspect ratio of the generated image. Always use 'square' format."
+              "The aspect ratio of the generated image. Always use 'square' format.",
             ),
         }),
       },

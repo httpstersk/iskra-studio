@@ -1,6 +1,6 @@
 /**
  * Canvas stage renderer component
- * 
+ *
  * Main rendering component for the Konva canvas stage. Handles:
  * - Viewport culling for performance optimization
  * - Grid rendering
@@ -8,7 +8,7 @@
  * - Image and video element rendering
  * - Variation mode ghost placeholders
  * - All mouse and touch interactions
- * 
+ *
  * @module components/canvas/CanvasStageRenderer
  */
 
@@ -53,7 +53,7 @@ interface CanvasStageRendererProps {
     isPanningCanvas: boolean;
     selectionBox: SelectionBox;
     setDragStartPositions: (
-      positions: Map<string, { x: number; y: number }>
+      positions: Map<string, { x: number; y: number }>,
     ) => void;
     setIsDraggingImage: (dragging: boolean) => void;
   };
@@ -78,7 +78,7 @@ interface CanvasStageRendererProps {
  * Filters visible items based on viewport bounds for performance optimization.
  * Only returns items that intersect with the current viewport (plus buffer).
  * This prevents rendering of off-screen elements.
- * 
+ *
  * @template T - Type of canvas element (must have position and dimensions)
  * @param items - Array of canvas elements to filter
  * @param viewport - Current viewport state
@@ -90,7 +90,7 @@ function getVisibleItems<
 >(
   items: T[],
   viewport: Viewport,
-  canvasSize: { height: number; width: number }
+  canvasSize: { height: number; width: number },
 ): T[] {
   const buffer = CANVAS_DIMENSIONS.BUFFER;
   const viewBounds = {
@@ -112,16 +112,16 @@ function getVisibleItems<
 
 /**
  * CanvasStageRenderer component - Main rendering component for the canvas.
- * 
+ *
  * This component manages the Konva Stage and all its child elements, implementing
  * viewport culling for optimal performance. It handles all user interactions
  * including mouse events, touch events, and keyboard shortcuts.
- * 
+ *
  * Performance optimizations:
  * - Viewport culling: Only renders visible elements
  * - Memoized visible items calculation
  * - Efficient event delegation
- * 
+ *
  * @component
  * @example
  * ```tsx
@@ -164,17 +164,16 @@ export function CanvasStageRenderer({
   // Memoize visible items calculation to avoid recalculating on every render
   const visibleImages = useMemo(
     () => getVisibleItems(images, viewport, canvasSize),
-    [images, viewport, canvasSize]
+    [images, viewport, canvasSize],
   );
   const visibleVideos = useMemo(
     () => getVisibleItems(videos, viewport, canvasSize),
-    [videos, viewport, canvasSize]
+    [videos, viewport, canvasSize],
   );
 
   // Check if we're in variation mode (one image selected, no prompt)
   const isVariationMode =
-    selectedIds.length === 1 &&
-    !generationSettings.prompt.trim();
+    selectedIds.length === 1 && !generationSettings.prompt.trim();
   const selectedImageForVariation = isVariationMode
     ? images.find((img) => img.id === selectedIds[0])
     : null;
@@ -309,8 +308,8 @@ export function CanvasStageRenderer({
               onChange={(newAttrs) => {
                 setImages((prev) =>
                   prev.map((img) =>
-                    img.id === image.id ? { ...img, ...newAttrs } : img
-                  )
+                    img.id === image.id ? { ...img, ...newAttrs } : img,
+                  ),
                 );
               }}
               onDragEnd={handleImageDragEnd}
@@ -343,8 +342,8 @@ export function CanvasStageRenderer({
               onChange={(newAttrs) => {
                 setVideos((prev) =>
                   prev.map((vid) =>
-                    vid.id === video.id ? { ...vid, ...newAttrs } : vid
-                  )
+                    vid.id === video.id ? { ...vid, ...newAttrs } : vid,
+                  ),
                 );
               }}
               onDragEnd={() => handleVideoDragEnd(video.id)}
@@ -358,7 +357,7 @@ export function CanvasStageRenderer({
               }
               onResizeStart={() =>
                 setHiddenVideoControlsIds(
-                  (prev) => new Set([...prev, video.id])
+                  (prev) => new Set([...prev, video.id]),
                 )
               }
               onSelect={(e) => interactions.handleSelect(video.id, e)}

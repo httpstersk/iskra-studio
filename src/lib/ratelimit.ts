@@ -35,19 +35,19 @@ export const IS_RATE_LIMITER_ENABLED =
 
 console.log(`[DEBUG] Rate limiter enabled: ${IS_RATE_LIMITER_ENABLED}`);
 console.log(
-  `[DEBUG] KV_REST_API_URL present: ${!!process.env.KV_REST_API_URL}`
+  `[DEBUG] KV_REST_API_URL present: ${!!process.env.KV_REST_API_URL}`,
 );
 console.log(
-  `[DEBUG] KV_REST_API_TOKEN present: ${!!process.env.KV_REST_API_TOKEN}`
+  `[DEBUG] KV_REST_API_TOKEN present: ${!!process.env.KV_REST_API_TOKEN}`,
 );
 
 export async function shouldLimitRequest(
   limiter: RateLimiter,
   ip: string,
-  keyPrefix?: string
+  keyPrefix?: string,
 ): Promise<LimitResult> {
   console.log(
-    `[DEBUG] Checking rate limit for IP: ${ip}${keyPrefix ? ` with prefix: ${keyPrefix}` : ""}`
+    `[DEBUG] Checking rate limit for IP: ${ip}${keyPrefix ? ` with prefix: ${keyPrefix}` : ""}`,
   );
 
   if (!IS_RATE_LIMITER_ENABLED) {
@@ -69,7 +69,7 @@ export async function shouldLimitRequest(
         limit: result.limit,
       });
       return result;
-    })
+    }),
   );
 
   const limitRequestIndex = results.findIndex((result) => !result.success);
@@ -78,7 +78,7 @@ export async function shouldLimitRequest(
   console.log(`[DEBUG] Should limit request: ${shouldLimit}`);
   if (shouldLimit) {
     console.log(
-      `[DEBUG] Rate limit exceeded for period: ${limits[limitRequestIndex]}`
+      `[DEBUG] Rate limit exceeded for period: ${limits[limitRequestIndex]}`,
     );
   }
 

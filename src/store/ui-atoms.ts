@@ -17,7 +17,6 @@ export const isSettingsDialogOpenAtom = atom(false);
  */
 export const selectedImageForVideoAtom = atom<string | null>(null);
 
-
 /**
  * View settings atoms
  */

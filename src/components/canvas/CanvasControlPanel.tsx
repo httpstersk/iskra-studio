@@ -106,7 +106,7 @@ export function CanvasControlPanel({
         className={cn(
           "bg-card/95 backdrop-blur-lg rounded-3xl",
           "shadow-[0_0_0_1px_rgba(50,50,50,0.16),0_4px_8px_-0.5px_rgba(50,50,50,0.08),0_8px_16px_-2px_rgba(50,50,50,0.04)]",
-          "dark:shadow-none dark:outline dark:outline-1 dark:outline-border"
+          "dark:shadow-none dark:outline dark:outline-1 dark:outline-border",
         )}
       >
         <div className="flex flex-col gap-3 px-3 md:px-3 py-2 md:py-3 relative">
@@ -129,7 +129,7 @@ export function CanvasControlPanel({
                     ? "shadow-[0_0_0_1px_rgba(34,197,94,0.2),0_4px_8px_-0.5px_rgba(34,197,94,0.08),0_8px_16px_-2px_rgba(34,197,94,0.04)] dark:shadow-none dark:border dark:border-green-500/30"
                     : activeVideoGenerationsSize > 0
                       ? "shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
-                      : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30"
+                      : "shadow-[0_0_0_1px_rgba(236,6,72,0.2),0_4px_8px_-0.5px_rgba(236,6,72,0.08),0_8px_16px_-2px_rgba(236,6,72,0.04)] dark:shadow-none dark:border dark:border-[#EC0648]/30",
                 )}
               >
                 <GenerationsIndicator
@@ -151,7 +151,7 @@ export function CanvasControlPanel({
                 className={cn(
                   "rounded-xl overflow-clip flex items-center",
                   "shadow-[0_0_0_1px_rgba(50,50,50,0.12),0_4px_8px_-0.5px_rgba(50,50,50,0.04),0_8px_16px_-2px_rgba(50,50,50,0.02)]",
-                  "dark:shadow-none dark:border dark:border-border"
+                  "dark:shadow-none dark:border dark:border-border",
                 )}
               >
                 <Button
@@ -185,7 +185,7 @@ export function CanvasControlPanel({
                       "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
                       variationMode === "image"
                         ? "bg-blue-500/10 dark:bg-blue-500/15 shadow-[0_0_0_1px_rgba(59,130,246,0.2),0_4px_8px_-0.5px_rgba(59,130,246,0.08),0_8px_16px_-2px_rgba(59,130,246,0.04)] dark:shadow-none dark:border dark:border-blue-500/30"
-                        : "bg-purple-500/10 dark:bg-purple-500/15 shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30"
+                        : "bg-purple-500/10 dark:bg-purple-500/15 shadow-[0_0_0_1px_rgba(168,85,247,0.2),0_4px_8px_-0.5px_rgba(168,85,247,0.08),0_8px_16px_-2px_rgba(168,85,247,0.04)] dark:shadow-none dark:border dark:border-purple-500/30",
                     )}
                   >
                     <div className="flex items-center gap-2 text-xs font-medium">
@@ -222,7 +222,7 @@ export function CanvasControlPanel({
                           "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
                           useSoraPro
                             ? "bg-amber-500/10 dark:bg-amber-500/15 shadow-[0_0_0_1px_rgba(245,158,11,0.2),0_4px_8px_-0.5px_rgba(245,158,11,0.08),0_8px_16px_-2px_rgba(245,158,11,0.04)] dark:shadow-none dark:border dark:border-amber-500/30"
-                            : "bg-gray-500/10 dark:bg-gray-500/15 shadow-[0_0_0_1px_rgba(107,114,128,0.2),0_4px_8px_-0.5px_rgba(107,114,128,0.08),0_8px_16px_-2px_rgba(107,114,128,0.04)] dark:shadow-none dark:border dark:border-gray-500/30"
+                            : "bg-gray-500/10 dark:bg-gray-500/15 shadow-[0_0_0_1px_rgba(107,114,128,0.2),0_4px_8px_-0.5px_rgba(107,114,128,0.08),0_8px_16px_-2px_rgba(107,114,128,0.04)] dark:shadow-none dark:border dark:border-gray-500/30",
                         )}
                       >
                         <div className="flex items-center gap-2 text-xs font-medium">
@@ -231,7 +231,7 @@ export function CanvasControlPanel({
                               "font-semibold",
                               useSoraPro
                                 ? "text-amber-600 dark:text-amber-500"
-                                : "text-gray-600 dark:text-gray-400"
+                                : "text-gray-600 dark:text-gray-400",
                             )}
                           >
                             Pro
@@ -247,7 +247,7 @@ export function CanvasControlPanel({
                       <div
                         className={cn(
                           "h-9 rounded-xl overflow-clip flex items-center gap-2 px-2",
-                          "bg-slate-500/10 dark:bg-slate-500/15 shadow-[0_0_0_1px_rgba(100,116,139,0.2),0_4px_8px_-0.5px_rgba(100,116,139,0.08),0_8px_16px_-2px_rgba(100,116,139,0.04)] dark:shadow-none dark:border dark:border-slate-500/30"
+                          "bg-slate-500/10 dark:bg-slate-500/15 shadow-[0_0_0_1px_rgba(100,116,139,0.2),0_4px_8px_-0.5px_rgba(100,116,139,0.08),0_8px_16px_-2px_rgba(100,116,139,0.04)] dark:shadow-none dark:border dark:border-slate-500/30",
                         )}
                       >
                         <Clock className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
@@ -290,7 +290,7 @@ export function CanvasControlPanel({
                   className={cn(
                     "h-9 rounded-xl overflow-clip flex items-center px-3",
                     "pointer-events-none select-none",
-                    "bg-orange-500/10 dark:bg-orange-500/15 shadow-[0_0_0_1px_rgba(249,115,22,0.2),0_4px_8px_-0.5px_rgba(249,115,22,0.08),0_8px_16px_-2px_rgba(249,115,22,0.04)] dark:shadow-none dark:border dark:border-orange-500/30"
+                    "bg-orange-500/10 dark:bg-orange-500/15 shadow-[0_0_0_1px_rgba(249,115,22,0.2),0_4px_8px_-0.5px_rgba(249,115,22,0.08),0_8px_16px_-2px_rgba(249,115,22,0.04)] dark:shadow-none dark:border dark:border-orange-500/30",
                   )}
                 >
                   <div className="flex items-center gap-2 text-xs font-medium">
@@ -449,7 +449,7 @@ export function CanvasControlPanel({
                         input.onchange = (e) => {
                           try {
                             handleFileUpload(
-                              (e.target as HTMLInputElement).files
+                              (e.target as HTMLInputElement).files,
                             );
                           } catch (error) {
                             console.error("File upload error:", error);
@@ -479,7 +479,7 @@ export function CanvasControlPanel({
                           } catch (error) {
                             console.error(
                               "Failed to trigger file dialog:",
-                              error
+                              error,
                             );
                             toast({
                               title: "Upload unavailable",
@@ -524,7 +524,7 @@ export function CanvasControlPanel({
                       }
                       className={cn(
                         "gap-2 font-medium transition-all",
-                        isGenerating && "bg-secondary"
+                        isGenerating && "bg-secondary",
                       )}
                     >
                       {isGenerating ? (

@@ -14,7 +14,7 @@ export function useDefaultImages(
   isStorageLoaded: boolean,
   imagesLength: number,
   canvasSize: { height: number; width: number },
-  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>
+  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>,
 ) {
   useEffect(() => {
     if (!isStorageLoaded || imagesLength > 0) return;

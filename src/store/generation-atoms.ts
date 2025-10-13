@@ -32,7 +32,7 @@ export const isGeneratingAtom = atom(false);
  * Atom for active image generation jobs
  */
 export const activeGenerationsAtom = atom<Map<string, ActiveGeneration>>(
-  new Map()
+  new Map(),
 );
 
 /**
@@ -46,7 +46,6 @@ export const activeVideoGenerationsAtom = atom<
  * Atom to track if image-to-video conversion is in progress
  */
 export const isConvertingToVideoAtom = atom(false);
-
 
 /**
  * Atom to track previous generation count for success detection

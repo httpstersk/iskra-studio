@@ -1,10 +1,10 @@
 /**
  * Image loading animation hook
- * 
+ *
  * Provides smooth loading animations for canvas images with pulsing
  * effect during loading and fade-in effect when loading completes.
  * Uses a single requestAnimationFrame loop for optimal performance.
- * 
+ *
  * @module hooks/useImageAnimation
  */
 
@@ -31,7 +31,7 @@ const ANIMATION_CONFIG = {
 /**
  * Easing function for smooth fade-in animation.
  * Uses cubic ease-out curve for natural motion.
- * 
+ *
  * @param t - Progress value between 0 and 1
  * @returns Eased value between 0 and 1
  */
@@ -61,7 +61,7 @@ interface UseImageAnimationReturn {
 
 /**
  * Custom hook for optimized image loading animations with pulsing and fade-in effects.
- * 
+ *
  * Features:
  * - Smooth pulsing animation during loading (sine wave)
  * - Cubic ease-out fade-in when loading completes
@@ -69,10 +69,10 @@ interface UseImageAnimationReturn {
  * - Frame-rate limiting (~60fps)
  * - Automatic cleanup on unmount
  * - Different final opacity for generated vs normal images
- * 
+ *
  * @param props - Hook configuration
  * @returns Current opacity values for rendering
- * 
+ *
  * @example
  * ```typescript
  * const { displayOpacity } = useImageAnimation({
@@ -80,7 +80,7 @@ interface UseImageAnimationReturn {
  *   isGenerated: image.isGenerated,
  *   hasImage: !!imageElement
  * });
- * 
+ *
  * <KonvaImage
  *   image={imageElement}
  *   opacity={displayOpacity}
@@ -97,10 +97,10 @@ export const useImageAnimation = ({
       ? ANIMATION_CONFIG.PULSE_MIN_OPACITY
       : isGenerated
         ? ANIMATION_CONFIG.GENERATED_OPACITY
-        : ANIMATION_CONFIG.NORMAL_OPACITY
+        : ANIMATION_CONFIG.NORMAL_OPACITY,
   );
   const [loadingOpacity, setLoadingOpacity] = useState<number>(
-    ANIMATION_CONFIG.PULSE_MIN_OPACITY
+    ANIMATION_CONFIG.PULSE_MIN_OPACITY,
   );
 
   const animationFrameRef = useRef<number | undefined>(undefined);
@@ -147,7 +147,9 @@ export const useImageAnimation = ({
       if (isLoading) {
         // Pulsing animation while loading
         const elapsed = currentTime - startTime;
-        const cycle = (elapsed % ANIMATION_CONFIG.PULSE_DURATION) / ANIMATION_CONFIG.PULSE_DURATION;
+        const cycle =
+          (elapsed % ANIMATION_CONFIG.PULSE_DURATION) /
+          ANIMATION_CONFIG.PULSE_DURATION;
         const opacity =
           ANIMATION_CONFIG.PULSE_MIN_OPACITY +
           Math.sin(cycle * Math.PI * 2) * ANIMATION_CONFIG.PULSE_AMPLITUDE;

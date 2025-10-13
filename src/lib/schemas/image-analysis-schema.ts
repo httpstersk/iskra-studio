@@ -5,17 +5,17 @@ export const imageStyleMoodAnalysisSchema = z.object({
     type: z
       .string()
       .describe(
-        "What is the main subject/object in the scene (e.g., 'person', 'cityscape', 'nature', 'object')"
+        "What is the main subject/object in the scene (e.g., 'person', 'cityscape', 'nature', 'object')",
       ),
     description: z
       .string()
       .describe(
-        "Brief description of the subject (e.g., 'lone figure standing', 'neon-lit street', 'geometric patterns')"
+        "Brief description of the subject (e.g., 'lone figure standing', 'neon-lit street', 'geometric patterns')",
       ),
     context: z
       .string()
       .describe(
-        "What the subject is doing or represents (e.g., 'contemplating', 'in motion', 'at rest')"
+        "What the subject is doing or represents (e.g., 'contemplating', 'in motion', 'at rest')",
       ),
   }),
 
@@ -25,7 +25,7 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .min(3)
       .max(5)
       .describe(
-        "3-5 specific color names (e.g., 'electric cobalt', 'sunset amber')"
+        "3-5 specific color names (e.g., 'electric cobalt', 'sunset amber')",
       ),
     mood: z.string().describe("How the colors make you feel"),
     saturation: z.enum(["muted", "balanced", "vibrant", "hyper-saturated"]),
@@ -55,7 +55,7 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .array(z.string())
       .min(1)
       .describe(
-        "Visual aesthetics: cinematic, editorial, surreal, minimalist, etc."
+        "Visual aesthetics: cinematic, editorial, surreal, minimalist, etc.",
       ),
     texture: z
       .array(z.string())
@@ -82,13 +82,13 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .array(z.string())
       .min(2)
       .describe(
-        "Types of motion that would fit: smooth, frenetic, slow, rhythmic, etc."
+        "Types of motion that would fit: smooth, frenetic, slow, rhythmic, etc.",
       ),
     camerawork: z
       .array(z.string())
       .min(2)
       .describe(
-        "Camera techniques that would enhance: push-in, orbit, tilt, etc."
+        "Camera techniques that would enhance: push-in, orbit, tilt, etc.",
       ),
     editingPace: z.enum([
       "slow-contemplative",
@@ -100,7 +100,7 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .array(z.string())
       .min(2)
       .describe(
-        "Effects that would amplify the mood: light streaks, particles, etc."
+        "Effects that would amplify the mood: light streaks, particles, etc.",
       ),
   }),
 
@@ -109,7 +109,7 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .array(z.string())
       .min(2)
       .describe(
-        "Cinematic genres this evokes: thriller, fashion, experimental, etc. (at least 2)"
+        "Cinematic genres this evokes: thriller, fashion, experimental, etc. (at least 2)",
       ),
     intensity: z
       .number()

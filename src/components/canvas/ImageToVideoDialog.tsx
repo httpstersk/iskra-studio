@@ -88,15 +88,18 @@ export const ImageToVideoDialog: React.FC<ImageToVideoDialogProps> = ({
       };
       console.log("ImageToVideoDialog - Initial option values:", initialValues);
       return initialValues;
-    }
+    },
   );
 
   // Update selected model and values when props change OR when dialog opens
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const newModelId = useSoraPro ? SORA_2_PRO_MODEL_ID : SORA_2_MODEL_ID;
-    console.log("ImageToVideoDialog - useEffect triggered, updating to model:", newModelId);
+    console.log(
+      "ImageToVideoDialog - useEffect triggered, updating to model:",
+      newModelId,
+    );
     setSelectedModelId(newModelId);
     const newModel = getVideoModelById(newModelId);
     if (newModel) {

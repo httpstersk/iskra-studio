@@ -49,9 +49,10 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
     }
   };
 
-  const [apiDimensions, setApiDimensions] = React.useState<
-    { width: number; height: number } | null
-  >(null);
+  const [apiDimensions, setApiDimensions] = React.useState<{
+    width: number;
+    height: number;
+  } | null>(null);
 
   React.useEffect(() => {
     if (!hasSingleSelection || !image) {
@@ -79,7 +80,7 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
   const { x: screenX, y: screenY } = canvasToScreen(
     boundingBox.x + boundingBox.width / 2,
     boundingBox.y + boundingBox.height,
-    viewport
+    viewport,
   );
 
   return (

@@ -25,20 +25,20 @@ import {
  */
 export function useGenerationState() {
   const [activeGenerations, setActiveGenerations] = useAtom(
-    activeGenerationsAtom
+    activeGenerationsAtom,
   );
   const [activeVideoGenerations, setActiveVideoGenerations] = useAtom(
-    activeVideoGenerationsAtom
+    activeVideoGenerationsAtom,
   );
   const [generationSettings, setGenerationSettings] = useAtom(
-    generationSettingsAtom
+    generationSettingsAtom,
   );
   const [isConvertingToVideo, setIsConvertingToVideo] = useAtom(
-    isConvertingToVideoAtom
+    isConvertingToVideoAtom,
   );
   const [isGenerating, setIsGenerating] = useAtom(isGeneratingAtom);
   const [previousGenerationCount, setPreviousGenerationCount] = useAtom(
-    previousGenerationCountAtom
+    previousGenerationCountAtom,
   );
   const [previousStyleId, setPreviousStyleId] = useAtom(previousStyleIdAtom);
   const [showSuccess, setShowSuccess] = useAtom(showSuccessAtom);

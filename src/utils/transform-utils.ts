@@ -1,13 +1,13 @@
 /**
  * Transform calculation utilities
- * 
+ *
  * This module provides utilities for geometric transformations including rotation,
  * scaling, bounding box calculations, and coordinate transformations for canvas elements.
- * 
+ *
  * @module transform-utils
  */
 
-import type { CanvasElement } from './viewport-utils';
+import type { CanvasElement } from "./viewport-utils";
 
 /**
  * Point in 2D space
@@ -49,10 +49,10 @@ export interface Rectangle {
 
 /**
  * Converts degrees to radians.
- * 
+ *
  * @param degrees - Angle in degrees
  * @returns Angle in radians
- * 
+ *
  * @example
  * ```typescript
  * const rad = degreesToRadians(90); // π/2
@@ -64,10 +64,10 @@ export function degreesToRadians(degrees: number): number {
 
 /**
  * Converts radians to degrees.
- * 
+ *
  * @param radians - Angle in radians
  * @returns Angle in degrees
- * 
+ *
  * @example
  * ```typescript
  * const deg = radiansToDegrees(Math.PI); // 180
@@ -79,12 +79,12 @@ export function radiansToDegrees(radians: number): number {
 
 /**
  * Rotates a point around an origin point.
- * 
+ *
  * @param point - Point to rotate
  * @param origin - Origin point to rotate around
  * @param angle - Rotation angle in degrees
  * @returns Rotated point
- * 
+ *
  * @example
  * ```typescript
  * const point = { x: 100, y: 0 };
@@ -109,17 +109,19 @@ export function rotatePoint(point: Point, origin: Point, angle: number): Point {
 
 /**
  * Calculates the four corners of a rectangle.
- * 
+ *
  * @param rect - Rectangle to get corners for
  * @returns Array of four corner points [topLeft, topRight, bottomRight, bottomLeft]
- * 
+ *
  * @example
  * ```typescript
  * const rect = { x: 100, y: 100, width: 50, height: 30 };
  * const corners = getRectangleCorners(rect);
  * ```
  */
-export function getRectangleCorners(rect: Rectangle): [Point, Point, Point, Point] {
+export function getRectangleCorners(
+  rect: Rectangle,
+): [Point, Point, Point, Point] {
   return [
     { x: rect.x, y: rect.y }, // top-left
     { x: rect.x + rect.width, y: rect.y }, // top-right
@@ -130,10 +132,10 @@ export function getRectangleCorners(rect: Rectangle): [Point, Point, Point, Poin
 
 /**
  * Calculates axis-aligned bounding box for a rotated rectangle.
- * 
+ *
  * @param element - Canvas element with position, size, and rotation
  * @returns Bounding box that encompasses the rotated rectangle
- * 
+ *
  * @example
  * ```typescript
  * const element = { x: 100, y: 100, width: 50, height: 30, rotation: 45 };
@@ -141,7 +143,7 @@ export function getRectangleCorners(rect: Rectangle): [Point, Point, Point, Poin
  * ```
  */
 export function calculateRotatedBoundingBox(
-  element: CanvasElement & { rotation?: number }
+  element: CanvasElement & { rotation?: number },
 ): Rectangle {
   const rotation = element.rotation || 0;
 
@@ -163,7 +165,7 @@ export function calculateRotatedBoundingBox(
 
   const origin = { x: 0, y: 0 };
   const rotatedCorners = corners.map((corner) =>
-    rotatePoint(corner, origin, rotation)
+    rotatePoint(corner, origin, rotation),
   );
 
   const xs = rotatedCorners.map((c) => c.x);
@@ -184,10 +186,10 @@ export function calculateRotatedBoundingBox(
 
 /**
  * Calculates the center point of a rectangle.
- * 
+ *
  * @param rect - Rectangle to find center of
  * @returns Center point
- * 
+ *
  * @example
  * ```typescript
  * const rect = { x: 100, y: 100, width: 50, height: 30 };
@@ -203,11 +205,11 @@ export function getRectangleCenter(rect: Rectangle): Point {
 
 /**
  * Applies scale transformation to an element while maintaining aspect ratio.
- * 
+ *
  * @param element - Canvas element to scale
  * @param scale - Scale factor
  * @returns New dimensions
- * 
+ *
  * @example
  * ```typescript
  * const element = { x: 100, y: 100, width: 50, height: 30 };
@@ -216,7 +218,7 @@ export function getRectangleCenter(rect: Rectangle): Point {
  */
 export function applyScale(
   element: CanvasElement,
-  scale: number
+  scale: number,
 ): { width: number; height: number } {
   return {
     width: element.width * scale,
@@ -226,13 +228,13 @@ export function applyScale(
 
 /**
  * Calculates new dimensions that fit within maximum bounds while maintaining aspect ratio.
- * 
+ *
  * @param width - Original width
  * @param height - Original height
  * @param maxWidth - Maximum width constraint
  * @param maxHeight - Maximum height constraint
  * @returns Fitted dimensions
- * 
+ *
  * @example
  * ```typescript
  * const fitted = fitToSize(1920, 1080, 800, 600);
@@ -243,7 +245,7 @@ export function fitToSize(
   width: number,
   height: number,
   maxWidth: number,
-  maxHeight: number
+  maxHeight: number,
 ): { width: number; height: number } {
   const aspectRatio = width / height;
   let newWidth = maxWidth;
@@ -263,13 +265,13 @@ export function fitToSize(
 /**
  * Calculates dimensions that cover a target size while maintaining aspect ratio.
  * Opposite of fitToSize - ensures no empty space.
- * 
+ *
  * @param width - Original width
  * @param height - Original height
  * @param targetWidth - Target width to cover
  * @param targetHeight - Target height to cover
  * @returns Dimensions that cover the target
- * 
+ *
  * @example
  * ```typescript
  * const covered = coverSize(800, 600, 1920, 1080);
@@ -280,7 +282,7 @@ export function coverSize(
   width: number,
   height: number,
   targetWidth: number,
-  targetHeight: number
+  targetHeight: number,
 ): { width: number; height: number } {
   const aspectRatio = width / height;
   const targetAspect = targetWidth / targetHeight;
@@ -300,11 +302,11 @@ export function coverSize(
 
 /**
  * Constrains a rectangle to stay within bounds.
- * 
+ *
  * @param rect - Rectangle to constrain
  * @param bounds - Boundary rectangle
  * @returns Constrained rectangle
- * 
+ *
  * @example
  * ```typescript
  * const rect = { x: -10, y: 50, width: 100, height: 50 };
@@ -315,11 +317,17 @@ export function coverSize(
  */
 export function constrainToBounds(
   rect: Rectangle,
-  bounds: Rectangle
+  bounds: Rectangle,
 ): Rectangle {
   return {
-    x: Math.max(bounds.x, Math.min(rect.x, bounds.x + bounds.width - rect.width)),
-    y: Math.max(bounds.y, Math.min(rect.y, bounds.y + bounds.height - rect.height)),
+    x: Math.max(
+      bounds.x,
+      Math.min(rect.x, bounds.x + bounds.width - rect.width),
+    ),
+    y: Math.max(
+      bounds.y,
+      Math.min(rect.y, bounds.y + bounds.height - rect.height),
+    ),
     width: rect.width,
     height: rect.height,
   };
@@ -327,11 +335,11 @@ export function constrainToBounds(
 
 /**
  * Calculates distance between two points.
- * 
+ *
  * @param p1 - First point
  * @param p2 - Second point
  * @returns Distance between points
- * 
+ *
  * @example
  * ```typescript
  * const distance = getDistance({ x: 0, y: 0 }, { x: 3, y: 4 }); // 5
@@ -345,11 +353,11 @@ export function getDistance(p1: Point, p2: Point): number {
 
 /**
  * Calculates angle between two points in degrees.
- * 
+ *
  * @param p1 - First point
  * @param p2 - Second point
  * @returns Angle in degrees
- * 
+ *
  * @example
  * ```typescript
  * const angle = getAngle({ x: 0, y: 0 }, { x: 1, y: 1 }); // 45 degrees
@@ -361,10 +369,10 @@ export function getAngle(p1: Point, p2: Point): number {
 
 /**
  * Normalizes rotation angle to 0-360 degree range.
- * 
+ *
  * @param angle - Angle in degrees
  * @returns Normalized angle
- * 
+ *
  * @example
  * ```typescript
  * const angle = normalizeAngle(450); // 90
@@ -381,11 +389,11 @@ export function normalizeAngle(angle: number): number {
 
 /**
  * Checks if two rectangles intersect.
- * 
+ *
  * @param rect1 - First rectangle
  * @param rect2 - Second rectangle
  * @returns True if rectangles intersect
- * 
+ *
  * @example
  * ```typescript
  * const r1 = { x: 0, y: 0, width: 100, height: 100 };
@@ -393,7 +401,10 @@ export function normalizeAngle(angle: number): number {
  * const intersects = rectanglesIntersect(r1, r2); // true
  * ```
  */
-export function rectanglesIntersect(rect1: Rectangle, rect2: Rectangle): boolean {
+export function rectanglesIntersect(
+  rect1: Rectangle,
+  rect2: Rectangle,
+): boolean {
   return !(
     rect1.x + rect1.width < rect2.x ||
     rect1.x > rect2.x + rect2.width ||
@@ -404,10 +415,10 @@ export function rectanglesIntersect(rect1: Rectangle, rect2: Rectangle): boolean
 
 /**
  * Calculates union of multiple rectangles (smallest rectangle containing all).
- * 
+ *
  * @param rectangles - Array of rectangles
  * @returns Union rectangle, or null if array is empty
- * 
+ *
  * @example
  * ```typescript
  * const rects = [

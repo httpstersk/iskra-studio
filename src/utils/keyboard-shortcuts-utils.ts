@@ -1,10 +1,10 @@
 /**
  * Keyboard shortcuts management utilities
- * 
+ *
  * This module provides reusable utilities for handling keyboard shortcuts
  * in canvas applications, with support for input field detection, modifier keys,
  * and common canvas/video operations.
- * 
+ *
  * @module keyboard-shortcuts-utils
  */
 
@@ -12,20 +12,20 @@
  * Keys that should be prevented from their default browser behavior
  */
 export const PREVENTABLE_KEYS = [
-  'Space',
-  'ArrowLeft',
-  'ArrowRight',
-  'ArrowUp',
-  'ArrowDown',
+  "Space",
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
 ] as const;
 
 /**
  * Checks if the current target element is an input field where
  * keyboard shortcuts should be disabled.
- * 
+ *
  * @param event - The keyboard event to check
  * @returns True if the target is an input field
- * 
+ *
  * @example
  * ```typescript
  * const handleKeyDown = (e: KeyboardEvent) => {
@@ -39,20 +39,22 @@ export const PREVENTABLE_KEYS = [
 export function isInputField(event: KeyboardEvent): boolean {
   const target = event.target as HTMLElement;
   return (
-    target.tagName === 'INPUT' ||
-    target.tagName === 'TEXTAREA' ||
-    target.contentEditable === 'true'
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.contentEditable === "true"
   );
 }
 
 /**
  * Checks if an event should prevent its default behavior based on the key code.
- * 
+ *
  * @param event - The keyboard event to check
  * @returns True if default should be prevented
  */
 export function shouldPreventDefault(event: KeyboardEvent): boolean {
-  return PREVENTABLE_KEYS.includes(event.code as typeof PREVENTABLE_KEYS[number]);
+  return PREVENTABLE_KEYS.includes(
+    event.code as (typeof PREVENTABLE_KEYS)[number],
+  );
 }
 
 /**
@@ -104,12 +106,12 @@ export interface VideoShortcutConfig {
 /**
  * Creates a keyboard event handler for video playback controls.
  * Supports play/pause, seeking, and volume control.
- * 
+ *
  * @param state - Current video state
  * @param actions - Callback actions for keyboard shortcuts
  * @param config - Configuration for shortcut behavior
  * @returns Event handler function
- * 
+ *
  * @example
  * ```typescript
  * const handleKeyDown = createVideoShortcutHandler(
@@ -129,20 +131,16 @@ export interface VideoShortcutConfig {
  *     onToggleMute: () => setMuted(!muted)
  *   }
  * );
- * 
+ *
  * window.addEventListener('keydown', handleKeyDown);
  * ```
  */
 export function createVideoShortcutHandler(
   state: VideoShortcutState,
   actions: VideoShortcutActions,
-  config: VideoShortcutConfig = {}
+  config: VideoShortcutConfig = {},
 ): (event: KeyboardEvent) => void {
-  const {
-    smallSeekStep = 5,
-    largeSeekStep = 10,
-    volumeStep = 0.1,
-  } = config;
+  const { smallSeekStep = 5, largeSeekStep = 10, volumeStep = 0.1 } = config;
 
   return (event: KeyboardEvent) => {
     if (isInputField(event)) {
@@ -154,33 +152,33 @@ export function createVideoShortcutHandler(
     }
 
     switch (event.code) {
-      case 'Space':
+      case "Space":
         actions.onTogglePlay();
         break;
 
-      case 'ArrowLeft':
+      case "ArrowLeft":
         const backwardStep = event.shiftKey ? largeSeekStep : smallSeekStep;
         actions.onSeekBackward(backwardStep);
         break;
 
-      case 'ArrowRight':
+      case "ArrowRight":
         const forwardStep = event.shiftKey ? largeSeekStep : smallSeekStep;
         actions.onSeekForward(forwardStep);
         break;
 
-      case 'ArrowUp':
+      case "ArrowUp":
         if (!state.muted) {
           actions.onVolumeUp(volumeStep);
         }
         break;
 
-      case 'ArrowDown':
+      case "ArrowDown":
         if (!state.muted) {
           actions.onVolumeDown(volumeStep);
         }
         break;
 
-      case 'KeyM':
+      case "KeyM":
         actions.onToggleMute();
         break;
     }
@@ -214,10 +212,10 @@ export interface CanvasShortcutActions {
 /**
  * Creates a keyboard event handler for canvas manipulation.
  * Supports delete, duplicate, select all, undo/redo, and clipboard operations.
- * 
+ *
  * @param actions - Callback actions for keyboard shortcuts
  * @returns Event handler function
- * 
+ *
  * @example
  * ```typescript
  * const handleKeyDown = createCanvasShortcutHandler({
@@ -227,51 +225,52 @@ export interface CanvasShortcutActions {
  *   onUndo: () => undo(),
  *   onRedo: () => redo()
  * });
- * 
+ *
  * window.addEventListener('keydown', handleKeyDown);
  * ```
  */
 export function createCanvasShortcutHandler(
-  actions: CanvasShortcutActions
+  actions: CanvasShortcutActions,
 ): (event: KeyboardEvent) => void {
   return (event: KeyboardEvent) => {
     if (isInputField(event)) {
       return;
     }
 
-    const isMac = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform);
+    const isMac =
+      typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
     const cmdOrCtrl = isMac ? event.metaKey : event.ctrlKey;
 
     // Delete/Backspace - Delete selected
-    if ((event.code === 'Delete' || event.code === 'Backspace') && !cmdOrCtrl) {
+    if ((event.code === "Delete" || event.code === "Backspace") && !cmdOrCtrl) {
       event.preventDefault();
       actions.onDelete?.();
       return;
     }
 
     // Cmd/Ctrl+D - Duplicate
-    if (event.code === 'KeyD' && cmdOrCtrl && !event.shiftKey) {
+    if (event.code === "KeyD" && cmdOrCtrl && !event.shiftKey) {
       event.preventDefault();
       actions.onDuplicate?.();
       return;
     }
 
     // Cmd/Ctrl+A - Select all
-    if (event.code === 'KeyA' && cmdOrCtrl) {
+    if (event.code === "KeyA" && cmdOrCtrl) {
       event.preventDefault();
       actions.onSelectAll?.();
       return;
     }
 
     // Escape - Deselect all
-    if (event.code === 'Escape') {
+    if (event.code === "Escape") {
       event.preventDefault();
       actions.onDeselectAll?.();
       return;
     }
 
     // Cmd/Ctrl+Z - Undo
-    if (event.code === 'KeyZ' && cmdOrCtrl && !event.shiftKey) {
+    if (event.code === "KeyZ" && cmdOrCtrl && !event.shiftKey) {
       event.preventDefault();
       actions.onUndo?.();
       return;
@@ -279,8 +278,8 @@ export function createCanvasShortcutHandler(
 
     // Cmd/Ctrl+Shift+Z or Cmd/Ctrl+Y - Redo
     if (
-      (event.code === 'KeyZ' && cmdOrCtrl && event.shiftKey) ||
-      (event.code === 'KeyY' && cmdOrCtrl)
+      (event.code === "KeyZ" && cmdOrCtrl && event.shiftKey) ||
+      (event.code === "KeyY" && cmdOrCtrl)
     ) {
       event.preventDefault();
       actions.onRedo?.();
@@ -288,21 +287,21 @@ export function createCanvasShortcutHandler(
     }
 
     // Cmd/Ctrl+C - Copy
-    if (event.code === 'KeyC' && cmdOrCtrl) {
+    if (event.code === "KeyC" && cmdOrCtrl) {
       event.preventDefault();
       actions.onCopy?.();
       return;
     }
 
     // Cmd/Ctrl+V - Paste
-    if (event.code === 'KeyV' && cmdOrCtrl) {
+    if (event.code === "KeyV" && cmdOrCtrl) {
       event.preventDefault();
       actions.onPaste?.();
       return;
     }
 
     // Cmd/Ctrl+X - Cut
-    if (event.code === 'KeyX' && cmdOrCtrl) {
+    if (event.code === "KeyX" && cmdOrCtrl) {
       event.preventDefault();
       actions.onCut?.();
       return;
@@ -313,21 +312,21 @@ export function createCanvasShortcutHandler(
 /**
  * Combines multiple keyboard shortcut handlers into a single handler.
  * Useful when you need both video and canvas shortcuts active.
- * 
+ *
  * @param handlers - Array of keyboard event handlers
  * @returns Combined event handler function
- * 
+ *
  * @example
  * ```typescript
  * const videoHandler = createVideoShortcutHandler(state, actions);
  * const canvasHandler = createCanvasShortcutHandler(canvasActions);
  * const combinedHandler = combineKeyboardHandlers([videoHandler, canvasHandler]);
- * 
+ *
  * window.addEventListener('keydown', combinedHandler);
  * ```
  */
 export function combineKeyboardHandlers(
-  handlers: Array<(event: KeyboardEvent) => void>
+  handlers: Array<(event: KeyboardEvent) => void>,
 ): (event: KeyboardEvent) => void {
   return (event: KeyboardEvent) => {
     handlers.forEach((handler) => handler(event));

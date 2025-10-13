@@ -16,7 +16,7 @@ export function useStorage(
   setImages: (images: PlacedImage[]) => void,
   setVideos: (videos: PlacedVideo[]) => void,
   setViewport: (viewport: Viewport) => void,
-  activeGenerationsSize: number
+  activeGenerationsSize: number,
 ) {
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

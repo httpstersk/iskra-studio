@@ -1,10 +1,10 @@
 /**
  * Viewport and visibility calculation utilities
- * 
+ *
  * This module provides utilities for viewport management, coordinate transformations,
  * and visibility culling for canvas applications. These utilities help optimize
  * rendering by only processing elements visible in the current viewport.
- * 
+ *
  * @module viewport-utils
  */
 
@@ -60,12 +60,12 @@ export interface CanvasSize {
 
 /**
  * Converts canvas coordinates to screen coordinates based on viewport.
- * 
+ *
  * @param canvasX - X coordinate in canvas space
  * @param canvasY - Y coordinate in canvas space
  * @param viewport - Current viewport state
  * @returns Screen coordinates
- * 
+ *
  * @example
  * ```typescript
  * const viewport = { x: 100, y: 50, scale: 1.5 };
@@ -76,7 +76,7 @@ export interface CanvasSize {
 export function canvasToScreen(
   canvasX: number,
   canvasY: number,
-  viewport: Viewport
+  viewport: Viewport,
 ): { x: number; y: number } {
   return {
     x: canvasX * viewport.scale + viewport.x,
@@ -86,12 +86,12 @@ export function canvasToScreen(
 
 /**
  * Converts screen coordinates to canvas coordinates based on viewport.
- * 
+ *
  * @param screenX - X coordinate in screen space
  * @param screenY - Y coordinate in screen space
  * @param viewport - Current viewport state
  * @returns Canvas coordinates
- * 
+ *
  * @example
  * ```typescript
  * const viewport = { x: 100, y: 50, scale: 1.5 };
@@ -102,7 +102,7 @@ export function canvasToScreen(
 export function screenToCanvas(
   screenX: number,
   screenY: number,
-  viewport: Viewport
+  viewport: Viewport,
 ): { x: number; y: number } {
   return {
     x: (screenX - viewport.x) / viewport.scale,
@@ -112,12 +112,12 @@ export function screenToCanvas(
 
 /**
  * Calculates the visible bounds in canvas space based on viewport and canvas size.
- * 
+ *
  * @param viewport - Current viewport state
  * @param canvasSize - Size of the canvas container
  * @param buffer - Extra buffer area outside visible bounds (default: 100)
  * @returns Bounding box of visible area in canvas coordinates
- * 
+ *
  * @example
  * ```typescript
  * const viewport = { x: 100, y: 50, scale: 1.0 };
@@ -128,7 +128,7 @@ export function screenToCanvas(
 export function getVisibleBounds(
   viewport: Viewport,
   canvasSize: CanvasSize,
-  buffer = 100
+  buffer = 100,
 ): BoundingBox {
   return {
     left: -viewport.x / viewport.scale - buffer,
@@ -140,11 +140,11 @@ export function getVisibleBounds(
 
 /**
  * Checks if an element is visible within the given bounding box.
- * 
+ *
  * @param element - Canvas element to check
  * @param bounds - Bounding box to check against
  * @returns True if the element intersects with the bounds
- * 
+ *
  * @example
  * ```typescript
  * const element = { x: 100, y: 100, width: 200, height: 150 };
@@ -154,7 +154,7 @@ export function getVisibleBounds(
  */
 export function isElementVisible(
   element: CanvasElement,
-  bounds: BoundingBox
+  bounds: BoundingBox,
 ): boolean {
   return !(
     element.x + element.width < bounds.left ||
@@ -167,13 +167,13 @@ export function isElementVisible(
 /**
  * Filters a list of elements to only those visible in the viewport.
  * Uses viewport culling to improve rendering performance.
- * 
+ *
  * @param elements - Array of canvas elements to filter
  * @param viewport - Current viewport state
  * @param canvasSize - Size of the canvas container
  * @param buffer - Extra buffer area outside visible bounds (default: 100)
  * @returns Array of visible elements
- * 
+ *
  * @example
  * ```typescript
  * const allImages = [...]; // Array of placed images
@@ -186,7 +186,7 @@ export function getVisibleElements<T extends CanvasElement>(
   elements: T[],
   viewport: Viewport,
   canvasSize: CanvasSize,
-  buffer = 100
+  buffer = 100,
 ): T[] {
   const bounds = getVisibleBounds(viewport, canvasSize, buffer);
   return elements.filter((element) => isElementVisible(element, bounds));
@@ -194,11 +194,11 @@ export function getVisibleElements<T extends CanvasElement>(
 
 /**
  * Calculates the center point of the viewport in canvas coordinates.
- * 
+ *
  * @param viewport - Current viewport state
  * @param canvasSize - Size of the canvas container
  * @returns Center point in canvas coordinates
- * 
+ *
  * @example
  * ```typescript
  * const viewport = { x: 100, y: 50, scale: 1.5 };
@@ -208,7 +208,7 @@ export function getVisibleElements<T extends CanvasElement>(
  */
 export function getViewportCenter(
   viewport: Viewport,
-  canvasSize: CanvasSize
+  canvasSize: CanvasSize,
 ): { x: number; y: number } {
   return {
     x: (canvasSize.width / 2 - viewport.x) / viewport.scale,
@@ -218,13 +218,13 @@ export function getViewportCenter(
 
 /**
  * Calculates viewport transform that centers on a specific point.
- * 
+ *
  * @param targetX - X coordinate to center on (canvas space)
  * @param targetY - Y coordinate to center on (canvas space)
  * @param canvasSize - Size of the canvas container
  * @param scale - Desired scale level (default: 1.0)
  * @returns New viewport state
- * 
+ *
  * @example
  * ```typescript
  * const canvasSize = { width: 800, height: 600 };
@@ -235,7 +235,7 @@ export function centerViewportOn(
   targetX: number,
   targetY: number,
   canvasSize: CanvasSize,
-  scale = 1.0
+  scale = 1.0,
 ): Viewport {
   return {
     x: canvasSize.width / 2 - targetX * scale,
@@ -246,12 +246,12 @@ export function centerViewportOn(
 
 /**
  * Clamps viewport scale within min and max bounds.
- * 
+ *
  * @param scale - Current scale value
  * @param minScale - Minimum allowed scale (default: 0.1)
  * @param maxScale - Maximum allowed scale (default: 5.0)
  * @returns Clamped scale value
- * 
+ *
  * @example
  * ```typescript
  * const scale = clampScale(10, 0.5, 3.0); // Returns 3.0
@@ -260,14 +260,14 @@ export function centerViewportOn(
 export function clampScale(
   scale: number,
   minScale = 0.1,
-  maxScale = 5.0
+  maxScale = 5.0,
 ): number {
   return Math.max(minScale, Math.min(maxScale, scale));
 }
 
 /**
  * Applies zoom transformation to viewport while keeping a point fixed on screen.
- * 
+ *
  * @param viewport - Current viewport state
  * @param screenX - Screen X coordinate to zoom towards
  * @param screenY - Screen Y coordinate to zoom towards
@@ -275,7 +275,7 @@ export function clampScale(
  * @param minScale - Minimum allowed scale (default: 0.1)
  * @param maxScale - Maximum allowed scale (default: 5.0)
  * @returns New viewport state
- * 
+ *
  * @example
  * ```typescript
  * const viewport = { x: 0, y: 0, scale: 1.0 };
@@ -288,7 +288,7 @@ export function zoomViewport(
   screenY: number,
   scaleDelta: number,
   minScale = 0.1,
-  maxScale = 5.0
+  maxScale = 5.0,
 ): Viewport {
   const oldScale = viewport.scale;
   const newScale = clampScale(oldScale + scaleDelta, minScale, maxScale);
@@ -310,10 +310,10 @@ export function zoomViewport(
 
 /**
  * Calculates bounding box that encompasses multiple elements.
- * 
+ *
  * @param elements - Array of canvas elements
  * @returns Bounding box containing all elements
- * 
+ *
  * @example
  * ```typescript
  * const elements = [
@@ -324,7 +324,7 @@ export function zoomViewport(
  * ```
  */
 export function getElementsBoundingBox(
-  elements: CanvasElement[]
+  elements: CanvasElement[],
 ): BoundingBox | null {
   if (elements.length === 0) {
     return null;
@@ -347,12 +347,12 @@ export function getElementsBoundingBox(
 
 /**
  * Calculates viewport that fits all elements in view with padding.
- * 
+ *
  * @param elements - Array of canvas elements to fit
  * @param canvasSize - Size of the canvas container
  * @param padding - Padding around elements (default: 50)
  * @returns Viewport that fits all elements
- * 
+ *
  * @example
  * ```typescript
  * const elements = [...]; // Array of images/videos
@@ -363,7 +363,7 @@ export function getElementsBoundingBox(
 export function fitElementsInView(
   elements: CanvasElement[],
   canvasSize: CanvasSize,
-  padding = 50
+  padding = 50,
 ): Viewport | null {
   const bounds = getElementsBoundingBox(elements);
   if (!bounds) {

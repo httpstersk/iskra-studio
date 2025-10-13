@@ -57,196 +57,200 @@ export const VideoOverlays: React.FC<VideoOverlaysProps> = ({
         if (!video.src || video.isLoading) {
           return null;
         }
-        
+
         return (
-        <React.Fragment key={`controls-${video.id}`}>
-          {/* Actual HTML video element overlaid on canvas */}
-          <video
-            key={`video-${video.id}`}
-            id={`video-${video.id}`}
-            src={video.src}
-            style={{
-              position: "absolute",
-              top: video.y * viewport.scale + viewport.y,
-              left: video.x * viewport.scale + viewport.x,
-              width: video.width * viewport.scale,
-              height: video.height * viewport.scale,
-              zIndex: 10,
-              objectFit: "cover",
-              pointerEvents: selectedIds.includes(video.id) ? "auto" : "none",
-              border: selectedIds.includes(video.id)
-                ? "1px solid #3b82f6"
-                : "none",
-              transform: `rotate(${video.rotation || 0}deg)`,
-              transformOrigin: "center",
-            }}
-            autoPlay={false}
-            loop={video.isLooping}
-            muted={video.muted}
-            playsInline
-            preload="auto"
-            crossOrigin="anonymous"
-            ref={(el) => {
-              if (el) {
-                videoRefs.current.set(video.id, el);
-              } else {
-                videoRefs.current.delete(video.id);
-              }
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-
-              // First, select the video if not already selected
-              if (!selectedIds.includes(video.id)) {
-                setVideos((prev) => {
-                  // This is a hack to trigger a re-render and selection update
-                  // We need to find a better way to update selectedIds from here
-                  return prev;
-                });
-              }
-
-              // Find the Konva stage and trigger a contextmenu event at this position
-              const konvaContainer = document.querySelector(".konvajs-content");
-              if (konvaContainer) {
-                const canvas = konvaContainer.querySelector("canvas");
-                if (canvas) {
-                  // Calculate the position relative to the canvas
-                  const rect = canvas.getBoundingClientRect();
-
-                  // Create a synthetic event that mimics a right-click on the Konva canvas
-                  const event = new MouseEvent("contextmenu", {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    clientX: e.clientX,
-                    clientY: e.clientY,
-                    screenX: e.screenX,
-                    screenY: e.screenY,
-                    button: 2,
-                    buttons: 2,
-                  });
-
-                  // Attach the video ID to the event so the parent can handle selection
-                  (event as MouseEvent & { videoId?: string }).videoId =
-                    video.id;
-
-                  // Dispatch to the canvas
-                  canvas.dispatchEvent(event);
+          <React.Fragment key={`controls-${video.id}`}>
+            {/* Actual HTML video element overlaid on canvas */}
+            <video
+              key={`video-${video.id}`}
+              id={`video-${video.id}`}
+              src={video.src}
+              style={{
+                position: "absolute",
+                top: video.y * viewport.scale + viewport.y,
+                left: video.x * viewport.scale + viewport.x,
+                width: video.width * viewport.scale,
+                height: video.height * viewport.scale,
+                zIndex: 10,
+                objectFit: "cover",
+                pointerEvents: selectedIds.includes(video.id) ? "auto" : "none",
+                border: selectedIds.includes(video.id)
+                  ? "1px solid #3b82f6"
+                  : "none",
+                transform: `rotate(${video.rotation || 0}deg)`,
+                transformOrigin: "center",
+              }}
+              autoPlay={false}
+              loop={video.isLooping}
+              muted={video.muted}
+              playsInline
+              preload="auto"
+              crossOrigin="anonymous"
+              ref={(el) => {
+                if (el) {
+                  videoRefs.current.set(video.id, el);
+                } else {
+                  videoRefs.current.delete(video.id);
                 }
-              }
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              // Toggle play/pause on click
-              const videoEl = e.currentTarget;
-              if (videoEl.paused) {
-                videoEl.play();
-                setVideos((prev) =>
-                  prev.map((vid) =>
-                    vid.id === video.id ? { ...vid, isPlaying: true } : vid
-                  )
-                );
-              } else {
-                videoEl.pause();
-                setVideos((prev) =>
-                  prev.map((vid) =>
-                    vid.id === video.id ? { ...vid, isPlaying: false } : vid
-                  )
-                );
-              }
-            }}
-            onTimeUpdate={(e) => {
-              const videoEl = e.currentTarget;
-              // Update more frequently for smooth seek bar, but throttle to 10 times per second
-              if (!videoEl.paused) {
-                const currentTenthSecond = Math.floor(videoEl.currentTime * 10);
-                const storedTenthSecond = Math.floor(video.currentTime * 10);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
 
-                if (currentTenthSecond !== storedTenthSecond) {
+                // First, select the video if not already selected
+                if (!selectedIds.includes(video.id)) {
+                  setVideos((prev) => {
+                    // This is a hack to trigger a re-render and selection update
+                    // We need to find a better way to update selectedIds from here
+                    return prev;
+                  });
+                }
+
+                // Find the Konva stage and trigger a contextmenu event at this position
+                const konvaContainer =
+                  document.querySelector(".konvajs-content");
+                if (konvaContainer) {
+                  const canvas = konvaContainer.querySelector("canvas");
+                  if (canvas) {
+                    // Calculate the position relative to the canvas
+                    const rect = canvas.getBoundingClientRect();
+
+                    // Create a synthetic event that mimics a right-click on the Konva canvas
+                    const event = new MouseEvent("contextmenu", {
+                      bubbles: true,
+                      cancelable: true,
+                      view: window,
+                      clientX: e.clientX,
+                      clientY: e.clientY,
+                      screenX: e.screenX,
+                      screenY: e.screenY,
+                      button: 2,
+                      buttons: 2,
+                    });
+
+                    // Attach the video ID to the event so the parent can handle selection
+                    (event as MouseEvent & { videoId?: string }).videoId =
+                      video.id;
+
+                    // Dispatch to the canvas
+                    canvas.dispatchEvent(event);
+                  }
+                }
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                // Toggle play/pause on click
+                const videoEl = e.currentTarget;
+                if (videoEl.paused) {
+                  videoEl.play();
                   setVideos((prev) =>
                     prev.map((vid) =>
-                      vid.id === video.id
-                        ? { ...vid, currentTime: videoEl.currentTime }
-                        : vid
-                    )
+                      vid.id === video.id ? { ...vid, isPlaying: true } : vid,
+                    ),
+                  );
+                } else {
+                  videoEl.pause();
+                  setVideos((prev) =>
+                    prev.map((vid) =>
+                      vid.id === video.id ? { ...vid, isPlaying: false } : vid,
+                    ),
                   );
                 }
-              }
-            }}
-            onLoadedMetadata={(e) => {
-              const videoEl = e.currentTarget;
-              setVideos((prev) =>
-                prev.map((vid) =>
-                  vid.id === video.id
-                    ? { ...vid, duration: videoEl.duration, isLoaded: true }
-                    : vid
-                )
-              );
-            }}
-            onEnded={() => {
-              if (!video.isLooping) {
+              }}
+              onTimeUpdate={(e) => {
+                const videoEl = e.currentTarget;
+                // Update more frequently for smooth seek bar, but throttle to 10 times per second
+                if (!videoEl.paused) {
+                  const currentTenthSecond = Math.floor(
+                    videoEl.currentTime * 10,
+                  );
+                  const storedTenthSecond = Math.floor(video.currentTime * 10);
+
+                  if (currentTenthSecond !== storedTenthSecond) {
+                    setVideos((prev) =>
+                      prev.map((vid) =>
+                        vid.id === video.id
+                          ? { ...vid, currentTime: videoEl.currentTime }
+                          : vid,
+                      ),
+                    );
+                  }
+                }
+              }}
+              onLoadedMetadata={(e) => {
+                const videoEl = e.currentTarget;
                 setVideos((prev) =>
                   prev.map((vid) =>
                     vid.id === video.id
-                      ? { ...vid, isPlaying: false, currentTime: 0 }
-                      : vid
-                  )
+                      ? { ...vid, duration: videoEl.duration, isLoaded: true }
+                      : vid,
+                  ),
                 );
-              }
-            }}
-          />
-
-          {/* Video playback indicator - only visible when loaded and not playing */}
-          {!video.isPlaying && video.isLoaded && (
-            <div
-              className="absolute bg-none text-white px-1 py-0.5"
-              style={{
-                position: "absolute",
-                top: video.y * viewport.scale + viewport.y + 5 * viewport.scale,
-                left:
-                  video.x * viewport.scale + viewport.x + 5 * viewport.scale,
-                zIndex: 10,
-                pointerEvents: "none",
-                visibility: video.isLoaded ? "visible" : "hidden",
-                display: video.isLoaded ? "block" : "none",
-                opacity: hiddenVideoControlsIds.has(video.id) ? 0 : 1,
-                transition: "opacity 0.05s ease-in-out",
-                // Non-linear scaling with min/max bounds for better visibility
-                fontSize: `${Math.max(10, Math.min(20, 20 * Math.sqrt(viewport.scale)))}px`,
               }}
-            >
-              ▶
-            </div>
-          )}
-
-          {/* Video controls - shown when video is selected */}
-          {selectedIds.includes(video.id) && selectedIds.length === 1 && (
-            <div
-              style={{
-                position: "absolute",
-                top:
-                  (video.y + video.height) * viewport.scale + viewport.y + 10,
-                left: video.x * viewport.scale + viewport.x,
-                zIndex: 10,
-                width: Math.max(video.width * viewport.scale, 180),
-                opacity: hiddenVideoControlsIds.has(video.id) ? 0 : 1,
-                transition: "opacity 0.05s ease-in-out",
-              }}
-            >
-              <VideoControls
-                video={video}
-                onChange={(newAttrs) => {
+              onEnded={() => {
+                if (!video.isLooping) {
                   setVideos((prev) =>
                     prev.map((vid) =>
-                      vid.id === video.id ? { ...vid, ...newAttrs } : vid
-                    )
+                      vid.id === video.id
+                        ? { ...vid, isPlaying: false, currentTime: 0 }
+                        : vid,
+                    ),
                   );
+                }
+              }}
+            />
+
+            {/* Video playback indicator - only visible when loaded and not playing */}
+            {!video.isPlaying && video.isLoaded && (
+              <div
+                className="absolute bg-none text-white px-1 py-0.5"
+                style={{
+                  position: "absolute",
+                  top:
+                    video.y * viewport.scale + viewport.y + 5 * viewport.scale,
+                  left:
+                    video.x * viewport.scale + viewport.x + 5 * viewport.scale,
+                  zIndex: 10,
+                  pointerEvents: "none",
+                  visibility: video.isLoaded ? "visible" : "hidden",
+                  display: video.isLoaded ? "block" : "none",
+                  opacity: hiddenVideoControlsIds.has(video.id) ? 0 : 1,
+                  transition: "opacity 0.05s ease-in-out",
+                  // Non-linear scaling with min/max bounds for better visibility
+                  fontSize: `${Math.max(10, Math.min(20, 20 * Math.sqrt(viewport.scale)))}px`,
                 }}
-                className="mt-2"
-              />
-            </div>
-          )}
-        </React.Fragment>
+              >
+                ▶
+              </div>
+            )}
+
+            {/* Video controls - shown when video is selected */}
+            {selectedIds.includes(video.id) && selectedIds.length === 1 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top:
+                    (video.y + video.height) * viewport.scale + viewport.y + 10,
+                  left: video.x * viewport.scale + viewport.x,
+                  zIndex: 10,
+                  width: Math.max(video.width * viewport.scale, 180),
+                  opacity: hiddenVideoControlsIds.has(video.id) ? 0 : 1,
+                  transition: "opacity 0.05s ease-in-out",
+                }}
+              >
+                <VideoControls
+                  video={video}
+                  onChange={(newAttrs) => {
+                    setVideos((prev) =>
+                      prev.map((vid) =>
+                        vid.id === video.id ? { ...vid, ...newAttrs } : vid,
+                      ),
+                    );
+                  }}
+                  className="mt-2"
+                />
+              </div>
+            )}
+          </React.Fragment>
         );
       })}
     </>

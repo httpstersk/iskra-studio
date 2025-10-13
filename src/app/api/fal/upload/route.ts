@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (authHeader && !bearerToken) {
       return NextResponse.json(
         { error: "Invalid authorization header" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const hasCustomApiKey = Boolean(bearerToken);
@@ -51,9 +51,9 @@ export async function POST(req: NextRequest) {
           status: 429,
           headers: buildRateLimitHeaders(
             limiterResult.period,
-            standardLimitHeaders
+            standardLimitHeaders,
           ),
-        }
+        },
       );
     }
 
@@ -62,28 +62,22 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json(
-        { error: "No file provided" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      return NextResponse.json(
-        { error: "File too large" },
-        { status: 413 }
-      );
+      return NextResponse.json({ error: "File too large" }, { status: 413 });
     }
 
     const mimeType = (file.type || "").toLowerCase();
     const isAllowedType = ALLOWED_MIME_PREFIXES.some((prefix) =>
-      mimeType.startsWith(prefix)
+      mimeType.startsWith(prefix),
     );
 
     if (!isAllowedType) {
       return NextResponse.json(
         { error: "Unsupported file type" },
-        { status: 415 }
+        { status: 415 },
       );
     }
 
@@ -98,7 +92,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: uploadResult });
   } catch (error) {
     console.error("Upload error:", error);
-    
+
     // Check for rate limit error
     const isRateLimit =
       (error as { status?: number; message?: string }).status === 429 ||
@@ -108,20 +102,20 @@ export async function POST(req: NextRequest) {
 
     if (isRateLimit) {
       return NextResponse.json(
-        { 
+        {
           error: "Rate limit exceeded",
-          message: "Add your FAL API key to bypass rate limits."
+          message: "Add your FAL API key to bypass rate limits.",
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     return NextResponse.json(
-      { 
+      {
         error: "Upload failed",
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -25,5 +25,5 @@ export const canUndoAtom = atom((get) => get(historyIndexAtom) > 0);
  * Derived atom to check if redo is available
  */
 export const canRedoAtom = atom(
-  (get) => get(historyIndexAtom) < get(historyAtom).length - 1
+  (get) => get(historyIndexAtom) < get(historyAtom).length - 1,
 );

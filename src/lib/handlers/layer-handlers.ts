@@ -1,10 +1,10 @@
 /**
  * Layer ordering handlers for canvas elements
- * 
+ *
  * This module provides utilities for manipulating the z-order (layer order)
  * of canvas elements. In the array representation, elements later in the array
  * are rendered on top of earlier elements.
- * 
+ *
  * @module lib/handlers/layer-handlers
  */
 
@@ -14,11 +14,11 @@ import type { PlacedImage } from "@/types/canvas";
  * Moves selected images to the front (top of the stack).
  * Selected images are moved to the end of the array, maintaining their
  * relative order with each other.
- * 
+ *
  * @param images - Array of all images on the canvas
  * @param selectedIds - IDs of images to move to front
  * @returns Reordered array with selected images at the end
- * 
+ *
  * @example
  * ```typescript
  * const reordered = sendToFront(allImages, ['img2', 'img3']);
@@ -27,7 +27,7 @@ import type { PlacedImage } from "@/types/canvas";
  */
 export function sendToFront(
   images: PlacedImage[],
-  selectedIds: string[]
+  selectedIds: string[],
 ): PlacedImage[] {
   if (selectedIds.length === 0) return images;
 
@@ -35,9 +35,7 @@ export function sendToFront(
     .map((id) => images.find((img) => img.id === id))
     .filter(Boolean) as PlacedImage[];
 
-  const remainingImages = images.filter(
-    (img) => !selectedIds.includes(img.id)
-  );
+  const remainingImages = images.filter((img) => !selectedIds.includes(img.id));
 
   return [...remainingImages, ...selectedImages];
 }
@@ -46,11 +44,11 @@ export function sendToFront(
  * Moves selected images to the back (bottom of the stack).
  * Selected images are moved to the beginning of the array, maintaining
  * their relative order with each other.
- * 
+ *
  * @param images - Array of all images on the canvas
  * @param selectedIds - IDs of images to move to back
  * @returns Reordered array with selected images at the beginning
- * 
+ *
  * @example
  * ```typescript
  * const reordered = sendToBack(allImages, ['img2', 'img3']);
@@ -59,7 +57,7 @@ export function sendToFront(
  */
 export function sendToBack(
   images: PlacedImage[],
-  selectedIds: string[]
+  selectedIds: string[],
 ): PlacedImage[] {
   if (selectedIds.length === 0) return images;
 
@@ -67,9 +65,7 @@ export function sendToBack(
     .map((id) => images.find((img) => img.id === id))
     .filter(Boolean) as PlacedImage[];
 
-  const remainingImages = images.filter(
-    (img) => !selectedIds.includes(img.id)
-  );
+  const remainingImages = images.filter((img) => !selectedIds.includes(img.id));
 
   return [...selectedImages, ...remainingImages];
 }
@@ -78,11 +74,11 @@ export function sendToBack(
  * Moves selected images forward by one layer.
  * Each selected image swaps position with the next unselected image
  * in front of it. Process happens from back to front to avoid conflicts.
- * 
+ *
  * @param images - Array of all images on the canvas
  * @param selectedIds - IDs of images to move forward
  * @returns Reordered array with selected images moved forward one position
- * 
+ *
  * @example
  * ```typescript
  * const reordered = bringForward(allImages, ['img2']);
@@ -91,7 +87,7 @@ export function sendToBack(
  */
 export function bringForward(
   images: PlacedImage[],
-  selectedIds: string[]
+  selectedIds: string[],
 ): PlacedImage[] {
   if (selectedIds.length === 0) return images;
 
@@ -113,11 +109,11 @@ export function bringForward(
  * Moves selected images backward by one layer.
  * Each selected image swaps position with the previous unselected image
  * behind it. Process happens from front to back to avoid conflicts.
- * 
+ *
  * @param images - Array of all images on the canvas
  * @param selectedIds - IDs of images to move backward
  * @returns Reordered array with selected images moved backward one position
- * 
+ *
  * @example
  * ```typescript
  * const reordered = sendBackward(allImages, ['img2']);
@@ -126,7 +122,7 @@ export function bringForward(
  */
 export function sendBackward(
   images: PlacedImage[],
-  selectedIds: string[]
+  selectedIds: string[],
 ): PlacedImage[] {
   if (selectedIds.length === 0) return images;
 

@@ -48,7 +48,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
   const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(
-    null
+    null,
   );
   // isVideoLoaded is used to track when the video is ready but not directly referenced
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
@@ -233,7 +233,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
           onChange({
             currentTime: Math.min(
               video.duration,
-              video.currentTime + (e.shiftKey ? 10 : 5)
+              video.currentTime + (e.shiftKey ? 10 : 5),
             ),
           });
           break;
@@ -274,7 +274,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
         (
           snapped: { x: number; y: number },
           isMultiSelect: boolean,
-          startPos?: { x: number; y: number }
+          startPos?: { x: number; y: number },
         ) => {
           if (isMultiSelect && startPos) {
             const deltaX = snapped.x - startPos.x;
@@ -302,7 +302,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
                   }
                 }
                 return vid;
-              })
+              }),
             );
           } else {
             onChange({
@@ -310,9 +310,9 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
               y: snapped.y,
             });
           }
-        }
+        },
       ),
-    [selectedIds, video.id, dragStartPositions, setVideos, onChange]
+    [selectedIds, video.id, dragStartPositions, setVideos, onChange],
   );
 
   // Handle drag move with snap-to-grid
@@ -354,7 +354,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
 
       throttledStateUpdate(snapped, isMultiSelect, startPos);
     },
-    [selectedIds, video.id, dragStartPositions, throttledStateUpdate]
+    [selectedIds, video.id, dragStartPositions, throttledStateUpdate],
   );
 
   return (

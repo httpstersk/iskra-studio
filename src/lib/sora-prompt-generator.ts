@@ -5,7 +5,7 @@
  * 2. Timestamps [00:00-00:01] for each shot
  * 3. Explicit shot types and camera motion
  * 4. SFX: and VFX: labels
- * 
+ *
  * All prompts naturally fit within 1000 chars by design (no truncation needed)
  */
 
@@ -30,7 +30,7 @@ function cleanText(value: string): string {
 function limitText(text: string, maxLength: number): string {
   const cleaned = cleanText(text);
   if (cleaned.length <= maxLength) return cleaned;
-  
+
   const sliced = cleaned.slice(0, maxLength);
   const lastSpace = sliced.lastIndexOf(" ");
   return lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced;
@@ -58,7 +58,7 @@ function formatTimestamp(startSec: number, endSec: number): string {
  * - Total: ~800 chars (safe margin under 1000)
  */
 export function expandStorylineToPrompt(
-  options: PromptGenerationOptions
+  options: PromptGenerationOptions,
 ): string {
   const { storyline, styleAnalysis } = options;
 
@@ -84,12 +84,14 @@ export function expandStorylineToPrompt(
   }
 
   const fullPrompt = `${globalDesc} ${shots.join(" ")}`;
-  
+
   // Safety check: should never hit this if input follows guidelines
   if (fullPrompt.length > PROMPT_CHAR_LIMIT) {
-    console.warn(`Prompt exceeded ${PROMPT_CHAR_LIMIT} chars: ${fullPrompt.length} chars`);
+    console.warn(
+      `Prompt exceeded ${PROMPT_CHAR_LIMIT} chars: ${fullPrompt.length} chars`,
+    );
   }
-  
+
   return fullPrompt;
 }
 
@@ -99,9 +101,9 @@ export function expandStorylineToPrompt(
 export function expandStorylinesToPrompts(
   storylines: StorylineConcept[],
   styleAnalysis: ImageStyleMoodAnalysis,
-  duration: number
+  duration: number,
 ): string[] {
   return storylines.map((storyline) =>
-    expandStorylineToPrompt({ storyline, styleAnalysis, duration })
+    expandStorylineToPrompt({ storyline, styleAnalysis, duration }),
   );
 }

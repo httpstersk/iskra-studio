@@ -4,7 +4,7 @@ import type { PlacedImage, PlacedVideo, HistoryState } from "@/types/canvas";
 export function useHistoryState(
   images: PlacedImage[],
   videos: PlacedVideo[],
-  selectedIds: string[]
+  selectedIds: string[],
 ) {
   const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);

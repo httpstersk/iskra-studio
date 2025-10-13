@@ -54,7 +54,7 @@ export function ShimmeringText({
         "[background-repeat:no-repeat,padding-box]",
         "[--shimmer-bg:linear-gradient(90deg,transparent_calc(50%-var(--spread)),var(--shimmer-color),transparent_calc(50%+var(--spread)))]",
         "dark:[--base-color:var(--muted-foreground)] dark:[--shimmer-color:var(--foreground)]",
-        className
+        className,
       )}
       style={
         {

@@ -37,7 +37,6 @@ interface SoraVideoVariationHandlerDeps {
   videoSettings?: Partial<VideoGenerationSettings>;
 }
 
-
 /**
  * Analyzes an image using OpenAI's vision model with structured output
  */
@@ -53,7 +52,7 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
   if (!response.ok) {
     const error = await response.json().catch(() => null);
     throw new Error(
-      error?.error || `Image analysis failed with status ${response.status}`
+      error?.error || `Image analysis failed with status ${response.status}`,
     );
   }
 
@@ -68,7 +67,7 @@ async function uploadImageToFal(
   blob: Blob,
   customApiKey: string | undefined,
   toast: SoraVideoVariationHandlerDeps["toast"],
-  setIsApiKeyDialogOpen: SoraVideoVariationHandlerDeps["setIsApiKeyDialogOpen"]
+  setIsApiKeyDialogOpen: SoraVideoVariationHandlerDeps["setIsApiKeyDialogOpen"],
 ): Promise<string> {
   try {
     const formData = new FormData();
@@ -83,7 +82,7 @@ async function uploadImageToFal(
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       throw new Error(
-        errorData?.message || `Upload failed with status ${response.status}`
+        errorData?.message || `Upload failed with status ${response.status}`,
       );
     }
 
@@ -142,7 +141,7 @@ async function imageToBlob(imageSrc: string): Promise<Blob> {
         else reject(new Error("Failed to create blob"));
       },
       "image/png",
-      0.95
+      0.95,
     );
   });
 }
@@ -151,7 +150,7 @@ async function imageToBlob(imageSrc: string): Promise<Blob> {
  * Generates 4 cinematic video variations from a reference image using Sora 2
  */
 export const handleSoraVideoVariations = async (
-  deps: SoraVideoVariationHandlerDeps
+  deps: SoraVideoVariationHandlerDeps,
 ) => {
   const {
     images,
@@ -202,7 +201,7 @@ export const handleSoraVideoVariations = async (
       blob,
       customApiKey,
       toast,
-      setIsApiKeyDialogOpen
+      setIsApiKeyDialogOpen,
     );
 
     // Stage 1: Analyze image style/mood
@@ -220,14 +219,20 @@ export const handleSoraVideoVariations = async (
     });
 
     // Stage 2: Generate storyline concepts using AI
-    const duration = typeof videoSettings.duration === "string"
-      ? parseInt(videoSettings.duration, 10)
-      : typeof videoSettings.duration === "number"
-        ? videoSettings.duration
-        : 8;
-    
-    console.log("[Sora Variations] Using duration:", duration, "from settings:", videoSettings.duration);
-    
+    const duration =
+      typeof videoSettings.duration === "string"
+        ? parseInt(videoSettings.duration, 10)
+        : typeof videoSettings.duration === "number"
+          ? videoSettings.duration
+          : 8;
+
+    console.log(
+      "[Sora Variations] Using duration:",
+      duration,
+      "from settings:",
+      videoSettings.duration,
+    );
+
     const storylineSet = await generateStorylines({
       styleAnalysis: imageAnalysis,
       duration,
@@ -248,14 +253,14 @@ export const handleSoraVideoVariations = async (
     const videoPrompts = expandStorylinesToPrompts(
       storylineSet.storylines,
       imageAnalysis,
-      duration
+      duration,
     );
 
     console.log("[Sora Variations] Stage 3: Expanded prompts:", {
       promptCount: videoPrompts.length,
       avgLength: Math.round(
         videoPrompts.reduce((sum, p) => sum + p.length, 0) /
-          videoPrompts.length
+          videoPrompts.length,
       ),
     });
 
@@ -276,7 +281,7 @@ export const handleSoraVideoVariations = async (
           selectedImage.width,
           selectedImage.height,
           selectedImage.width,
-          selectedImage.height
+          selectedImage.height,
         );
 
         return {
@@ -296,7 +301,7 @@ export const handleSoraVideoVariations = async (
           muted: VIDEO_DEFAULTS.MUTED,
           isLoading: true,
         };
-      }
+      },
     );
 
     // Add placeholders to canvas
@@ -305,8 +310,12 @@ export const handleSoraVideoVariations = async (
     // Determine model ID based on Pro setting
     const modelId = videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID;
     const modelName = modelId === "sora-2-pro" ? "Sora 2 Pro" : "Sora 2";
-    
-    console.log("[Sora Variations] Using model:", { modelId, modelName, duration });
+
+    console.log("[Sora Variations] Using model:", {
+      modelId,
+      modelName,
+      duration,
+    });
 
     // Show generation started toast
     toast({

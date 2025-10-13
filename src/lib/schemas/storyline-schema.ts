@@ -6,7 +6,7 @@ export const storylineConceptSchema = z.object({
   subject: z
     .string()
     .describe(
-      "Main subject/character (e.g., 'street dancer', 'cyber warrior', 'fashion icon')"
+      "Main subject/character (e.g., 'street dancer', 'cyber warrior', 'fashion icon')",
     ),
 
   setting: z.string().describe("Environment/location where story takes place"),
@@ -18,7 +18,7 @@ export const storylineConceptSchema = z.object({
   visualMotifs: z
     .array(z.string())
     .describe(
-      "3-5 key visual elements that appear throughout (e.g., 'neon reflections', 'fabric motion', 'light trails')"
+      "3-5 key visual elements that appear throughout (e.g., 'neon reflections', 'fabric motion', 'light trails')",
     ),
 
   emotionalArc: z
@@ -28,7 +28,7 @@ export const storylineConceptSchema = z.object({
   cinematicStyle: z
     .string()
     .describe(
-      "Overall cinematic approach (e.g., 'commercial high-energy', 'surreal dreamlike', 'editorial fashion', 'experimental time-based')"
+      "Overall cinematic approach (e.g., 'commercial high-energy', 'surreal dreamlike', 'editorial fashion', 'experimental time-based')",
     ),
 
   keyMoments: z
@@ -41,7 +41,7 @@ export const storylineSetSchema = z.object({
     .array(storylineConceptSchema)
     .length(4)
     .describe(
-      "Four distinct storyline concepts matching the style/mood analysis"
+      "Four distinct storyline concepts matching the style/mood analysis",
     ),
 
   styleTheme: z

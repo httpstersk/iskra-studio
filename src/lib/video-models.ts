@@ -250,10 +250,10 @@ export function getVideoModelById(id: string): VideoModelConfig | undefined {
  * Returns all models for the configured category.
  */
 export function getVideoModelsByCategory(
-  category: VideoModelConfig["category"]
+  category: VideoModelConfig["category"],
 ): VideoModelConfig[] {
   return Object.values(VIDEO_MODELS).filter(
-    (model) => model.category === category
+    (model) => model.category === category,
   );
 }
 
@@ -261,7 +261,7 @@ export function getVideoModelsByCategory(
  * Retrieves the default model for a category.
  */
 export function getDefaultVideoModel(
-  category: VideoModelConfig["category"]
+  category: VideoModelConfig["category"],
 ): VideoModelConfig | undefined {
   const models = getVideoModelsByCategory(category);
   return models.find((model) => model.isDefault) || models[0];
@@ -272,7 +272,7 @@ export function getDefaultVideoModel(
  */
 export function calculateVideoGenerations(
   model: VideoModelConfig,
-  budget: number = 1
+  budget: number = 1,
 ): number {
   return Math.floor(budget / model.pricing.costPerVideo);
 }

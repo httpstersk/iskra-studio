@@ -151,7 +151,7 @@ export const useImageInteraction = ({
         return;
       }
     },
-    []
+    [],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -171,7 +171,7 @@ export const useImageInteraction = ({
 
       onDragStart();
     },
-    [isSelected, onSelect, onDragStart]
+    [isSelected, onSelect, onDragStart],
   );
 
   return {
