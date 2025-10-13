@@ -1,4 +1,5 @@
 import { FAL_UPLOAD_PATH } from "@/lib/fal/constants";
+import { formatImageVariationPrompt } from "@/lib/prompt-formatters/image-variation-prompt-formatter";
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
@@ -389,16 +390,17 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
-      variationsToGenerate.forEach((cameraPrompt, index) => {
+      variationsToGenerate.forEach((cameraDirective, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
-        // Combine user's variation prompt with camera angle prompt
-        const combinedPrompt = variationPrompt
-          ? `${variationPrompt}. ${cameraPrompt}`
-          : cameraPrompt;
+        // Format prompt with Fincher-style cinematography instructions
+        const formattedPrompt = formatImageVariationPrompt(
+          cameraDirective,
+          variationPrompt
+        );
 
         newMap.set(placeholderId, {
           imageUrl: blobUpload.url,
-          prompt: combinedPrompt,
+          prompt: formattedPrompt,
           isVariation: true,
           imageSize: imageSizeDimensions,
         });
