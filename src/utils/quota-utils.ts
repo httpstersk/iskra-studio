@@ -1,19 +1,14 @@
 /**
- * Utility functions for storage quota calculations and formatting.
+ * Storage quota utility functions.
  * 
- * Provides functions to calculate storage usage, check quota limits,
- * and format storage sizes for display in the UI.
+ * Provides utilities for calculating storage usage, checking quota limits,
+ * and formatting storage sizes for display.
  */
 
-import type { Asset } from "@/types/asset";
 import type { UserTier } from "@/types/auth";
 
 /**
- * Storage quota limits in bytes for each user tier.
- * 
- * @remarks
- * - Free tier: 500 MB
- * - Paid tier: 10 GB
+ * Storage quota limits in bytes for each tier.
  */
 const QUOTA_LIMITS: Record<UserTier, number> = {
   free: 500 * 1024 * 1024, // 500 MB
@@ -21,44 +16,33 @@ const QUOTA_LIMITS: Record<UserTier, number> = {
 };
 
 /**
- * Calculates total storage usage from a list of assets.
+ * Gets the storage quota limit for a given user tier.
  * 
- * Sums the sizeBytes field of all provided assets to determine
- * the total storage consumed by a user.
- * 
- * @param assets - Array of user's assets
- * @returns Total storage used in bytes
+ * @param tier - User tier ("free" or "paid")
+ * @returns Storage limit in bytes
  * 
  * @example
  * ```ts
- * const assets: Asset[] = [
- *   { sizeBytes: 1024000, ... },
- *   { sizeBytes: 2048000, ... },
- * ];
- * const total = calculateStorageUsage(assets); // 3072000 bytes
+ * const limit = getQuotaForTier("free");
+ * console.log(limit); // 524288000 (500 MB in bytes)
  * ```
  */
-export function calculateStorageUsage(assets: Asset[]): number {
-  return assets.reduce((total, asset) => total + asset.sizeBytes, 0);
+export function getQuotaForTier(tier: UserTier): number {
+  return QUOTA_LIMITS[tier];
 }
 
 /**
  * Checks if an upload would exceed the user's storage quota.
  * 
- * Compares the user's current storage usage plus the size of a new
- * upload against their tier's quota limit.
- * 
- * @param currentUsageBytes - Current storage used by user in bytes
- * @param uploadSizeBytes - Size of the file to be uploaded in bytes
- * @param tier - User's subscription tier
+ * @param currentUsageBytes - Current storage usage in bytes
+ * @param uploadSizeBytes - Size of the file to upload in bytes
+ * @param tier - User tier
  * @returns True if upload would exceed quota, false otherwise
  * 
  * @example
  * ```ts
- * const currentUsage = 450 * 1024 * 1024; // 450 MB
- * const uploadSize = 100 * 1024 * 1024; // 100 MB
- * const wouldExceed = checkQuotaLimit(currentUsage, uploadSize, "free");
- * // Returns true (450 + 100 = 550 MB > 500 MB limit)
+ * const wouldExceed = checkQuotaLimit(450_000_000, 100_000_000, "free");
+ * console.log(wouldExceed); // true (450 MB + 100 MB > 500 MB)
  * ```
  */
 export function checkQuotaLimit(
@@ -71,103 +55,110 @@ export function checkQuotaLimit(
 }
 
 /**
- * Formats bytes into a human-readable storage size string.
+ * Calculates storage quota information including percentage used.
  * 
- * Converts raw bytes into appropriate units (B, KB, MB, GB)
- * with proper decimal precision.
+ * @param usedBytes - Current storage usage in bytes
+ * @param tier - User tier
+ * @returns Quota information object
  * 
- * @param bytes - Number of bytes to format
- * @param decimals - Number of decimal places (default: 1)
+ * @example
+ * ```ts
+ * const quota = calculateStorageQuota(450_000_000, "free");
+ * console.log(quota);
+ * // {
+ * //   used: 450000000,
+ * //   limit: 524288000,
+ * //   percentage: 85.83,
+ * //   isApproachingLimit: true,
+ * //   isExceeded: false
+ * // }
+ * ```
+ */
+export function calculateStorageQuota(usedBytes: number, tier: UserTier) {
+  const limit = getQuotaForTier(tier);
+  const percentage = (usedBytes / limit) * 100;
+  
+  return {
+    isApproachingLimit: percentage >= 80,
+    isExceeded: percentage >= 100,
+    limit,
+    percentage: Math.min(100, Math.round(percentage * 100) / 100),
+    used: usedBytes,
+  };
+}
+
+/**
+ * Formats bytes to human-readable storage size string.
+ * 
+ * Converts bytes to the most appropriate unit (B, KB, MB, GB)
+ * with 2 decimal places for sizes >= 1 KB.
+ * 
+ * @param bytes - Size in bytes
  * @returns Formatted string (e.g., "45.2 MB", "1.5 GB")
  * 
  * @example
  * ```ts
- * formatStorageSize(0); // "0 B"
- * formatStorageSize(1024); // "1.0 KB"
- * formatStorageSize(1536000); // "1.5 MB"
- * formatStorageSize(2147483648); // "2.0 GB"
- * formatStorageSize(1536000, 2); // "1.46 MB"
+ * formatStorageSize(1024); // "1.00 KB"
+ * formatStorageSize(1536000); // "1.47 MB"
+ * formatStorageSize(2147483648); // "2.00 GB"
+ * formatStorageSize(512); // "512 B"
  * ```
  */
-export function formatStorageSize(bytes: number, decimals: number = 1): string {
+export function formatStorageSize(bytes: number): string {
   if (bytes === 0) return "0 B";
-
+  
+  const units = ["B", "KB", "MB", "GB", "TB"];
   const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return `${(bytes / Math.pow(k, i)).toFixed(decimals)} ${sizes[i]}`;
+  const size = bytes / Math.pow(k, i);
+  
+  // Don't show decimals for bytes
+  if (i === 0) {
+    return `${size} ${units[i]}`;
+  }
+  
+  return `${size.toFixed(2)} ${units[i]}`;
 }
 
 /**
- * Gets the storage quota limit in bytes for a given tier.
+ * Gets the color class for storage quota display based on usage percentage.
  * 
- * @param tier - User's subscription tier
- * @returns Quota limit in bytes
+ * Returns appropriate color for progress bars and indicators:
+ * - Green: < 60% (safe)
+ * - Yellow: 60-90% (warning)
+ * - Red: > 90% (critical)
+ * 
+ * @param percentage - Storage usage percentage (0-100)
+ * @returns Tailwind color class
  * 
  * @example
  * ```ts
- * const freeLimit = getQuotaForTier("free"); // 524288000 (500 MB)
- * const paidLimit = getQuotaForTier("paid"); // 10737418240 (10 GB)
+ * getQuotaColor(45); // "text-green-600"
+ * getQuotaColor(75); // "text-yellow-600"
+ * getQuotaColor(95); // "text-red-600"
  * ```
  */
-export function getQuotaForTier(tier: UserTier): number {
-  return QUOTA_LIMITS[tier];
+export function getQuotaColor(percentage: number): string {
+  if (percentage >= 90) return "text-red-600";
+  if (percentage >= 60) return "text-yellow-600";
+  return "text-green-600";
 }
 
 /**
- * Calculates the percentage of quota used.
+ * Gets the progress bar color class based on usage percentage.
  * 
- * @param usedBytes - Current storage used in bytes
- * @param tier - User's subscription tier
- * @returns Percentage of quota used (0-100+)
- * 
- * @example
- * ```ts
- * const used = 250 * 1024 * 1024; // 250 MB
- * const percentage = getQuotaPercentage(used, "free"); // 50.0
- * ```
- */
-export function getQuotaPercentage(usedBytes: number, tier: UserTier): number {
-  const limit = getQuotaForTier(tier);
-  if (limit === 0) return 0;
-  return (usedBytes / limit) * 100;
-}
-
-/**
- * Checks if user is approaching their storage limit.
- * 
- * Returns true when usage reaches 80% of quota.
- * 
- * @param usedBytes - Current storage used in bytes
- * @param tier - User's subscription tier
- * @returns True if at or above 80% of quota
+ * @param percentage - Storage usage percentage (0-100)
+ * @returns Tailwind background color class
  * 
  * @example
  * ```ts
- * const used = 400 * 1024 * 1024; // 400 MB
- * const approaching = isApproachingLimit(used, "free"); // true (80% of 500 MB)
+ * getQuotaProgressColor(45); // "bg-green-600"
+ * getQuotaProgressColor(75); // "bg-yellow-600"
+ * getQuotaProgressColor(95); // "bg-red-600"
  * ```
  */
-export function isApproachingLimit(usedBytes: number, tier: UserTier): boolean {
-  return getQuotaPercentage(usedBytes, tier) >= 80;
-}
-
-/**
- * Checks if user has exceeded their storage limit.
- * 
- * Returns true when usage reaches or exceeds 100% of quota.
- * 
- * @param usedBytes - Current storage used in bytes
- * @param tier - User's subscription tier
- * @returns True if at or above 100% of quota
- * 
- * @example
- * ```ts
- * const used = 550 * 1024 * 1024; // 550 MB
- * const exceeded = isQuotaExceeded(used, "free"); // true (110% of 500 MB)
- * ```
- */
-export function isQuotaExceeded(usedBytes: number, tier: UserTier): boolean {
-  return getQuotaPercentage(usedBytes, tier) >= 100;
+export function getQuotaProgressColor(percentage: number): string {
+  if (percentage >= 90) return "bg-red-600";
+  if (percentage >= 60) return "bg-yellow-600";
+  return "bg-green-600";
 }

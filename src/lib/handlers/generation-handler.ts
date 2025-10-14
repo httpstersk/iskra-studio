@@ -4,6 +4,7 @@ import type {
   PlacedImage,
 } from "@/types/canvas";
 import type { FalClient } from "@fal-ai/client";
+import { downloadAndReupload } from "./asset-download-handler";
 
 interface GenerationHandlerDeps {
   images: PlacedImage[];
@@ -33,6 +34,8 @@ interface GenerationHandlerDeps {
       | "landscape_16_9"
       | "portrait_16_9";
   }) => Promise<{ width: number; height: number; url: string }>;
+  userId?: string; // Optional user ID for Convex storage
+  useConvexStorage?: boolean; // Flag to enable Convex storage migration
 }
 
 export const uploadImageDirect = async (
@@ -135,6 +138,8 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
     setIsGenerating,
     toast,
     generateTextToImage,
+    userId,
+    useConvexStorage = false,
   } = deps;
 
   if (!generationSettings.prompt) {
@@ -155,6 +160,27 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       const result = (await generateTextToImage({
         prompt: generationSettings.prompt,
       })) as { width: number; height: number; url: string };
+
+      // Migrate to Convex storage if enabled and userId is provided
+      let finalUrl = result.url;
+      if (useConvexStorage && userId) {
+        try {
+          const migrationResult = await downloadAndReupload(result.url, {
+            userId,
+            type: "image",
+            mimeType: "image/png",
+            metadata: {
+              prompt: generationSettings.prompt,
+              width: result.width,
+              height: result.height,
+            },
+          });
+          finalUrl = migrationResult.url;
+        } catch (error) {
+          console.error("Failed to migrate to Convex storage:", error);
+          // Continue with FAL URL if migration fails
+        }
+      }
 
       // Add the generated image to the canvas
       const id = `generated-${Date.now()}-${Math.random()}`;
@@ -179,7 +205,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
         ...prev,
         {
           id,
-          src: result.url,
+          src: finalUrl,
           x: viewportCenterX - width / 2,
           y: viewportCenterY - height / 2,
           width,
