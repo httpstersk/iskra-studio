@@ -12,7 +12,7 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `convex/README.md` - **CREATED** ✅ - Setup instructions and directory structure documentation
 - `convex/.gitignore` - **CREATED** ✅ - Ignore generated files and logs
 - `convex/schema.ts` - **CREATED** ✅ - Convex database schema with users, assets, and projects tables (145 lines)
-- `convex/auth.config.ts` - **NEW** - Clerk authentication configuration for Convex
+- `convex/auth.config.ts` - **CREATED** ✅ - Clerk authentication configuration for Convex JWT validation (56 lines)
 - `convex/_generated/` - Auto-generated Convex types and client code (generated after `npx convex dev`)
 - `.env.local` - **MODIFIED** ✅ - Organized with Convex and Clerk environment variables, proper comments
 - `.env.example` - **MODIFIED** ✅ - Comprehensive documentation of all required environment variables with setup instructions
@@ -185,15 +185,20 @@ Below are the high-level tasks required to implement the Convex storage and Cler
       - Additional redirect URLs configured
     - ⚠️ Note: User needs to create Clerk account and replace placeholder keys with actual API keys from dashboard.clerk.com
   
-  - [ ] 1.4 Create Clerk authentication config for Convex in `convex/auth.config.ts`
-    - Use `@clerk/convex` integration pattern
-    - Export auth configuration that Convex will use to validate JWT tokens from Clerk
-    - Configure domain and issuer URL
+  - [x] 1.4 Create Clerk authentication config for Convex in `convex/auth.config.ts`
+    - ✅ Created `convex/auth.config.ts` with Clerk authentication provider configuration (56 lines)
+    - ✅ Configured JWT token validation using `CLERK_JWT_ISSUER_DOMAIN` environment variable
+    - ✅ Added comprehensive TSDoc documentation explaining the integration
+    - ✅ Added `CLERK_JWT_ISSUER_DOMAIN` to `.env.local` (pre-filled: https://welcome-buck-6.clerk.accounts.dev)
+    - ✅ Added `CLERK_JWT_ISSUER_DOMAIN` to `.env.example` with documentation
+    - ✅ Updated `docs/clerk-setup.md` with JWT issuer domain instructions (Step 5)
+    - ✅ Documented two methods to obtain JWT issuer domain (Dashboard & decode from publishable key)
+    - ✅ Added JWT issuer domain to environment variables reference table
   
-  - [ ] 1.5 Update `.env.example` with all required environment variables
-    - Document Convex variables: `CONVEX_DEPLOYMENT`, `NEXT_PUBLIC_CONVEX_URL`
-    - Document Clerk variables: publishable key, secret key, sign-in/sign-up URLs
-    - Add comments explaining where to obtain each value
+  - [x] 1.5 Update `.env.example` with all required environment variables
+    - ✅ Document Convex variables: `CONVEX_DEPLOYMENT`, `NEXT_PUBLIC_CONVEX_URL`
+    - ✅ Document Clerk variables: publishable key, secret key, sign-in/sign-up URLs
+    - ✅ Add comments explaining where to obtain each value
 
 - [ ] 2.0 **Implement User Authentication & Authorization**
   - [ ] 2.1 Create Clerk middleware in `src/middleware.ts`

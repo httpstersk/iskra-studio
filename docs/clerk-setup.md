@@ -51,6 +51,7 @@ After creating the application, you'll be on the **Quickstart** page:
 # Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 CLERK_SECRET_KEY=sk_test_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+CLERK_JWT_ISSUER_DOMAIN=https://your-clerk-frontend-api.clerk.accounts.dev
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 ```
@@ -69,7 +70,34 @@ npm install -g @clerk/clerk-sdk-node
 npx @clerk/clerk-sdk-node setup
 ```
 
-## Step 5: Configure Sign-In/Sign-Up Routes
+## Step 5: Get JWT Issuer Domain
+
+For Convex authentication to work, you need the JWT issuer domain:
+
+### Option A: From Clerk Dashboard (Recommended)
+
+1. In Clerk Dashboard, go to **API Keys**
+2. Click **"Show JWT public key"** or **"Advanced"**
+3. Find **"JWT Issuer"** or **"Issuer URL"**
+4. Copy the domain (format: `https://your-app-name.clerk.accounts.dev`)
+5. Add to `.env.local`:
+   ```bash
+   CLERK_JWT_ISSUER_DOMAIN=https://your-app-name.clerk.accounts.dev
+   ```
+
+### Option B: Decode from Publishable Key
+
+The publishable key contains the issuer domain in base64:
+
+1. Your publishable key looks like: `pk_test_d2VsY29tZS1idWNrLTYuY2xlcmsuYWNjb3VudHMuZGV2JA`
+2. The last part (after `pk_test_`) is base64 encoded
+3. Decode it to get the domain (e.g., `welcome-buck-6.clerk.accounts.dev`)
+4. Add `https://` prefix:
+   ```bash
+   CLERK_JWT_ISSUER_DOMAIN=https://welcome-buck-6.clerk.accounts.dev
+   ```
+
+## Step 6: Configure Sign-In/Sign-Up Routes
 
 The environment variables we added tell Clerk where to redirect users:
 - `/sign-in` - Sign-in page
@@ -77,7 +105,7 @@ The environment variables we added tell Clerk where to redirect users:
 
 These routes will be created automatically by Clerk middleware in Task 2.1.
 
-## Step 6: Test Authentication (After Implementation)
+## Step 7: Test Authentication (After Implementation)
 
 Once the authentication is fully implemented (Tasks 2.x), you can test it:
 
@@ -103,12 +131,13 @@ Here's what each environment variable does:
 |----------|-------------|---------|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Public key for client-side Clerk SDK | `pk_test_abc123...` |
 | `CLERK_SECRET_KEY` | Secret key for server-side API calls | `sk_test_xyz789...` |
+| `CLERK_JWT_ISSUER_DOMAIN` | JWT issuer domain for Convex authentication | `https://your-app.clerk.accounts.dev` |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | Sign-in page route | `/sign-in` |
 | `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Sign-up page route | `/sign-up` |
 
 **Note**: Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
 
-## Step 7: Configure Additional Settings (Optional)
+## Step 8: Configure Additional Settings (Optional)
 
 ### Email Customization
 
@@ -144,7 +173,7 @@ For production use, you'll need to configure OAuth apps:
    - First/Last name
    - Phone number
 
-## Step 8: Security Best Practices
+## Step 9: Security Best Practices
 
 ✅ **Never commit `.env.local` to Git** - Already in `.gitignore`
 ✅ **Use test keys for development** - Production keys for deployment
