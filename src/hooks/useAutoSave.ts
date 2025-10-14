@@ -1,27 +1,24 @@
 /**
  * Auto-save hook for projects.
- * 
+ *
  * Automatically saves canvas state changes to Convex with debouncing.
  * Only saves when not currently generating and when changes are detected.
  */
 
 "use client";
 
-import { useAtomValue } from "jotai";
-import { useCallback, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useProjects } from "./useProjects";
+import type { CanvasState } from "@/lib/storage";
 import {
   activeGenerationsAtom,
   activeVideoGenerationsAtom,
 } from "@/store/generation-atoms";
-import {
-  canvasDirtyAtom,
-  currentProjectAtom,
-} from "@/store/project-atoms";
-import type { CanvasState } from "@/lib/storage";
+import { canvasDirtyAtom, currentProjectAtom } from "@/store/project-atoms";
 import { debounce } from "@/utils/performance";
+import { useAtomValue } from "jotai";
+import { useCallback, useEffect, useRef } from "react";
 import type { Id } from "../../convex/_generated/dataModel";
+import { useProjects } from "./useProjects";
 
 /**
  * Auto-save configuration options.
@@ -29,10 +26,10 @@ import type { Id } from "../../convex/_generated/dataModel";
 interface UseAutoSaveOptions {
   /** Debounce delay in milliseconds (default: 10000 = 10 seconds) */
   debounceMs?: number;
-  
+
   /** Whether auto-save is enabled (default: true) */
   enabled?: boolean;
-  
+
   /** Function to generate thumbnail (optional) */
   generateThumbnail?: () => Promise<string | undefined>;
 }
@@ -43,48 +40,48 @@ interface UseAutoSaveOptions {
 interface UseAutoSaveReturn {
   /** Whether auto-save is currently enabled */
   isEnabled: boolean;
-  
+
   /** Whether a save is currently in progress */
   isSaving: boolean;
-  
+
   /** Timestamp of last successful save */
   lastSavedAt: number | null;
-  
+
   /** Manually triggers a save */
   triggerSave: () => Promise<void>;
 }
 
 /**
  * Auto-save hook for project canvas state.
- * 
+ *
  * Automatically saves canvas changes to Convex after a debounce delay.
  * Skips saving when:
  * - No project is loaded
  * - Canvas has no unsaved changes
  * - AI generation is in progress (images or videos)
  * - A save is already in progress
- * 
+ *
  * @param canvasState - Current canvas state to save
  * @param options - Auto-save configuration options
- * 
+ *
  * @remarks
  * - Default debounce: 10 seconds
  * - Generates thumbnail if generateThumbnail function provided
  * - Shows toast notifications on save errors
  * - Updates lastSavedAt atom on successful save
- * 
+ *
  * @example
  * ```tsx
  * function CanvasEditor() {
  *   const [canvasState, setCanvasState] = useState<CanvasState>(...);
- *   
+ *
  *   const { isSaving, triggerSave } = useAutoSave(canvasState, {
  *     debounceMs: 10000,
  *     generateThumbnail: async () => {
  *       return await generateThumbnail(stageRef.current);
  *     },
  *   });
- *   
+ *
  *   return (
  *     <div>
  *       {isSaving && <span>Saving...</span>}
@@ -189,10 +186,11 @@ export function useAutoSave(
       lastSavedStateRef.current = JSON.stringify(canvasState);
     } catch (error) {
       console.error("Auto-save failed:", error);
-      
+
       toast({
         title: "Save failed",
-        description: error instanceof Error ? error.message : "Failed to save project",
+        description:
+          error instanceof Error ? error.message : "Failed to save project",
         variant: "destructive",
       });
     }
@@ -205,19 +203,18 @@ export function useAutoSave(
    * Using useRef to maintain debounced function instance across renders.
    * The debounce utility should return a cleanup function to cancel pending saves.
    */
-  const debouncedSaveRef = useRef<ReturnType<typeof debounce>>();
+  const debouncedSaveRef = useRef<ReturnType<typeof debounce> | null>(null);
 
   /**
    * Updates debounced function when delay changes and cleans up on unmount.
    */
   useEffect(() => {
     debouncedSaveRef.current = debounce(performSave, debounceMs);
-    
+
     // Cleanup: cancel any pending debounced calls
     return () => {
-      // If debounce returns a cancelable function, cancel it here
-      // This prevents calling performSave after component unmount
-      debouncedSaveRef.current = undefined;
+      // Prevent calling performSave after component unmount
+      debouncedSaveRef.current = null;
     };
   }, [debounceMs, performSave]);
 

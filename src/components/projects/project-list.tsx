@@ -7,18 +7,18 @@
 
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { useProjects } from "@/hooks/useProjects";
+import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import {
-  Plus,
-  Folder,
   ChevronRight,
+  Folder,
   Image as ImageIcon,
+  Plus,
   Video,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { ProjectCard } from "./project-card";
-import { useProjects } from "@/hooks/useProjects";
 
 /**
  * Props for ProjectList component.
@@ -87,7 +87,7 @@ export function ProjectList({
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-3 rounded-lg border border-transparent bg-surface-light/70 px-3 py-3"
+          className="flex items-center gap-3 rounded-xl border border-sidebar-border/40 bg-sidebar-accent/30 px-3 py-3"
         >
           <Skeleton className="h-10 w-10 rounded-lg" />
           <div className="flex-1 space-y-2">
@@ -105,7 +105,9 @@ export function ProjectList({
       <div className="mb-4 rounded-full bg-surface-light p-6">
         <Folder className="h-12 w-12 text-content-light" />
       </div>
-      <h3 className="mb-2 text-lg font-medium text-content-base">No projects yet</h3>
+      <h3 className="mb-2 text-lg font-medium text-content-base">
+        No projects yet
+      </h3>
       <p className="mb-6 max-w-sm text-sm text-content-light">
         Create your first project to start designing with Iskra Studio.
       </p>
@@ -119,18 +121,23 @@ export function ProjectList({
   );
 
   const renderSidebarEmptyState = () => (
-    <div className="rounded-lg border border-dashed border-stroke-light bg-surface-light/70 px-4 py-10 text-center">
+    <div className="rounded-xl border border-dashed border-sidebar-border/60 bg-sidebar-accent/25 px-4 py-10 text-center">
       <div className="flex justify-center">
-        <Folder className="h-8 w-8 text-content-light" />
+        <Folder className="h-8 w-8 text-muted-foreground" />
       </div>
-      <p className="mt-3 text-sm font-medium text-content-base">
+      <p className="mt-3 text-sm font-medium text-foreground">
         No projects yet
       </p>
-      <p className="mt-1 text-xs text-content-light">
+      <p className="mt-1 text-xs text-muted-foreground">
         Create a project to keep your ideas organized.
       </p>
       {onNewProject && (
-        <Button className="mt-4" onClick={onNewProject} size="sm" variant="secondary">
+        <Button
+          className="mt-4"
+          onClick={onNewProject}
+          size="sm"
+          variant="secondary"
+        >
           <Plus className="mr-2 h-4 w-4" />
           New project
         </Button>
@@ -152,7 +159,11 @@ export function ProjectList({
         </button>
       )}
       {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} onOpen={onOpenProject} />
+        <ProjectCard
+          key={project.id}
+          project={project}
+          onOpen={onOpenProject}
+        />
       ))}
     </div>
   );
@@ -163,22 +174,25 @@ export function ProjectList({
         <button
           key={project.id}
           onClick={() => onOpenProject?.(project.id)}
-          className="group flex w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-surface px-3 py-3 text-left transition hover:border-primary/40 hover:bg-surface-light"
+          className="group flex w-full items-center justify-between gap-2 rounded-xl border border-sidebar-border/30 bg-sidebar-accent/20 px-3 py-3 text-left transition hover:border-sidebar-ring/40 hover:bg-sidebar-accent/30"
         >
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Folder className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-content-base" title={project.name}>
+              <p
+                className="truncate text-sm font-medium text-foreground"
+                title={project.name}
+              >
                 {project.name}
               </p>
-              <p className="mt-1 text-xs text-content-light">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Updated {formatLastUpdated(project.lastSavedAt)}
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-3 text-[11px] font-medium text-content-light">
+          <div className="flex shrink-0 items-center gap-3 text-[11px] font-medium text-muted-foreground">
             {project.imageCount > 0 && (
               <span className="flex items-center gap-1">
                 <ImageIcon className="h-3 w-3" />
@@ -207,15 +221,19 @@ export function ProjectList({
         {showQuickCreate && (
           <button
             onClick={onNewProject}
-            className="group flex items-center justify-between gap-3 rounded-lg border border-dashed border-stroke-light bg-surface-light/70 px-4 py-3 text-left transition hover:border-primary/60 hover:bg-primary/5"
+            className="group flex items-center justify-between gap-3 rounded-xl border border-dashed border-sidebar-border/60 bg-sidebar-accent/25 px-4 py-3 text-left transition hover:border-sidebar-ring/60 hover:bg-sidebar-accent/35"
           >
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Plus className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-primary">New project</p>
-                <p className="text-xs text-content-light">Start from scratch</p>
+                <p className="text-sm font-semibold text-primary">
+                  New project
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Start from scratch
+                </p>
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-primary/70 transition group-hover:translate-x-1" />
@@ -234,7 +252,9 @@ export function ProjectList({
       <div className="container mx-auto px-6 py-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-content-base">My Projects</h2>
-          <p className="mt-1 text-sm text-content-light">Loading your projects...</p>
+          <p className="mt-1 text-sm text-content-light">
+            Loading your projects...
+          </p>
         </div>
         {renderGridSkeleton()}
       </div>
@@ -273,5 +293,9 @@ export function ProjectList({
  * Simple skeleton component if not using shadcn's Skeleton.
  */
 function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-lg bg-surface-light", className)} />;
+  return (
+    <div
+      className={cn("animate-pulse rounded-lg bg-surface-light", className)}
+    />
+  );
 }

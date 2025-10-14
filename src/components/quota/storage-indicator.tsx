@@ -1,27 +1,15 @@
 "use client";
 
-import { Crown } from "lucide-react";
-import { useQuota } from "@/hooks/useQuota";
-import { useAuth } from "@/hooks/useAuth";
-import {
-  formatStorageSize,
-  getQuotaColor,
-  getQuotaProgressColor,
-} from "@/utils/quota-utils";
 import { Button } from "@/components/ui/button";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuota } from "@/hooks/useQuota";
+import { formatStorageSize, getQuotaProgressColor } from "@/utils/quota-utils";
+import { Crown, HardDrive } from "lucide-react";
 
 /**
  * Props for the StorageIndicator component.
  */
 interface StorageIndicatorProps {
-  /** Whether to show the full indicator or just the percentage */
-  compact?: boolean;
-
   /** Optional className for custom styling */
   className?: string;
 }
@@ -43,15 +31,9 @@ interface StorageIndicatorProps {
  * ```tsx
  * // Full indicator with progress bar
  * <StorageIndicator />
- *
- * // Compact version (percentage only)
- * <StorageIndicator compact />
  * ```
  */
-export function StorageIndicator({
-  compact = false,
-  className = "",
-}: StorageIndicatorProps) {
+export function StorageIndicator({ className = "" }: StorageIndicatorProps) {
   const { quota, isLoading } = useQuota();
   const { tier, isAuthenticated } = useAuth();
 
@@ -64,8 +46,8 @@ export function StorageIndicator({
   if (isLoading) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <div className="h-2 w-32 animate-pulse rounded-full bg-gray-700" />
-        <span className="text-sm text-gray-400">Loading...</span>
+        <div className="h-2 w-32 animate-pulse rounded-full bg-sidebar-accent/40 ring-1 ring-sidebar-border/50" />
+        <span className="text-sm text-muted-foreground">Loading...</span>
       </div>
     );
   }
@@ -73,65 +55,35 @@ export function StorageIndicator({
   const usedText = formatStorageSize(quota.used);
   const limitText = formatStorageSize(quota.limit);
   const percentageText = `${quota.percentage}%`;
-  const textColor = getQuotaColor(quota.percentage);
   const progressColor = getQuotaProgressColor(quota.percentage);
 
-  // Compact version (just percentage)
-  if (compact) {
-    return (
-      <HoverCard>
-        <HoverCardTrigger asChild>
-          <span className={`cursor-help text-sm ${textColor} ${className}`}>
-            {percentageText}
-          </span>
-        </HoverCardTrigger>
-
-        <HoverCardContent className="w-64">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Storage Used</span>
-              {tier === "free" && (
-                <Button size="sm" variant="default" className="h-6 text-xs">
-                  <Crown className="mr-1 h-3 w-3" />
-                  Upgrade
-                </Button>
-              )}
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>{usedText}</span>
-                <span>{limitText}</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-700">
-                <div
-                  className={`h-full transition-all duration-300 ${progressColor}`}
-                  style={{ width: `${Math.min(100, quota.percentage)}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </HoverCardContent>
-      </HoverCard>
-    );
-  }
-
-  // Full version with progress bar
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
-      <div className="flex items-center justify-between">
-        <span className={`text-xs font-mono ${textColor}`}>
-          Storage: {usedText} / {limitText} ({percentageText})
+    <div
+      className={`w-64 rounded-xl border border-sidebar-border/60 bg-sidebar-accent/20 px-3 py-2 ${className}`}
+    >
+      <div className="flex items-center gap-1">
+        <HardDrive className="h-4 w-4 text-muted-foreground" />
+        <span className="text-xs text-muted-foreground">Storage:</span>
+        <span className="text-xs font-mono text-muted-foreground">
+          {usedText}/{limitText}
+        </span>
+        <span className="ml-auto text-[11px] font-mono text-muted-foreground">
+          {percentageText}
         </span>
 
         {tier === "free" && quota.isApproachingLimit && (
-          <Button size="sm" variant="default" className="h-7 text-xs">
+          <Button
+            size="xs"
+            variant="default"
+            className="ml-2 h-6 text-[11px] px-2"
+          >
             <Crown className="mr-1 h-3 w-3" />
             Upgrade
           </Button>
         )}
       </div>
 
-      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-700">
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-sidebar-accent/40 ring-1 ring-sidebar-border/50">
         <div
           aria-label={`Storage used: ${percentageText}`}
           aria-valuemax={100}
@@ -144,10 +96,10 @@ export function StorageIndicator({
       </div>
 
       {quota.isApproachingLimit && (
-        <p className="text-xs text-yellow-600">
+        <p className="mt-1 text-[11px] text-yellow-600">
           {quota.isExceeded
-            ? "Storage limit exceeded. Delete assets to free up space."
-            : "Approaching storage limit. Consider upgrading or deleting unused assets."}
+            ? "Limit exceeded — remove assets to free space."
+            : "Nearing limit — upgrade or remove unused assets."}
         </p>
       )}
     </div>

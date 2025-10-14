@@ -118,11 +118,16 @@ export function ProjectPanel({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-[60] flex h-full w-[22rem] flex-col border-r border-border/50 bg-card/95 shadow-2xl backdrop-blur-2xl transition-transform duration-300 ease-in-out",
+          "fixed left-0 top-0 z-[60] flex h-full w-[22rem] flex-col",
+          // Deep charcoal surface + crisp 1px borders inspired by reference UI
+          "bg-sidebar/98 backdrop-blur-xl border-r border-sidebar-border/60",
+          // Subtle elevation with hairline highlight
+          "shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_12px_24px_rgba(0,0,0,0.45)]",
+          "transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="border-b border-border/50 px-5 py-4">
+        <div className="border-b border-sidebar-border/60 px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-foreground">
@@ -144,7 +149,7 @@ export function ProjectPanel({
                 variant="ghost"
                 size="icon"
                 onClick={togglePanel}
-                className="h-8 w-8 rounded-full border border-transparent hover:border-border/50 hover:bg-accent"
+                className="h-8 w-8 rounded-xl border border-transparent hover:border-sidebar-border/60 hover:bg-sidebar-accent/50"
               >
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
@@ -168,7 +173,7 @@ export function ProjectPanel({
           />
         </div>
 
-        <div className="pointer-events-none relative z-10 mx-5 mb-5 rounded-lg border border-dashed border-border/50 bg-secondary/40 px-4 py-4 text-center text-xs text-muted-foreground">
+        <div className="pointer-events-none relative z-10 mx-5 mb-5 rounded-xl border border-dashed border-sidebar-border/60 bg-sidebar-accent/20 px-4 py-4 text-center text-xs text-muted-foreground">
           Press{" "}
           <kbd className="rounded bg-input px-2 py-1 text-[11px] uppercase tracking-[0.2em]">
             Cmd/Ctrl+P
