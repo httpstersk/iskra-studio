@@ -14,7 +14,7 @@ const handler = (req: NextRequest) =>
       process.env.NODE_ENV === "development"
         ? ({ path, error }) => {
             console.error(
-              `❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`,
+              `❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`
             );
           }
         : undefined,
@@ -24,6 +24,7 @@ const protectedHandler = async (req: NextRequest) => {
   // Only check for bots on POST requests (mutations)
   if (req.method === "POST") {
     const verification = await checkBotId();
+
     if (verification.isBot) {
       return new Response("Access denied", { status: 403 });
     }

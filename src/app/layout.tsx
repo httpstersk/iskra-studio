@@ -90,14 +90,6 @@ export default function RootLayout({
               path: "/api/trpc/*",
               method: "POST",
             },
-            {
-              path: FAL_PROXY_PATH,
-              method: "POST",
-            },
-            {
-              path: FAL_UPLOAD_PATH,
-              method: "POST",
-            },
           ]}
         />
       </head>

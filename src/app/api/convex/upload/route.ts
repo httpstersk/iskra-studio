@@ -9,8 +9,6 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
 
-import { checkBotId } from "botid/server";
-
 import type { AssetUploadResult } from "@/types/asset";
 import { api } from "../../../../../convex/_generated/api";
 
@@ -45,14 +43,9 @@ const ALLOWED_MIME_PREFIXES = ["image/", "video/"];
  */
 export async function POST(req: NextRequest) {
   try {
-    // Check for bot activity first
-    const verification = await checkBotId();
-    if (verification.isBot) {
-      return new Response("Access denied", { status: 403 });
-    }
-
     // Check authentication
     const { userId } = await auth();
+
     if (!userId) {
       return NextResponse.json(
         { error: "Authentication required" },
@@ -127,7 +120,9 @@ export async function POST(req: NextRequest) {
         errorText,
         uploadUrl: `${convexUrl}/upload`,
       });
-      throw new Error(`Convex upload failed (${uploadResponse.status}): ${errorText}`);
+      throw new Error(
+        `Convex upload failed (${uploadResponse.status}): ${errorText}`
+      );
     }
 
     const { storageId, url } = await uploadResponse.json();
