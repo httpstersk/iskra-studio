@@ -53,7 +53,7 @@ interface CanvasStageRendererProps {
     isPanningCanvas: boolean;
     selectionBox: SelectionBox;
     setDragStartPositions: (
-      positions: Map<string, { x: number; y: number }>,
+      positions: Map<string, { x: number; y: number }>
     ) => void;
     setIsDraggingImage: (dragging: boolean) => void;
   };
@@ -90,7 +90,7 @@ function getVisibleItems<
 >(
   items: T[],
   viewport: Viewport,
-  canvasSize: { height: number; width: number },
+  canvasSize: { height: number; width: number }
 ): T[] {
   const buffer = CANVAS_DIMENSIONS.BUFFER;
   const viewBounds = {
@@ -164,16 +164,17 @@ export function CanvasStageRenderer({
   // Memoize visible items calculation to avoid recalculating on every render
   const visibleImages = useMemo(
     () => getVisibleItems(images, viewport, canvasSize),
-    [images, viewport, canvasSize],
+    [images, viewport, canvasSize]
   );
   const visibleVideos = useMemo(
     () => getVisibleItems(videos, viewport, canvasSize),
-    [videos, viewport, canvasSize],
+    [videos, viewport, canvasSize]
   );
 
-  // Check if we're in variation mode (one image selected, no prompt)
+  // Show variation ghost placeholders when a single image is selected and UI is in variation mode (image or video)
   const isVariationMode =
-    selectedIds.length === 1 && !generationSettings.prompt.trim();
+    selectedIds.length === 1 &&
+    (variationMode === "image" || variationMode === "video");
   const selectedImageForVariation = isVariationMode
     ? images.find((img) => img.id === selectedIds[0])
     : null;
@@ -275,9 +276,7 @@ export function CanvasStageRenderer({
         height={canvasSize.height}
         onContextMenu={handleContextMenu}
         onMouseDown={interactions.handleMouseDown}
-        onMouseLeave={() => {
-          // Mouse leave handled in parent
-        }}
+        onMouseLeave={() => {}}
         onMouseMove={interactions.handleMouseMove}
         onMouseUp={interactions.handleMouseUp}
         onTouchEnd={interactions.handleTouchEnd}
@@ -308,8 +307,8 @@ export function CanvasStageRenderer({
               onChange={(newAttrs) => {
                 setImages((prev) =>
                   prev.map((img) =>
-                    img.id === image.id ? { ...img, ...newAttrs } : img,
-                  ),
+                    img.id === image.id ? { ...img, ...newAttrs } : img
+                  )
                 );
               }}
               onDragEnd={handleImageDragEnd}
@@ -342,8 +341,8 @@ export function CanvasStageRenderer({
               onChange={(newAttrs) => {
                 setVideos((prev) =>
                   prev.map((vid) =>
-                    vid.id === video.id ? { ...vid, ...newAttrs } : vid,
-                  ),
+                    vid.id === video.id ? { ...vid, ...newAttrs } : vid
+                  )
                 );
               }}
               onDragEnd={() => handleVideoDragEnd(video.id)}
@@ -357,7 +356,7 @@ export function CanvasStageRenderer({
               }
               onResizeStart={() =>
                 setHiddenVideoControlsIds(
-                  (prev) => new Set([...prev, video.id]),
+                  (prev) => new Set([...prev, video.id])
                 )
               }
               onSelect={(e) => interactions.handleSelect(video.id, e)}

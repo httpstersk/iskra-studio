@@ -297,7 +297,7 @@ export default function CanvasPage() {
     // Check if we're in variation mode: one image selected, no prompt
     const isVariationMode =
       canvasState.selectedIds.length === 1 &&
-      !generationState.generationSettings.prompt.trim();
+      (uiState.variationMode === "image" || uiState.variationMode === "video");
 
     if (isVariationMode) {
       // Generate variations based on mode and count
