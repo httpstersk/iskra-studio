@@ -5,17 +5,24 @@ import {
 } from "@/utils/image-crop-utils";
 import { useCallback } from "react";
 import type { Viewport } from "./useCanvasState";
+import { createStorageService } from "@/lib/storage";
 
 export function useFileUpload(
   setImages: (fn: (prev: PlacedImage[]) => PlacedImage[]) => void,
   viewport: Viewport,
   canvasSize: { width: number; height: number },
+  userId?: string,
+  toast?: (props: {
+    title: string;
+    description?: string;
+    variant?: "default" | "destructive";
+  }) => void,
 ) {
   const handleFileUpload = useCallback(
     (files: FileList | null, position?: { x: number; y: number }) => {
       if (!files) return;
 
-      Array.from(files).forEach((file, index) => {
+      Array.from(files).forEach(async (file, index) => {
         if (file.type.startsWith("image/")) {
           const reader = new FileReader();
           reader.onload = async (e) => {
@@ -37,7 +44,7 @@ export function useFileUpload(
 
               // Create a new image element to get the cropped dimensions
               const croppedImg = new window.Image();
-              croppedImg.onload = () => {
+              croppedImg.onload = async () => {
                 // Use naturalWidth/naturalHeight to avoid detached element issues
                 const naturalWidth =
                   croppedImg.naturalWidth || croppedImg.width;
@@ -76,11 +83,45 @@ export function useFileUpload(
                   y += index * 20;
                 }
 
+                // Upload to Convex storage if userId is provided
+                let finalSrc = croppedImageSrc;
+                if (userId) {
+                  try {
+                    // Convert cropped image data URL to blob
+                    const response = await fetch(croppedImageSrc);
+                    const blob = await response.blob();
+                    
+                    // Upload to Convex storage
+                    const storage = createStorageService();
+                    const uploadResult = await storage.upload(blob, {
+                      userId,
+                      type: "image",
+                      mimeType: file.type || "image/png",
+                      metadata: {
+                        width: naturalWidth,
+                        height: naturalHeight,
+                      },
+                    });
+                    
+                    finalSrc = uploadResult.url;
+                  } catch (error) {
+                    console.error("Failed to upload image to Convex:", error);
+                    if (toast) {
+                      toast({
+                        title: "Upload failed",
+                        description: "Image will be stored locally only",
+                        variant: "destructive",
+                      });
+                    }
+                    // Fall back to data URL if upload fails
+                  }
+                }
+
                 setImages((prev) => [
                   ...prev,
                   {
                     id,
-                    src: croppedImageSrc,
+                    src: finalSrc,
                     x,
                     y,
                     width,
@@ -98,7 +139,7 @@ export function useFileUpload(
         }
       });
     },
-    [setImages, viewport, canvasSize],
+    [setImages, viewport, canvasSize, userId, toast],
   );
 
   const handleDrop = useCallback(

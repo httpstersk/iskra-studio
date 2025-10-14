@@ -69,7 +69,6 @@ interface VideoGenerationConfig {
 
 interface SoraVideoVariationHandlerDeps {
   basePrompt?: string;
-  falClient: { storage: { upload: (blob: Blob) => Promise<string> } };
   images: PlacedImage[];
   selectedIds: string[];
   setActiveVideoGenerations: React.Dispatch<
@@ -78,6 +77,7 @@ interface SoraVideoVariationHandlerDeps {
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
   toast: (props: ToastProps) => void;
+  userId?: string;
   videoSettings?: Partial<VideoGenerationSettings>;
   viewport: { x: number; y: number; scale: number };
 }
@@ -125,21 +125,23 @@ function isRateLimitError(error: unknown): boolean {
 }
 
 /**
- * Uploads an image blob to fal.ai storage
+ * Uploads an image blob to Convex storage
  * @param blob - Image blob to upload
+ * @param userId - User ID for authentication
  * @param toast - Toast notification function
  * @returns Promise resolving to uploaded image URL
  * @throws Error if upload fails
  */
-async function uploadImageToFal(
+async function uploadImageToConvex(
   blob: Blob,
+  userId: string,
   toast: (props: ToastProps) => void
 ): Promise<string> {
   try {
     const formData = new FormData();
     formData.append("file", blob, IMAGE_CONFIG.FILE_NAME);
 
-    const response = await fetch(API_ENDPOINTS.FAL_UPLOAD, {
+    const response = await fetch("/api/convex/upload", {
       body: formData,
       method: "POST",
     });
@@ -155,19 +157,11 @@ async function uploadImageToFal(
     const result = await response.json();
     return result.url;
   } catch (error: unknown) {
-    if (isRateLimitError(error)) {
-      toast({
-        description: "Please try again later.",
-        title: ERROR_MESSAGES.RATE_LIMIT_EXCEEDED,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        description: error instanceof Error ? error.message : "Unknown error",
-        title: ERROR_MESSAGES.UPLOAD_FAILED,
-        variant: "destructive",
-      });
-    }
+    toast({
+      description: error instanceof Error ? error.message : "Unknown error",
+      title: ERROR_MESSAGES.UPLOAD_FAILED,
+      variant: "destructive",
+    });
     throw error;
   }
 }
@@ -393,11 +387,11 @@ export const handleSoraVideoVariations = async (
   const {
     images,
     selectedIds,
-    falClient,
     setVideos,
     setIsGenerating,
     setActiveVideoGenerations,
     toast,
+    userId,
     basePrompt = "",
     videoSettings = {},
   } = deps;
@@ -410,6 +404,17 @@ export const handleSoraVideoVariations = async (
   setIsGenerating(true);
 
   try {
+    // Check if user is authenticated
+    if (!userId) {
+      toast({
+        description: "Please sign in to generate video variations",
+        title: "Authentication required",
+        variant: "destructive",
+      });
+      setIsGenerating(false);
+      return;
+    }
+
     // Upload the reference image
     toast({
       description: TOAST_MESSAGES.PREPARING_IMAGE,
@@ -417,7 +422,7 @@ export const handleSoraVideoVariations = async (
     });
 
     const selectedImageBlob = await imageToBlob(selectedImage.src);
-    const imageUrl = await uploadImageToFal(selectedImageBlob, toast);
+    const imageUrl = await uploadImageToConvex(selectedImageBlob, userId, toast);
 
     // Stage 1: Analyze image style/mood
     const imageAnalysis = await analyzeImage(imageUrl);

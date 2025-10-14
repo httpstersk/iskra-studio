@@ -23,44 +23,30 @@ export function createGenerationId(prefix: string): string {
  * Uploads media if it's a data URL or blob URL
  * 
  * @param url - URL of the media to upload
- * @param falClient - FAL client for FAL storage uploads
- * @param userId - Optional user ID for Convex storage migration
- * @param useConvexStorage - Flag to enable Convex storage (default: false)
+ * @param userId - User ID for Convex storage
  * @returns URL of the uploaded media
  */
 export async function uploadMediaIfNeeded(
   url: string,
-  falClient: { storage: { upload: (blob: Blob) => Promise<string> } },
   userId?: string,
-  useConvexStorage: boolean = false,
 ): Promise<string> {
   if (url.startsWith("data:") || url.startsWith("blob:")) {
-    // If Convex storage is enabled and userId is provided, use Convex
-    if (useConvexStorage && userId) {
-      try {
-        const blob = await (await fetch(url)).blob();
-        const mimeType = blob.type || "image/png";
-        const type = mimeType.startsWith("video/") ? "video" : "image";
-        
-        const result = await downloadAndReupload(url, {
-          userId,
-          type,
-          mimeType,
-          metadata: {},
-        });
-        
-        return result.url;
-      } catch (error) {
-        console.error("Failed to upload to Convex storage:", error);
-        // Fall back to FAL storage
-      }
+    if (!userId) {
+      throw new Error("User ID required for upload");
     }
+
+    const blob = await (await fetch(url)).blob();
+    const mimeType = blob.type || "image/png";
+    const type = mimeType.startsWith("video/") ? "video" : "image";
     
-    // Use FAL storage as default or fallback
-    const uploadResult = await falClient.storage.upload(
-      await (await fetch(url)).blob(),
-    );
-    return uploadResult;
+    const result = await downloadAndReupload(url, {
+      userId,
+      type,
+      mimeType,
+      metadata: {},
+    });
+    
+    return result.url;
   }
   return url;
 }
