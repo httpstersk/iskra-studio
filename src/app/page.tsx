@@ -442,11 +442,11 @@ export default function CanvasPage() {
             return prev.map((video) =>
               video.id === videoId
                 ? {
-                  ...video,
-                  src: videoUrl,
-                  duration,
-                  isLoading: false,
-                }
+                    ...video,
+                    src: videoUrl,
+                    duration,
+                    isLoading: false,
+                  }
                 : video
             );
           });

@@ -1,6 +1,6 @@
 /**
  * Project list component for displaying all user projects.
- * 
+ *
  * Shows a grid of project cards with a "New Project" button.
  * Includes loading states and empty state for no projects.
  */
@@ -18,23 +18,23 @@ import { useProjects } from "@/hooks/useProjects";
 interface ProjectListProps {
   /** Callback when new project button is clicked */
   onNewProject?: () => void;
-  
+
   /** Callback when a project is clicked to open */
   onOpenProject?: (projectId: string) => void;
 }
 
 /**
  * Project list component.
- * 
+ *
  * Displays all user projects in a responsive grid layout.
  * Shows loading skeleton while fetching projects.
  * Shows empty state when user has no projects.
- * 
+ *
  * @remarks
  * - Grid adapts from 1 column (mobile) to 4 columns (desktop)
  * - "New Project" button always appears first
  * - Projects sorted by lastSavedAt (most recent first)
- * 
+ *
  * @example
  * ```tsx
  * <ProjectList
@@ -69,15 +69,15 @@ export function ProjectList({ onNewProject, onOpenProject }: ProjectListProps) {
       <div className="rounded-full bg-surface-light p-6 mb-4">
         <Folder className="h-12 w-12 text-content-light" />
       </div>
-      
+
       <h3 className="text-lg font-medium text-content-base mb-2">
         No projects yet
       </h3>
-      
+
       <p className="text-sm text-content-light mb-6 max-w-sm">
         Create your first project to start designing with Iskra Studio.
       </p>
-      
+
       {onNewProject && (
         <Button onClick={onNewProject} size="lg">
           <Plus className="mr-2 h-5 w-5" />
@@ -122,7 +122,9 @@ export function ProjectList({ onNewProject, onOpenProject }: ProjectListProps) {
       <div className="container mx-auto p-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-content-base">My Projects</h2>
-          <p className="text-sm text-content-light mt-1">Loading your projects...</p>
+          <p className="text-sm text-content-light mt-1">
+            Loading your projects...
+          </p>
         </div>
         {renderSkeleton()}
       </div>
@@ -136,6 +138,7 @@ export function ProjectList({ onNewProject, onOpenProject }: ProjectListProps) {
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-content-base">My Projects</h2>
         </div>
+
         {renderEmptyState()}
       </div>
     );
@@ -162,7 +165,7 @@ export function ProjectList({ onNewProject, onOpenProject }: ProjectListProps) {
 
 /**
  * Skeleton component for loading state.
- * 
+ *
  * Simple skeleton component if not using shadcn's Skeleton.
  */
 function Skeleton({ className }: { className?: string }) {

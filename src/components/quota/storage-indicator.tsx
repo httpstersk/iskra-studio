@@ -21,29 +21,29 @@ import {
 interface StorageIndicatorProps {
   /** Whether to show the full indicator or just the percentage */
   compact?: boolean;
-  
+
   /** Optional className for custom styling */
   className?: string;
 }
 
 /**
  * Storage quota indicator component.
- * 
+ *
  * Displays the user's storage usage with a progress bar and
  * formatted text. Shows different colors based on usage percentage
  * and provides tooltips with detailed information.
- * 
+ *
  * @remarks
  * - Only renders for authenticated users
  * - Updates automatically as quota changes
  * - Shows "Upgrade" button for free-tier users approaching limits
  * - Color-coded based on usage: green (<60%), yellow (60-90%), red (>90%)
- * 
+ *
  * @example
  * ```tsx
  * // Full indicator with progress bar
  * <StorageIndicator />
- * 
+ *
  * // Compact version (percentage only)
  * <StorageIndicator compact />
  * ```
@@ -85,6 +85,7 @@ export function StorageIndicator({
             {percentageText}
           </span>
         </HoverCardTrigger>
+
         <HoverCardContent className="w-64">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -118,9 +119,10 @@ export function StorageIndicator({
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
       <div className="flex items-center justify-between">
-        <span className={`text-sm font-medium ${textColor}`}>
+        <span className={`text-xs font-mono ${textColor}`}>
           Storage: {usedText} / {limitText} ({percentageText})
         </span>
+
         {tier === "free" && quota.isApproachingLimit && (
           <Button size="sm" variant="default" className="h-7 text-xs">
             <Crown className="mr-1 h-3 w-3" />
@@ -128,17 +130,19 @@ export function StorageIndicator({
           </Button>
         )}
       </div>
+
       <div className="h-2 w-full overflow-hidden rounded-full bg-gray-700">
         <div
-          className={`h-full transition-all duration-300 ${progressColor}`}
-          style={{ width: `${Math.min(100, quota.percentage)}%` }}
-          role="progressbar"
-          aria-valuenow={quota.percentage}
-          aria-valuemin={0}
-          aria-valuemax={100}
           aria-label={`Storage used: ${percentageText}`}
+          aria-valuemax={100}
+          aria-valuemin={0}
+          aria-valuenow={quota.percentage}
+          className={`h-full transition-all duration-300 ${progressColor}`}
+          role="progressbar"
+          style={{ width: `${Math.min(100, quota.percentage)}%` }}
         />
       </div>
+
       {quota.isApproachingLimit && (
         <p className="text-xs text-yellow-600">
           {quota.isExceeded
