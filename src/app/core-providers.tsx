@@ -62,7 +62,7 @@ export function CoreProviders({ children }: { children: ReactNode }) {
           <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
             <ThemeProvider
               attribute="class"
-              defaultTheme="system"
+              defaultTheme="dark"
               enableSystem
               disableTransitionOnChange
             >
