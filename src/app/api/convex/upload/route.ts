@@ -6,14 +6,8 @@
  */
 
 import { auth } from "@clerk/nextjs/server";
-import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
-
-import type { AssetUploadResult } from "@/types/asset";
-import { api } from "../../../../../convex/_generated/api";
-
-const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB (Convex limit)
-const ALLOWED_MIME_PREFIXES = ["image/", "video/"];
+import { uploadFileToConvex } from "@/lib/storage/convex-upload-logic";
 
 /**
  * POST handler for uploading files to Convex storage.
@@ -44,7 +38,8 @@ const ALLOWED_MIME_PREFIXES = ["image/", "video/"];
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const { userId } = await auth();
+    const authData = await auth();
+    const { userId } = authData;
 
     if (!userId) {
       return NextResponse.json(
@@ -61,82 +56,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      return NextResponse.json(
-        { error: "File too large. Maximum size is 25 MB." },
-        { status: 413 }
-      );
-    }
-
-    // Validate MIME type
-    const mimeType = (file.type || "").toLowerCase();
-    const isAllowedType = ALLOWED_MIME_PREFIXES.some((prefix) =>
-      mimeType.startsWith(prefix)
-    );
-
-    if (!isAllowedType) {
-      return NextResponse.json(
-        { error: "Unsupported file type. Only images and videos are allowed." },
-        { status: 415 }
-      );
-    }
-
-    // Determine asset type from MIME type
-    const assetType: "image" | "video" = mimeType.startsWith("image/")
-      ? "image"
-      : "video";
-
-    // TODO: Check user's storage quota before upload
-    // This requires fetching user data from Convex
-    // For now, we'll proceed with the upload and let the mutation handle quota enforcement
-
-    // Get Convex deployment URL
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-    if (!convexUrl) {
-      return NextResponse.json(
-        { error: "Convex configuration missing" },
-        { status: 500 }
-      );
-    }
-
-    // Convert .convex.cloud to .convex.site for HTTP actions
-    const convexSiteUrl = convexUrl.replace('.convex.cloud', '.convex.site');
-
-    // Upload file to Convex storage via HTTP action
-    // Send as raw blob, not FormData
-    const blob = await file.arrayBuffer();
-
-    const uploadResponse = await fetch(`${convexSiteUrl}/upload`, {
-      body: blob,
-      method: "POST",
-      headers: {
-        "Content-Type": file.type,
-      },
-    });
-
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text();
-      console.error("Convex upload failed:", {
-        status: uploadResponse.status,
-        statusText: uploadResponse.statusText,
-        errorText,
-        uploadUrl: `${convexSiteUrl}/upload`,
-      });
-      throw new Error(
-        `Convex upload failed (${uploadResponse.status}): ${errorText}`
-      );
-    }
-
-    const { storageId, url } = await uploadResponse.json();
-
-    // Create asset record in database via Convex mutation
-    const convexClient = new ConvexHttpClient(convexUrl);
-
-    // Set auth token for the mutation
-    const authData = await auth();
+    // Get auth token
     const token = await authData.getToken({ template: "convex" });
-
     if (!token) {
       return NextResponse.json(
         { error: "Failed to get auth token" },
@@ -144,54 +65,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    convexClient.setAuth(token);
-
     // Extract metadata from form data if provided
     const metadataStr = formData.get("metadata") as string | null;
     const rawMetadata = metadataStr ? JSON.parse(metadataStr) : {};
 
-    // Extract width/height from metadata if present (for backward compatibility)
-    // They should be passed as separate fields, not in metadata
+    // Extract dimensions from form data
     const widthFromForm = formData.get("width");
     const heightFromForm = formData.get("height");
     const durationFromForm = formData.get("duration");
 
-    const width = widthFromForm
-      ? parseInt(widthFromForm as string)
-      : rawMetadata.width;
-    const height = heightFromForm
-      ? parseInt(heightFromForm as string)
-      : rawMetadata.height;
-    const duration = durationFromForm
-      ? parseFloat(durationFromForm as string)
-      : rawMetadata.duration;
-
-    // Clean metadata to only include schema-valid fields (model, prompt, seed)
     const metadata = {
-      ...(rawMetadata.model && { model: rawMetadata.model }),
-      ...(rawMetadata.prompt && { prompt: rawMetadata.prompt }),
-      ...(rawMetadata.seed !== undefined && { seed: rawMetadata.seed }),
+      ...rawMetadata,
+      width: widthFromForm
+        ? parseInt(widthFromForm as string)
+        : rawMetadata.width,
+      height: heightFromForm
+        ? parseInt(heightFromForm as string)
+        : rawMetadata.height,
+      duration: durationFromForm
+        ? parseFloat(durationFromForm as string)
+        : rawMetadata.duration,
     };
 
-    // Call uploadAsset mutation to create database record
-    const assetId = await convexClient.mutation(api.assets.uploadAsset, {
-      duration: duration || undefined,
-      height: height || undefined,
-      metadata,
-      mimeType,
-      sizeBytes: file.size,
-      storageId,
-      type: assetType,
+    // Use shared upload logic
+    const result = await uploadFileToConvex({
+      file,
       userId,
-      width: width || undefined,
+      mimeType: file.type,
+      metadata,
+      authToken: token,
     });
-
-    const result: AssetUploadResult = {
-      assetId: assetId as string,
-      sizeBytes: file.size,
-      storageId,
-      url,
-    };
 
     return NextResponse.json(result);
   } catch (error) {

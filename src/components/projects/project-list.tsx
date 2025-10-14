@@ -130,7 +130,7 @@ export function ProjectList({
         Create a project to keep your ideas organized.
       </p>
       {onNewProject && (
-        <Button className="mt-4" onClick={onNewProject} size="sm" variant="outline">
+        <Button className="mt-4" onClick={onNewProject} size="sm" variant="secondary">
           <Plus className="mr-2 h-4 w-4" />
           New project
         </Button>

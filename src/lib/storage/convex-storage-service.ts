@@ -133,6 +133,9 @@ export class ConvexStorageService implements StorageService {
    * 
    * Includes automatic retry logic for failed uploads.
    * 
+   * On the client, uses the HTTP API route.
+   * On the server, should not be used - use uploadFileToConvex directly instead.
+   * 
    * @param file - File blob to upload
    * @param options - Upload options (userId, type, metadata)
    * @returns Upload result with storageId, URL, and assetId
@@ -149,7 +152,6 @@ export class ConvexStorageService implements StorageService {
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
-        // Upload file to Convex via our API route
         const formData = new FormData();
         formData.append("file", file);
         formData.append("userId", options.userId);
@@ -160,9 +162,7 @@ export class ConvexStorageService implements StorageService {
           formData.append("metadata", JSON.stringify(options.metadata));
         }
 
-        console.log("[ConvexStorage] Sending request to /api/convex/upload");
-
-        const response = await fetch("/api/convex/upload", {
+        const response = await fetch('/api/convex/upload', {
           body: formData,
           method: "POST",
         });

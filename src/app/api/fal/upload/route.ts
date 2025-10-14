@@ -9,7 +9,7 @@ import {
   standardLimitHeaders,
   standardRateLimiter,
 } from "@/lib/fal/utils";
-import { createStorageService } from "@/lib/storage";
+import { uploadFileToConvex } from "@/lib/storage/convex-upload-logic";
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_MIME_PREFIXES = ["image/", "video/"];
@@ -93,13 +93,24 @@ export async function POST(req: NextRequest) {
 
     const blob: Blob = file;
 
-    // Upload to Convex storage
-    const storage = createStorageService();
-    const uploadResult = await storage.upload(blob, {
+    // Get auth token
+    const authData = await auth();
+    const token = await authData.getToken({ template: "convex" });
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Failed to get auth token" },
+        { status: 401 }
+      );
+    }
+
+    // Upload to Convex storage using direct upload logic
+    const uploadResult = await uploadFileToConvex({
+      file: blob,
       userId: userId!,
-      type: mimeType.startsWith("image/") ? "image" : "video",
       mimeType,
       metadata: {},
+      authToken: token,
     });
 
     return NextResponse.json({ url: uploadResult.url });
