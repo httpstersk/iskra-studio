@@ -1,0 +1,123 @@
+/**
+ * Asset type definitions for file storage in Convex.
+ * 
+ * Defines types for managing images and videos stored in Convex,
+ * including metadata for AI generation parameters and upload results.
+ */
+
+/**
+ * Type of asset stored in Convex.
+ */
+export type AssetType = "image" | "video";
+
+/**
+ * Metadata for AI-generated assets.
+ * 
+ * Stores generation parameters to enable reproducibility and
+ * provide context for generated content.
+ * 
+ * @remarks
+ * All fields are optional as not all assets are AI-generated.
+ */
+export interface AssetMetadata {
+  /** Duration of video in seconds (video only) */
+  duration?: number;
+  
+  /** Height of image/video in pixels */
+  height?: number;
+  
+  /** AI model used for generation */
+  model?: string;
+  
+  /** Original FAL URL before uploading to Convex */
+  originalFalUrl?: string;
+  
+  /** Text prompt used for generation */
+  prompt?: string;
+  
+  /** Random seed used for generation */
+  seed?: number;
+  
+  /** Width of image/video in pixels */
+  width?: number;
+}
+
+/**
+ * Asset record from Convex database.
+ * 
+ * Represents a file (image or video) stored in Convex storage
+ * with associated metadata and ownership information.
+ * 
+ * @remarks
+ * - storageId references the file in Convex storage
+ * - userId links asset to the owner for quota tracking
+ * - sizeBytes is used for storage quota calculations
+ * - metadata stores AI generation parameters
+ */
+export interface Asset {
+  /** Timestamp when the asset was created (ms since epoch) */
+  createdAt: number;
+  
+  /** Duration in seconds (video only) */
+  duration?: number;
+  
+  /** Height in pixels */
+  height?: number;
+  
+  /** Unique identifier for the asset record */
+  id: string;
+  
+  /** Additional metadata (generation params, original URLs, etc.) */
+  metadata?: AssetMetadata;
+  
+  /** MIME type of the file (e.g., "image/png", "video/mp4") */
+  mimeType: string;
+  
+  /** Original URL before uploading to Convex (if applicable) */
+  originalUrl?: string;
+  
+  /** Size of the file in bytes */
+  sizeBytes: number;
+  
+  /** Convex storage ID for retrieving the file */
+  storageId: string;
+  
+  /** Type of asset */
+  type: AssetType;
+  
+  /** User ID of the asset owner */
+  userId: string;
+  
+  /** Width in pixels */
+  width?: number;
+}
+
+/**
+ * Result returned from asset upload operations.
+ * 
+ * Provides essential information needed to reference and display
+ * the uploaded asset in the application.
+ * 
+ * @example
+ * ```ts
+ * const result: AssetUploadResult = {
+ *   assetId: "k17abc123def",
+ *   sizeBytes: 2048576,
+ *   storageId: "kg2xyz789abc",
+ *   url: "https://example.convex.cloud/api/storage/kg2xyz789abc",
+ * };
+ * ```
+ */
+export interface AssetUploadResult {
+  /** Unique identifier for the asset record in database */
+  assetId: string;
+  
+  /** Size of the uploaded file in bytes */
+  sizeBytes: number;
+  
+  /** Convex storage ID for the uploaded file */
+  storageId: string;
+  
+  /** Public URL to access the uploaded file */
+  url: string;
+}

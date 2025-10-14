@@ -200,7 +200,7 @@ Below are the high-level tasks required to implement the Convex storage and Cler
     - ✅ Document Clerk variables: publishable key, secret key, sign-in/sign-up URLs
     - ✅ Add comments explaining where to obtain each value
 
-- [ ] 2.0 **Implement User Authentication & Authorization**
+- [x] 2.0 **Implement User Authentication & Authorization**
   - [x] 2.1 Create Clerk middleware in `src/middleware.ts`
     - ✅ Created `src/middleware.ts` with `clerkMiddleware()` from `@clerk/nextjs/server`
     - ✅ Protected all routes except public routes (sign-in, sign-up, static assets, webhooks)
