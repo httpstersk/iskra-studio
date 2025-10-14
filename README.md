@@ -12,7 +12,12 @@ An infinite canvas image editor with AI transformations using fal.ai. Built with
 - Background removal and object isolation
 - Real-time streaming of AI results
 - Multi-selection and image manipulation
-- Auto-save to IndexedDB
+- **Cloud sync with Convex** - Projects saved to cloud with auto-save
+- **User authentication with Clerk** - Secure sign-in with Google, GitHub, or email
+- **Project management** - Create, save, and switch between multiple projects
+- **Cross-device sync** - Access your projects from any device
+- **Offline support** - Continue working offline with automatic sync when reconnected
+- **Storage quotas** - Track usage with free (500MB) and paid (5GB) tiers
 - Undo/redo support
 
 ## Technical Details
@@ -72,12 +77,15 @@ The client receives these updates via a tRPC subscription and updates the canvas
 
 ### State Management
 
-The application uses a combination of React state and IndexedDB for persistence:
+The application uses Jotai for global state management with Convex for cloud persistence:
 
-- **Canvas State**: Images, positions, and transformations stored in React state
+- **Canvas State**: Images, positions, and transformations stored in Jotai atoms
 - **History**: Undo/redo stack maintained in memory
-- **Persistence**: Auto-saves to IndexedDB with debouncing
-- **Image Storage**: Original image data stored separately in IndexedDB to handle large files
+- **Persistence**: Auto-saves to Convex every 10 seconds with debouncing
+- **Offline Cache**: IndexedDB cache layer for offline access and fast loading
+- **Sync Manager**: Bidirectional sync between IndexedDB and Convex with conflict resolution
+- **Authentication State**: Clerk user data and Convex user profile in Jotai atoms
+- **Project State**: Current project, project list, and auto-save indicators
 
 ### API Architecture
 
@@ -128,20 +136,87 @@ Uses Bria's specialized background removal model:
 
 ### Setup
 
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Add your fal.ai API key to `.env.local`:
-
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/spark-videos.git
+   cd spark-videos
    ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up Convex** (for cloud storage and sync)
+   - See detailed guide: [docs/convex-setup.md](./docs/convex-setup.md)
+   - Quick start:
+     ```bash
+     npx convex dev
+     ```
+   - Follow prompts to create project and get deployment URL
+
+4. **Set up Clerk** (for authentication)
+   - See detailed guide: [docs/clerk-setup.md](./docs/clerk-setup.md)
+   - Quick start: [docs/CLERK_QUICKSTART.md](./docs/CLERK_QUICKSTART.md)
+   - Create account at [clerk.com](https://clerk.com)
+   - Get API keys from dashboard
+
+5. **Configure environment variables**
+   
+   Copy `.env.example` to `.env.local` and fill in:
+
+   ```bash
+   # FAL.ai (AI generation)
    FAL_KEY=your_fal_api_key_here
    NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-   # Optional
+   # Convex (database & storage)
+   CONVEX_DEPLOYMENT=prod:your-deployment-name
+   NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+
+   # Clerk (authentication)
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+   CLERK_SECRET_KEY=sk_test_xxx
+   CLERK_JWT_ISSUER_DOMAIN=https://your-domain.clerk.accounts.dev
+   NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+   NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+
+   # Optional: Rate limiting
    KV_REST_API_URL=
    KV_REST_API_TOKEN=
    ```
 
-4. Run development server: `npm run dev`
+6. **Run development servers**
+   
+   Start Convex (in one terminal):
+   ```bash
+   npx convex dev
+   ```
+   
+   Start Next.js (in another terminal):
+   ```bash
+   npm run dev
+   ```
+
+7. **Access the app**
+   
+   Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### First Time Setup
+
+After running the app:
+1. Click "Sign In" in the top-right corner
+2. Create an account with email, Google, or GitHub
+3. Click the folder icon (top-left) or press Cmd/Ctrl+P to open Projects panel
+4. Create your first project
+5. Start generating AI images!
+
+### Migration from Old Version
+
+If you have existing canvas data in IndexedDB:
+- See migration guide: [docs/migration-guide.md](./docs/migration-guide.md)
+- Old data remains accessible but won't auto-migrate
+- Manual recreation recommended for important work
 
 ### Pre-commit Hooks
 
@@ -165,10 +240,13 @@ npx lint-staged
 
 - **Next.js 15**: React framework with App Router
 - **React Konva**: Canvas rendering engine
+- **Convex**: Real-time database and file storage
+- **Clerk**: Authentication and user management
+- **Jotai**: Global state management
 - **tRPC**: Type-safe API layer
 - **fal.ai SDK**: AI model integration
 - **Tailwind CSS**: Styling
-- **IndexedDB**: Client-side storage
+- **IndexedDB**: Client-side cache layer
 - **Sharp**: Server-side image processing
 
 ## Deployment
