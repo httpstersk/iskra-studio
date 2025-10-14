@@ -18,10 +18,10 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `.env.example` - **MODIFIED** ✅ - Comprehensive documentation of all required environment variables with setup instructions
 
 ### Authentication & Middleware
-- `src/middleware.ts` - **NEW** - Clerk authentication middleware for route protection
-- `src/providers/clerk-provider.tsx` - **NEW** - Client-side Clerk provider wrapper
-- `src/providers/convex-provider.tsx` - **NEW** - Client-side Convex provider with auth
-- `src/app/layout.tsx` - **MODIFY** - Wrap app with Clerk and Convex providers
+- `src/middleware.ts` - **CREATED** ✅ - Clerk authentication middleware for route protection (65 lines)
+- `src/providers/clerk-provider.tsx` - **CREATED** ✅ - Client-side Clerk provider wrapper with dark theme (53 lines)
+- `src/providers/convex-provider.tsx` - **CREATED** ✅ - Client-side Convex provider with Clerk auth integration (57 lines)
+- `src/app/core-providers.tsx` - **MODIFIED** ✅ - Wrapped with ClerkProvider and ConvexProvider
 
 ### Convex Backend (Mutations & Queries)
 - `convex/assets.ts` - **NEW** - Asset CRUD operations (upload, delete, list)
@@ -46,17 +46,17 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `src/lib/handlers/asset-download-handler.ts` - **NEW** - Download FAL assets and reupload to Convex
 
 ### State Management (Jotai)
-- `src/store/auth-atoms.ts` - **NEW** - Clerk user state, tier, quotas
+- `src/store/auth-atoms.ts` - **CREATED** ✅ - Clerk user state, tier, quotas (74 lines)
 - `src/store/project-atoms.ts` - **NEW** - Current project, project list, auto-save state
-- `src/hooks/useAuth.ts` - **NEW** - Custom hook for Clerk auth with Convex integration
+- `src/hooks/useAuth.ts` - **CREATED** ✅ - Custom hook for Clerk auth with Convex integration (145 lines)
 - `src/hooks/useProjects.ts` - **NEW** - Custom hook for project CRUD operations
 - `src/hooks/useQuota.ts` - **NEW** - Custom hook for storage quota tracking
 - `src/hooks/useAutoSave.ts` - **NEW** - Auto-save hook with 10-second debounce
 - `src/hooks/useStorage.ts` - **MODIFY** - Update to sync with Convex instead of only IndexedDB
 
 ### UI Components
-- `src/components/auth/sign-in-button.tsx` - **NEW** - Clerk sign-in button
-- `src/components/auth/user-menu.tsx` - **NEW** - User dropdown with profile and sign-out
+- `src/components/auth/sign-in-button.tsx` - **CREATED** ✅ - Clerk sign-in button with LogIn icon (68 lines)
+- `src/components/auth/user-menu.tsx` - **CREATED** ✅ - User dropdown with avatar, tier badge, storage quota, and sign-out (210 lines)
 - `src/components/projects/project-list.tsx` - **NEW** - Project grid/list view
 - `src/components/projects/project-card.tsx` - **NEW** - Individual project tile with thumbnail
 - `src/components/projects/project-dialog.tsx` - **NEW** - Create/rename project modal
@@ -78,7 +78,7 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `src/lib/sync/conflict-resolver.ts` - **NEW** - Handle sync conflicts
 
 ### Type Definitions
-- `src/types/auth.ts` - **NEW** - User, UserTier, StorageQuota types
+- `src/types/auth.ts` - **CREATED** ✅ - User, UserTier, StorageQuota types (78 lines)
 - `src/types/project.ts` - **NEW** - Project, ProjectMetadata types
 - `src/types/asset.ts` - **NEW** - Asset, AssetMetadata types
 - `src/types/canvas.ts` - **MODIFY** - Add projectId to canvas state types
@@ -201,53 +201,71 @@ Below are the high-level tasks required to implement the Convex storage and Cler
     - ✅ Add comments explaining where to obtain each value
 
 - [ ] 2.0 **Implement User Authentication & Authorization**
-  - [ ] 2.1 Create Clerk middleware in `src/middleware.ts`
-    - Use `clerkMiddleware()` from `@clerk/nextjs`
-    - Protect all routes except public landing page and auth routes
-    - Pass authentication state to downstream requests
+  - [x] 2.1 Create Clerk middleware in `src/middleware.ts`
+    - ✅ Created `src/middleware.ts` with `clerkMiddleware()` from `@clerk/nextjs/server`
+    - ✅ Protected all routes except public routes (sign-in, sign-up, static assets, webhooks)
+    - ✅ Configured automatic redirect to `/sign-in` for unauthenticated users
+    - ✅ Added comprehensive TSDoc documentation
+    - ✅ Configured Next.js middleware matcher to run on appropriate routes
   
-  - [ ] 2.2 Create Clerk provider wrapper in `src/providers/clerk-provider.tsx`
-    - Wrap children with `<ClerkProvider>`
-    - Configure appearance and routing
-    - Add TypeScript types for props
+  - [x] 2.2 Create Clerk provider wrapper in `src/providers/clerk-provider.tsx`
+    - ✅ Created `src/providers/clerk-provider.tsx` with ClerkProvider wrapper (53 lines)
+    - ✅ Configured dark theme to match application design
+    - ✅ Configured sign-in and sign-up URLs from environment variables
+    - ✅ Added comprehensive TSDoc documentation
   
-  - [ ] 2.3 Create Convex provider wrapper in `src/providers/convex-provider.tsx`
-    - Use `ConvexProviderWithClerk` from `convex/react-clerk`
-    - Connect Clerk authentication to Convex client
-    - Pass `useAuth()` hook to Convex provider
+  - [x] 2.3 Create Convex provider wrapper in `src/providers/convex-provider.tsx`
+    - ✅ Created `src/providers/convex-provider.tsx` with ConvexProviderWithClerk (57 lines)
+    - ✅ Connected Clerk authentication to Convex client
+    - ✅ Configured Convex client with deployment URL from environment
+    - ✅ Integrated useAuth hook from @clerk/nextjs
+    - ✅ Added comprehensive TSDoc documentation
   
-  - [ ] 2.4 Update `src/app/layout.tsx` to wrap app with providers
-    - Wrap with `<ClerkProvider>` at top level
-    - Wrap with `<ConvexProviderWithClerk>` inside Clerk provider
-    - Maintain existing providers (QueryClientProvider, Toaster, etc.)
+  - [x] 2.4 Update `src/app/layout.tsx` to wrap app with providers
+    - ✅ Updated `src/app/core-providers.tsx` to wrap with ClerkProvider at top level
+    - ✅ Added ConvexProvider inside ClerkProvider
+    - ✅ Maintained existing providers (QueryClientProvider, TRPCProvider, ThemeProvider, Toaster)
+    - ✅ Proper provider nesting order for authentication flow
   
-  - [ ] 2.5 Create auth state atoms in `src/store/auth-atoms.ts`
-    - `userAtom` - Current Clerk user object
-    - `userTierAtom` - Derived atom for user tier ("free" | "paid")
-    - `storageQuotaAtom` - User's storage quota info (used, limit, percentage)
-    - `isAuthenticatedAtom` - Boolean derived from userAtom
+  - [x] 2.5 Create auth state atoms in `src/store/auth-atoms.ts`
+    - ✅ Created `src/store/auth-atoms.ts` with authentication state atoms (74 lines)
+    - ✅ `userAtom` - Combined Clerk and Convex user data
+    - ✅ `isAuthenticatedAtom` - Derived boolean from userAtom
+    - ✅ `userTierAtom` - Derived atom for user tier with "free" default
+    - ✅ `storageQuotaAtom` - Storage quota information
+    - ✅ Comprehensive TSDoc documentation for all atoms
   
-  - [ ] 2.6 Create `src/hooks/useAuth.ts` custom hook
-    - Combine Clerk's `useUser()` with Convex user data
-    - Return user, tier, isAuthenticated, signIn, signOut functions
-    - Fetch and sync user data from Convex `users` table
+  - [x] 2.6 Create `src/hooks/useAuth.ts` custom hook
+    - ✅ Created `src/hooks/useAuth.ts` combining Clerk and Convex (145 lines)
+    - ✅ Returns convexUser, isAuthenticated, isLoading, signIn, signOut, tier, userId
+    - ✅ Syncs Clerk user data to Jotai atoms
+    - ✅ Includes TODO for Convex user data fetching (backend not yet implemented)
+    - ✅ Comprehensive TSDoc with usage examples
   
-  - [ ] 2.7 Create `src/types/auth.ts` for authentication types
-    - `User` type with userId, email, tier, storageUsedBytes, createdAt, updatedAt
-    - `UserTier` type: "free" | "paid"
-    - `StorageQuota` type with used, limit, percentage fields
+  - [x] 2.7 Create `src/types/auth.ts` for authentication types
+    - ✅ Created `src/types/auth.ts` with authentication types (78 lines)
+    - ✅ `User` interface with userId, email, tier, storageUsedBytes, timestamps
+    - ✅ `UserTier` type: "free" | "paid"
+    - ✅ `StorageQuota` interface with used, limit, percentage, isApproachingLimit, isExceeded
+    - ✅ Comprehensive TSDoc with usage examples
   
-  - [ ] 2.8 Create sign-in button component in `src/components/auth/sign-in-button.tsx`
-    - Use Clerk's `<SignInButton>` component
-    - Style with existing UI components (Button)
-    - Add accessibility attributes (aria-label)
+  - [x] 2.8 Create sign-in button component in `src/components/auth/sign-in-button.tsx`
+    - ✅ Created `src/components/auth/sign-in-button.tsx` (68 lines)
+    - ✅ Uses Clerk's SignInButton with modal mode
+    - ✅ Styled with application's Button component
+    - ✅ Includes LogIn icon from lucide-react
+    - ✅ Accessible with aria-label attribute
+    - ✅ Comprehensive TSDoc with usage examples
   
-  - [ ] 2.9 Create user menu component in `src/components/auth/user-menu.tsx`
-    - Display user avatar and email
-    - Dropdown menu with storage quota indicator
-    - "Manage Account" link to Clerk user profile
-    - "Sign Out" button using Clerk's `<SignOutButton>`
-    - Show tier badge ("Free" or "Paid")
+  - [x] 2.9 Create user menu component in `src/components/auth/user-menu.tsx`
+    - ✅ Created `src/components/auth/user-menu.tsx` with full functionality (210 lines)
+    - ✅ Displays user avatar using Clerk's UserButton
+    - ✅ Shows user email and tier badge (with Crown icon for paid tier)
+    - ✅ Storage quota indicator with progress bar and color coding
+    - ✅ Links to account management and settings pages
+    - ✅ Sign-out functionality with Clerk integration
+    - ✅ Fully accessible with ARIA labels and roles
+    - ✅ Helper functions for storage formatting and quota color
 
 - [ ] 3.0 **Build Convex Storage Service & Migration**
   - [ ] 3.1 Create abstract storage interface in `src/lib/storage/storage-service.ts`
