@@ -79,31 +79,10 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
       className={`fixed top-0 left-0 right-0 z-50 border-b border-border bg-card/95 backdrop-blur-xl ${className || ""}`}
     >
       <div className="flex items-center justify-between h-14 px-4">
-        {/* Left: macOS Window Controls & Branding */}
         <div className="flex items-center gap-3">
-          {/* macOS-style window controls */}
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500/90 hover:bg-red-500 transition-colors" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/90 hover:bg-yellow-500 transition-colors" />
-            <div className="w-3 h-3 rounded-full bg-green-500/90 hover:bg-green-500 transition-colors" />
-          </div>
-          <div className="w-px h-5 bg-border/50" />
           <Sparkles className="h-4 w-4 text-foreground" />
         </div>
 
-        {/* Center: Status Indicators */}
-        <div className="flex items-center gap-4">
-          {isAuthenticated && (
-            <AutoSaveIndicator
-              status={saveStatus}
-              lastSavedAt={lastSavedAt}
-              error={autoSaveError || undefined}
-            />
-          )}
-          <OfflineIndicator />
-        </div>
-
-        {/* Right: Auth & Storage */}
         <div className="flex items-center gap-3">
           {!isLoading && (
             <>

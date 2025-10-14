@@ -2,13 +2,13 @@
  * Project panel component for sidebar navigation.
  * 
  * Collapsible sidebar that displays the project list.
- * Provides toggle button and keyboard shortcut (Cmd/Ctrl+P).
+ * Supports keyboard shortcut (Cmd/Ctrl+P) when external toggle handler is provided.
  */
 
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Folder, X, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Folder, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ProjectList } from "./project-list";
@@ -19,24 +19,26 @@ import { useProjects } from "@/hooks/useProjects";
  * Props for ProjectPanel component.
  */
 interface ProjectPanelProps {
-  /** Initial collapsed state (default: true) */
-  defaultCollapsed?: boolean;
-  
+  /** Whether the panel is open */
+  isOpen?: boolean;
+
   /** Callback when a project is opened */
   onOpenProject?: (projectId: string) => void;
+
+  /** Callback to toggle the panel */
+  onToggle?: () => void;
 }
 
 /**
  * Project panel sidebar component.
  * 
- * Collapsible sidebar that shows the project list with toggle button.
- * Supports keyboard shortcut (Cmd/Ctrl+P) to toggle panel.
- * Includes slide animation using framer-motion.
+ * Collapsible sidebar that shows the project list.
+ * Supports keyboard shortcut (Cmd/Ctrl+P) to toggle panel when onToggle is provided.
  * 
  * @remarks
- * - Default state: collapsed
+ * - Controlled component: uses isOpen prop for state
  * - Width: 320px when expanded
- * - Keyboard shortcut: Cmd/Ctrl+P (can be customized)
+ * - Keyboard shortcut: Cmd/Ctrl+P (requires onToggle callback)
  * - Smooth slide-in/out animation
  * - Overlay on mobile (< 768px)
  * - Fixed sidebar on desktop (>= 768px)
@@ -44,7 +46,8 @@ interface ProjectPanelProps {
  * @example
  * ```tsx
  * <ProjectPanel
- *   defaultCollapsed={false}
+ *   isOpen={isPanelOpen}
+ *   onToggle={() => setIsPanelOpen(!isPanelOpen)}
  *   onOpenProject={(id) => {
  *     router.push(`/project/${id}`);
  *   }}
@@ -52,10 +55,10 @@ interface ProjectPanelProps {
  * ```
  */
 export function ProjectPanel({
-  defaultCollapsed = true,
+  isOpen = false,
   onOpenProject,
+  onToggle,
 }: ProjectPanelProps) {
-  const [isOpen, setIsOpen] = useState(!defaultCollapsed);
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   const { projects, isLoading } = useProjects();
 
@@ -70,7 +73,7 @@ export function ProjectPanel({
    * Toggles the panel open/closed.
    */
   const togglePanel = () => {
-    setIsOpen((prev) => !prev);
+    onToggle?.();
   };
 
   /**
@@ -86,7 +89,7 @@ export function ProjectPanel({
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
@@ -104,37 +107,14 @@ export function ProjectPanel({
    */
   const handleProjectCreated = (projectId: string) => {
     setIsNewProjectDialogOpen(false);
-    
+
     if (onOpenProject) {
       onOpenProject(projectId);
     }
   };
 
   return (
-    <>
-      {/* Toggle Button (always visible) */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={togglePanel}
-        className={cn(
-          "fixed left-4 top-4 z-[70] flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-border/50 bg-card/95 backdrop-blur-xl shadow-lg transition-all hover:bg-accent",
-          isOpen && "bg-accent",
-          "md:w-auto md:px-4"
-        )}
-        title={`${isOpen ? "Close" : "Open"} Projects (Cmd/Ctrl+P)`}
-        aria-label={`${isOpen ? "Close" : "Open"} Projects`}
-      >
-        {isOpen ? (
-          <ChevronLeft className="h-5 w-5" />
-        ) : (
-          <ChevronRight className="h-5 w-5" />
-        )}
-        <span className="hidden text-xs font-semibold uppercase tracking-[0.2em] md:inline">
-          Projects
-        </span>
-      </Button>
-
+    <aside>
       {/* Sidebar Panel */}
       <div
         className={cn(
@@ -183,8 +163,8 @@ export function ProjectPanel({
               if (onOpenProject) {
                 onOpenProject(projectId);
               }
-              if (window.innerWidth < 768) {
-                setIsOpen(false);
+              if (window.innerWidth < 768 && isOpen) {
+                togglePanel();
               }
             }}
           />
@@ -210,6 +190,6 @@ export function ProjectPanel({
         onClose={() => setIsNewProjectDialogOpen(false)}
         onProjectCreated={handleProjectCreated}
       />
-    </>
+    </aside>
   );
 }

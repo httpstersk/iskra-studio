@@ -89,6 +89,7 @@ export default function CanvasPage() {
 
   // Projects
   const projects = useProjects();
+  const [isProjectsPanelOpen, setIsProjectsPanelOpen] = useState(false);
 
   const interactions = useCanvasInteractions(
     canvasState.viewport,
@@ -786,6 +787,8 @@ export default function CanvasPage() {
       {/* Project panel for authenticated users */}
       {isAuthenticated && (
         <ProjectPanel
+          isOpen={isProjectsPanelOpen}
+          onToggle={() => setIsProjectsPanelOpen(!isProjectsPanelOpen)}
           onOpenProject={async (projectId) => {
             try {
               await projects.loadProject(projectId as any);
@@ -913,6 +916,12 @@ export default function CanvasPage() {
           {/* Zoom Controls */}
           <ZoomControls
             canvasSize={canvasState.canvasSize}
+            isProjectsPanelOpen={isAuthenticated ? isProjectsPanelOpen : undefined}
+            onToggleProjectsPanel={
+              isAuthenticated
+                ? () => setIsProjectsPanelOpen(!isProjectsPanelOpen)
+                : undefined
+            }
             setViewport={canvasState.setViewport}
             viewport={canvasState.viewport}
           />
