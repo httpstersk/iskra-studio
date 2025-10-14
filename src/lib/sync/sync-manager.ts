@@ -1,6 +1,6 @@
 /**
  * Sync manager for synchronizing canvas state between IndexedDB and Convex.
- * 
+ *
  * Handles offline queueing, conflict resolution, and bidirectional sync
  * between local IndexedDB cache and remote Convex storage.
  */
@@ -43,12 +43,12 @@ interface SyncResult {
 
 /**
  * Sync manager class for handling canvas state synchronization.
- * 
+ *
  * @remarks
  * This class manages bidirectional sync between IndexedDB (local cache)
  * and Convex (remote backend). It handles offline scenarios by queueing
  * changes and processing them when connectivity is restored.
- * 
+ *
  * Key features:
  * - Automatic online/offline detection
  * - Change queueing for offline scenarios
@@ -66,7 +66,7 @@ export class SyncManager {
 
   /**
    * Creates a new sync manager instance.
-   * 
+   *
    * @param convexClient - Convex React client for backend communication
    */
   constructor(convexClient: ConvexReactClient) {
@@ -77,12 +77,18 @@ export class SyncManager {
 
   /**
    * Loads the sync queue from localStorage.
-   * 
+   *
    * @private
    */
   private loadQueue(): void {
+    // Skip on server-side rendering
+    if (typeof window === "undefined") {
+      this.syncQueue = [];
+      return;
+    }
+
     try {
-      const stored = localStorage.getItem(this.QUEUE_KEY);
+      const stored = window.localStorage.getItem(this.QUEUE_KEY);
       if (stored) {
         this.syncQueue = JSON.parse(stored);
       }
@@ -94,10 +100,15 @@ export class SyncManager {
 
   /**
    * Persists the sync queue to localStorage.
-   * 
+   *
    * @private
    */
   private saveQueue(): void {
+    // Skip on server-side rendering
+    if (typeof window === "undefined") {
+      return;
+    }
+
     try {
       localStorage.setItem(this.QUEUE_KEY, JSON.stringify(this.syncQueue));
     } catch (error) {
@@ -107,7 +118,7 @@ export class SyncManager {
 
   /**
    * Sets up network event listeners for online/offline detection.
-   * 
+   *
    * @private
    */
   private setupNetworkListeners(): void {
@@ -125,7 +136,7 @@ export class SyncManager {
 
   /**
    * Checks if the browser is currently online.
-   * 
+   *
    * @returns True if online, false if offline
    */
   public isOnline(): boolean {
@@ -135,15 +146,15 @@ export class SyncManager {
 
   /**
    * Syncs canvas state to Convex backend.
-   * 
+   *
    * Uploads the local canvas state to Convex and updates sync metadata.
    * If offline, the change is queued for later processing.
-   * 
+   *
    * @param projectId - Project ID to sync
    * @param canvasState - Canvas state to upload
    * @param thumbnailStorageId - Optional thumbnail storage ID
    * @returns Sync result with success status
-   * 
+   *
    * @example
    * ```ts
    * const result = await syncManager.syncToConvex(
@@ -151,7 +162,7 @@ export class SyncManager {
    *   canvasState,
    *   thumbnailId
    * );
-   * 
+   *
    * if (result.success) {
    *   console.log("Synced at:", result.syncedAt);
    * }
@@ -220,17 +231,17 @@ export class SyncManager {
 
   /**
    * Syncs canvas state from Convex to IndexedDB.
-   * 
+   *
    * Downloads the latest canvas state from Convex and updates the local cache.
    * Handles conflicts by using the "last write wins" strategy.
-   * 
+   *
    * @param projectId - Project ID to sync
    * @returns Sync result with success status
-   * 
+   *
    * @example
    * ```ts
    * const result = await syncManager.syncFromConvex(projectId);
-   * 
+   *
    * if (result.success) {
    *   const localState = canvasStorage.getCanvasState();
    *   console.log("Local state updated");
@@ -296,14 +307,14 @@ export class SyncManager {
 
   /**
    * Queues a canvas state change for later sync.
-   * 
+   *
    * Used when offline to ensure changes are not lost and can be
    * synced when connectivity is restored.
-   * 
+   *
    * @param projectId - Project ID to sync
    * @param canvasState - Canvas state to queue
    * @param thumbnailStorageId - Optional thumbnail storage ID
-   * 
+   *
    * @example
    * ```ts
    * syncManager.queueChange(projectId, canvasState);
@@ -332,12 +343,12 @@ export class SyncManager {
 
   /**
    * Processes all queued changes and syncs them to Convex.
-   * 
+   *
    * Automatically called when network connectivity is restored.
    * Processes changes in FIFO order with retry logic.
-   * 
+   *
    * @returns Number of successfully synced changes
-   * 
+   *
    * @example
    * ```ts
    * const synced = await syncManager.flushQueue();
@@ -355,7 +366,7 @@ export class SyncManager {
     try {
       // Process queue in order
       const queue = [...this.syncQueue];
-      
+
       for (const change of queue) {
         try {
           const result = await this.syncToConvex(
@@ -383,12 +394,15 @@ export class SyncManager {
 
             // Wait before next retry with exponential backoff
             await new Promise((resolve) =>
-              setTimeout(resolve, this.RETRY_DELAY * Math.pow(2, change.retries))
+              setTimeout(
+                resolve,
+                this.RETRY_DELAY * Math.pow(2, change.retries)
+              )
             );
           }
         } catch (error) {
           console.error(`Failed to sync queued change ${change.id}:`, error);
-          
+
           // Increment retry count
           const index = this.syncQueue.findIndex((c) => c.id === change.id);
           if (index !== -1) {
@@ -409,7 +423,7 @@ export class SyncManager {
 
   /**
    * Gets the current sync queue length.
-   * 
+   *
    * @returns Number of queued changes
    */
   public getQueueLength(): number {
@@ -418,7 +432,7 @@ export class SyncManager {
 
   /**
    * Clears the sync queue.
-   * 
+   *
    * @remarks
    * Use with caution - this will discard all queued changes.
    */
@@ -430,15 +444,15 @@ export class SyncManager {
 
 /**
  * Creates a new sync manager instance.
- * 
+ *
  * @param convexClient - Convex React client
  * @returns Sync manager instance
- * 
+ *
  * @example
  * ```ts
  * const convex = new ConvexReactClient(url);
  * const syncManager = createSyncManager(convex);
- * 
+ *
  * // Sync to Convex
  * await syncManager.syncToConvex(projectId, canvasState);
  * ```

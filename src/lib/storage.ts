@@ -97,7 +97,7 @@ class CanvasStorage {
     const sizeInBytes = new Blob([dataUrl]).size;
     if (sizeInBytes > this.MAX_IMAGE_SIZE) {
       throw new Error(
-        `Image size exceeds maximum allowed size of ${this.MAX_IMAGE_SIZE / 1024 / 1024}MB`,
+        `Image size exceeds maximum allowed size of ${this.MAX_IMAGE_SIZE / 1024 / 1024}MB`
       );
     }
 
@@ -128,7 +128,7 @@ class CanvasStorage {
   async saveVideo(
     videoDataUrl: string,
     duration: number,
-    id?: string,
+    id?: string
   ): Promise<string> {
     if (!this.db) await this.init();
 
@@ -136,7 +136,7 @@ class CanvasStorage {
     const sizeInBytes = new Blob([videoDataUrl]).size;
     if (sizeInBytes > this.MAX_IMAGE_SIZE) {
       throw new Error(
-        `Video size exceeds maximum allowed size of ${this.MAX_IMAGE_SIZE / 1024 / 1024}MB`,
+        `Video size exceeds maximum allowed size of ${this.MAX_IMAGE_SIZE / 1024 / 1024}MB`
       );
     }
 
@@ -180,7 +180,7 @@ class CanvasStorage {
   // Load canvas state from localStorage
   getCanvasState(): CanvasState | null {
     try {
-      const stored = localStorage.getItem(this.STATE_KEY);
+      const stored = window.localStorage.getItem(this.STATE_KEY);
       return stored ? JSON.parse(stored) : null;
     } catch (e) {
       console.error("Failed to load canvas state:", e);
@@ -220,14 +220,14 @@ class CanvasStorage {
     const usedImageIds = new Set(
       state.elements
         .filter((el) => el.type === "image" && el.imageId)
-        .map((el) => el.imageId!),
+        .map((el) => el.imageId!)
     );
 
     // Get all video IDs currently in use
     const usedVideoIds = new Set(
       state.elements
         .filter((el) => el.type === "video" && el.videoId)
-        .map((el) => el.videoId!),
+        .map((el) => el.videoId!)
     );
 
     // Delete unused images
@@ -296,6 +296,10 @@ class CanvasStorage {
 }
 
 export const canvasStorage = new CanvasStorage();
+
+// Re-export from storage service
+export { createStorageService } from "./storage/index";
+
 export type {
   CanvasElement,
   CanvasImage,

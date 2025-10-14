@@ -25,29 +25,28 @@ import {
 export function useUIState() {
   const [generationCount, setGenerationCount] = useAtom(generationCountAtom);
   const [hiddenVideoControlsIds, setHiddenVideoControlsIds] = useAtom(
-    hiddenVideoControlsIdsAtom,
+    hiddenVideoControlsIdsAtom
   );
   const [isImageToVideoDialogOpen, setIsImageToVideoDialogOpen] = useAtom(
-    isImageToVideoDialogOpenAtom,
+    isImageToVideoDialogOpenAtom
   );
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useAtom(
-    isSettingsDialogOpenAtom,
+    isSettingsDialogOpenAtom
   );
   const [selectedImageForVideo, setSelectedImageForVideo] = useAtom(
-    selectedImageForVideoAtom,
+    selectedImageForVideoAtom
   );
   const [showChat, setShowChat] = useAtom(showChatAtom);
   const [showGrid, setShowGrid] = useAtom(showGridAtom);
   const [showMinimap, setShowMinimap] = useAtom(showMinimapAtom);
   const [variationMode, setVariationMode] = useAtom(variationModeAtom);
   const [visibleIndicators, setVisibleIndicators] = useAtom(
-    visibleIndicatorsAtom,
+    visibleIndicatorsAtom
   );
-
 
   // Load grid setting from localStorage on mount
   useEffect(() => {
-    const savedShowGrid = localStorage.getItem("showGrid");
+    const savedShowGrid = window.localStorage.getItem("showGrid");
     if (savedShowGrid !== null) {
       setShowGrid(savedShowGrid === "true");
     }
@@ -55,7 +54,7 @@ export function useUIState() {
 
   // Load minimap setting from localStorage on mount
   useEffect(() => {
-    const savedShowMinimap = localStorage.getItem("showMinimap");
+    const savedShowMinimap = window.localStorage.getItem("showMinimap");
     if (savedShowMinimap !== null) {
       setShowMinimap(savedShowMinimap === "true");
     }
@@ -70,7 +69,6 @@ export function useUIState() {
   useEffect(() => {
     localStorage.setItem("showMinimap", showMinimap.toString());
   }, [showMinimap]);
-
 
   return {
     generationCount,
