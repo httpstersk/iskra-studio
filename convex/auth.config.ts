@@ -33,7 +33,7 @@ const authConfig = {
        * @remarks
        * Convex will automatically derive this from the Clerk JWT token's issuer.
        */
-      applicationID: "clerk",
+      applicationID: "convex",
 
       /**
        * Domain for JWT token verification
