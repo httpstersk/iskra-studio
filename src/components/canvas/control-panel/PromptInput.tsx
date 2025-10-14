@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Prompt input component with keyboard shortcuts and image thumbnails
+ *
+ * @module components/canvas/control-panel/PromptInput
+ */
+
 import { Textarea } from "@/components/ui/textarea";
 import {
   CONTROL_PANEL_STRINGS,
@@ -7,7 +13,7 @@ import {
 } from "@/constants/control-panel";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 import { checkOS } from "@/utils/os-utils";
-import type { KeyboardEvent } from "react";
+import React, { useCallback, type KeyboardEvent } from "react";
 
 /**
  * Props for the PromptInput component
@@ -23,8 +29,9 @@ interface PromptInputProps {
 
 /**
  * Prompt input textarea with optional selected image thumbnails
+ * Supports Cmd/Ctrl+Enter keyboard shortcut for generation
  */
-export function PromptInput({
+export const PromptInput = React.memo(function PromptInput({
   generationSettings,
   handleRun,
   images,
@@ -34,28 +41,55 @@ export function PromptInput({
 }: PromptInputProps) {
   const hasSelection = selectedIds.length > 0;
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-      e.preventDefault();
-      if (isGenerating) return;
+  /**
+   * Handles keyboard shortcuts for generation
+   */
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (isGenerating) return;
 
-      if (hasSelection || generationSettings.prompt.trim()) {
-        handleRun();
+        if (hasSelection || generationSettings.prompt.trim()) {
+          handleRun();
+        }
       }
-    }
-  };
+    },
+    [generationSettings.prompt, handleRun, hasSelection, isGenerating]
+  );
+
+  /**
+   * Handles variation prompt change
+   */
+  const handleVariationPromptChange = useCallback(
+    (value: string) => {
+      setGenerationSettings({
+        ...generationSettings,
+        variationPrompt: value,
+      });
+    },
+    [generationSettings, setGenerationSettings]
+  );
+
+  /**
+   * Handles main prompt change
+   */
+  const handlePromptChange = useCallback(
+    (value: string) => {
+      setGenerationSettings({
+        ...generationSettings,
+        prompt: value,
+      });
+    },
+    [generationSettings, setGenerationSettings]
+  );
 
   if (hasSelection) {
     return (
       <div className="relative">
         <Textarea
           className="w-full h-16 resize-none border-none p-2 pr-24"
-          onChange={(e) =>
-            setGenerationSettings({
-              ...generationSettings,
-              variationPrompt: e.target.value,
-            })
-          }
+          onChange={(e) => handleVariationPromptChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={CONTROL_PANEL_STRINGS.VARIATION_PLACEHOLDER}
           style={{ fontSize: "16px" }}
@@ -112,12 +146,7 @@ export function PromptInput({
     <div className="relative">
       <Textarea
         className="w-full h-20 resize-none border-none p-2"
-        onChange={(e) =>
-          setGenerationSettings({
-            ...generationSettings,
-            prompt: e.target.value,
-          })
-        }
+        onChange={(e) => handlePromptChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={getPromptPlaceholder(shortcut)}
         style={{ fontSize: "16px" }}
@@ -125,4 +154,4 @@ export function PromptInput({
       />
     </div>
   );
-}
+});
