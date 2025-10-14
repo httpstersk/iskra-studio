@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "isolatedModules": true,
+    "lib": ["ESNext"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ESNext",
+    "paths": {
+      "convex/_generated/*": ["./_generated/*"]
+    }
+  },
+  "exclude": ["node_modules", "_generated"],
+  "extends": "../tsconfig.json",
+  "include": ["./**/*"],
+}

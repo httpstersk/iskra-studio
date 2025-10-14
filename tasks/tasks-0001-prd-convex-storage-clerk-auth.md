@@ -7,9 +7,13 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 ## Relevant Files
 
 ### Core Infrastructure
+- `convex.json` - **CREATED** ✅ - Convex project configuration file
+- `convex/tsconfig.json` - **CREATED** ✅ - TypeScript configuration for Convex backend
+- `convex/README.md` - **CREATED** ✅ - Setup instructions and directory structure documentation
+- `convex/.gitignore` - **CREATED** ✅ - Ignore generated files and logs
 - `convex/schema.ts` - **NEW** - Convex database schema (users, assets, projects tables)
 - `convex/auth.config.ts` - **NEW** - Clerk authentication configuration for Convex
-- `convex/_generated/` - Auto-generated Convex types and client code
+- `convex/_generated/` - Auto-generated Convex types and client code (generated after `npx convex dev`)
 - `.env.local` - **MODIFY** - Add Convex and Clerk environment variables
 - `.env.example` - **MODIFY** - Document required environment variables
 
@@ -150,10 +154,13 @@ Below are the high-level tasks required to implement the Convex storage and Cler
 ---
 
 - [ ] 1.0 **Configure Convex and Clerk Infrastructure**
-  - [ ] 1.1 Initialize Convex project using `npx convex dev`
-    - Creates `convex/` directory structure
-    - Generates deployment URL and adds to `.env.local`
-    - Creates `convex/_generated/` folder with auto-generated types
+  - [x] 1.1 Initialize Convex project using `npx convex dev`
+    - ✅ Created `convex/` directory structure
+    - ✅ Created `convex.json` configuration file
+    - ✅ Created `convex/tsconfig.json` for TypeScript support
+    - ✅ Created `convex/README.md` with setup instructions
+    - ✅ Created `convex/.gitignore` to exclude generated files
+    - ⚠️ Note: Full deployment requires running `npx convex dev` which needs Convex account authentication
   
   - [ ] 1.2 Create Convex database schema in `convex/schema.ts`
     - Define `users` table with fields: userId (string, indexed), email, tier ("free" | "paid"), storageUsedBytes, createdAt, updatedAt

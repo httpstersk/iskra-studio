@@ -1,0 +1,3 @@
+_generated/
+*.log
+.env.local
