@@ -7,6 +7,7 @@ import {
 } from "@/constants/control-panel";
 import { cn } from "@/lib/utils";
 import { Redo, Undo } from "lucide-react";
+import React from "react";
 
 /**
  * Props for the ActionButtons component
@@ -21,7 +22,7 @@ interface ActionButtonsProps {
 /**
  * Undo/Redo action buttons component
  */
-export function ActionButtons({
+export const ActionButtons = React.memo(function ActionButtons({
   canRedo,
   canUndo,
   redo,
@@ -60,4 +61,4 @@ export function ActionButtons({
       </Button>
     </div>
   );
-}
+});

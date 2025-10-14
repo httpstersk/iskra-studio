@@ -14,21 +14,21 @@
 
 "use client";
 
-import React, { useMemo } from "react";
-import { Stage, Layer } from "react-konva";
-import type Konva from "konva";
-import { CanvasGrid } from "./CanvasGrid";
-import { SelectionBoxComponent } from "./SelectionBox";
-import { CanvasImage } from "./CanvasImage";
-import { CanvasVideo } from "./CanvasVideo";
-import { CANVAS_DIMENSIONS, ARIA_LABELS } from "@/constants/canvas";
+import { ARIA_LABELS, CANVAS_DIMENSIONS } from "@/constants/canvas";
+import type { Viewport } from "@/hooks/useCanvasState";
 import type {
+  GenerationSettings,
   PlacedImage,
   PlacedVideo,
   SelectionBox,
-  GenerationSettings,
 } from "@/types/canvas";
-import type { Viewport } from "@/hooks/useCanvasState";
+import type Konva from "konva";
+import React, { useMemo } from "react";
+import { Layer, Stage } from "react-konva";
+import { CanvasGrid } from "./CanvasGrid";
+import { CanvasImage } from "./CanvasImage";
+import { CanvasVideo } from "./CanvasVideo";
+import { SelectionBoxComponent } from "./SelectionBox";
 import { VariationGhostPlaceholders } from "./VariationGhostPlaceholders";
 
 /**
@@ -141,9 +141,7 @@ function getVisibleItems<
  */
 export function CanvasStageRenderer({
   canvasSize,
-  generationSettings,
-  isGenerating,
-  hiddenVideoControlsIds,
+  generationCount,
   images,
   interactions,
   isCanvasReady,
@@ -156,12 +154,10 @@ export function CanvasStageRenderer({
   setVideos,
   showGrid,
   stageRef,
+  variationMode,
   videos,
   viewport,
-  variationMode,
-  generationCount,
 }: CanvasStageRendererProps) {
-  // Memoize visible items calculation to avoid recalculating on every render
   const visibleImages = useMemo(
     () => getVisibleItems(images, viewport, canvasSize),
     [images, viewport, canvasSize]
@@ -171,7 +167,6 @@ export function CanvasStageRenderer({
     [videos, viewport, canvasSize]
   );
 
-  // Show variation ghost placeholders when a single image is selected and UI is in variation mode (image or video)
   const isVariationMode =
     selectedIds.length === 1 &&
     (variationMode === "image" || variationMode === "video");
@@ -179,7 +174,7 @@ export function CanvasStageRenderer({
     ? images.find((img) => img.id === selectedIds[0])
     : null;
 
-  const handleContextMenu = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleContextMenu = React.useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
     const stage = e.target.getStage();
     if (!stage) return;
     const point = stage.getPointerPosition();
@@ -216,9 +211,9 @@ export function CanvasStageRenderer({
     if (clickedImage && !selectedIds.includes(clickedImage.id)) {
       setSelectedIds([clickedImage.id]);
     }
-  };
+  }, [images, selectedIds, setSelectedIds, videos, viewport]);
 
-  const handleImageDragStart = (imageId: string) => {
+  const handleImageDragStart = React.useCallback((imageId: string) => {
     let currentSelectedIds = selectedIds;
     if (!selectedIds.includes(imageId)) {
       currentSelectedIds = [imageId];
@@ -231,15 +226,15 @@ export function CanvasStageRenderer({
       if (img) positions.set(id, { x: img.x, y: img.y });
     });
     interactions.setDragStartPositions(positions);
-  };
+  }, [images, interactions, selectedIds, setSelectedIds]);
 
-  const handleImageDragEnd = () => {
+  const handleImageDragEnd = React.useCallback(() => {
     interactions.setIsDraggingImage(false);
     saveToHistory();
     interactions.setDragStartPositions(new Map());
-  };
+  }, [interactions, saveToHistory]);
 
-  const handleVideoDragStart = (videoId: string) => {
+  const handleVideoDragStart = React.useCallback((videoId: string) => {
     let currentSelectedIds = selectedIds;
     if (!selectedIds.includes(videoId)) {
       currentSelectedIds = [videoId];
@@ -253,9 +248,9 @@ export function CanvasStageRenderer({
       if (vid) positions.set(id, { x: vid.x, y: vid.y });
     });
     interactions.setDragStartPositions(positions);
-  };
+  }, [interactions, selectedIds, setHiddenVideoControlsIds, setSelectedIds, videos]);
 
-  const handleVideoDragEnd = (videoId: string) => {
+  const handleVideoDragEnd = React.useCallback((videoId: string) => {
     interactions.setIsDraggingImage(false);
     setHiddenVideoControlsIds((prev) => {
       const newSet = new Set(prev);
@@ -264,7 +259,7 @@ export function CanvasStageRenderer({
     });
     saveToHistory();
     interactions.setDragStartPositions(new Map());
-  };
+  }, [interactions, saveToHistory, setHiddenVideoControlsIds]);
 
   if (!isCanvasReady) return null;
 
@@ -276,7 +271,7 @@ export function CanvasStageRenderer({
         height={canvasSize.height}
         onContextMenu={handleContextMenu}
         onMouseDown={interactions.handleMouseDown}
-        onMouseLeave={() => {}}
+        onMouseLeave={() => { }}
         onMouseMove={interactions.handleMouseMove}
         onMouseUp={interactions.handleMouseUp}
         onTouchEnd={interactions.handleTouchEnd}

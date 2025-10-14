@@ -1,19 +1,15 @@
+import { useVideoDragWithSnap } from "@/hooks/useVideoDragWithSnap";
+import { useVideoElement } from "@/hooks/useVideoElement";
+import { useVideoKeyboardShortcuts } from "@/hooks/useVideoKeyboardShortcuts";
+import { useVideoPlayback } from "@/hooks/useVideoPlayback";
 import type { PlacedVideo } from "@/types/canvas";
-import { throttleRAF } from "@/utils/performance";
-import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
 import Konva from "konva";
 import React, {
   useCallback,
-  useEffect,
-  useMemo,
   useRef,
-  useState,
+  useState
 } from "react";
 import { Image as KonvaImage } from "react-konva";
-import { useVideoElement } from "@/hooks/useVideoElement";
-import { useVideoPlayback } from "@/hooks/useVideoPlayback";
-import { useVideoKeyboardShortcuts } from "@/hooks/useVideoKeyboardShortcuts";
-import { useVideoDragWithSnap } from "@/hooks/useVideoDragWithSnap";
 
 /**
  * Canvas video element rendered on the Konva stage.
@@ -115,7 +111,6 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
     toggleMute: () => onChange({ muted: !video.muted }),
   });
 
-  // Snap-to-grid drag handler
   const { onDragMove, reset } = useVideoDragWithSnap(
     {
       dragStartPositions,
@@ -126,72 +121,86 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
     onChange
   );
 
-  return (
-    <>
-      <KonvaImage
-        ref={shapeRef}
-        image={videoElement || undefined}
-        x={video.x}
-        y={video.y}
-        width={video.width}
-        height={video.height}
-        rotation={video.rotation}
-        draggable={isDraggable}
-        perfectDrawEnabled={false}
-        onClick={(e) => {
-          // Prevent event propagation issues
-          e.cancelBubble = true;
-          onSelect(e);
-          // Toggle play/pause on click if already selected
-          // Use setTimeout to ensure selection state is updated first
-          if (isSelected) {
-            setTimeout(() => {
-              onChange({ isPlaying: !video.isPlaying });
-            }, 0);
-          }
-        }}
-        onTap={onSelect}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onMouseDown={(e) => {
-          // Only allow dragging with left mouse button (0)
-          // Middle mouse (1) and right mouse (2) should not drag videos
-          const isLeftButton = e.evt.button === 0;
-          setIsDraggable(isLeftButton);
+  /**
+   * Handles video click - selects video and toggles play/pause if already selected
+   * Note: setTimeout is used to ensure selection state updates before toggling playback
+   */
+  const handleClick = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
+      e.cancelBubble = true;
+      onSelect(e);
+      if (isSelected) {
+        setTimeout(() => {
+          onChange({ isPlaying: !video.isPlaying });
+        }, 0);
+      }
+    },
+    [isSelected, onChange, onSelect, video.isPlaying]
+  );
 
-          // For middle mouse button, don't stop propagation
-          // Let it bubble up to the stage for canvas panning
-          if (e.evt.button === 1) {
-            return;
-          }
-        }}
-        onMouseUp={() => {
-          // Re-enable dragging after mouse up
-          setIsDraggable(true);
-        }}
-        onDragStart={(e) => {
-          // Stop propagation to prevent stage from being dragged
-          e.cancelBubble = true;
-          // Auto-select on drag if not already selected
-          if (!isSelected) {
-            onSelect(e);
-          }
-          // Hide video controls during drag
-          if (onResizeStart) {
-            onResizeStart();
-          }
-          onDragStart();
-        }}
-        onDragMove={onDragMove}
-        onDragEnd={() => {
-          // Reset snap tracking on drag end
-          reset();
-          onDragEnd();
-        }}
-        opacity={video.isGenerating ? 0.9 : 1}
-        stroke={isSelected ? "#3b82f6" : isHovered ? "#3b82f6" : "transparent"}
-        strokeWidth={isSelected || isHovered ? 2 : 0}
-      />
-    </>
+  const handleDragStart = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      e.cancelBubble = true;
+      if (!isSelected) {
+        onSelect(e as unknown as Konva.KonvaEventObject<MouseEvent>);
+      }
+      if (onResizeStart) {
+        onResizeStart();
+      }
+      onDragStart();
+    },
+    [isSelected, onDragStart, onResizeStart, onSelect]
+  );
+
+  const handleDragEnd = useCallback(() => {
+    reset();
+    onDragEnd();
+  }, [onDragEnd, reset]);
+
+  const handleMouseDown = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
+    const isLeftButton = e.evt.button === 0;
+    setIsDraggable(isLeftButton);
+
+    if (e.evt.button === 1) {
+      return;
+    }
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDraggable(true);
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
+
+  return (
+    <KonvaImage
+      draggable={isDraggable}
+      height={video.height}
+      image={videoElement || undefined}
+      onClick={handleClick}
+      onDragEnd={handleDragEnd}
+      onDragMove={onDragMove}
+      onDragStart={handleDragStart}
+      onMouseDown={handleMouseDown}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onMouseUp={handleMouseUp}
+      onTap={onSelect}
+      opacity={video.isGenerating ? 0.9 : 1}
+      perfectDrawEnabled={false}
+      ref={shapeRef}
+      rotation={video.rotation}
+      stroke={isSelected ? "#3b82f6" : isHovered ? "#3b82f6" : "transparent"}
+      strokeWidth={isSelected || isHovered ? 2 : 0}
+      width={video.width}
+      x={video.x}
+      y={video.y}
+    />
   );
 };

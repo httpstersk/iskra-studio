@@ -283,38 +283,35 @@ export default function CanvasPage() {
    * If one image is selected with no prompt, generates variations based on mode and count
    * Otherwise, performs standard text-to-image or image-to-image generation
    */
-  const handleRun = async () => {
-    // Check if we're in variation mode: one image selected, no prompt
+  const handleRun = useCallback(async () => {
     const isVariationMode =
       canvasState.selectedIds.length === 1 &&
       (uiState.variationMode === "image" || uiState.variationMode === "video");
 
     if (isVariationMode) {
-      // Generate variations based on mode and count
       await handleVariationGeneration({
+        falClient,
         images: canvasState.images,
         selectedIds: canvasState.selectedIds,
-        viewport: canvasState.viewport,
-        falClient,
-        setImages: canvasState.setImages,
-        setVideos: canvasState.setVideos,
-        setIsGenerating: generationState.setIsGenerating,
         setActiveGenerations: generationState.setActiveGenerations,
         setActiveVideoGenerations: generationState.setActiveVideoGenerations,
+        setImages: canvasState.setImages,
+        setIsGenerating: generationState.setIsGenerating,
+        setVideos: canvasState.setVideos,
         toast,
-        variationPrompt: generationState.generationSettings.variationPrompt,
-        variationMode: uiState.variationMode,
         variationCount: uiState.generationCount,
+        variationMode: uiState.variationMode,
+        variationPrompt: generationState.generationSettings.variationPrompt,
         videoSettings: {
+          aspectRatio: "auto",
+          duration: generationState.videoDuration,
           modelId: generationState.useSoraPro ? "sora-2-pro" : "sora-2",
           prompt: generationState.generationSettings.variationPrompt || "",
           resolution: generationState.videoResolution,
-          aspectRatio: "auto",
-          duration: generationState.videoDuration,
         },
+        viewport: canvasState.viewport,
       });
     } else {
-      // Standard generation flow
       await handleRunHandler({
         canvasSize: canvasState.canvasSize,
         falClient,
@@ -330,7 +327,27 @@ export default function CanvasPage() {
         viewport: canvasState.viewport,
       });
     }
-  };
+  }, [
+    canvasState.canvasSize,
+    canvasState.images,
+    canvasState.selectedIds,
+    canvasState.setImages,
+    canvasState.setSelectedIds,
+    canvasState.setVideos,
+    canvasState.viewport,
+    falClient,
+    generateTextToImage,
+    generationState.generationSettings,
+    generationState.setActiveGenerations,
+    generationState.setActiveVideoGenerations,
+    generationState.setIsGenerating,
+    generationState.useSoraPro,
+    generationState.videoDuration,
+    generationState.videoResolution,
+    toast,
+    uiState.generationCount,
+    uiState.variationMode,
+  ]);
 
   /**
    * Handles sending an element backward in the layer stack
@@ -372,129 +389,254 @@ export default function CanvasPage() {
   /**
    * Opens dialog for converting an image to video
    */
-  const handleConvertToVideo = (imageId: string) => {
-    const image = canvasState.images.find((img) => img.id === imageId);
-    if (!image) return;
-    uiState.setIsImageToVideoDialogOpen(true);
-    uiState.setSelectedImageForVideo(imageId);
-  };
+  const handleConvertToVideo = useCallback(
+    (imageId: string) => {
+      const image = canvasState.images.find((img) => img.id === imageId);
+      if (!image) return;
+      uiState.setIsImageToVideoDialogOpen(true);
+      uiState.setSelectedImageForVideo(imageId);
+    },
+    [canvasState.images, uiState]
+  );
 
   /**
    * Handles completion of video generation
    */
-  const handleVideoGenerationComplete = async (
-    videoId: string,
-    videoUrl: string,
-    duration: number
-  ) => {
-    try {
-      const generation = generationState.activeVideoGenerations.get(videoId);
+  const handleVideoGenerationComplete = useCallback(
+    async (videoId: string, videoUrl: string, duration: number) => {
+      try {
+        const generation = generationState.activeVideoGenerations.get(videoId);
 
-      if (generation?.toastId) {
-        dismissToast(generation.toastId);
-      }
+        if (generation?.toastId) {
+          dismissToast(generation.toastId);
+        }
 
-      // Check if this is a variation - if so, update the placeholder
-      if (generation?.isVariation) {
-        canvasState.setVideos((prev) => {
-          return prev.map((video) =>
-            video.id === videoId
-              ? {
+        // Check if this is a variation - if so, update the placeholder
+        if (generation?.isVariation) {
+          canvasState.setVideos((prev) => {
+            return prev.map((video) =>
+              video.id === videoId
+                ? {
                   ...video,
                   src: videoUrl,
                   duration,
                   isLoading: false,
                 }
-              : video
-          );
-        });
+                : video
+            );
+          });
 
-        // Remove from active generations
+          // Remove from active generations
+          generationState.setActiveVideoGenerations((prev) => {
+            const newMap = new Map(prev);
+            newMap.delete(videoId);
+            return newMap;
+          });
+
+          // Show success toast only after all variations complete
+          if (generationState.activeVideoGenerations.size === 1) {
+            // This is the last one
+            historyState.saveToHistory();
+            toast({
+              title: "Video variations complete",
+              description: "All 4 cinematic videos have been generated",
+            });
+          }
+
+          generationState.setIsConvertingToVideo(false);
+          return;
+        }
+
+        // Standard video generation (not variation)
+        const { newVideo } = handleVideoCompletion(
+          videoId,
+          videoUrl,
+          duration,
+          generation || null,
+          canvasState.images,
+          uiState.selectedImageForVideo
+        );
+
+        if (newVideo) {
+          canvasState.setVideos((prev) => [...prev, newVideo]);
+          historyState.saveToHistory();
+          toast({
+            title: CANVAS_STRINGS.SUCCESS.VIDEO_CREATED,
+          });
+        }
+
         generationState.setActiveVideoGenerations((prev) => {
           const newMap = new Map(prev);
           newMap.delete(videoId);
           return newMap;
         });
-
-        // Show success toast only after all variations complete
-        if (generationState.activeVideoGenerations.size === 1) {
-          // This is the last one
-          historyState.saveToHistory();
-          toast({
-            title: "Video variations complete",
-            description: "All 4 cinematic videos have been generated",
-          });
-        }
-
         generationState.setIsConvertingToVideo(false);
-        return;
-      }
-
-      // Standard video generation (not variation)
-      const { newVideo } = handleVideoCompletion(
-        videoId,
-        videoUrl,
-        duration,
-        generation || null,
-        canvasState.images,
-        uiState.selectedImageForVideo
-      );
-
-      if (newVideo) {
-        canvasState.setVideos((prev) => [...prev, newVideo]);
-        historyState.saveToHistory();
+        uiState.setSelectedImageForVideo(null);
+      } catch (error) {
+        console.error("Error completing video generation:", error);
         toast({
-          title: CANVAS_STRINGS.SUCCESS.VIDEO_CREATED,
+          description:
+            error instanceof Error
+              ? error.message
+              : CANVAS_STRINGS.ERRORS.VIDEO_FAILED,
+          title: CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
+          variant: "destructive",
         });
       }
+    },
+    [
+      canvasState.setVideos,
+      canvasState.images,
+      generationState.activeVideoGenerations,
+      generationState.setActiveVideoGenerations,
+      generationState.setIsConvertingToVideo,
+      historyState.saveToHistory,
+      toast,
+      uiState.selectedImageForVideo,
+      uiState.setSelectedImageForVideo,
+    ]
+  );
 
+  /**
+   * Handles video generation error
+   */
+  const handleVideoGenerationError = useCallback(
+    (videoId: string, error: string) => {
+      console.error("Video generation error:", error);
+      toast({
+        description: error,
+        title: CANVAS_STRINGS.ERRORS.VIDEO_GENERATION_FAILED,
+        variant: "destructive",
+      });
       generationState.setActiveVideoGenerations((prev) => {
         const newMap = new Map(prev);
         newMap.delete(videoId);
         return newMap;
       });
-      generationState.setIsConvertingToVideo(false);
-      uiState.setSelectedImageForVideo(null);
-    } catch (error) {
-      console.error("Error completing video generation:", error);
-      toast({
-        description:
-          error instanceof Error
-            ? error.message
-            : CANVAS_STRINGS.ERRORS.VIDEO_FAILED,
-        title: CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
-        variant: "destructive",
-      });
-    }
-  };
-
-  /**
-   * Handles video generation error
-   */
-  const handleVideoGenerationError = (videoId: string, error: string) => {
-    console.error("Video generation error:", error);
-    toast({
-      description: error,
-      title: CANVAS_STRINGS.ERRORS.VIDEO_GENERATION_FAILED,
-      variant: "destructive",
-    });
-    generationState.setActiveVideoGenerations((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(videoId);
-      return newMap;
-    });
-  };
+    },
+    [generationState.setActiveVideoGenerations, toast]
+  );
 
   /**
    * Handles video generation progress updates
    */
-  const handleVideoGenerationProgress = (
-    videoId: string,
-    progress: number,
-    status: string
-  ) => {
-    console.log(`Video generation progress: ${progress}% - ${status}`);
-  };
+  const handleVideoGenerationProgress = useCallback(
+    (videoId: string, progress: number, status: string) => {
+      console.log(`Video generation progress: ${progress}% - ${status}`);
+    },
+    []
+  );
+
+  // ========================================
+  // Streaming Generation Handlers
+  // ========================================
+
+  /**
+   * Handles completion of streaming image generation
+   */
+  const handleStreamingImageComplete = useCallback(
+    (id: string, finalUrl: string) => {
+      const isVariation = id.startsWith("variation-");
+
+      let variationBatchTimestamp: string | null = null;
+      if (isVariation) {
+        const match = id.match(/^variation-(\d+)-\d+$/);
+        if (match) {
+          variationBatchTimestamp = match[1];
+        }
+      }
+
+      canvasState.setImages((prev) =>
+        prev.map((img) =>
+          img.id === id
+            ? { ...img, isLoading: false, opacity: 1.0, src: finalUrl }
+            : img
+        )
+      );
+
+      generationState.setActiveGenerations((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(id);
+
+        if (variationBatchTimestamp && newMap.size > 0) {
+          const hasMoreFromBatch = Array.from(newMap.keys()).some((key) =>
+            key.startsWith(`variation-${variationBatchTimestamp}-`)
+          );
+
+          if (!hasMoreFromBatch) {
+            canvasState.setSelectedIds([]);
+          }
+        }
+
+        if (newMap.size === 0) {
+          generationState.setIsGenerating(false);
+          if (isVariation) {
+            canvasState.setSelectedIds([]);
+          }
+        }
+
+        return newMap;
+      });
+
+      setTimeout(() => saveToStorage(), ANIMATION.SAVE_DELAY);
+    },
+    [
+      canvasState.setImages,
+      canvasState.setSelectedIds,
+      generationState.setActiveGenerations,
+      generationState.setIsGenerating,
+      saveToStorage,
+    ]
+  );
+
+  /**
+   * Handles error during streaming image generation
+   */
+  const handleStreamingImageError = useCallback(
+    (id: string, error: string) => {
+      console.error(`Generation error for ${id}:`, error);
+
+      canvasState.setImages((prev) => prev.filter((img) => img.id !== id));
+
+      generationState.setActiveGenerations((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(id);
+
+        if (newMap.size === 0) {
+          generationState.setIsGenerating(false);
+        }
+
+        return newMap;
+      });
+
+      const isVariation = id.startsWith("variation-");
+      toast({
+        description: isVariation ? "One variation failed to generate" : error,
+        title: isVariation
+          ? "Variation failed"
+          : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
+        variant: "destructive",
+      });
+    },
+    [
+      canvasState.setImages,
+      generationState.setActiveGenerations,
+      generationState.setIsGenerating,
+      toast,
+    ]
+  );
+
+  /**
+   * Handles streaming update for image generation
+   */
+  const handleStreamingImageUpdate = useCallback(
+    (id: string, url: string) => {
+      canvasState.setImages((prev) =>
+        prev.map((img) => (img.id === id ? { ...img, src: url } : img))
+      );
+    },
+    [canvasState.setImages]
+  );
 
   // ========================================
   // Keyboard Shortcuts
@@ -542,97 +684,9 @@ export default function CanvasPage() {
             generation={generation}
             imageId={imageId}
             key={imageId}
-            onComplete={(id, finalUrl) => {
-              // Check if this is a variation by looking at the ID pattern
-              const isVariation = id.startsWith("variation-");
-
-              // Extract timestamp from variation ID to find all variations in the same batch
-              let variationBatchTimestamp: string | null = null;
-              if (isVariation) {
-                const match = id.match(/^variation-(\d+)-\d+$/);
-                if (match) {
-                  variationBatchTimestamp = match[1];
-                }
-              }
-
-              canvasState.setImages((prev) =>
-                prev.map((img) =>
-                  img.id === id
-                    ? { ...img, src: finalUrl, isLoading: false, opacity: 1.0 }
-                    : img
-                )
-              );
-
-              generationState.setActiveGenerations((prev) => {
-                const newMap = new Map(prev);
-                newMap.delete(id);
-
-                // Check if this was the last variation in a batch to complete
-                if (variationBatchTimestamp && newMap.size > 0) {
-                  // Check if there are any more variations from the same batch still generating
-                  const hasMoreFromBatch = Array.from(newMap.keys()).some(
-                    (key) =>
-                      key.startsWith(`variation-${variationBatchTimestamp}-`)
-                  );
-
-                  // If no more variations from this batch, deselect the source image
-                  if (!hasMoreFromBatch) {
-                    canvasState.setSelectedIds([]);
-                  }
-                }
-
-                // Only set isGenerating to false if this was the last active generation
-                if (newMap.size === 0) {
-                  generationState.setIsGenerating(false);
-                  // Deselect all images when all generations are complete
-                  if (isVariation) {
-                    canvasState.setSelectedIds([]);
-                  }
-                }
-
-                return newMap;
-              });
-
-              setTimeout(() => saveToStorage(), ANIMATION.SAVE_DELAY);
-            }}
-            onError={(id, error) => {
-              console.error(`Generation error for ${id}:`, error);
-
-              // Remove the failed image from canvas
-              canvasState.setImages((prev) =>
-                prev.filter((img) => img.id !== id)
-              );
-
-              // Remove from active generations
-              generationState.setActiveGenerations((prev) => {
-                const newMap = new Map(prev);
-                newMap.delete(id);
-
-                // Only set isGenerating to false if this was the last active generation
-                if (newMap.size === 0) {
-                  generationState.setIsGenerating(false);
-                }
-
-                return newMap;
-              });
-
-              // Show a less intrusive error for individual variations
-              const isVariation = id.startsWith("variation-");
-              toast({
-                description: isVariation
-                  ? "One variation failed to generate"
-                  : error.toString(),
-                title: isVariation
-                  ? "Variation failed"
-                  : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
-                variant: "destructive",
-              });
-            }}
-            onStreamingUpdate={(id, url) => {
-              canvasState.setImages((prev) =>
-                prev.map((img) => (img.id === id ? { ...img, src: url } : img))
-              );
-            }}
+            onComplete={handleStreamingImageComplete}
+            onError={handleStreamingImageError}
+            onStreamingUpdate={handleStreamingImageUpdate}
           />
         )
       )}
