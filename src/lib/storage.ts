@@ -41,6 +41,10 @@ interface CanvasState {
     y: number;
     scale: number;
   };
+  // Sync metadata for offline support
+  lastSyncedAt?: number; // Timestamp of last successful sync to Convex
+  isDirty?: boolean; // True if local changes haven't been synced
+  syncStatus?: "synced" | "pending" | "error"; // Current sync state
 }
 
 interface CanvasVideo {

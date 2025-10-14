@@ -63,8 +63,12 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `src/components/projects/project-panel.tsx` - **CREATED** ✅ - Collapsible sidebar with Cmd/Ctrl+P shortcut
 - `src/components/quota/storage-indicator.tsx` - **CREATED** ✅ - Progress bar showing storage usage with color coding and tooltips (154 lines)
 - `src/components/quota/quota-warning-dialog.tsx` - **CREATED** ✅ - Warning dialog when quota exceeded or approaching limit (196 lines)
-- `src/components/canvas/auto-save-indicator.tsx` - **NEW** - Saving/saved status indicator
-- `src/components/canvas/offline-indicator.tsx` - **NEW** - Network status indicator
+- `src/components/canvas/auto-save-indicator.tsx` - **CREATED** ✅ - Auto-save status indicator with spinner, check, and error states (247 lines)
+- `src/components/canvas/offline-indicator.tsx` - **CREATED** ✅ - Offline banner with CloudOff icon and queue count (117 lines)
+- `src/components/network-status-initializer.tsx` - **CREATED** ✅ - App-level network monitoring initializer (58 lines)
+- `src/hooks/useNetworkStatus.ts` - **CREATED** ✅ - Network status hook with callbacks and notifications (116 lines)
+- `src/store/ui-atoms.ts` - **MODIFIED** ✅ - Added isOnlineAtom for global network status
+- `src/app/core-providers.tsx` - **MODIFIED** ✅ - Integrated NetworkStatusInitializer for app-wide monitoring
 - `src/app/page.tsx` - **MODIFY** - Integrate auth, projects, quotas into main canvas
 
 ### Rate Limiting
@@ -76,9 +80,10 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `src/app/api/fal/route.ts` - **MODIFIED** ✅ - Per-user rate limiting with Clerk userId
 
 ### IndexedDB Cache Layer
-- `src/lib/storage.ts` - **MODIFY** - Add sync metadata (lastSyncedAt, isDirty)
-- `src/lib/sync/sync-manager.ts` - **NEW** - Sync logic between IndexedDB and Convex
-- `src/lib/sync/conflict-resolver.ts` - **NEW** - Handle sync conflicts
+- `src/lib/storage.ts` - **MODIFIED** ✅ - Added sync metadata (lastSyncedAt, isDirty, syncStatus) to CanvasState interface
+- `src/lib/sync/sync-manager.ts` - **CREATED** ✅ - Sync manager with queue, retry logic, and online/offline detection (459 lines)
+- `src/lib/sync/conflict-resolver.ts` - **CREATED** ✅ - Conflict resolution with last-write-wins strategy (244 lines)
+- `src/hooks/useStorage.ts` - **MODIFIED** ✅ - Integrated sync manager for bidirectional IndexedDB-Convex sync
 
 ### Type Definitions
 - `src/types/auth.ts` - **CREATED** ✅ - User, UserTier, StorageQuota types (78 lines)
@@ -611,51 +616,57 @@ Below are the high-level tasks required to implement the Convex storage and Cler
     - ✅ `getOrCreateUser` mutation creates user record on first sign-in with "free" tier
     - ✅ All mutations require Clerk authentication
 
-- [ ] 6.0 **Implement IndexedDB Caching & Offline Support**
-  - [ ] 6.1 Update `src/lib/storage.ts` to add sync metadata
-    - Add `lastSyncedAt` timestamp field to `CanvasState` interface
-    - Add `isDirty` boolean flag to track unsaved changes
-    - Add `syncStatus` field: "synced" | "pending" | "error"
-    - Modify save/load methods to include new fields
+- [x] 6.0 **Implement IndexedDB Caching & Offline Support**
+  - [x] 6.1 Update `src/lib/storage.ts` to add sync metadata
+    - ✅ Added `lastSyncedAt` timestamp field to `CanvasState` interface
+    - ✅ Added `isDirty` boolean flag to track unsaved changes
+    - ✅ Added `syncStatus` field: "synced" | "pending" | "error"
+    - ✅ Existing save/load methods automatically handle new optional fields via JSON serialization
   
-  - [ ] 6.2 Create sync manager in `src/lib/sync/sync-manager.ts`
-    - `syncToConvex()`: Uploads dirty canvas state to Convex, updates lastSyncedAt
-    - `syncFromConvex()`: Downloads latest canvas state from Convex, updates IndexedDB cache
-    - `queueChange()`: Adds change to sync queue when offline
-    - `flushQueue()`: Processes queued changes on reconnect
-    - Detects online/offline using `navigator.onLine` and online/offline events
+  - [x] 6.2 Create sync manager in `src/lib/sync/sync-manager.ts`
+    - ✅ `syncToConvex()`: Uploads dirty canvas state to Convex, updates lastSyncedAt
+    - ✅ `syncFromConvex()`: Downloads latest canvas state from Convex, updates IndexedDB cache
+    - ✅ `queueChange()`: Adds change to sync queue when offline
+    - ✅ `flushQueue()`: Processes queued changes on reconnect with retry logic
+    - ✅ Detects online/offline using `navigator.onLine` and online/offline events
+    - ✅ Automatic network listener setup for queue flushing on reconnect
   
-  - [ ] 6.3 Create conflict resolver in `src/lib/sync/conflict-resolver.ts`
-    - `resolveConflict()`: Handles case when local and remote state diverge
-    - Strategy: "last write wins" based on timestamps
-    - Option to show merge dialog in future (defer for v1)
-    - Returns resolved state
+  - [x] 6.3 Create conflict resolver in `src/lib/sync/conflict-resolver.ts`
+    - ✅ `resolveConflict()`: Handles case when local and remote state diverge
+    - ✅ Strategy: "last write wins" based on lastModified timestamps
+    - ✅ Helper functions: `hasConflict()`, `detectChangedElements()`, `resolveConflictWithMetadata()`
+    - ✅ Returns resolved state with sync metadata
   
-  - [ ] 6.4 Update `src/hooks/useStorage.ts` to integrate sync manager
-    - Call `syncFromConvex()` on app load to fetch latest from Convex
-    - Call `syncToConvex()` after auto-save
-    - Set `isDirty` flag when canvas state changes
-    - Clear `isDirty` flag after successful sync
-    - Handle sync errors with retry logic
+  - [x] 6.4 Update `src/hooks/useStorage.ts` to integrate sync manager
+    - ✅ Created sync manager instance using Convex client
+    - ✅ Calls `syncFromConvex()` on app load when project is loaded
+    - ✅ Calls `syncToConvex()` after saving to IndexedDB
+    - ✅ Sets `isDirty` and `syncStatus` flags when canvas state changes
+    - ✅ Clears `isDirty` flag after successful sync
+    - ✅ Handles sync errors with user-friendly toast notifications
   
-  - [ ] 6.5 Create offline indicator component in `src/components/canvas/offline-indicator.tsx`
-    - Banner at top of canvas: "You're offline. Changes will sync when reconnected."
-    - Icon: Cloud with slash
-    - Auto-hide when back online
-    - Use `navigator.onLine` and online/offline events
+  - [x] 6.5 Create offline indicator component in `src/components/canvas/offline-indicator.tsx`
+    - ✅ Banner at top of canvas: "You're offline. Changes will sync when reconnected."
+    - ✅ Icon: CloudOff from lucide-react
+    - ✅ Auto-hide when back online
+    - ✅ Uses `navigator.onLine` and online/offline events
+    - ✅ Optional queue count display
   
-  - [ ] 6.6 Create auto-save indicator component in `src/components/canvas/auto-save-indicator.tsx`
-    - Small indicator in corner: "Saving...", "Saved at 3:45 PM", or "Failed to save"
-    - Spinner animation when saving
-    - Check mark icon when saved
-    - Error icon with retry button on failure
-    - Hide after 3 seconds of success
+  - [x] 6.6 Create auto-save indicator component in `src/components/canvas/auto-save-indicator.tsx`
+    - ✅ Small indicator in corner: "Saving...", "Saved at [time]", or "Failed to save"
+    - ✅ Spinner animation when saving (Loader2 component)
+    - ✅ Check mark icon when saved with relative timestamp
+    - ✅ Error icon with retry button on failure
+    - ✅ Auto-hide after 3 seconds of success
+    - ✅ Includes useAutoSaveIndicator hook for state management
   
-  - [ ] 6.7 Add network status listener in app initialization
-    - Listen to `window.addEventListener('online')` and `window.addEventListener('offline')`
-    - Update Jotai atom: `isOnlineAtom`
-    - Trigger sync when transitioning from offline to online
-    - Show toast notification on status change
+  - [x] 6.7 Add network status listener in app initialization
+    - ✅ Created `useNetworkStatus` hook with online/offline event listeners
+    - ✅ Created `NetworkStatusInitializer` component for app-level initialization
+    - ✅ Added `isOnlineAtom` to Jotai store
+    - ✅ Integrated in CoreProviders for app-wide monitoring
+    - ✅ Optional toast notifications on status change
+    - ✅ Callbacks for onOnline and onOffline events
 
 - [ ] 7.0 **End-to-End Integration & Testing**
   - [ ] 7.1 Integrate authentication into main canvas page (`src/app/page.tsx`)

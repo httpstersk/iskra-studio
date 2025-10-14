@@ -1,4 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useConvex } from "convex/react";
+import { useAtomValue } from "jotai";
 import { canvasStorage, type CanvasState } from "@/lib/storage";
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 import type { Viewport } from "./useCanvasState";
@@ -8,6 +10,9 @@ import {
 } from "@/utils/canvas-utils";
 import { snapImagesToGrid } from "@/utils/snap-utils";
 import { useToast } from "@/hooks/use-toast";
+import { createSyncManager } from "@/lib/sync/sync-manager";
+import { currentProjectAtom } from "@/store/project-atoms";
+import type { Id } from "../../convex/_generated/dataModel";
 
 export function useStorage(
   images: PlacedImage[],
@@ -21,6 +26,14 @@ export function useStorage(
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const convexClient = useConvex();
+  const currentProject = useAtomValue(currentProjectAtom);
+  
+  // Create sync manager instance
+  const syncManager = useMemo(
+    () => createSyncManager(convexClient),
+    [convexClient]
+  );
 
   const saveToStorage = useCallback(async () => {
     try {
@@ -34,6 +47,9 @@ export function useStorage(
         backgroundColor: "#ffffff",
         lastModified: Date.now(),
         viewport: viewport,
+        projectId: currentProject?._id as string | undefined,
+        isDirty: true, // Mark as dirty until synced
+        syncStatus: "pending",
       };
       canvasStorage.saveCanvasState(canvasState);
 
@@ -62,6 +78,27 @@ export function useStorage(
       }
 
       await canvasStorage.cleanupOldData();
+      
+      // Sync to Convex if project is loaded
+      if (currentProject?._id) {
+        const syncResult = await syncManager.syncToConvex(
+          currentProject._id as Id<"projects">,
+          canvasState
+        );
+        
+        if (!syncResult.success) {
+          console.warn("Sync to Convex failed:", syncResult.error);
+          // Don't show error toast for offline scenarios - offline indicator will handle it
+          if (!syncResult.error?.includes("Offline")) {
+            toast({
+              title: "Sync failed",
+              description: "Your changes are saved locally but couldn't sync to cloud",
+              variant: "destructive",
+            });
+          }
+        }
+      }
+      
       setTimeout(() => setIsSaving(false), 300);
     } catch (error) {
       console.error("Failed to save to storage:", error);
@@ -71,6 +108,21 @@ export function useStorage(
 
   const loadFromStorage = useCallback(async () => {
     try {
+      // If project is loaded, sync from Convex first
+      if (currentProject?._id) {
+        const syncResult = await syncManager.syncFromConvex(
+          currentProject._id as Id<"projects">
+        );
+        
+        if (!syncResult.success) {
+          console.warn("Failed to sync from Convex:", syncResult.error);
+          toast({
+            title: "Sync warning",
+            description: "Loading local version, couldn't fetch latest from cloud",
+          });
+        }
+      }
+      
       const canvasState = canvasStorage.getCanvasState();
       if (!canvasState) {
         setIsStorageLoaded(true);
@@ -138,7 +190,7 @@ export function useStorage(
     } finally {
       setIsStorageLoaded(true);
     }
-  }, [toast, setImages, setVideos, setViewport]);
+  }, [toast, setImages, setVideos, setViewport, currentProject, syncManager]);
 
   // Load from storage on mount
   useEffect(() => {
@@ -155,7 +207,7 @@ export function useStorage(
     }, 1000);
 
     return () => clearTimeout(timeoutId);
-  }, [images, viewport, isStorageLoaded, saveToStorage, activeGenerationsSize]);
+  }, [images, videos, viewport, isStorageLoaded, saveToStorage, activeGenerationsSize]);
 
   return {
     isStorageLoaded,

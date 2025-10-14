@@ -41,3 +41,15 @@ export const variationModeAtom = atom<"image" | "video">("image");
  * For videos: always 4
  */
 export const generationCountAtom = atom<number>(4);
+
+/**
+ * Network status atom - tracks online/offline state
+ * 
+ * @remarks
+ * - Initialized with navigator.onLine value
+ * - Updated by online/offline event listeners
+ * - Used by sync manager to queue changes when offline
+ */
+export const isOnlineAtom = atom<boolean>(
+  typeof window !== "undefined" ? navigator.onLine : true
+);
