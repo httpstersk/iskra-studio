@@ -68,7 +68,7 @@ const analyzeImageRequestSchema = z.object({
       (value) => value.startsWith("https://") || value.startsWith("http://"),
       {
         message: "Image URL must use http or https",
-      },
+      }
     ),
 });
 
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -88,7 +88,7 @@ export async function POST(req: Request) {
     if (!imageUrl) {
       return NextResponse.json(
         { error: "Image URL is required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -96,12 +96,12 @@ export async function POST(req: Request) {
     if (!apiKey) {
       return NextResponse.json(
         { error: "OpenAI API key not configured" },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
     const result = await generateObject({
-      model: openai("gpt-5"),
+      model: openai("gpt-5-mini"),
       schema: imageStyleMoodAnalysisSchema,
       messages: [
         {
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
         error: "Failed to analyze image",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

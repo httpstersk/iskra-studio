@@ -25,7 +25,7 @@ const generateStorylinesRequestSchema = z.object({
  */
 function buildStyleContext(
   analysis: ImageStyleMoodAnalysis,
-  duration: number,
+  duration: number
 ): string {
   const {
     subject,
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -111,14 +111,14 @@ export async function POST(req: Request) {
     if (!apiKey) {
       return NextResponse.json(
         { error: "OpenAI API key not configured" },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
     const styleContext = buildStyleContext(styleAnalysis, duration ?? 4);
 
     const result = await generateObject({
-      model: openai("gpt-5"),
+      model: openai("gpt-5-mini"),
       schema: storylineSetSchema,
       messages: [
         {
@@ -148,7 +148,7 @@ Create storylines that match this style but with completely different subjects a
         error: "Failed to generate storylines",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
