@@ -5,6 +5,7 @@ import type {
 } from "@/types/canvas";
 import type { FalClient } from "@fal-ai/client";
 import { downloadAndReupload } from "./asset-download-handler";
+import { createStorageService } from "@/lib/storage";
 
 interface GenerationHandlerDeps {
   images: PlacedImage[];
@@ -40,7 +41,7 @@ interface GenerationHandlerDeps {
 
 export const uploadImageDirect = async (
   dataUrl: string,
-  falClient: FalClient,
+  userId: string | undefined,
   toast: GenerationHandlerDeps["toast"],
 ) => {
   // Convert data URL to blob first
@@ -57,31 +58,26 @@ export const uploadImageDirect = async (
       );
     }
 
-    // Upload directly to FAL through proxy (using the client instance)
-    const uploadResult = await falClient.storage.upload(blob);
-
-    return { url: uploadResult };
-  } catch (error: unknown) {
-    // Check for rate limit error
-    const isRateLimit =
-      (error as { status?: number; message?: string }).status === 429 ||
-      (error as { message?: string }).message?.includes("429") ||
-      (error as { message?: string }).message?.includes("rate limit") ||
-      (error as { message?: string }).message?.includes("Rate limit");
-
-    if (isRateLimit) {
-      toast({
-        title: "Rate limit exceeded",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Failed to upload image",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
+    // Upload to Convex storage
+    if (!userId) {
+      throw new Error("User ID required for upload");
     }
+
+    const storage = createStorageService();
+    const uploadResult = await storage.upload(blob, {
+      userId,
+      type: "image",
+      mimeType: blob.type || "image/png",
+      metadata: {},
+    });
+
+    return { url: uploadResult.url };
+  } catch (error: unknown) {
+    toast({
+      title: "Failed to upload image",
+      description: error instanceof Error ? error.message : "Unknown error",
+      variant: "destructive",
+    });
 
     // Re-throw the error so calling code knows upload failed
     throw error;
@@ -271,7 +267,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       try {
         uploadResult = await uploadImageDirect(
           dataUrl,
-          falClient,
+          userId,
           toast,
         );
       } catch (uploadError) {

@@ -116,6 +116,7 @@ interface VariationHandlerDeps {
   selectedIds: string[];
   viewport: { x: number; y: number; scale: number };
   falClient: FalClient;
+  userId?: string;
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   setVideos?: React.Dispatch<
     React.SetStateAction<import("@/types/canvas").PlacedVideo[]>
@@ -242,6 +243,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     selectedIds,
     viewport,
     falClient,
+    userId,
     setImages,
     setVideos,
     setIsGenerating,
@@ -277,7 +279,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       images,
       selectedIds,
       viewport,
-      falClient,
+      userId,
       setVideos,
       setIsGenerating,
       setActiveVideoGenerations,

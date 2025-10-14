@@ -84,7 +84,7 @@ export default function CanvasPage() {
   const uiState = useUIState();
 
   // Authentication
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, userId } = useAuth();
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
   // Projects
@@ -113,7 +113,9 @@ export default function CanvasPage() {
   const { handleDrop, handleFileUpload } = useFileUpload(
     canvasState.setImages,
     canvasState.viewport,
-    canvasState.canvasSize
+    canvasState.canvasSize,
+    userId ?? undefined,
+    toast
   );
 
   // API mutations
@@ -309,6 +311,7 @@ export default function CanvasPage() {
     if (isVariationMode) {
       await handleVariationGeneration({
         falClient,
+        userId: userId ?? undefined,
         images: canvasState.images,
         selectedIds: canvasState.selectedIds,
         setActiveGenerations: generationState.setActiveGenerations,

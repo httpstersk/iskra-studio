@@ -6,18 +6,17 @@ import { checkBotId } from "botid/server";
 import {
   buildRateLimitHeaders,
   checkRateLimit,
-  createServerFalClient,
-  extractBearerToken,
   standardLimitHeaders,
   standardRateLimiter,
 } from "@/lib/fal/utils";
+import { createStorageService } from "@/lib/storage";
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_MIME_PREFIXES = ["image/", "video/"];
 
 /**
- * POST handler for uploading files to fal.ai through server-side proxy
- * This bypasses CORS issues by handling the upload on the server
+ * POST handler for uploading files to Convex storage
+ * Redirects to the Convex upload endpoint for consistency
  */
 export async function POST(req: NextRequest) {
   try {
@@ -38,6 +37,14 @@ export async function POST(req: NextRequest) {
 
   // Get userId from Clerk for per-user rate limiting
   const { userId } = await auth();
+
+  // Require authentication for uploads
+  if (!userId) {
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 },
+    );
+  }
 
   // Always apply rate limiting (per-user if authenticated, per-IP otherwise)
   const limiterResult = await checkRateLimit({
@@ -86,13 +93,16 @@ export async function POST(req: NextRequest) {
 
     const blob: Blob = file;
 
-    // Create fal client using server environment key
-    const falClient = createServerFalClient();
+    // Upload to Convex storage
+    const storage = createStorageService();
+    const uploadResult = await storage.upload(blob, {
+      userId: userId!,
+      type: mimeType.startsWith("image/") ? "image" : "video",
+      mimeType,
+      metadata: {},
+    });
 
-    // Upload the file server-side
-    const uploadResult = await falClient.storage.upload(blob);
-
-    return NextResponse.json({ url: uploadResult });
+    return NextResponse.json({ url: uploadResult.url });
   } catch (error) {
     console.error("Upload error:", error);
 
