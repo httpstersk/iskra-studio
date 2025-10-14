@@ -10,10 +10,9 @@
 import { Button } from "@/components/ui/button";
 import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
-import { Plus, X } from "lucide-react";
+import { PanelLeftClose, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ProjectDialog } from "./project-dialog";
-import { ProjectList } from "./project-list";
 
 /**
  * Props for ProjectPanel component.
@@ -62,12 +61,14 @@ export function ProjectPanel({
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   const { projects, isLoading } = useProjects();
 
-  const projectSummary = useMemo(() => {
-    if (isLoading) return "Loading projects…";
-    if (projects.length === 0) return "No projects yet";
-    if (projects.length === 1) return "1 project";
-    return `${projects.length} projects`;
-  }, [isLoading, projects.length]);
+  const projectNumbers = useMemo(
+    () =>
+      projects.map((project, index) => ({
+        id: project.id,
+        label: `${(index + 1).toString().padStart(2, "0")}`,
+      })),
+    [projects]
+  );
 
   /**
    * Toggles the panel open/closed.
@@ -118,67 +119,90 @@ export function ProjectPanel({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-[60] flex h-full w-[22rem] flex-col",
-          // Deep charcoal surface + crisp 1px borders inspired by reference UI
-          "bg-sidebar/98 backdrop-blur-xl border-r border-sidebar-border/60",
-          // Subtle elevation with hairline highlight
-          "shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_12px_24px_rgba(0,0,0,0.45)]",
+          "fixed left-0 top-0 z-[60] flex h-full w-[5.5rem]",
+          "flex-col items-center overflow-hidden border-r border-sidebar-border/60",
+          "bg-sidebar/95 backdrop-blur-xl",
+          "shadow-[0_20px_40px_rgba(0,0,0,0.5)]",
           "transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="border-b border-sidebar-border/60 px-5 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">
-                Projects
-              </h2>
-              <p className="text-xs text-muted-foreground">{projectSummary}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleNewProject}
-                className="hidden shadow-md md:inline-flex"
-              >
-                <Plus className="h-4 w-4" />
-                New
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={togglePanel}
-                className="h-8 w-8 rounded-xl border border-transparent hover:border-sidebar-border/60 hover:bg-sidebar-accent/50"
-              >
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </Button>
-            </div>
+        <div className="flex h-full w-full flex-col items-center px-3 py-6">
+          <div className="flex w-full flex-col items-center gap-2.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={togglePanel}
+              customVariant={cn(
+                "h-11 w-11 rounded-2xl border border-sidebar-border/60",
+                "bg-sidebar-accent/35 text-muted-foreground",
+                "shadow-[0_10px_24px_rgba(0,0,0,0.45)] transition hover:border-sidebar-ring/60 hover:bg-sidebar-accent/55 hover:text-foreground"
+              )}
+            >
+              <PanelLeftClose className="h-5 w-5" />
+              <span className="sr-only">Toggle sidebar</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleNewProject}
+              customVariant={cn(
+                "h-11 w-11 rounded-2xl border border-sidebar-border/60",
+                "bg-sidebar-accent/35 text-foreground",
+                "shadow-[0_10px_26px_rgba(0,0,0,0.45)] transition hover:border-sidebar-ring/60 hover:bg-sidebar-accent/55"
+              )}
+            >
+              <Plus className="h-5 w-5" />
+              <span className="sr-only">New project</span>
+            </Button>
           </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-24 pt-5">
-          <ProjectList
-            variant="sidebar"
-            onNewProject={handleNewProject}
-            onOpenProject={(projectId) => {
-              if (onOpenProject) {
-                onOpenProject(projectId);
-              }
-              if (window.innerWidth < 768 && isOpen) {
-                togglePanel();
-              }
-            }}
+          <div
+            className="mt-6 h-px w-10 bg-sidebar-border/50"
+            aria-hidden="true"
           />
-        </div>
 
-        <div className="pointer-events-none relative z-10 mx-5 mb-5 rounded-xl border border-dashed border-sidebar-border/60 bg-sidebar-accent/20 px-4 py-4 text-center text-xs text-muted-foreground">
-          Press{" "}
-          <kbd className="rounded bg-input px-2 py-1 text-[11px] uppercase tracking-[0.2em]">
-            Cmd/Ctrl+P
-          </kbd>{" "}
-          to toggle
+          <div className="mt-6 flex w-full flex-1 flex-col items-center gap-2.5 overflow-y-auto pb-8">
+            {isLoading && (
+              <div className="flex w-full flex-col items-center gap-2">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="h-11 w-11 animate-pulse rounded-2xl border border-sidebar-border/55 bg-sidebar-accent/35"
+                  />
+                ))}
+              </div>
+            )}
+
+            {!isLoading && projectNumbers.length === 0 && (
+              <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                No projects yet
+              </p>
+            )}
+
+            {!isLoading &&
+              projectNumbers.map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => {
+                    onOpenProject?.(id);
+                    if (window.innerWidth < 768 && isOpen) {
+                      togglePanel();
+                    }
+                  }}
+                  className={cn(
+                    "group flex h-11 w-11 items-center justify-center rounded-2xl border border-sidebar-border/60",
+                    "bg-sidebar/80 text-xs font-semibold text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.35)]",
+                    "transition hover:border-sidebar-ring/60 hover:bg-sidebar/85"
+                  )}
+                >
+                  <span className="text-base font-normal text-muted-foreground transition group-hover:text-foreground">
+                    {label}
+                  </span>
+                </button>
+              ))}
+          </div>
         </div>
       </div>
 

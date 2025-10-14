@@ -83,18 +83,18 @@ export function ProjectList({
   );
 
   const renderSidebarSkeleton = () => (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="flex items-center gap-3 rounded-xl border border-sidebar-border/40 bg-sidebar-accent/30 px-3 py-3"
+          className="flex items-center gap-3 rounded-2xl border border-sidebar-border/60 bg-sidebar-accent/20 px-4 py-4 shadow-[0_14px_40px_rgba(0,0,0,0.45)]"
         >
-          <Skeleton className="h-10 w-10 rounded-lg" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-3 w-3/5" />
-            <Skeleton className="h-3 w-2/5" />
+          <Skeleton className="h-11 w-11 rounded-xl !bg-sidebar-accent/40" />
+          <div className="flex-1 space-y-2.5">
+            <Skeleton className="h-3 w-3/5 rounded-full !bg-sidebar-accent/35" />
+            <Skeleton className="h-3 w-2/5 rounded-full !bg-sidebar-accent/35" />
           </div>
-          <Skeleton className="h-5 w-10 rounded-full" />
+          <Skeleton className="h-6 w-14 rounded-full !bg-sidebar-accent/30" />
         </div>
       ))}
     </div>
@@ -121,22 +121,23 @@ export function ProjectList({
   );
 
   const renderSidebarEmptyState = () => (
-    <div className="rounded-xl border border-dashed border-sidebar-border/60 bg-sidebar-accent/25 px-4 py-10 text-center">
-      <div className="flex justify-center">
-        <Folder className="h-8 w-8 text-muted-foreground" />
+    <div className="rounded-2xl border border-dashed border-sidebar-border/55 bg-sidebar-accent/20 px-6 py-14 text-center shadow-[0_18px_48px_rgba(0,0,0,0.5)]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-sidebar-border/40 bg-sidebar-accent/35 text-muted-foreground">
+        <Folder className="h-6 w-6" />
       </div>
-      <p className="mt-3 text-sm font-medium text-foreground">
+      <p className="mt-6 text-sm font-semibold text-foreground">
         No projects yet
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">
+      <p className="mt-1 text-xs text-muted-foreground/80">
         Create a project to keep your ideas organized.
       </p>
       {onNewProject && (
         <Button
-          className="mt-4"
+          className="mt-6"
           onClick={onNewProject}
           size="sm"
-          variant="secondary"
+          variant="ghost"
+          customVariant="rounded-xl border border-sidebar-border/60 bg-sidebar-accent/35 px-4 py-2 text-xs font-semibold text-foreground hover:border-sidebar-ring/60 hover:bg-sidebar-accent/55"
         >
           <Plus className="mr-2 h-4 w-4" />
           New project
@@ -169,44 +170,42 @@ export function ProjectList({
   );
 
   const renderSidebarProjects = () => (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {projects.map((project) => (
         <button
           key={project.id}
           onClick={() => onOpenProject?.(project.id)}
-          className="group flex w-full items-center justify-between gap-2 rounded-xl border border-sidebar-border/30 bg-sidebar-accent/20 px-3 py-3 text-left transition hover:border-sidebar-ring/40 hover:bg-sidebar-accent/30"
+          className="group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-sidebar-border/55 bg-sidebar/75 px-4 py-4 text-left shadow-[0_22px_60px_rgba(0,0,0,0.6)] transition hover:border-sidebar-ring/55 hover:bg-sidebar/80"
         >
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Folder className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p
-                className="truncate text-sm font-medium text-foreground"
-                title={project.name}
-              >
-                {project.name}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-sidebar-border/40 bg-sidebar-accent/40 text-foreground shadow-[0_10px_28px_rgba(0,0,0,0.55)]">
+            <Folder className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p
+              className="truncate text-sm font-semibold text-foreground"
+              title={project.name}
+            >
+              {project.name}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground/80">
+              <span className="rounded-full border border-sidebar-border/45 bg-sidebar-accent/25 px-3 py-1">
                 Updated {formatLastUpdated(project.lastSavedAt)}
-              </p>
+              </span>
+              {project.imageCount > 0 && (
+                <span className="flex items-center gap-1 rounded-full border border-sidebar-border/45 bg-sidebar-accent/25 px-3 py-1">
+                  <ImageIcon className="h-3 w-3" />
+                  {project.imageCount}
+                </span>
+              )}
+              {project.videoCount > 0 && (
+                <span className="flex items-center gap-1 rounded-full border border-sidebar-border/45 bg-sidebar-accent/25 px-3 py-1">
+                  <Video className="h-3 w-3" />
+                  {project.videoCount}
+                </span>
+              )}
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-3 text-[11px] font-medium text-muted-foreground">
-            {project.imageCount > 0 && (
-              <span className="flex items-center gap-1">
-                <ImageIcon className="h-3 w-3" />
-                {project.imageCount}
-              </span>
-            )}
-            {project.videoCount > 0 && (
-              <span className="flex items-center gap-1">
-                <Video className="h-3 w-3" />
-                {project.videoCount}
-              </span>
-            )}
-            <ChevronRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
-          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-all group-hover:translate-x-1 group-hover:text-foreground" />
         </button>
       ))}
     </div>
@@ -221,22 +220,22 @@ export function ProjectList({
         {showQuickCreate && (
           <button
             onClick={onNewProject}
-            className="group flex items-center justify-between gap-3 rounded-xl border border-dashed border-sidebar-border/60 bg-sidebar-accent/25 px-4 py-3 text-left transition hover:border-sidebar-ring/60 hover:bg-sidebar-accent/35"
+            className="group flex items-center justify-between gap-4 rounded-2xl border border-dashed border-sidebar-border/60 bg-sidebar-accent/20 px-5 py-4 text-left shadow-[0_16px_44px_rgba(0,0,0,0.55)] transition hover:border-sidebar-ring/60 hover:bg-sidebar-accent/35"
           >
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl border border-sidebar-border/45 bg-sidebar-accent/35 text-foreground shadow-[0_12px_32px_rgba(0,0,0,0.5)]">
                 <Plus className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-primary">
+                <p className="text-sm font-semibold text-foreground">
                   New project
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground/80">
                   Start from scratch
                 </p>
               </div>
             </div>
-            <ChevronRight className="h-4 w-4 text-primary/70 transition group-hover:translate-x-1" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground/60 transition group-hover:translate-x-1 group-hover:text-foreground" />
           </button>
         )}
 
