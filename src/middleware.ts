@@ -7,13 +7,12 @@ import { NextResponse } from "next/server";
  */
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
+  "/sign-in",
   "/sign-up(.*)",
+  "/sign-up",
   "/api/webhooks(.*)",
   "/_next(.*)",
   "/favicon.ico",
-  "/.*\\.png",
-  "/.*\\.jpg",
-  "/.*\\.svg",
 ]);
 
 /**

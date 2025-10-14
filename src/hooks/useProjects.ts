@@ -1,17 +1,13 @@
 /**
  * Custom hook for project CRUD operations.
- * 
+ *
  * Provides functions to create, save, load, delete, and rename projects.
  * Integrates with Convex backend and updates Jotai atoms for state management.
  */
 
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { useAtom, useSetAtom } from "jotai";
-import { useCallback } from "react";
-import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { CanvasState } from "@/lib/storage";
 import {
   currentProjectAtom,
   isAutoSavingAtom,
@@ -19,8 +15,13 @@ import {
   projectListAtom,
   projectLoadingAtom,
 } from "@/store/project-atoms";
-import type { CanvasState } from "@/lib/storage";
 import type { Project, ProjectMetadata } from "@/types/project";
+import { useMutation, useQuery } from "convex/react";
+import { useAtom } from "jotai";
+import { useCallback } from "react";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
+import { useAuth } from "./useAuth";
 
 /**
  * Return type for the useProjects hook.
@@ -28,31 +29,31 @@ import type { Project, ProjectMetadata } from "@/types/project";
 interface UseProjectsReturn {
   /** Creates a new project with optional name */
   createProject: (name?: string) => Promise<Id<"projects">>;
-  
+
   /** Current project (null if no project loaded) */
   currentProject: Project | null;
-  
+
   /** Deletes a project by ID */
   deleteProject: (projectId: Id<"projects">) => Promise<void>;
-  
+
   /** Whether a project is currently loading */
   isLoading: boolean;
-  
+
   /** Whether auto-save is in progress */
   isSaving: boolean;
-  
+
   /** Timestamp of last successful save */
   lastSavedAt: number | null;
-  
+
   /** Loads a project by ID */
   loadProject: (projectId: Id<"projects">) => Promise<void>;
-  
+
   /** List of all user's projects */
   projects: ProjectMetadata[];
-  
+
   /** Renames a project */
   renameProject: (projectId: Id<"projects">, name: string) => Promise<void>;
-  
+
   /** Saves current project canvas state */
   saveProject: (
     projectId: Id<"projects">,
@@ -63,16 +64,16 @@ interface UseProjectsReturn {
 
 /**
  * Custom hook for managing projects.
- * 
+ *
  * Provides functions for all project operations and maintains
  * project state in Jotai atoms. Automatically handles loading
  * states and error handling.
- * 
+ *
  * @remarks
  * - All operations require user authentication
  * - Projects are automatically linked to the authenticated user
  * - Failed operations throw errors that should be caught by caller
- * 
+ *
  * @example
  * ```tsx
  * function ProjectManager() {
@@ -84,12 +85,12 @@ interface UseProjectsReturn {
  *     saveProject,
  *     isLoading,
  *   } = useProjects();
- *   
+ *
  *   const handleCreate = async () => {
  *     const projectId = await createProject("My New Project");
  *     await loadProject(projectId);
  *   };
- *   
+ *
  *   return (
  *     <div>
  *       {projects.map(p => (
@@ -110,17 +111,25 @@ export function useProjects(): UseProjectsReturn {
   const [isSaving, setIsSaving] = useAtom(isAutoSavingAtom);
   const [lastSavedAt, setLastSavedAt] = useAtom(lastSavedAtAtom);
 
+  // Auth check
+  const { isAuthenticated } = useAuth();
+
   // Convex mutations
   const createProjectMutation = useMutation(api.projects.createProject);
   const saveProjectMutation = useMutation(api.projects.saveProject);
   const deleteProjectMutation = useMutation(api.projects.deleteProject);
   const renameProjectMutation = useMutation(api.projects.renameProject);
 
-  // Convex queries
-  const projectsQuery = useQuery(api.projects.listProjects, { limit: 50 });
+  // Convex queries - only run when authenticated
+  const projectsQuery = useQuery(
+    api.projects.listProjects,
+    isAuthenticated ? { limit: 50 } : "skip"
+  );
   const getProjectQuery = useQuery(
     api.projects.getProject,
-    currentProject ? { projectId: currentProject._id as Id<"projects"> } : "skip"
+    isAuthenticated && currentProject
+      ? { projectId: currentProject._id as Id<"projects"> }
+      : "skip"
   );
 
   // Update project list when query results change
@@ -148,7 +157,7 @@ export function useProjects(): UseProjectsReturn {
     async (name?: string): Promise<Id<"projects">> => {
       try {
         const projectId = await createProjectMutation({ name });
-        
+
         // Refresh project list (will happen automatically via query)
         return projectId;
       } catch (error) {
@@ -172,9 +181,11 @@ export function useProjects(): UseProjectsReturn {
         // Note: In a real implementation, we would fetch the project here
         // For now, we'll rely on the query to update
         // The project will be set via getProjectQuery
-        
+
         // This is a simplified version - you may want to add explicit fetching
-        throw new Error("loadProject not yet fully implemented - use getProject query");
+        throw new Error(
+          "loadProject not yet fully implemented - use getProject query"
+        );
       } catch (error) {
         console.error("Failed to load project:", error);
         throw error;
@@ -225,7 +236,13 @@ export function useProjects(): UseProjectsReturn {
         setIsSaving(false);
       }
     },
-    [saveProjectMutation, currentProject, setIsSaving, setLastSavedAt, setCurrentProject]
+    [
+      saveProjectMutation,
+      currentProject,
+      setIsSaving,
+      setLastSavedAt,
+      setCurrentProject,
+    ]
   );
 
   /**
