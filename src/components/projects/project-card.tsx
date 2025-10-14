@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import type { ProjectMetadata } from "@/types/project";
 import { useProjects } from "@/hooks/useProjects";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -267,10 +267,10 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRenaming(false)}>
+            <Button variant="ghost" onClick={() => setIsRenaming(false)}>
               Cancel
             </Button>
-            <Button onClick={handleRename}>Rename</Button>
+            <Button variant="primary" onClick={handleRename}>Rename</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -286,10 +286,10 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
           </DialogHeader>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleting(false)}>
+            <Button variant="ghost" onClick={() => setIsDeleting(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button variant="primary" onClick={handleDelete}>
               Delete
             </Button>
           </DialogFooter>

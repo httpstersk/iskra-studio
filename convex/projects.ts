@@ -165,12 +165,13 @@ export const listProjects = query({
       projects.map(async (project) => {
         let thumbnailUrl: string | undefined;
         if (project.thumbnailStorageId) {
-          thumbnailUrl = await ctx.storage.getUrl(project.thumbnailStorageId);
+          const url = await ctx.storage.getUrl(project.thumbnailStorageId);
+          thumbnailUrl = url ?? undefined;
         }
 
         return {
           ...project,
-          thumbnailUrl: thumbnailUrl || undefined,
+          thumbnailUrl,
         };
       })
     );
@@ -208,12 +209,13 @@ export const getProject = query({
     // Get thumbnail URL if exists
     let thumbnailUrl: string | undefined;
     if (project.thumbnailStorageId) {
-      thumbnailUrl = await ctx.storage.getUrl(project.thumbnailStorageId);
+      const url = await ctx.storage.getUrl(project.thumbnailStorageId);
+      thumbnailUrl = url ?? undefined;
     }
 
     return {
       ...project,
-      thumbnailUrl: thumbnailUrl || undefined,
+      thumbnailUrl,
     };
   },
 });

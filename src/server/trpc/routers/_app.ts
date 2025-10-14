@@ -102,13 +102,13 @@ function extractResultData<T extends object>(input: unknown): T | undefined {
 /**
  * Resolves an authenticated FAL client instance with rate limiting applied.
  *
- * @param ctx - tRPC context containing a minimal Request-like object
+ * @param ctx - tRPC context containing request and optional userId from Clerk
  * @param isVideo - Whether the request should use video rate limits
  * @returns A FAL client configured for the current request
  * @throws Error when the active rate limit bucket is exhausted
  */
 async function getFalClient(
-  ctx: { req?: RequestLike; user?: { id: string } },
+  ctx: { req?: RequestLike; userId?: string },
   isVideo: boolean = false
 ) {
   const headersSource =
@@ -119,6 +119,8 @@ async function getFalClient(
     headers: headersSource,
     bucketId: isVideo ? "video" : undefined,
     fallbackIp: typeof ctx.req?.ip === "string" ? ctx.req.ip : undefined,
+    userId: ctx.userId,
+    limitType: isVideo ? "video" : "standard",
   });
 
   if (resolved.limited) {

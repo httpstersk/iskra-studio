@@ -184,16 +184,19 @@ export const listAssets = query({
     const limit = args.limit ?? 100;
 
     // Query with optional type filter
-    let query = ctx.db
-      .query("assets")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId));
-
+    let query;
+    
     if (args.type) {
+      const assetType = args.type; // TypeScript narrowing
       query = ctx.db
         .query("assets")
         .withIndex("by_userId_and_type", (q) =>
-          q.eq("userId", args.userId).eq("type", args.type),
+          q.eq("userId", args.userId).eq("type", assetType),
         );
+    } else {
+      query = ctx.db
+        .query("assets")
+        .withIndex("by_userId", (q) => q.eq("userId", args.userId));
     }
 
     const assets = await query.order("desc").take(limit);

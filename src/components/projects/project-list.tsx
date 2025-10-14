@@ -11,7 +11,6 @@ import { Plus, Folder } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "./project-card";
 import { useProjects } from "@/hooks/useProjects";
-import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Props for ProjectList component.

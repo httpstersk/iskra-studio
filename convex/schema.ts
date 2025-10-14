@@ -62,7 +62,7 @@ export default defineSchema({
   assets: defineTable({
     createdAt: v.number(),
     duration: v.optional(v.number()),
-    height: v.number(),
+    height: v.optional(v.number()),
     metadata: v.object({
       model: v.optional(v.string()),
       prompt: v.optional(v.string()),
@@ -74,7 +74,7 @@ export default defineSchema({
     storageId: v.string(),
     type: v.union(v.literal("image"), v.literal("video")),
     userId: v.string(),
-    width: v.number(),
+    width: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_and_type", ["userId", "type"])

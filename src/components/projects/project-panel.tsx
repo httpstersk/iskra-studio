@@ -105,7 +105,7 @@ export function ProjectPanel({
     <>
       {/* Toggle Button (always visible) */}
       <Button
-        variant="outline"
+        variant="default"
         size="icon"
         onClick={togglePanel}
         className="fixed left-4 top-4 z-50 shadow-lg"

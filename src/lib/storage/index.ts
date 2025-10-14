@@ -5,7 +5,9 @@
  * for creating storage service instances.
  */
 
-export { ConvexStorageService } from "./convex-storage-service";
+import { ConvexStorageService } from "./convex-storage-service";
+
+export { ConvexStorageService };
 export type {
   DownloadOptions,
   StorageService,
@@ -33,9 +35,9 @@ export type {
  * });
  * ```
  */
-export function createStorageService(type: "convex" = "convex"): import("./storage-service").StorageService {
-  const { ConvexStorageService } = require("./convex-storage-service");
-  
+export function createStorageService(
+  type: "convex" = "convex"
+): import("./storage-service").StorageService {
   switch (type) {
     case "convex":
       return new ConvexStorageService();

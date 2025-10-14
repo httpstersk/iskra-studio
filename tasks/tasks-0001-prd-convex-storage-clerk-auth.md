@@ -50,7 +50,7 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `src/store/project-atoms.ts` - **CREATED** ✅ - Current project, project list, auto-save state, dirty flags
 - `src/hooks/useAuth.ts` - **CREATED** ✅ - Custom hook for Clerk auth with Convex integration (145 lines)
 - `src/hooks/useProjects.ts` - **CREATED** ✅ - Custom hook for project CRUD operations with Convex queries/mutations
-- `src/hooks/useQuota.ts` - **NEW** - Custom hook for storage quota tracking
+- `src/hooks/useQuota.ts` - **CREATED** ✅ - Custom hook for storage quota tracking with polling and refetch (108 lines)
 - `src/hooks/useAutoSave.ts` - **CREATED** ✅ - Auto-save hook with 10-second debounce, skips during generation
 - `src/hooks/useStorage.ts` - **MODIFY** - Update to sync with Convex instead of only IndexedDB
 
@@ -61,16 +61,19 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `src/components/projects/project-card.tsx` - **CREATED** ✅ - Project tile with thumbnail, metadata, rename/delete actions
 - `src/components/projects/project-dialog.tsx` - **CREATED** ✅ - New project creation modal with validation
 - `src/components/projects/project-panel.tsx` - **CREATED** ✅ - Collapsible sidebar with Cmd/Ctrl+P shortcut
-- `src/components/quota/storage-indicator.tsx` - **NEW** - Progress bar showing storage usage
-- `src/components/quota/quota-warning-dialog.tsx` - **NEW** - Warning when quota exceeded
+- `src/components/quota/storage-indicator.tsx` - **CREATED** ✅ - Progress bar showing storage usage with color coding and tooltips (154 lines)
+- `src/components/quota/quota-warning-dialog.tsx` - **CREATED** ✅ - Warning dialog when quota exceeded or approaching limit (196 lines)
 - `src/components/canvas/auto-save-indicator.tsx` - **NEW** - Saving/saved status indicator
 - `src/components/canvas/offline-indicator.tsx` - **NEW** - Network status indicator
 - `src/app/page.tsx` - **MODIFY** - Integrate auth, projects, quotas into main canvas
 
 ### Rate Limiting
-- `src/lib/ratelimit/per-user-limiter.ts` - **NEW** - User-based rate limiting (replaces IP-based)
-- `src/lib/fal/utils.ts` - **MODIFY** - Accept userId parameter instead of only IP
-- `src/server/trpc/routers/_app.ts` - **MODIFY** - Pass Clerk userId to rate limiter
+- `src/lib/ratelimit/per-user-limiter.ts` - **CREATED** ✅ - User-based rate limiting using Upstash KV with userId as key (206 lines)
+- `src/lib/fal/utils.ts` - **MODIFIED** ✅ - Updated to accept userId and limitType parameters for per-user rate limiting
+- `src/server/trpc/context.ts` - **MODIFIED** ✅ - Extracts userId from Clerk auth
+- `src/server/trpc/routers/_app.ts` - **MODIFIED** ✅ - Passes Clerk userId to FAL client resolver
+- `src/app/api/fal/upload/route.ts` - **MODIFIED** ✅ - Per-user rate limiting with Clerk userId
+- `src/app/api/fal/route.ts` - **MODIFIED** ✅ - Per-user rate limiting with Clerk userId
 
 ### IndexedDB Cache Layer
 - `src/lib/storage.ts` - **MODIFY** - Add sync metadata (lastSyncedAt, isDirty)
@@ -536,65 +539,77 @@ Below are the high-level tasks required to implement the Convex storage and Cler
     - Add optional `projectId?: string` field to canvas state types
     - Ensures canvas knows which project it belongs to
 
-- [ ] 5.0 **Implement Per-User Rate Limiting & Quota Management**
-  - [ ] 5.1 Create per-user rate limiter in `src/lib/ratelimit/per-user-limiter.ts`
-    - Implement rate limiting using Upstash KV with userId as key instead of IP
-    - Maintain same limits: Standard (5/min, 15/hr, 50/day), Video (2/min, 4/hr, 8/day)
-    - Export `checkUserRateLimit(userId, limitType)` function
-    - Return same interface as IP-based limiter for compatibility
+- [x] 5.0 **Implement Per-User Rate Limiting & Quota Management**
+  - [x] 5.1 Create per-user rate limiter in `src/lib/ratelimit/per-user-limiter.ts`
+    - ✅ Implemented rate limiting using Upstash KV with userId as key instead of IP
+    - ✅ Maintained same limits: Standard (5/min, 15/hr, 50/day), Video (2/min, 4/hr, 8/day)
+    - ✅ Exported `checkUserRateLimit(userId, limitType)` function
+    - ✅ Returns same interface as IP-based limiter for compatibility
+    - ✅ Added helper functions: `getRateLimitConfig()`, `formatRateLimitPeriod()`
+    - ✅ Comprehensive TSDoc documentation with examples
   
-  - [ ] 5.2 Create Convex rate limit tracking in `convex/ratelimit.ts`
-    - Alternative to Upstash: Store rate limit counters in Convex
-    - `incrementRateLimit` mutation: Increments counter for userId, period, operation type
-    - `checkRateLimit` query: Checks if user has exceeded limits
-    - Store counters with TTL based on period (minute/hour/day)
-    - Decide: Use Upstash KV (existing) or Convex (new) - recommend Convex for simplicity
+  - [x] 5.2 Create Convex rate limit tracking in `convex/ratelimit.ts`
+    - ⏭️ SKIPPED - Using Upstash KV implementation from task 5.1 instead
+    - Upstash provides better performance and simpler integration for rate limiting
+    - Convex alternative not needed as Upstash is already configured
   
-  - [ ] 5.3 Update `src/lib/fal/utils.ts` to accept userId parameter
-    - Modify `checkRateLimit()` to accept optional `userId` parameter
-    - If userId provided, use per-user limiter; otherwise fall back to IP-based
-    - Update `resolveFalClient()` signature to accept userId
-    - Maintain backward compatibility for non-authenticated flows
+  - [x] 5.3 Update `src/lib/fal/utils.ts` to accept userId parameter
+    - ✅ Modified `checkRateLimit()` to accept optional `userId` and `limitType` parameters
+    - ✅ If userId provided, uses per-user limiter; otherwise falls back to IP-based
+    - ✅ Updated `resolveFalClient()` signature to accept userId and limitType
+    - ✅ Maintained backward compatibility for non-authenticated flows
+    - ✅ Imported per-user rate limiting functions from new module
   
-  - [ ] 5.4 Update `src/server/trpc/routers/_app.ts` to pass Clerk userId
-    - Extract userId from `ctx.auth.getUserIdentity()` in tRPC context
-    - Pass userId to all FAL client resolution calls
-    - Apply per-user rate limiting to all AI generation endpoints
-    - Return appropriate error messages when rate limited
+  - [x] 5.4 Update `src/server/trpc/routers/_app.ts` to pass Clerk userId
+    - ✅ Updated tRPC context in `src/server/trpc/context.ts` to extract userId from Clerk
+    - ✅ Modified `getFalClient()` to accept userId in context
+    - ✅ Passed userId and limitType to all `resolveFalClient()` calls
+    - ✅ Applied per-user rate limiting to all AI generation endpoints
+    - ✅ Error messages remain consistent when rate limited
   
-  - [ ] 5.5 Update `src/app/api/fal/upload/route.ts` for per-user rate limiting
-    - Extract Clerk userId from request headers using `getAuth()`
-    - Pass userId to rate limiter instead of IP
-    - If user not authenticated, fall back to IP-based rate limiting
+  - [x] 5.5 Update FAL API routes for per-user rate limiting
+    - ✅ Updated `src/app/api/fal/upload/route.ts` with Clerk userId extraction
+    - ✅ Updated `src/app/api/fal/route.ts` with Clerk userId extraction
+    - ✅ Passed userId and limitType to `checkRateLimit()` in both routes
+    - ✅ Falls back to IP-based rate limiting for unauthenticated users
+    - ✅ Added proper comments explaining rate limiting strategy
   
-  - [ ] 5.6 Create quota tracking hook in `src/hooks/useQuota.ts`
-    - Fetch user's storage quota from Convex
-    - Calculate percentage used
-    - Return: `{ used, limit, percentage, isApproachingLimit, isExceeded }`
-    - `isApproachingLimit` = percentage >= 80%
-    - `isExceeded` = percentage >= 100%
-    - Poll quota every 30 seconds while user active
+  - [x] 5.6 Create quota tracking hook in `src/hooks/useQuota.ts`
+    - ✅ Fetches user's storage quota from Convex using `api.users.getUserQuota`
+    - ✅ Calculates percentage used via `calculateStorageQuota()` utility
+    - ✅ Returns: `{ quota, isLoading, error, refetch }`
+    - ✅ Quota includes: used, limit, percentage, isApproachingLimit, isExceeded
+    - ✅ Polls quota every 30 seconds while component is mounted
+    - ✅ Provides manual refetch function for immediate updates
+    - ✅ Comprehensive TSDoc documentation with examples
   
-  - [ ] 5.7 Create storage indicator component in `src/components/quota/storage-indicator.tsx`
-    - Progress bar showing storage usage (Radix UI Progress)
-    - Text: "45.2 MB / 500 MB used (9%)"
-    - Color coding: green (<60%), yellow (60-90%), red (>90%)
-    - Tooltip with breakdown by asset type (images vs videos)
-    - "Upgrade" button for free-tier users
+  - [x] 5.7 Create storage indicator component in `src/components/quota/storage-indicator.tsx`
+    - ✅ Progress bar showing storage usage with custom styling
+    - ✅ Text format: "Storage: X / Y (Z%)" with formatted sizes
+    - ✅ Color coding: green (<60%), yellow (60-90%), red (>90%)
+    - ✅ Hover card tooltip with detailed storage breakdown
+    - ✅ "Upgrade" button for free-tier users approaching limit
+    - ✅ Compact mode option for space-constrained layouts
+    - ✅ Full accessibility with ARIA labels and roles
+    - ✅ Comprehensive TSDoc documentation
   
-  - [ ] 5.8 Create quota warning dialog in `src/components/quota/quota-warning-dialog.tsx`
-    - Modal shown when quota exceeded
-    - Message: "Storage limit reached. Delete assets or upgrade."
-    - Link to asset management view
-    - "Upgrade" CTA button
-    - "Manage Assets" button
-    - Cannot dismiss until action taken
+  - [x] 5.8 Create quota warning dialog in `src/components/quota/quota-warning-dialog.tsx`
+    - ✅ Modal shown when quota exceeded or approaching limit
+    - ✅ Different messages for "exceeded" vs "approaching" states
+    - ✅ Visual progress bar showing current usage
+    - ✅ "Manage Assets" button (navigates to /assets)
+    - ✅ "Upgrade Plan" button for free-tier users (navigates to /upgrade)
+    - ✅ Optional preventClose prop to block dismissal when quota exceeded
+    - ✅ Helpful action list with suggestions
+    - ✅ Full accessibility and responsive design
+    - ✅ Comprehensive TSDoc documentation
   
-  - [ ] 5.9 Create Convex user quota mutations in `convex/users.ts`
-    - `updateUserQuota` mutation: Recalculates storageUsedBytes by summing all assets
-    - Called after asset upload/delete
-    - `getUserQuota` query: Returns user's quota info for UI
-    - `getOrCreateUser` mutation: Creates user record on first sign-in with default "free" tier
+  - [x] 5.9 Convex user quota mutations in `convex/users.ts`
+    - ✅ Already implemented in previous tasks
+    - ✅ `updateUserQuota` mutation recalculates storageUsedBytes by summing all assets
+    - ✅ `getUserQuota` query returns user's quota info for UI
+    - ✅ `getOrCreateUser` mutation creates user record on first sign-in with "free" tier
+    - ✅ All mutations require Clerk authentication
 
 - [ ] 6.0 **Implement IndexedDB Caching & Offline Support**
   - [ ] 6.1 Update `src/lib/storage.ts` to add sync metadata

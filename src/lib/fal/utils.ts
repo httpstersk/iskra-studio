@@ -5,6 +5,11 @@ import {
   shouldLimitRequest,
   type RateLimiter,
 } from "@/lib/ratelimit";
+import {
+  checkUserRateLimit,
+  type LimitType,
+  type UserRateLimitResult,
+} from "@/lib/ratelimit/per-user-limiter";
 
 import {
   FAL_PROXY_PATH,
@@ -92,11 +97,15 @@ export async function resolveFalClient({
   headers,
   bucketId,
   fallbackIp,
+  userId,
+  limitType,
 }: {
   limiter: RateLimiter;
   headers: HeaderSource;
   bucketId?: string;
   fallbackIp?: string;
+  userId?: string;
+  limitType?: LimitType;
 }): Promise<
   { client: FalClient; limited: false } | { limited: true; period: LimitPeriod }
 > {
@@ -105,6 +114,8 @@ export async function resolveFalClient({
     headers,
     bucketId,
     fallbackIp,
+    userId,
+    limitType,
   });
 
   if (rateLimit.shouldLimitRequest) {
@@ -119,12 +130,22 @@ export async function checkRateLimit({
   headers,
   bucketId,
   fallbackIp,
+  userId,
+  limitType = "standard",
 }: {
   limiter: RateLimiter;
   headers: HeaderSource;
   bucketId?: string;
   fallbackIp?: string;
+  userId?: string;
+  limitType?: LimitType;
 }): Promise<RateLimitCheck> {
+  // If userId is provided, use per-user rate limiting
+  if (userId) {
+    return checkUserRateLimit(userId, limitType);
+  }
+
+  // Otherwise, fall back to IP-based rate limiting
   const ip = getClientIp(headers, fallbackIp);
   return shouldLimitRequest(limiter, ip, bucketId);
 }

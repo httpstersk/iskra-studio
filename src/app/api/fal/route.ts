@@ -1,6 +1,7 @@
 import { route } from "@fal-ai/server-proxy/nextjs";
 import { NextRequest } from "next/server";
 
+import { auth } from "@clerk/nextjs/server";
 import { checkBotId } from "botid/server";
 
 import {
@@ -24,10 +25,15 @@ export const POST = async (req: NextRequest) => {
     });
   }
 
-  // Always apply rate limiting
+  // Get userId from Clerk for per-user rate limiting
+  const { userId } = await auth();
+
+  // Always apply rate limiting (per-user if authenticated, per-IP otherwise)
   const rateLimitResult = await checkRateLimit({
     limiter: standardRateLimiter,
     headers: req.headers,
+    userId: userId ?? undefined,
+    limitType: "standard",
   });
 
   if (rateLimitResult.shouldLimitRequest) {
