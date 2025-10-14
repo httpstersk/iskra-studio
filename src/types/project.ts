@@ -91,11 +91,13 @@ export interface CanvasState {
  * - userId links to the project owner for access control
  */
 export interface Project {
+  /** Convex document ID */
+  _id: string;
   /** Complete canvas state */
   canvasState: CanvasState;
   /** Timestamp when the project was created (ms since epoch) */
   createdAt: number;
-  /** Unique identifier for the project */
+  /** Unique identifier for the project (same as _id) */
   id: string;
   /** Timestamp of last auto-save (ms since epoch) */
   lastSavedAt: number;

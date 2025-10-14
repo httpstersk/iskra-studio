@@ -18,7 +18,7 @@ import {
 import type { Project, ProjectMetadata } from "@/types/project";
 import { useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "./useAuth";
@@ -133,22 +133,24 @@ export function useProjects(): UseProjectsReturn {
   );
 
   // Update project list when query results change
-  if (projectsQuery && projectsQuery !== projectList) {
-    const metadata: ProjectMetadata[] = projectsQuery.map((project) => ({
-      id: project._id,
-      name: project.name,
-      createdAt: project.createdAt,
-      lastSavedAt: project.lastSavedAt,
-      thumbnailUrl: project.thumbnailUrl,
-      imageCount: project.canvasState.elements.filter(
-        (el) => el.type === "image"
-      ).length,
-      videoCount: project.canvasState.elements.filter(
-        (el) => el.type === "video"
-      ).length,
-    }));
-    setProjectList(metadata);
-  }
+  useEffect(() => {
+    if (projectsQuery) {
+      const metadata: ProjectMetadata[] = projectsQuery.map((project) => ({
+        id: project._id,
+        name: project.name,
+        createdAt: project.createdAt,
+        lastSavedAt: project.lastSavedAt,
+        thumbnailUrl: project.thumbnailUrl,
+        imageCount: project.canvasState.elements.filter(
+          (el) => el.type === "image"
+        ).length,
+        videoCount: project.canvasState.elements.filter(
+          (el) => el.type === "video"
+        ).length,
+      }));
+      setProjectList(metadata);
+    }
+  }, [projectsQuery, setProjectList]);
 
   /**
    * Creates a new project.
