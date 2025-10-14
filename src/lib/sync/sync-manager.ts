@@ -10,6 +10,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { canvasStorage, type CanvasElement, type CanvasState } from "../storage";
 import { resolveConflict } from "./conflict-resolver";
+import { NETWORK_EVENTS, SYNC_CONSTANTS } from "../constants";
 
 /**
  * Queued change to be synced when online.
@@ -58,11 +59,10 @@ interface SyncResult {
  */
 export class SyncManager {
   private convexClient: ConvexReactClient;
-  private syncQueue: QueuedChange[] = [];
   private isSyncing = false;
-  private readonly QUEUE_KEY = "sync-queue";
-  private readonly MAX_RETRIES = 3;
-  private readonly RETRY_DELAY = 1000; // 1 second base delay
+  private onlineHandler: (() => void) | null = null;
+  private offlineHandler: (() => void) | null = null;
+  private syncQueue: QueuedChange[] = [];
 
   /**
    * Creates a new sync manager instance.
@@ -142,7 +142,7 @@ export class SyncManager {
     }
 
     try {
-      const stored = window.localStorage.getItem(this.QUEUE_KEY);
+      const stored = window.localStorage.getItem(SYNC_CONSTANTS.QUEUE_KEY);
       if (stored) {
         this.syncQueue = JSON.parse(stored);
       }
@@ -164,7 +164,7 @@ export class SyncManager {
     }
 
     try {
-      localStorage.setItem(this.QUEUE_KEY, JSON.stringify(this.syncQueue));
+      localStorage.setItem(SYNC_CONSTANTS.QUEUE_KEY, JSON.stringify(this.syncQueue));
     } catch (error) {
       console.error("Failed to save sync queue:", error);
     }
@@ -174,18 +174,22 @@ export class SyncManager {
    * Sets up network event listeners for online/offline detection.
    *
    * @private
+   * @remarks
+   * Stores references to handlers for proper cleanup via destroy()
    */
   private setupNetworkListeners(): void {
-    if (typeof window !== "undefined") {
-      window.addEventListener("online", () => {
-        console.log("Network connection restored, flushing sync queue...");
-        this.flushQueue();
-      });
+    if (typeof window === "undefined") return;
 
-      window.addEventListener("offline", () => {
-        console.log("Network connection lost, queueing changes...");
-      });
-    }
+    this.onlineHandler = () => {
+      void this.flushQueue();
+    };
+
+    this.offlineHandler = () => {
+      // Queue will be flushed when online again
+    };
+
+    window.addEventListener(NETWORK_EVENTS.ONLINE, this.onlineHandler);
+    window.addEventListener(NETWORK_EVENTS.OFFLINE, this.offlineHandler);
   }
 
   /**
@@ -433,7 +437,7 @@ export class SyncManager {
             // Remove from queue
             this.syncQueue = this.syncQueue.filter((c) => c.id !== change.id);
             syncedCount++;
-          } else if (change.retries >= this.MAX_RETRIES) {
+          } else if (change.retries >= SYNC_CONSTANTS.MAX_RETRIES) {
             // Max retries reached, remove from queue
             console.error(
               `Max retries reached for queued change ${change.id}, dropping`
@@ -446,12 +450,11 @@ export class SyncManager {
               this.syncQueue[index].retries++;
             }
 
-            // Wait before next retry with exponential backoff
+            // Wait before next retry with exponential backoff and jitter
+            const baseDelay = SYNC_CONSTANTS.RETRY_DELAY_MS * Math.pow(2, change.retries);
+            const jitter = Math.random() * SYNC_CONSTANTS.MAX_JITTER_MS;
             await new Promise((resolve) =>
-              setTimeout(
-                resolve,
-                this.RETRY_DELAY * Math.pow(2, change.retries)
-              )
+              setTimeout(resolve, baseDelay + jitter)
             );
           }
         } catch (error) {
@@ -494,6 +497,39 @@ export class SyncManager {
     this.syncQueue = [];
     this.saveQueue();
   }
+
+  /**
+   * Destroys the sync manager and cleans up resources.
+   *
+   * @remarks
+   * CRITICAL: Must be called when sync manager is no longer needed to prevent memory leaks.
+   * Removes event listeners and clears internal state.
+   *
+   * @example
+   * ```ts
+   * useEffect(() => {
+   *   const syncManager = createSyncManager(convex);
+   *   return () => syncManager.destroy();
+   * }, [convex]);
+   * ```
+   */
+  public destroy(): void {
+    if (typeof window === "undefined") return;
+
+    // Remove event listeners to prevent memory leaks
+    if (this.onlineHandler) {
+      window.removeEventListener(NETWORK_EVENTS.ONLINE, this.onlineHandler);
+      this.onlineHandler = null;
+    }
+
+    if (this.offlineHandler) {
+      window.removeEventListener(NETWORK_EVENTS.OFFLINE, this.offlineHandler);
+      this.offlineHandler = null;
+    }
+
+    // Clear state but keep queue persisted in localStorage for next session
+    this.isSyncing = false;
+  }
 }
 
 /**
@@ -509,6 +545,9 @@ export class SyncManager {
  *
  * // Sync to Convex
  * await syncManager.syncToConvex(projectId, canvasState);
+ *
+ * // Clean up when done
+ * syncManager.destroy();
  * ```
  */
 export function createSyncManager(

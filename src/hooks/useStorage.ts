@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useConvex } from "convex/react";
 import { useAtomValue } from "jotai";
 import { canvasStorage, type CanvasState } from "@/lib/storage";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createSyncManager } from "@/lib/sync/sync-manager";
 import { currentProjectAtom } from "@/store/project-atoms";
 import type { Id } from "../../convex/_generated/dataModel";
+import { UI_CONSTANTS, PLACEHOLDER_URLS } from "@/lib/constants";
 
 export function useStorage(
   images: PlacedImage[],
@@ -25,15 +26,19 @@ export function useStorage(
 ) {
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
   const convexClient = useConvex();
   const currentProject = useAtomValue(currentProjectAtom);
+  const { toast } = useToast();
   
-  // Create sync manager instance
-  const syncManager = useMemo(
-    () => createSyncManager(convexClient),
-    [convexClient]
-  );
+  // Use ref to store syncManager to ensure proper cleanup
+  const syncManagerRef = useRef(createSyncManager(convexClient));
+
+  // Clean up syncManager on unmount
+  useEffect(() => {
+    return () => {
+      syncManagerRef.current.destroy();
+    };
+  }, []);
 
   const saveToStorage = useCallback(async () => {
     try {
@@ -54,10 +59,7 @@ export function useStorage(
       canvasStorage.saveCanvasState(canvasState);
 
       for (const image of images) {
-        if (
-          image.src.startsWith("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP")
-        )
-          continue;
+        if (image.src.startsWith(PLACEHOLDER_URLS.TRANSPARENT_GIF)) continue;
 
         const existingImage = await canvasStorage.getImage(image.id);
         if (!existingImage) {
@@ -66,10 +68,7 @@ export function useStorage(
       }
 
       for (const video of videos) {
-        if (
-          video.src.startsWith("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP")
-        )
-          continue;
+        if (video.src.startsWith(PLACEHOLDER_URLS.TRANSPARENT_GIF)) continue;
 
         const existingVideo = await canvasStorage.getVideo(video.id);
         if (!existingVideo) {
@@ -81,44 +80,43 @@ export function useStorage(
       
       // Sync to Convex if project is loaded
       if (currentProject?._id) {
-        const syncResult = await syncManager.syncToConvex(
+        const syncResult = await syncManagerRef.current.syncToConvex(
           currentProject._id as Id<"projects">,
           canvasState
         );
         
         if (!syncResult.success) {
-          console.warn("Sync to Convex failed:", syncResult.error);
           // Don't show error toast for offline scenarios - offline indicator will handle it
           if (!syncResult.error?.includes("Offline")) {
             toast({
-              title: "Sync failed",
               description: "Your changes are saved locally but couldn't sync to cloud",
+              title: "Sync failed",
               variant: "destructive",
             });
           }
         }
       }
       
-      setTimeout(() => setIsSaving(false), 300);
+      // Debounce hiding the saving indicator
+      setTimeout(() => setIsSaving(false), UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS);
     } catch (error) {
       console.error("Failed to save to storage:", error);
       setIsSaving(false);
     }
-  }, [images, videos, viewport]);
+  }, [currentProject?._id, images, toast, videos, viewport]);
 
   const loadFromStorage = useCallback(async () => {
     try {
       // If project is loaded, sync from Convex first
       if (currentProject?._id) {
-        const syncResult = await syncManager.syncFromConvex(
+        const syncResult = await syncManagerRef.current.syncFromConvex(
           currentProject._id as Id<"projects">
         );
         
         if (!syncResult.success) {
-          console.warn("Failed to sync from Convex:", syncResult.error);
           toast({
-            title: "Sync warning",
             description: "Loading local version, couldn't fetch latest from cloud",
+            title: "Sync warning",
           });
         }
       }
@@ -137,33 +135,33 @@ export function useStorage(
           const imageData = await canvasStorage.getImage(element.imageId);
           if (imageData) {
             loadedImages.push({
+              height: element.height || 300,
               id: element.id,
+              rotation: element.transform.rotation,
               src: imageData.originalDataUrl,
+              width: element.width || 300,
               x: element.transform.x,
               y: element.transform.y,
-              width: element.width || 300,
-              height: element.height || 300,
-              rotation: element.transform.rotation,
             });
           }
         } else if (element.type === "video" && element.videoId) {
           const videoData = await canvasStorage.getVideo(element.videoId);
           if (videoData) {
             loadedVideos.push({
+              currentTime: element.currentTime || 0,
+              duration: element.duration || videoData.duration,
+              height: element.height || 300,
               id: element.id,
+              isLoaded: false,
+              isPlaying: element.isPlaying || false,
+              isVideo: true,
+              muted: element.muted || false,
+              rotation: element.transform.rotation,
               src: videoData.originalDataUrl,
+              volume: element.volume || 1,
+              width: element.width || 300,
               x: element.transform.x,
               y: element.transform.y,
-              width: element.width || 300,
-              height: element.height || 300,
-              rotation: element.transform.rotation,
-              isVideo: true,
-              duration: element.duration || videoData.duration,
-              currentTime: element.currentTime || 0,
-              isPlaying: element.isPlaying || false,
-              volume: element.volume || 1,
-              muted: element.muted || false,
-              isLoaded: false,
             });
           }
         }
@@ -183,14 +181,14 @@ export function useStorage(
     } catch (error) {
       console.error("Failed to load from storage:", error);
       toast({
-        title: "Failed to restore canvas",
         description: "Starting with a fresh canvas",
+        title: "Failed to restore canvas",
         variant: "destructive",
       });
     } finally {
       setIsStorageLoaded(true);
     }
-  }, [toast, setImages, setVideos, setViewport, currentProject, syncManager]);
+  }, [currentProject?._id, setImages, setVideos, setViewport, toast]);
 
   // Load from storage on mount
   useEffect(() => {
@@ -203,11 +201,11 @@ export function useStorage(
     if (activeGenerationsSize > 0) return;
 
     const timeoutId = setTimeout(() => {
-      saveToStorage();
-    }, 1000);
+      void saveToStorage();
+    }, UI_CONSTANTS.STORAGE_SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [images, videos, viewport, isStorageLoaded, saveToStorage, activeGenerationsSize]);
+  }, [activeGenerationsSize, images, isStorageLoaded, saveToStorage, videos, viewport]);
 
   return {
     isStorageLoaded,

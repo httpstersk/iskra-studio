@@ -142,24 +142,28 @@ export class ConvexStorageService implements StorageService {
    * @throws Error if upload fails or quota is exceeded
    */
   async upload(file: Blob, options: UploadOptions): Promise<AssetUploadResult> {
-    console.log("[ConvexStorage] Upload called with options:", {
-      userId: options.userId,
-      type: options.type,
-      mimeType: options.mimeType,
-      fileSize: file.size,
-      metadata: options.metadata,
-    });
-
+    // SECURITY: userId should NOT be sent from client - it's derived from auth on backend
+    // Remove userId from the formData - backend will get it from authenticated session
+    
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("userId", options.userId);
-        formData.append("type", options.type);
-        formData.append("mimeType", options.mimeType);
 
+        // Send metadata including dimensions if available
         if (options.metadata) {
           formData.append("metadata", JSON.stringify(options.metadata));
+          
+          // Extract dimensions for form fields (required by backend)
+          if (options.metadata.width) {
+            formData.append("width", options.metadata.width.toString());
+          }
+          if (options.metadata.height) {
+            formData.append("height", options.metadata.height.toString());
+          }
+          if (options.metadata.duration) {
+            formData.append("duration", options.metadata.duration.toString());
+          }
         }
 
         const response = await fetch('/api/convex/upload', {
@@ -167,16 +171,12 @@ export class ConvexStorageService implements StorageService {
           method: "POST",
         });
 
-        console.log("[ConvexStorage] Response status:", response.status);
-
         if (!response.ok) {
           const error = await response.text();
-          console.error("[ConvexStorage] Upload failed:", error);
           throw new Error(`Upload failed: ${error}`);
         }
 
         const result = await response.json();
-        console.log("[ConvexStorage] Upload successful, result:", result);
         return result as AssetUploadResult;
       } catch (error) {
         const isLastAttempt = attempt === this.maxRetries;
@@ -186,8 +186,8 @@ export class ConvexStorageService implements StorageService {
           );
         }
 
-        // Exponential backoff
-        const delay = Math.pow(2, attempt) * 1000;
+        // Exponential backoff with jitter to prevent thundering herd
+        const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }

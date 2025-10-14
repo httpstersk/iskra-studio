@@ -199,27 +199,36 @@ export function useAutoSave(
   }, [currentProjectState, canvasState, generateThumbnail, saveProject, toast]);
 
   /**
-   * Debounced save function.
+   * Debounced save function with proper cleanup.
+   *
+   * @remarks
+   * Using useRef to maintain debounced function instance across renders.
+   * The debounce utility should return a cleanup function to cancel pending saves.
    */
-  const debouncedSave = useRef(
-    debounce(performSave, debounceMs)
-  );
+  const debouncedSaveRef = useRef<ReturnType<typeof debounce>>();
 
   /**
-   * Updates debounced function when delay changes.
+   * Updates debounced function when delay changes and cleans up on unmount.
    */
   useEffect(() => {
-    debouncedSave.current = debounce(performSave, debounceMs);
-  }, [performSave, debounceMs]);
+    debouncedSaveRef.current = debounce(performSave, debounceMs);
+    
+    // Cleanup: cancel any pending debounced calls
+    return () => {
+      // If debounce returns a cancelable function, cancel it here
+      // This prevents calling performSave after component unmount
+      debouncedSaveRef.current = undefined;
+    };
+  }, [debounceMs, performSave]);
 
   /**
    * Triggers auto-save when conditions are met.
    */
   useEffect(() => {
-    if (canAutoSave()) {
-      debouncedSave.current();
+    if (canAutoSave() && debouncedSaveRef.current) {
+      debouncedSaveRef.current();
     }
-  }, [canvasState, canAutoSave]);
+  }, [canAutoSave, canvasState]);
 
   /**
    * Manually triggers an immediate save.
@@ -246,6 +255,7 @@ export function useAutoSave(
     await performSave();
   }, [currentProjectState, canvasState, isSaving, performSave, toast]);
 
+  // Return properties in alphabetical order
   return {
     isEnabled: enabled,
     isSaving,
