@@ -139,6 +139,14 @@ export class ConvexStorageService implements StorageService {
    * @throws Error if upload fails or quota is exceeded
    */
   async upload(file: Blob, options: UploadOptions): Promise<AssetUploadResult> {
+    console.log("[ConvexStorage] Upload called with options:", {
+      userId: options.userId,
+      type: options.type,
+      mimeType: options.mimeType,
+      fileSize: file.size,
+      metadata: options.metadata,
+    });
+
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         // Upload file to Convex via our API route
@@ -152,17 +160,23 @@ export class ConvexStorageService implements StorageService {
           formData.append("metadata", JSON.stringify(options.metadata));
         }
 
+        console.log("[ConvexStorage] Sending request to /api/convex/upload");
+
         const response = await fetch("/api/convex/upload", {
           body: formData,
           method: "POST",
         });
 
+        console.log("[ConvexStorage] Response status:", response.status);
+
         if (!response.ok) {
           const error = await response.text();
+          console.error("[ConvexStorage] Upload failed:", error);
           throw new Error(`Upload failed: ${error}`);
         }
 
         const result = await response.json();
+        console.log("[ConvexStorage] Upload successful, result:", result);
         return result as AssetUploadResult;
       } catch (error) {
         const isLastAttempt = attempt === this.maxRetries;

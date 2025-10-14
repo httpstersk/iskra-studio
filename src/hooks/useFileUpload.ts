@@ -83,45 +83,12 @@ export function useFileUpload(
                   y += index * 20;
                 }
 
-                // Upload to Convex storage if userId is provided
-                let finalSrc = croppedImageSrc;
-                if (userId) {
-                  try {
-                    // Convert cropped image data URL to blob
-                    const response = await fetch(croppedImageSrc);
-                    const blob = await response.blob();
-                    
-                    // Upload to Convex storage
-                    const storage = createStorageService();
-                    const uploadResult = await storage.upload(blob, {
-                      userId,
-                      type: "image",
-                      mimeType: file.type || "image/png",
-                      metadata: {
-                        width: naturalWidth,
-                        height: naturalHeight,
-                      },
-                    });
-                    
-                    finalSrc = uploadResult.url;
-                  } catch (error) {
-                    console.error("Failed to upload image to Convex:", error);
-                    if (toast) {
-                      toast({
-                        title: "Upload failed",
-                        description: "Image will be stored locally only",
-                        variant: "destructive",
-                      });
-                    }
-                    // Fall back to data URL if upload fails
-                  }
-                }
-
+                // Optimistic update: Add image immediately with local data URL
                 setImages((prev) => [
                   ...prev,
                   {
                     id,
-                    src: finalSrc,
+                    src: croppedImageSrc,
                     x,
                     y,
                     width,
@@ -129,6 +96,57 @@ export function useFileUpload(
                     rotation: 0,
                   },
                 ]);
+
+                // Upload to Convex storage in the background if userId is provided
+                if (userId) {
+                  console.log("[Upload] Starting background upload for image:", id);
+                  (async () => {
+                    try {
+                      // Convert cropped image data URL to blob
+                      const response = await fetch(croppedImageSrc);
+                      const blob = await response.blob();
+                      
+                      console.log("[Upload] Blob created, size:", blob.size);
+                      
+                      // Upload to Convex storage
+                      const storage = createStorageService();
+                      const uploadResult = await storage.upload(blob, {
+                        userId,
+                        type: "image",
+                        mimeType: file.type || "image/png",
+                        metadata: {
+                          model: "user-upload",
+                          prompt: file.name,
+                          width: naturalWidth,
+                          height: naturalHeight,
+                        },
+                      });
+                      
+                      console.log("[Upload] Upload successful:", uploadResult.url);
+                      
+                      // Update the image with the Convex URL
+                      setImages((prev) =>
+                        prev.map((img) =>
+                          img.id === id
+                            ? { ...img, src: uploadResult.url }
+                            : img
+                        )
+                      );
+                    } catch (error) {
+                      console.error("Failed to upload image to Convex:", error);
+                      if (toast) {
+                        toast({
+                          title: "Upload failed",
+                          description: "Image will be stored locally only",
+                          variant: "destructive",
+                        });
+                      }
+                      // Keep using the data URL if upload fails
+                    }
+                  })();
+                } else {
+                  console.log("[Upload] Skipping upload - no userId provided");
+                }
               };
               croppedImg.src = croppedImageSrc;
             };
