@@ -118,7 +118,7 @@ export function ProjectPanel({
         size="sm"
         onClick={togglePanel}
         className={cn(
-          "fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-primary/40 bg-surface/90 text-content-base shadow-lg backdrop-blur transition-all",
+          "fixed left-4 top-4 z-[70] flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-primary/40 bg-surface/90 text-content-base shadow-lg backdrop-blur transition-all",
           isOpen && "text-primary",
           "md:w-auto md:px-4"
         )}
@@ -138,7 +138,7 @@ export function ProjectPanel({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-full w-[22rem] flex-col border-r border-stroke-light/60 bg-surface/95 shadow-2xl backdrop-blur-xl transition-transform duration-300 ease-in-out",
+          "fixed left-0 top-0 z-[60] flex h-full w-[22rem] flex-col border-r border-stroke-light/60 bg-surface/95 shadow-2xl backdrop-blur-xl transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
