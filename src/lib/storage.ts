@@ -35,6 +35,7 @@ interface CanvasState {
   elements: CanvasElement[];
   backgroundColor?: string;
   lastModified: number;
+  projectId?: string; // Optional reference to Convex project ID
   viewport?: {
     x: number;
     y: number;

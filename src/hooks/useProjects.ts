@@ -1,0 +1,296 @@
+/**
+ * Custom hook for project CRUD operations.
+ * 
+ * Provides functions to create, save, load, delete, and rename projects.
+ * Integrates with Convex backend and updates Jotai atoms for state management.
+ */
+
+"use client";
+
+import { useMutation, useQuery } from "convex/react";
+import { useAtom, useSetAtom } from "jotai";
+import { useCallback } from "react";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
+import {
+  currentProjectAtom,
+  isAutoSavingAtom,
+  lastSavedAtAtom,
+  projectListAtom,
+  projectLoadingAtom,
+} from "@/store/project-atoms";
+import type { CanvasState } from "@/lib/storage";
+import type { Project, ProjectMetadata } from "@/types/project";
+
+/**
+ * Return type for the useProjects hook.
+ */
+interface UseProjectsReturn {
+  /** Creates a new project with optional name */
+  createProject: (name?: string) => Promise<Id<"projects">>;
+  
+  /** Current project (null if no project loaded) */
+  currentProject: Project | null;
+  
+  /** Deletes a project by ID */
+  deleteProject: (projectId: Id<"projects">) => Promise<void>;
+  
+  /** Whether a project is currently loading */
+  isLoading: boolean;
+  
+  /** Whether auto-save is in progress */
+  isSaving: boolean;
+  
+  /** Timestamp of last successful save */
+  lastSavedAt: number | null;
+  
+  /** Loads a project by ID */
+  loadProject: (projectId: Id<"projects">) => Promise<void>;
+  
+  /** List of all user's projects */
+  projects: ProjectMetadata[];
+  
+  /** Renames a project */
+  renameProject: (projectId: Id<"projects">, name: string) => Promise<void>;
+  
+  /** Saves current project canvas state */
+  saveProject: (
+    projectId: Id<"projects">,
+    canvasState: CanvasState,
+    thumbnailStorageId?: string
+  ) => Promise<void>;
+}
+
+/**
+ * Custom hook for managing projects.
+ * 
+ * Provides functions for all project operations and maintains
+ * project state in Jotai atoms. Automatically handles loading
+ * states and error handling.
+ * 
+ * @remarks
+ * - All operations require user authentication
+ * - Projects are automatically linked to the authenticated user
+ * - Failed operations throw errors that should be caught by caller
+ * 
+ * @example
+ * ```tsx
+ * function ProjectManager() {
+ *   const {
+ *     projects,
+ *     currentProject,
+ *     createProject,
+ *     loadProject,
+ *     saveProject,
+ *     isLoading,
+ *   } = useProjects();
+ *   
+ *   const handleCreate = async () => {
+ *     const projectId = await createProject("My New Project");
+ *     await loadProject(projectId);
+ *   };
+ *   
+ *   return (
+ *     <div>
+ *       {projects.map(p => (
+ *         <button key={p.id} onClick={() => loadProject(p.id)}>
+ *           {p.name}
+ *         </button>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+export function useProjects(): UseProjectsReturn {
+  // Atoms
+  const [currentProject, setCurrentProject] = useAtom(currentProjectAtom);
+  const [projectList, setProjectList] = useAtom(projectListAtom);
+  const [isLoading, setIsLoading] = useAtom(projectLoadingAtom);
+  const [isSaving, setIsSaving] = useAtom(isAutoSavingAtom);
+  const [lastSavedAt, setLastSavedAt] = useAtom(lastSavedAtAtom);
+
+  // Convex mutations
+  const createProjectMutation = useMutation(api.projects.createProject);
+  const saveProjectMutation = useMutation(api.projects.saveProject);
+  const deleteProjectMutation = useMutation(api.projects.deleteProject);
+  const renameProjectMutation = useMutation(api.projects.renameProject);
+
+  // Convex queries
+  const projectsQuery = useQuery(api.projects.listProjects, { limit: 50 });
+  const getProjectQuery = useQuery(
+    api.projects.getProject,
+    currentProject ? { projectId: currentProject._id as Id<"projects"> } : "skip"
+  );
+
+  // Update project list when query results change
+  if (projectsQuery && projectsQuery !== projectList) {
+    const metadata: ProjectMetadata[] = projectsQuery.map((project) => ({
+      id: project._id,
+      name: project.name,
+      createdAt: project.createdAt,
+      lastSavedAt: project.lastSavedAt,
+      thumbnailUrl: project.thumbnailUrl,
+      imageCount: project.canvasState.elements.filter(
+        (el) => el.type === "image"
+      ).length,
+      videoCount: project.canvasState.elements.filter(
+        (el) => el.type === "video"
+      ).length,
+    }));
+    setProjectList(metadata);
+  }
+
+  /**
+   * Creates a new project.
+   */
+  const createProject = useCallback(
+    async (name?: string): Promise<Id<"projects">> => {
+      try {
+        const projectId = await createProjectMutation({ name });
+        
+        // Refresh project list (will happen automatically via query)
+        return projectId;
+      } catch (error) {
+        console.error("Failed to create project:", error);
+        throw new Error(
+          `Project creation failed: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    },
+    [createProjectMutation]
+  );
+
+  /**
+   * Loads a project by ID.
+   */
+  const loadProject = useCallback(
+    async (projectId: Id<"projects">): Promise<void> => {
+      try {
+        setIsLoading(true);
+
+        // Note: In a real implementation, we would fetch the project here
+        // For now, we'll rely on the query to update
+        // The project will be set via getProjectQuery
+        
+        // This is a simplified version - you may want to add explicit fetching
+        throw new Error("loadProject not yet fully implemented - use getProject query");
+      } catch (error) {
+        console.error("Failed to load project:", error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [setIsLoading]
+  );
+
+  /**
+   * Saves project canvas state.
+   */
+  const saveProject = useCallback(
+    async (
+      projectId: Id<"projects">,
+      canvasState: CanvasState,
+      thumbnailStorageId?: string
+    ): Promise<void> => {
+      try {
+        setIsSaving(true);
+
+        await saveProjectMutation({
+          projectId,
+          canvasState,
+          thumbnailStorageId,
+        });
+
+        const now = Date.now();
+        setLastSavedAt(now);
+
+        // Update current project if it's the one being saved
+        if (currentProject?._id === projectId) {
+          setCurrentProject({
+            ...currentProject,
+            canvasState,
+            lastSavedAt: now,
+            updatedAt: now,
+            thumbnailStorageId,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to save project:", error);
+        throw new Error(
+          `Project save failed: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [saveProjectMutation, currentProject, setIsSaving, setLastSavedAt, setCurrentProject]
+  );
+
+  /**
+   * Deletes a project.
+   */
+  const deleteProject = useCallback(
+    async (projectId: Id<"projects">): Promise<void> => {
+      try {
+        await deleteProjectMutation({ projectId });
+
+        // Clear current project if it was deleted
+        if (currentProject?._id === projectId) {
+          setCurrentProject(null);
+          setLastSavedAt(null);
+        }
+
+        // Project list will update automatically via query
+      } catch (error) {
+        console.error("Failed to delete project:", error);
+        throw new Error(
+          `Project deletion failed: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    },
+    [deleteProjectMutation, currentProject, setCurrentProject, setLastSavedAt]
+  );
+
+  /**
+   * Renames a project.
+   */
+  const renameProject = useCallback(
+    async (projectId: Id<"projects">, name: string): Promise<void> => {
+      try {
+        await renameProjectMutation({ projectId, name });
+
+        // Update current project if it's the one being renamed
+        if (currentProject?._id === projectId) {
+          setCurrentProject({
+            ...currentProject,
+            name,
+            updatedAt: Date.now(),
+          });
+        }
+
+        // Project list will update automatically via query
+      } catch (error) {
+        console.error("Failed to rename project:", error);
+        throw new Error(
+          `Project rename failed: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+    },
+    [renameProjectMutation, currentProject, setCurrentProject]
+  );
+
+  return {
+    createProject,
+    currentProject,
+    deleteProject,
+    isLoading,
+    isSaving,
+    lastSavedAt,
+    loadProject,
+    projects: projectList,
+    renameProject,
+    saveProject,
+  };
+}
