@@ -7,12 +7,13 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { Folder, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Folder, X, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 import { ProjectList } from "./project-list";
 import { ProjectDialog } from "./project-dialog";
+import { useProjects } from "@/hooks/useProjects";
 
 /**
  * Props for ProjectPanel component.
@@ -56,6 +57,14 @@ export function ProjectPanel({
 }: ProjectPanelProps) {
   const [isOpen, setIsOpen] = useState(!defaultCollapsed);
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
+  const { projects, isLoading } = useProjects();
+
+  const projectSummary = useMemo(() => {
+    if (isLoading) return "Loading projects…";
+    if (projects.length === 0) return "No projects yet";
+    if (projects.length === 1) return "1 project";
+    return `${projects.length} projects`;
+  }, [isLoading, projects.length]);
 
   /**
    * Toggles the panel open/closed.
@@ -106,52 +115,74 @@ export function ProjectPanel({
       {/* Toggle Button (always visible) */}
       <Button
         variant="default"
-        size="icon"
+        size="sm"
         onClick={togglePanel}
-        className="fixed left-4 top-4 z-50 shadow-lg"
+        className={cn(
+          "fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-primary/40 bg-surface/90 text-content-base shadow-lg backdrop-blur transition-all",
+          isOpen && "text-primary",
+          "md:w-auto md:px-4"
+        )}
         title={`${isOpen ? "Close" : "Open"} Projects (Cmd/Ctrl+P)`}
         aria-label={`${isOpen ? "Close" : "Open"} Projects`}
       >
         {isOpen ? (
           <ChevronLeft className="h-5 w-5" />
         ) : (
-          <Folder className="h-5 w-5" />
+          <ChevronRight className="h-5 w-5" />
         )}
+        <span className="hidden text-xs font-semibold uppercase tracking-[0.2em] text-primary md:inline">
+          Projects
+        </span>
       </Button>
 
       {/* Sidebar Panel */}
       <div
-        className={`fixed left-0 top-0 z-40 h-full w-80 transform bg-surface border-r border-stroke-light shadow-xl transition-transform duration-300 ease-in-out ${
+        className={cn(
+          "fixed left-0 top-0 z-40 flex h-full w-[22rem] flex-col border-r border-stroke-light/60 bg-surface/95 shadow-2xl backdrop-blur-xl transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        )}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-stroke-light p-4">
-          <div className="flex items-center gap-2">
-            <Folder className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold text-content-base">Projects</h2>
+        <div className="border-b border-stroke-light/60 px-5 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-content-light">
+                <Folder className="h-4 w-4 text-primary" />
+                Library
+              </div>
+              <h2 className="mt-2 text-xl font-semibold text-content-base">Projects</h2>
+              <p className="text-xs text-content-light/80">{projectSummary}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleNewProject}
+                className="hidden shadow-md md:inline-flex"
+              >
+                <Plus className="h-4 w-4" />
+                New
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={togglePanel}
+                className="h-8 w-8 rounded-full border border-transparent hover:border-primary/40 hover:bg-primary/10"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
           </div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={togglePanel}
-            className="h-8 w-8"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </Button>
         </div>
 
-        {/* Content - Scrollable */}
-        <div className="h-[calc(100vh-4rem)] overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto px-5 pb-24 pt-5">
           <ProjectList
+            variant="sidebar"
             onNewProject={handleNewProject}
             onOpenProject={(projectId) => {
               if (onOpenProject) {
                 onOpenProject(projectId);
               }
-              // Optionally close panel on mobile after opening project
               if (window.innerWidth < 768) {
                 setIsOpen(false);
               }
@@ -159,11 +190,8 @@ export function ProjectPanel({
           />
         </div>
 
-        {/* Keyboard Shortcut Hint */}
-        <div className="absolute bottom-4 left-4 right-4 border-t border-stroke-light pt-4">
-          <p className="text-xs text-content-light text-center">
-            Press <kbd className="px-2 py-1 bg-surface-light rounded">Cmd/Ctrl+P</kbd> to toggle
-          </p>
+        <div className="pointer-events-none relative z-10 mx-5 mb-5 rounded-lg border border-dashed border-stroke-light/60 bg-surface-light/40 px-4 py-4 text-center text-xs text-content-light">
+          Press <kbd className="rounded bg-surface px-2 py-1 text-[11px] uppercase tracking-[0.2em]">Cmd/Ctrl+P</kbd> to toggle
         </div>
       </div>
 
