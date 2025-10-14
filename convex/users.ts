@@ -13,25 +13,23 @@ import { mutation, query } from "./_generated/server";
  * Automatically creates a new user with default "free" tier on first sign-in.
  * Returns existing user data on subsequent calls.
  * 
- * @param userId - Clerk user ID
- * @param email - User's email address
  * @returns User record with tier and storage information
  */
 export const getOrCreateUser = mutation({
-  args: {
-    email: v.string(),
-    userId: v.string(),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
     }
 
+    const userId = identity.subject;
+    const email = identity.email ?? "";
+
     // Check if user already exists
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
 
     if (existingUser) {
@@ -39,38 +37,61 @@ export const getOrCreateUser = mutation({
     }
 
     // Create new user with default free tier
-    const userId = await ctx.db.insert("users", {
+    const newUserId = await ctx.db.insert("users", {
       createdAt: Date.now(),
-      email: args.email,
+      email,
       storageUsedBytes: 0,
       tier: "free",
       updatedAt: Date.now(),
-      userId: args.userId,
+      userId,
     });
 
-    return await ctx.db.get(userId);
+    return await ctx.db.get(newUserId);
+  },
+});
+
+/**
+ * Gets current user record.
+ * 
+ * @returns User record with tier and storage information
+ */
+export const getCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const userId = identity.subject;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+
+    return user ?? null;
   },
 });
 
 /**
  * Gets user quota information.
  * 
- * @param userId - Clerk user ID
  * @returns User's storage quota data
  */
 export const getUserQuota = query({
-  args: {
-    userId: v.string(),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
     }
 
+    const userId = identity.subject;
+
     const user = await ctx.db
       .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
 
     if (!user) {
@@ -87,23 +108,22 @@ export const getUserQuota = query({
 /**
  * Updates user's storage quota by recalculating from all assets.
  * 
- * @param userId - Clerk user ID
  * @returns Updated storage usage in bytes
  */
 export const updateUserQuota = mutation({
-  args: {
-    userId: v.string(),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
     }
 
+    const userId = identity.subject;
+
     // Get user record
     const user = await ctx.db
       .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
 
     if (!user) {
@@ -113,7 +133,7 @@ export const updateUserQuota = mutation({
     // Calculate total storage from all assets
     const assets = await ctx.db
       .query("assets")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
 
     const totalBytes = assets.reduce((sum, asset) => sum + asset.sizeBytes, 0);

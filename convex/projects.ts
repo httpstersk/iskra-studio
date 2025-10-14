@@ -27,11 +27,21 @@ export const createProject = mutation({
     const userId = identity.subject;
     const now = Date.now();
 
+    // Validate project name if provided
+    if (args.name && args.name.length > 100) {
+      throw new Error("Project name too long (max 100 characters)");
+    }
+
     // Count existing projects to generate default name
     const existingProjects = await ctx.db
       .query("projects")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
+
+    // Limit number of projects per user
+    if (existingProjects.length >= 100) {
+      throw new Error("Maximum number of projects reached (100)");
+    }
 
     const defaultName = `Iskra Project ${String(existingProjects.length + 1).padStart(2, "0")}`;
     const projectName = args.name || defaultName;
@@ -119,6 +129,11 @@ export const saveProject = mutation({
     // Verify ownership
     if (project.userId !== identity.subject) {
       throw new Error("Unauthorized");
+    }
+
+    // Validate canvas state
+    if (args.canvasState.elements.length > 1000) {
+      throw new Error("Too many canvas elements (max 1000)");
     }
 
     const now = Date.now();
@@ -294,6 +309,10 @@ export const renameProject = mutation({
     // Validate name
     if (!args.name.trim()) {
       throw new Error("Project name cannot be empty");
+    }
+
+    if (args.name.length > 100) {
+      throw new Error("Project name too long (max 100 characters)");
     }
 
     // Update project name

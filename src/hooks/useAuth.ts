@@ -2,8 +2,8 @@
 
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useAtom, useAtomValue } from "jotai";
-import { useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useEffect, useMemo } from "react";
+import { useMutation, useQuery } from "convex/react";
 import {
   isAuthenticatedAtom,
   userAtom,
@@ -78,59 +78,60 @@ export function useAuth(): UseAuthReturn {
   const isAuthenticated = useAtomValue(isAuthenticatedAtom);
   const tier = useAtomValue(userTierAtom);
 
-  // Convex mutation to get or create user
+  // Use reactive query instead of mutation for better performance
+  const convexUser = useQuery(
+    api.users.getCurrentUser,
+    isClerkLoaded && clerkUser ? {} : "skip"
+  );
+  
+  // Mutation to create user if doesn't exist
   const getOrCreateUser = useMutation(api.users.getOrCreateUser);
 
   /**
    * Syncs Clerk user data to Jotai atoms and ensures Convex user exists.
    * 
    * @remarks
-   * - Updates userAtom when Clerk authentication state changes
-   * - Calls getOrCreateUser to ensure user exists in Convex database
-   * - Updates convexUser data once fetched from Convex
+   * - Uses reactive queries for efficient data fetching
+   * - Only calls mutation if user doesn't exist
+   * - Updates userAtom when data changes
    */
   useEffect(() => {
     if (isClerkLoaded && clerkUser) {
-      const syncUser = async () => {
-        try {
-          // Get or create user in Convex
-          const convexUser = await getOrCreateUser({
-            userId: clerkUser.id,
-            email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
+      // If convexUser is null, trigger creation
+      if (convexUser === null) {
+        getOrCreateUser()
+          .then((newUser) => {
+            if (newUser) {
+              setUserInfo({
+                clerkUser: clerkUser as any,
+                convexUser: {
+                  userId: newUser.userId,
+                  email: newUser.email,
+                  tier: newUser.tier,
+                  storageUsedBytes: newUser.storageUsedBytes,
+                  createdAt: newUser.createdAt,
+                  updatedAt: newUser.updatedAt,
+                },
+              });
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to create user in Convex:", error);
           });
-
-          // Update atom with Convex user data
-          setUserInfo({
-            clerkUser: clerkUser as any,
-            convexUser: convexUser
-              ? {
-                  userId: convexUser.userId,
-                  email: convexUser.email,
-                  tier: convexUser.tier,
-                  storageUsedBytes: convexUser.storageUsedBytes,
-                  createdAt: convexUser.createdAt,
-                  updatedAt: convexUser.updatedAt,
-                }
-              : null,
-          });
-        } catch (error) {
-          console.error("Failed to sync user with Convex:", error);
-          // Fallback to mock data if Convex sync fails
-          setUserInfo({
-            clerkUser: clerkUser as any,
-            convexUser: {
-              createdAt: Date.now(),
-              email: clerkUser.primaryEmailAddress?.emailAddress ?? "",
-              storageUsedBytes: 0,
-              tier: "free",
-              updatedAt: Date.now(),
-              userId: clerkUser.id,
-            },
-          });
-        }
-      };
-
-      syncUser();
+      } else if (convexUser) {
+        // Update atom with fetched Convex user data
+        setUserInfo({
+          clerkUser: clerkUser as any,
+          convexUser: {
+            userId: convexUser.userId,
+            email: convexUser.email,
+            tier: convexUser.tier,
+            storageUsedBytes: convexUser.storageUsedBytes,
+            createdAt: convexUser.createdAt,
+            updatedAt: convexUser.updatedAt,
+          },
+        });
+      }
     } else if (isClerkLoaded && !clerkUser) {
       // User is not authenticated, clear user info
       setUserInfo({
@@ -138,7 +139,7 @@ export function useAuth(): UseAuthReturn {
         convexUser: null,
       });
     }
-  }, [clerkUser, isClerkLoaded, getOrCreateUser, setUserInfo]);
+  }, [clerkUser, isClerkLoaded, convexUser, getOrCreateUser, setUserInfo]);
 
   /**
    * Initiates the Clerk sign-in flow.

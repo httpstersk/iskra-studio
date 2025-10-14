@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "./useAuth";
 import { calculateStorageQuota } from "@/utils/quota-utils";
@@ -19,9 +19,6 @@ interface UseQuotaReturn {
   
   /** Error message if quota fetch failed */
   error: string | null;
-  
-  /** Function to manually refresh quota data */
-  refetch: () => void;
 }
 
 /**
@@ -33,14 +30,15 @@ interface UseQuotaReturn {
  * 
  * @remarks
  * - Returns null for quota when user is not authenticated
- * - Automatically polls quota every 30 seconds while component is mounted
+ * - Uses Convex's reactive queries for automatic real-time updates
+ * - No polling needed - updates automatically when data changes
  * - Uses calculateStorageQuota utility to derive percentage and flags
  * - Handles loading and error states
  * 
  * @example
  * ```tsx
  * function StorageDisplay() {
- *   const { quota, isLoading, error, refetch } = useQuota();
+ *   const { quota, isLoading, error } = useQuota();
  *   
  *   if (isLoading) return <Spinner />;
  *   if (error) return <Error message={error} />;
@@ -51,7 +49,6 @@ interface UseQuotaReturn {
  *       <p>{quota.percentage}% used</p>
  *       {quota.isApproachingLimit && <Warning />}
  *       {quota.isExceeded && <Error />}
- *       <button onClick={refetch}>Refresh</button>
  *     </div>
  *   );
  * }
@@ -60,56 +57,28 @@ interface UseQuotaReturn {
  * @returns Quota information and status
  */
 export function useQuota(): UseQuotaReturn {
-  const { userId, tier } = useAuth();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, tier } = useAuth();
 
-  // Fetch quota data from Convex
+  // Fetch quota data from Convex - reactive query updates automatically
   const quotaData = useQuery(
     api.users.getUserQuota,
-    userId ? { userId } : "skip"
+    isAuthenticated ? {} : "skip"
   );
 
-  // Poll quota every 30 seconds
-  useEffect(() => {
-    if (!userId) return;
+  // Calculate quota information with memoization
+  const quota: StorageQuota | null = useMemo(() => {
+    if (!quotaData) return null;
+    return calculateStorageQuota(quotaData.storageUsedBytes, tier);
+  }, [quotaData, tier]);
 
-    const intervalId = setInterval(() => {
-      setRefreshTrigger((prev) => prev + 1);
-    }, 30000); // 30 seconds
-
-    return () => clearInterval(intervalId);
-  }, [userId]);
-
-  // Calculate quota information
-  const quota: StorageQuota | null = quotaData
-    ? calculateStorageQuota(quotaData.storageUsedBytes, tier)
+  // Determine error state
+  const error = quotaData === undefined && isAuthenticated
+    ? "Failed to fetch quota data"
     : null;
-
-  // Handle errors
-  useEffect(() => {
-    if (quotaData === undefined && userId) {
-      setError("Failed to fetch quota data");
-    } else {
-      setError(null);
-    }
-  }, [quotaData, userId]);
-
-  /**
-   * Manually triggers a quota data refresh.
-   * 
-   * @remarks
-   * Forces a re-fetch of quota data from Convex.
-   * Useful after uploading or deleting assets.
-   */
-  const refetch = () => {
-    setRefreshTrigger((prev) => prev + 1);
-  };
 
   return {
     error,
-    isLoading: quotaData === undefined && userId !== null,
+    isLoading: quotaData === undefined && isAuthenticated,
     quota,
-    refetch,
   };
 }

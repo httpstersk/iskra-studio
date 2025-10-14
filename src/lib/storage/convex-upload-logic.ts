@@ -110,6 +110,7 @@ export async function uploadFileToConvex(
   };
 
   // Call uploadAsset mutation to create database record
+  // Note: userId is derived from auth token on the backend
   const assetId = await convexClient.mutation(api.assets.uploadAsset, {
     duration: duration || undefined,
     height: height || undefined,
@@ -118,7 +119,6 @@ export async function uploadFileToConvex(
     sizeBytes: file.size,
     storageId,
     type: assetType,
-    userId,
     width: width || undefined,
   });
 

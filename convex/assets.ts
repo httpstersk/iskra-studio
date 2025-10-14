@@ -11,7 +11,6 @@ import { mutation, query } from "./_generated/server";
 /**
  * Creates an asset record after file upload to storage.
  * 
- * @param userId - User ID of the asset owner
  * @param storageId - Convex storage ID of the uploaded file
  * @param type - Type of asset (image or video)
  * @param sizeBytes - Size of the file in bytes
@@ -29,7 +28,6 @@ export const uploadAsset = mutation({
     sizeBytes: v.number(),
     storageId: v.string(),
     type: v.union(v.literal("image"), v.literal("video")),
-    userId: v.string(),
     width: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -38,9 +36,28 @@ export const uploadAsset = mutation({
       throw new Error("Not authenticated");
     }
 
-    // Verify user owns this upload
-    if (identity.subject !== args.userId) {
-      throw new Error("Unauthorized");
+    // Derive userId from authenticated identity
+    const userId = identity.subject;
+
+    // Validate inputs
+    if (args.sizeBytes <= 0 || args.sizeBytes > 25 * 1024 * 1024) {
+      throw new Error("Invalid file size");
+    }
+
+    if (!args.mimeType.startsWith("image/") && !args.mimeType.startsWith("video/")) {
+      throw new Error("Invalid MIME type");
+    }
+
+    if (args.width && (args.width <= 0 || args.width > 10000)) {
+      throw new Error("Invalid width");
+    }
+
+    if (args.height && (args.height <= 0 || args.height > 10000)) {
+      throw new Error("Invalid height");
+    }
+
+    if (args.duration && (args.duration <= 0 || args.duration > 7200)) {
+      throw new Error("Invalid duration");
     }
 
     // Create asset record
@@ -54,14 +71,14 @@ export const uploadAsset = mutation({
       sizeBytes: args.sizeBytes,
       storageId: args.storageId,
       type: args.type,
-      userId: args.userId,
+      userId,
       width: args.width,
     });
 
     // Update user's storage quota
     const user = await ctx.db
       .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
 
     if (user) {
@@ -79,18 +96,18 @@ export const uploadAsset = mutation({
  * Deletes an asset from database and storage, updates user quota.
  * 
  * @param assetId - ID of the asset to delete
- * @param userId - User ID for authorization
  */
 export const deleteAsset = mutation({
   args: {
     assetId: v.id("assets"),
-    userId: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Not authenticated");
     }
+
+    const userId = identity.subject;
 
     // Get asset
     const asset = await ctx.db.get(args.assetId);
@@ -99,7 +116,7 @@ export const deleteAsset = mutation({
     }
 
     // Verify ownership
-    if (asset.userId !== args.userId || identity.subject !== args.userId) {
+    if (asset.userId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -112,7 +129,7 @@ export const deleteAsset = mutation({
     // Update user's storage quota
     const user = await ctx.db
       .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
 
     if (user) {
@@ -128,13 +145,11 @@ export const deleteAsset = mutation({
  * Gets a single asset by ID with ownership verification.
  * 
  * @param assetId - ID of the asset to retrieve
- * @param userId - User ID for authorization
  * @returns Asset record
  */
 export const getAsset = query({
   args: {
     assetId: v.id("assets"),
-    userId: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -142,13 +157,15 @@ export const getAsset = query({
       throw new Error("Not authenticated");
     }
 
+    const userId = identity.subject;
+
     const asset = await ctx.db.get(args.assetId);
     if (!asset) {
       throw new Error("Asset not found");
     }
 
     // Verify ownership
-    if (asset.userId !== args.userId || identity.subject !== args.userId) {
+    if (asset.userId !== userId) {
       throw new Error("Unauthorized");
     }
 
@@ -157,9 +174,8 @@ export const getAsset = query({
 });
 
 /**
- * Lists all assets for a user with pagination.
+ * Lists all assets for the authenticated user with pagination.
  * 
- * @param userId - User ID to list assets for
  * @param limit - Maximum number of assets to return (default: 100)
  * @param type - Optional filter by asset type
  * @returns Array of asset records
@@ -168,7 +184,6 @@ export const listAssets = query({
   args: {
     limit: v.optional(v.number()),
     type: v.optional(v.union(v.literal("image"), v.literal("video"))),
-    userId: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -176,11 +191,7 @@ export const listAssets = query({
       throw new Error("Not authenticated");
     }
 
-    // Verify requesting own assets
-    if (identity.subject !== args.userId) {
-      throw new Error("Unauthorized");
-    }
-
+    const userId = identity.subject;
     const limit = args.limit ?? 100;
 
     // Query with optional type filter
@@ -191,12 +202,12 @@ export const listAssets = query({
       query = ctx.db
         .query("assets")
         .withIndex("by_userId_and_type", (q) =>
-          q.eq("userId", args.userId).eq("type", assetType),
+          q.eq("userId", userId).eq("type", assetType),
         );
     } else {
       query = ctx.db
         .query("assets")
-        .withIndex("by_userId", (q) => q.eq("userId", args.userId));
+        .withIndex("by_userId", (q) => q.eq("userId", userId));
     }
 
     const assets = await query.order("desc").take(limit);

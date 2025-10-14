@@ -17,6 +17,7 @@ const http = httpRouter();
  * Validates file type (image/* or video/*) and stores in Convex.
  *
  * @remarks
+ * - Requires authentication via Clerk JWT token
  * - Maximum file size: 25MB (Convex limit)
  * - Supported types: image/*, video/*
  * - Returns storageId and URL for accessing the file
@@ -29,6 +30,9 @@ const http = httpRouter();
  * const response = await fetch("/api/upload", {
  *   method: "POST",
  *   body: formData,
+ *   headers: {
+ *     Authorization: `Bearer ${token}`,
+ *   },
  * });
  *
  * const { storageId, url } = await response.json();
@@ -37,6 +41,18 @@ const http = httpRouter();
 http.route({
   handler: httpAction(async (ctx, request) => {
     try {
+      // SECURITY: Verify authentication
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        return new Response(
+          JSON.stringify({ error: "Authentication required" }),
+          {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
       // Read the request body as a blob
       const blob = await request.blob();
 
@@ -49,6 +65,21 @@ http.route({
             headers: { "Content-Type": "application/json" },
           }
         );
+      }
+
+      // Validate content type from request headers
+      const contentType = request.headers.get("Content-Type");
+      if (contentType) {
+        const isAllowedType = contentType.startsWith("image/") || contentType.startsWith("video/");
+        if (!isAllowedType) {
+          return new Response(
+            JSON.stringify({ error: "Unsupported file type. Only images and videos are allowed." }),
+            {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
       }
 
       // Store file in Convex storage

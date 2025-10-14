@@ -18,7 +18,7 @@ import {
 import type { Project, ProjectMetadata } from "@/types/project";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "./useAuth";
@@ -126,57 +126,32 @@ export function useProjects(): UseProjectsReturn {
     api.projects.listProjects,
     isAuthenticated ? { limit: 50 } : "skip"
   );
-  const getProjectQuery = useQuery(
-    api.projects.getProject,
-    isAuthenticated && currentProject
-      ? { projectId: currentProject._id as Id<"projects"> }
-      : "skip"
-  );
 
-  // Update project list when query results change
+  // Memoize project list to avoid unnecessary recalculations
+  const projectMetadata = useMemo(() => {
+    if (!projectsQuery) return null;
+    
+    return projectsQuery.map((project) => ({
+      id: project._id,
+      name: project.name,
+      createdAt: project.createdAt,
+      lastSavedAt: project.lastSavedAt,
+      thumbnailUrl: project.thumbnailUrl,
+      imageCount: project.canvasState.elements.filter(
+        (el) => el.type === "image"
+      ).length,
+      videoCount: project.canvasState.elements.filter(
+        (el) => el.type === "video"
+      ).length,
+    }));
+  }, [projectsQuery]);
+
+  // Update project list only when metadata changes
   useEffect(() => {
-    if (projectsQuery) {
-      const metadata: ProjectMetadata[] = projectsQuery.map((project) => ({
-        id: project._id,
-        name: project.name,
-        createdAt: project.createdAt,
-        lastSavedAt: project.lastSavedAt,
-        thumbnailUrl: project.thumbnailUrl,
-        imageCount: project.canvasState.elements.filter(
-          (el) => el.type === "image"
-        ).length,
-        videoCount: project.canvasState.elements.filter(
-          (el) => el.type === "video"
-        ).length,
-      }));
-      setProjectList(metadata);
+    if (projectMetadata) {
+      setProjectList(projectMetadata);
     }
-  }, [projectsQuery, setProjectList]);
-
-  useEffect(() => {
-    if (!getProjectQuery) {
-      return;
-    }
-
-    const normalizedProject: Project = {
-      ...getProjectQuery,
-      id: getProjectQuery._id,
-    };
-
-    setCurrentProject((prev) => {
-      if (
-        prev &&
-        prev._id === normalizedProject._id &&
-        prev.updatedAt === normalizedProject.updatedAt &&
-        prev.lastSavedAt === normalizedProject.lastSavedAt
-      ) {
-        return prev;
-      }
-      return normalizedProject;
-    });
-
-    setLastSavedAt(normalizedProject.lastSavedAt ?? null);
-  }, [getProjectQuery, setCurrentProject, setLastSavedAt]);
+  }, [projectMetadata, setProjectList]);
 
   /**
    * Creates a new project.
@@ -222,6 +197,7 @@ export function useProjects(): UseProjectsReturn {
         setCurrentProject(normalizedProject);
         setLastSavedAt(normalizedProject.lastSavedAt ?? null);
 
+        // Update project list with loaded project data
         setProjectList((prev) => {
           const metadata: ProjectMetadata = {
             id: project._id,
