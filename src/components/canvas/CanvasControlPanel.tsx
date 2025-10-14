@@ -80,12 +80,11 @@ export function CanvasControlPanel({
     <div className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:p-0 md:pb-0 md:max-w-[648px]">
       <div
         className={cn(
-          "bg-card/95 backdrop-blur-lg rounded-3xl",
-          CONTROL_PANEL_STYLES.CARD_SHADOW,
-          CONTROL_PANEL_STYLES.DARK_OUTLINE
+          "bg-card/98 backdrop-blur-2xl rounded-2xl border border-border/50",
+          "shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
         )}
       >
-        <div className="flex flex-col gap-3 px-3 md:px-3 py-2 md:py-3 relative">
+        <div className="flex flex-col gap-3 px-4 md:px-4 py-3 md:py-3 relative">
           {/* Active generations indicator */}
           <GenerationsIndicatorWrapper
             activeGenerationsSize={activeGenerationsSize}

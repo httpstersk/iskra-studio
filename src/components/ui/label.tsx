@@ -5,7 +5,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const labelVariants = cva([
-  "text-content-strong font-normal font-heading leading-none",
+  "text-foreground font-normal font-heading leading-none",
   "peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
 ]);
 

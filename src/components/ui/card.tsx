@@ -10,7 +10,7 @@ const Card = React.forwardRef<
     ref={ref}
     data-layout={compact ? "compact" : "default"}
     className={cn(
-      "flex flex-col rounded-xl border border-stroke-light bg-surface",
+      "flex flex-col rounded-2xl border border-border/50 bg-card",
       "group",
       className,
     )}
@@ -34,7 +34,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "font-base font-heading text-lg leading-none tracking-tight text-content-base lg:text-xl",
+      "font-base font-heading text-lg leading-none tracking-tight text-foreground lg:text-xl",
       className,
     )}
     {...props}
@@ -48,7 +48,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-content-light", className)}
+    className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
 ));

@@ -25,8 +25,8 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "flex cursor-default select-none items-center rounded-xl px-2 py-1.5 text-sm outline-none transition-colors",
-      "focus:bg-primary/10 focus:text-primary data-[state=open]:bg-primary/10 data-[state=open]:text-primary",
+      "flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none transition-colors",
+      "focus:bg-accent focus:text-foreground data-[state=open]:bg-accent data-[state=open]:text-foreground",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className,
@@ -47,7 +47,7 @@ const DropdownMenuSubContent = React.forwardRef<
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
-      "z-50 min-w-[8rem] overflow-hidden rounded-xl border p-1 text-popover-foreground shadow-lg",
+      "z-50 min-w-[8rem] overflow-hidden rounded-lg border border-border/50 bg-popover/95 backdrop-blur-xl p-1 text-popover-foreground shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
       "data-[state=open]:animate-in data-[state=closed]:animate-out",
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
@@ -70,7 +70,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[8rem] overflow-hidden rounded-xl border bg-background p-1 text-popover-foreground shadow-md",
+        "z-50 min-w-[8rem] overflow-hidden rounded-lg border border-border/50 bg-popover/95 backdrop-blur-xl p-1 text-popover-foreground shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
@@ -93,8 +93,8 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
-      "focus:bg-primary/10 focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-pointer select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none transition-colors",
+      "focus:bg-accent focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className,
     )}

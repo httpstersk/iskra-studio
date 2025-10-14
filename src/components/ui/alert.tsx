@@ -34,7 +34,7 @@ const alertVariants = cva(
       container: {
         none: "",
         bordered:
-          "rounded border border-stroke-light p-4 bg-black/[1%] dark:bg-black/5",
+          "rounded border border-border/50 p-4 bg-card/50",
       },
     },
     defaultVariants: {
@@ -54,7 +54,7 @@ const Alert = React.forwardRef<
       ref={ref}
       role="alert"
       className={cn(
-        "space-x-2 text-content-base",
+        "space-x-2 text-foreground",
         "[&>svg]:icon-lg [&>svg]:text-current",
         alertVariants({ type, container }),
         className,
@@ -89,7 +89,7 @@ const AlertDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-content-light [&_p]:leading-relaxed", className)}
+    className={cn("text-muted-foreground [&_p]:leading-relaxed", className)}
     {...props}
   />
 ));

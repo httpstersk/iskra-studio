@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
   [
-    "inline-flex items-center justify-center whitespace-nowrap rounded-xl",
+    "inline-flex items-center justify-center whitespace-nowrap rounded-full",
     "outline-none",
     "font-heading font-medium transition-all",
     "disabled:pointer-events-none disabled:opacity-50",
@@ -17,22 +17,22 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: [
-          "bg-transparent text-content-strong border-stroke-strong",
-          "hover:text-content-stronger hover:border-stroke-stronger",
-          "data-[state=open]:bg-surface-alpha",
-          "[&>svg]:text-content-lighter",
+          "bg-secondary text-foreground border border-border",
+          "hover:bg-accent hover:border-accent",
+          "data-[state=open]:bg-accent",
+          "[&>svg]:text-muted-foreground",
         ],
         primary: [
-          "bg-primary text-white hover:bg-primary/80",
-          "[&>svg]:text-primary-300",
+          "bg-foreground text-background hover:bg-foreground/90",
+          "[&>svg]:text-background",
         ],
         secondary: [
-          "bg-secondary/40 text-secondary-foreground hover:bg-secondary/80",
+          "bg-secondary text-foreground hover:bg-accent border border-border",
         ],
         ghost: [
-          "bg-transparent text-secondary-foreground hover:bg-secondary/40",
+          "bg-transparent text-foreground hover:bg-secondary",
         ],
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-foreground underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4",

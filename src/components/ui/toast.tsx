@@ -27,7 +27,7 @@ ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 const toastVariants = cva(
   [
     "group relative pointer-events-auto flex w-full items-center justify-between",
-    "space-x-4 overflow-hidden rounded-xl border p-4 pr-6 shadow transition-all",
+    "space-x-4 overflow-hidden rounded-lg border border-border/50 p-4 pr-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all",
     "data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)]",
     "data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none",
     "data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out",
@@ -37,7 +37,7 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-card border-border text-card-foreground",
+        default: "bg-card/95 text-card-foreground",
         destructive:
           "border-destructive-border bg-destructive text-destructive-foreground",
       },

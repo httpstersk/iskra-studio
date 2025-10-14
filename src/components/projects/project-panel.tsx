@@ -114,12 +114,12 @@ export function ProjectPanel({
     <>
       {/* Toggle Button (always visible) */}
       <Button
-        variant="default"
+        variant="ghost"
         size="sm"
         onClick={togglePanel}
         className={cn(
-          "fixed left-4 top-4 z-[70] flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-primary/40 bg-surface/90 text-content-base shadow-lg backdrop-blur transition-all",
-          isOpen && "text-primary",
+          "fixed left-4 top-4 z-[70] flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-border/50 bg-card/95 backdrop-blur-xl shadow-lg transition-all hover:bg-accent",
+          isOpen && "bg-accent",
           "md:w-auto md:px-4"
         )}
         title={`${isOpen ? "Close" : "Open"} Projects (Cmd/Ctrl+P)`}
@@ -130,7 +130,7 @@ export function ProjectPanel({
         ) : (
           <ChevronRight className="h-5 w-5" />
         )}
-        <span className="hidden text-xs font-semibold uppercase tracking-[0.2em] text-primary md:inline">
+        <span className="hidden text-xs font-semibold uppercase tracking-[0.2em] md:inline">
           Projects
         </span>
       </Button>
@@ -138,19 +138,19 @@ export function ProjectPanel({
       {/* Sidebar Panel */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-[60] flex h-full w-[22rem] flex-col border-r border-stroke-light/60 bg-surface/95 shadow-2xl backdrop-blur-xl transition-transform duration-300 ease-in-out",
+          "fixed left-0 top-0 z-[60] flex h-full w-[22rem] flex-col border-r border-border/50 bg-card/95 shadow-2xl backdrop-blur-2xl transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="border-b border-stroke-light/60 px-5 py-4">
+        <div className="border-b border-border/50 px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-content-light">
-                <Folder className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                <Folder className="h-4 w-4 text-foreground" />
                 Library
               </div>
-              <h2 className="mt-2 text-xl font-semibold text-content-base">Projects</h2>
-              <p className="text-xs text-content-light/80">{projectSummary}</p>
+              <h2 className="mt-2 text-xl font-semibold text-foreground">Projects</h2>
+              <p className="text-xs text-muted-foreground">{projectSummary}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -166,7 +166,7 @@ export function ProjectPanel({
                 variant="ghost"
                 size="icon"
                 onClick={togglePanel}
-                className="h-8 w-8 rounded-full border border-transparent hover:border-primary/40 hover:bg-primary/10"
+                className="h-8 w-8 rounded-full border border-transparent hover:border-border/50 hover:bg-accent"
               >
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
@@ -190,8 +190,8 @@ export function ProjectPanel({
           />
         </div>
 
-        <div className="pointer-events-none relative z-10 mx-5 mb-5 rounded-lg border border-dashed border-stroke-light/60 bg-surface-light/40 px-4 py-4 text-center text-xs text-content-light">
-          Press <kbd className="rounded bg-surface px-2 py-1 text-[11px] uppercase tracking-[0.2em]">Cmd/Ctrl+P</kbd> to toggle
+        <div className="pointer-events-none relative z-10 mx-5 mb-5 rounded-lg border border-dashed border-border/50 bg-secondary/40 px-4 py-4 text-center text-xs text-muted-foreground">
+          Press <kbd className="rounded bg-input px-2 py-1 text-[11px] uppercase tracking-[0.2em]">Cmd/Ctrl+P</kbd> to toggle
         </div>
       </div>
 
