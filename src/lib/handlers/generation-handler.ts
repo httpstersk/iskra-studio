@@ -154,7 +154,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
     try {
       const result = (await generateTextToImage({
         prompt: generationSettings.prompt,
-        imageSize: "square",
       })) as { width: number; height: number; url: string };
 
       // Add the generated image to the canvas
@@ -166,9 +165,15 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       const viewportCenterY =
         (canvasSize.height / 2 - viewport.y) / viewport.scale;
 
-      // Use the actual dimensions from the result
-      const width = Math.min(result.width, 512); // Limit display size
-      const height = Math.min(result.height, 512);
+      // Preserve aspect ratio while limiting the longest side to 512px
+      const maxDisplay = 512;
+      const scale = Math.min(
+        maxDisplay / Math.max(result.width, 1),
+        maxDisplay / Math.max(result.height, 1),
+        1,
+      );
+      const width = Math.max(1, Math.round(result.width * scale));
+      const height = Math.max(1, Math.round(result.height * scale));
 
       setImages((prev) => [
         ...prev,
