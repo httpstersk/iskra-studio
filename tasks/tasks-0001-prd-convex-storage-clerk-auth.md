@@ -25,7 +25,7 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 
 ### Convex Backend (Mutations & Queries)
 - `convex/assets.ts` - **CREATED** ✅ - Asset CRUD operations (upload, delete, list, get) with authentication
-- `convex/projects.ts` - **NEW** - Project CRUD operations (create, save, load, delete)
+- `convex/projects.ts` - **CREATED** ✅ - Project CRUD operations (create, save, list, get, delete, rename) with auto-naming
 - `convex/users.ts` - **CREATED** ✅ - User management and quota tracking (getOrCreateUser, getUserQuota, updateUserQuota)
 - `convex/http.ts` - **CREATED** ✅ - HTTP POST /upload action for file storage up to 25MB
 - `convex/ratelimit.ts` - **NEW** - Per-user rate limiting logic
@@ -47,20 +47,20 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 
 ### State Management (Jotai)
 - `src/store/auth-atoms.ts` - **CREATED** ✅ - Clerk user state, tier, quotas (74 lines)
-- `src/store/project-atoms.ts` - **NEW** - Current project, project list, auto-save state
+- `src/store/project-atoms.ts` - **CREATED** ✅ - Current project, project list, auto-save state, dirty flags
 - `src/hooks/useAuth.ts` - **CREATED** ✅ - Custom hook for Clerk auth with Convex integration (145 lines)
-- `src/hooks/useProjects.ts` - **NEW** - Custom hook for project CRUD operations
+- `src/hooks/useProjects.ts` - **CREATED** ✅ - Custom hook for project CRUD operations with Convex queries/mutations
 - `src/hooks/useQuota.ts` - **NEW** - Custom hook for storage quota tracking
-- `src/hooks/useAutoSave.ts` - **NEW** - Auto-save hook with 10-second debounce
+- `src/hooks/useAutoSave.ts` - **CREATED** ✅ - Auto-save hook with 10-second debounce, skips during generation
 - `src/hooks/useStorage.ts` - **MODIFY** - Update to sync with Convex instead of only IndexedDB
 
 ### UI Components
 - `src/components/auth/sign-in-button.tsx` - **CREATED** ✅ - Clerk sign-in button with LogIn icon (68 lines)
 - `src/components/auth/user-menu.tsx` - **CREATED** ✅ - User dropdown with avatar, tier badge, storage quota, and sign-out (210 lines)
-- `src/components/projects/project-list.tsx` - **NEW** - Project grid/list view
-- `src/components/projects/project-card.tsx` - **NEW** - Individual project tile with thumbnail
-- `src/components/projects/project-dialog.tsx` - **NEW** - Create/rename project modal
-- `src/components/projects/project-panel.tsx` - **NEW** - Collapsible sidebar for projects
+- `src/components/projects/project-list.tsx` - **CREATED** ✅ - Project grid with responsive layout, loading/empty states
+- `src/components/projects/project-card.tsx` - **CREATED** ✅ - Project tile with thumbnail, metadata, rename/delete actions
+- `src/components/projects/project-dialog.tsx` - **CREATED** ✅ - New project creation modal with validation
+- `src/components/projects/project-panel.tsx` - **CREATED** ✅ - Collapsible sidebar with Cmd/Ctrl+P shortcut
 - `src/components/quota/storage-indicator.tsx` - **NEW** - Progress bar showing storage usage
 - `src/components/quota/quota-warning-dialog.tsx` - **NEW** - Warning when quota exceeded
 - `src/components/canvas/auto-save-indicator.tsx` - **NEW** - Saving/saved status indicator
@@ -79,13 +79,13 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 
 ### Type Definitions
 - `src/types/auth.ts` - **CREATED** ✅ - User, UserTier, StorageQuota types (78 lines)
-- `src/types/project.ts` - **NEW** - Project, ProjectMetadata types
+- `src/types/project.ts` - **CREATED** ✅ - Project, ProjectMetadata, CanvasState, CanvasElement types
 - `src/types/asset.ts` - **CREATED** ✅ - Asset, AssetType, AssetMetadata, AssetUploadResult types
-- `src/types/canvas.ts` - **MODIFY** - Add projectId to canvas state types
+- `src/types/canvas.ts` - **MODIFIED** ✅ - Added optional projectId field to CanvasState
 
 ### Utility Functions
 - `src/utils/quota-utils.ts` - **CREATED** ✅ - Storage quota calculations, limits, formatting, color helpers
-- `src/utils/thumbnail-utils.ts` - **NEW** - Generate project thumbnails from canvas
+- `src/utils/thumbnail-utils.ts` - **CREATED** ✅ - Generate and upload project thumbnails from Konva stage
 - `src/utils/download-utils.ts` - **NEW** - Download files from URLs (FAL → Convex)
 
 ### Testing Files (To be created alongside implementation)
@@ -391,8 +391,15 @@ Below are the high-level tasks required to implement the Convex storage and Cler
     - `getQuotaForTier()`: Returns limit in bytes for "free" or "paid" tier
     - `formatStorageSize()`: Converts bytes to human-readable (MB, GB)
 
-- [ ] 4.0 **Implement Project Management System**
-  - [ ] 4.1 Create Convex projects mutations/queries in `convex/projects.ts`
+- [x] 4.0 **Implement Project Management System**
+  - [x] 4.1 Create Convex projects mutations/queries in `convex/projects.ts`
+    - ✅ `createProject` mutation with auto-sequential naming (Iskra Project 01, 02...)
+    - ✅ `saveProject` mutation with atomic canvas state updates and thumbnail support
+    - ✅ `listProjects` query with pagination, sorting by lastSavedAt DESC
+    - ✅ `getProject` query with ownership verification and thumbnail URLs
+    - ✅ `deleteProject` mutation with thumbnail cleanup (keeps assets)
+    - ✅ `renameProject` mutation with validation
+    - ✅ All mutations require Clerk authentication
     - `createProject` mutation: Creates new project with default name "Iskra 0X", empty canvas state
     - `saveProject` mutation: Upserts project canvas state (atomic update)
     - `listProjects` query: Returns all projects for authenticated user, sorted by lastSavedAt DESC
@@ -401,20 +408,39 @@ Below are the high-level tasks required to implement the Convex storage and Cler
     - `renameProject` mutation: Updates project name
     - All mutations require authentication via `ctx.auth.getUserIdentity()`
   
-  - [ ] 4.2 Create project state atoms in `src/store/project-atoms.ts`
+  - [x] 4.2 Create project state atoms in `src/store/project-atoms.ts`
+    - ✅ `currentProjectAtom` - Active project with full canvas state
+    - ✅ `projectListAtom` - Array of ProjectMetadata for list views
+    - ✅ `isAutoSavingAtom` - Save in progress indicator
+    - ✅ `lastSavedAtAtom` - Last successful save timestamp
+    - ✅ `projectLoadingAtom` - Loading state tracking
+    - ✅ `canvasDirtyAtom` - Unsaved changes flag
+    - ✅ Derived atoms for projectId and projectName
     - `currentProjectAtom` - Active project ID and metadata
     - `projectListAtom` - Array of user's projects
     - `isAutoSavingAtom` - Boolean flag for auto-save in progress
     - `lastSavedAtAtom` - Timestamp of last successful save
     - `projectLoadingAtom` - Boolean for project load state
   
-  - [ ] 4.3 Create `src/hooks/useProjects.ts` custom hook
+  - [x] 4.3 Create `src/hooks/useProjects.ts` custom hook
+    - ✅ Returns: createProject, saveProject, loadProject, deleteProject, renameProject
+    - ✅ Uses Convex useMutation and useQuery hooks
+    - ✅ Handles loading and error states with proper error messages
+    - ✅ Updates Jotai project atoms after operations
+    - ✅ Automatic project list updates via Convex queries
     - Return functions: createProject, saveProject, loadProject, deleteProject, renameProject, listProjects
     - Use Convex mutations/queries via `useMutation()` and `useQuery()`
     - Handle loading and error states
     - Update project atoms after operations
   
-  - [ ] 4.4 Create auto-save hook in `src/hooks/useAutoSave.ts`
+  - [x] 4.4 Create auto-save hook in `src/hooks/useAutoSave.ts`
+    - ✅ Debounced save with configurable delay (default 10 seconds)
+    - ✅ Only saves if canvas state actually changed (JSON comparison)
+    - ✅ Skips save if no project loaded or already saving
+    - ✅ Skips save during AI generation (checks activeGenerations)
+    - ✅ Optional thumbnail generation on save
+    - ✅ Manual trigger function for immediate saves
+    - ✅ Toast notifications for errors
     - Debounce canvas state changes with 10-second delay
     - Only save if canvas state has changed since last save
     - Only save if not currently generating (activeGenerations.size === 0)
@@ -422,12 +448,26 @@ Below are the high-level tasks required to implement the Convex storage and Cler
     - Update `lastSavedAtAtom` on success
     - Show toast on save errors
   
-  - [ ] 4.5 Create thumbnail utilities in `src/utils/thumbnail-utils.ts`
+  - [x] 4.5 Create thumbnail utilities in `src/utils/thumbnail-utils.ts`
+    - ✅ `generateThumbnail()` - Captures Konva stage at 300x200px
+    - ✅ `uploadThumbnail()` - Uploads thumbnail blob to Convex via /api/convex/upload
+    - ✅ `generateAndUploadThumbnail()` - Combined operation
+    - ✅ `generatePlaceholderThumbnail()` - Fallback for empty projects
+    - ✅ `dataUrlToBlob()` - Utility for data URL conversion
     - `generateThumbnail()`: Captures canvas as 300x200px image using Konva `stage.toDataURL()`
     - `uploadThumbnail()`: Uploads thumbnail blob to Convex storage
     - Called after project save to update thumbnail
   
-  - [ ] 4.6 Create project card component in `src/components/projects/project-card.tsx`
+  - [x] 4.6 Create project card component in `src/components/projects/project-card.tsx`
+    - ✅ Displays project thumbnail or placeholder
+    - ✅ Shows project name with truncation
+    - ✅ Displays relative time ("2 hours ago") using date-fns
+    - ✅ Shows image and video element counts
+    - ✅ Dropdown menu with Rename and Delete actions
+    - ✅ Inline rename dialog with validation
+    - ✅ Confirmation dialog for deletion
+    - ✅ Hover effects and responsive design
+    - ✅ Accessible with ARIA labels
     - Display project thumbnail (fallback to placeholder)
     - Show project name (editable on click)
     - Display last modified timestamp ("2 hours ago" format using `date-fns`)
@@ -435,33 +475,64 @@ Below are the high-level tasks required to implement the Convex storage and Cler
     - Dropdown menu with "Rename", "Delete" actions
     - Confirm dialog for delete action
   
-  - [ ] 4.7 Create project list component in `src/components/projects/project-list.tsx`
+  - [x] 4.7 Create project list component in `src/components/projects/project-list.tsx`
+    - ✅ Responsive grid layout (1-4 columns based on viewport)
+    - ✅ "New Project" button with dashed border design
+    - ✅ Empty state with helpful messaging and CTA
+    - ✅ Loading state with skeleton loaders
+    - ✅ Project count display in header
+    - ✅ Grid adapts to screen size (sm, md, lg breakpoints)
     - Grid view of project cards
     - "New Project" button at top
     - Empty state when no projects exist
     - Loading skeleton while fetching projects
     - Search/filter input (optional, can defer)
   
-  - [ ] 4.8 Create project dialog in `src/components/projects/project-dialog.tsx`
+  - [x] 4.8 Create project dialog in `src/components/projects/project-dialog.tsx`
+    - ✅ Modal for creating new projects
+    - ✅ Optional name input (uses default sequential naming if empty)
+    - ✅ Enter key support for quick submission
+    - ✅ "Create" and "Cancel" buttons
+    - ✅ Loading state during creation
+    - ✅ Input validation and error handling
+    - ✅ Toast notifications on success/failure
+    - ✅ Auto-closes and calls onProjectCreated on success
     - Modal for creating new project
     - Input field for project name with validation
     - "Create" and "Cancel" buttons
     - Use Radix UI Dialog component
     - Handle form submission with react-hook-form
   
-  - [ ] 4.9 Create project panel in `src/components/projects/project-panel.tsx`
+  - [x] 4.9 Create project panel in `src/components/projects/project-panel.tsx`
+    - ✅ Collapsible sidebar (320px width, default collapsed)
+    - ✅ Toggle button with folder icon
+    - ✅ Renders ProjectList component when expanded
+    - ✅ Smooth slide-in/out animation (300ms transition)
+    - ✅ Keyboard shortcut: Cmd/Ctrl+P to toggle
+    - ✅ Mobile overlay with backdrop blur
+    - ✅ Desktop fixed sidebar
+    - ✅ Scrollable content area
+    - ✅ Keyboard shortcut hint at bottom
     - Collapsible sidebar (default collapsed)
     - Toggle button with icon
     - Renders `<ProjectList>` when expanded
     - Slide animation with framer-motion
     - Keyboard shortcut: Cmd/Ctrl+P to toggle
   
-  - [ ] 4.10 Create `src/types/project.ts` for project types
+  - [x] 4.10 Create `src/types/project.ts` for project types
+    - ✅ `Project` interface matching Convex schema
+    - ✅ `ProjectMetadata` for lightweight list views
+    - ✅ `CanvasState`, `CanvasElement`, `ElementTransform` interfaces
+    - ✅ `CanvasViewport` for zoom and position state
+    - ✅ `CreateProjectResult`, `SaveProjectResult` interfaces
+    - ✅ Comprehensive TSDoc with examples
     - `Project` type matching Convex schema
     - `ProjectMetadata` type for UI display (id, name, thumbnailUrl, lastSavedAt, imageCount, videoCount)
     - `CanvasState` type extension with projectId field
   
-  - [ ] 4.11 Update `src/types/canvas.ts`
+  - [x] 4.11 Update `src/types/canvas.ts`
+    - ✅ Added optional `projectId?: string` field to CanvasState interface in src/lib/storage.ts
+    - ✅ Ensures canvas knows which project it belongs to
     - Add optional `projectId?: string` field to canvas state types
     - Ensures canvas knows which project it belongs to
 
