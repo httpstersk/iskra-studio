@@ -31,7 +31,7 @@ const authConfig = {
        * publishable key (e.g., from pk_test_abc123... extract the domain).
        *
        * @remarks
-       * Convex will automatically derive this from the Clerk JWT token's issuer.
+       * Must match the audience claim in Clerk's JWT tokens (typically "clerk").
        */
       applicationID: "convex",
 
