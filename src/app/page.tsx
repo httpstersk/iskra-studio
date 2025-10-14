@@ -439,14 +439,50 @@ export default function CanvasPage() {
           dismissToast(generation.toastId);
         }
 
+        // Upload generated video to Convex storage for permanent storage
+        let convexUrl = videoUrl;
+        if (isAuthenticated) {
+          try {
+            const video = canvasState.videos.find((v) => v.id === videoId);
+            
+            const { uploadGeneratedAssetToConvex } = await import(
+              "@/lib/storage/upload-generated-asset"
+            );
+            
+            const uploadResult = await uploadGeneratedAssetToConvex({
+              sourceUrl: videoUrl,
+              assetType: "video",
+              metadata: {
+                prompt: generation?.prompt,
+                width: video?.width,
+                height: video?.height,
+                duration,
+                model: generation?.modelId,
+              },
+            });
+            
+            convexUrl = uploadResult.url;
+            console.log(`[Video Generation] Uploaded to Convex:`, {
+              videoId,
+              storageId: uploadResult.storageId,
+              assetId: uploadResult.assetId,
+              isVariation: !!generation?.isVariation,
+            });
+          } catch (error) {
+            console.error(`[Video Generation] Failed to upload to Convex:`, error);
+            // Continue with original URL if Convex upload fails
+          }
+        }
+
         // Check if this is a variation - if so, update the placeholder
         if (generation?.isVariation) {
+
           canvasState.setVideos((prev) => {
             return prev.map((video) =>
               video.id === videoId
                 ? {
                     ...video,
-                    src: videoUrl,
+                    src: convexUrl,
                     duration,
                     isLoading: false,
                   }
@@ -478,7 +514,7 @@ export default function CanvasPage() {
         // Standard video generation (not variation)
         const { newVideo } = handleVideoCompletion(
           videoId,
-          videoUrl,
+          convexUrl,
           duration,
           generation || null,
           canvasState.images,
@@ -513,12 +549,14 @@ export default function CanvasPage() {
       }
     },
     [
-      canvasState.setVideos,
       canvasState.images,
+      canvasState.setVideos,
+      canvasState.videos,
       generationState.activeVideoGenerations,
       generationState.setActiveVideoGenerations,
       generationState.setIsConvertingToVideo,
       historyState.saveToHistory,
+      isAuthenticated,
       toast,
       uiState.selectedImageForVideo,
       uiState.setSelectedImageForVideo,
@@ -563,7 +601,7 @@ export default function CanvasPage() {
    * Handles completion of streaming image generation
    */
   const handleStreamingImageComplete = useCallback(
-    (id: string, finalUrl: string) => {
+    async (id: string, finalUrl: string) => {
       const isVariation = id.startsWith("variation-");
 
       let variationBatchTimestamp: string | null = null;
@@ -574,10 +612,44 @@ export default function CanvasPage() {
         }
       }
 
+      // Upload generated image to Convex storage for permanent storage
+      let convexUrl = finalUrl;
+      if (isAuthenticated) {
+        try {
+          const generation = generationState.activeGenerations.get(id);
+          const image = canvasState.images.find((img) => img.id === id);
+          
+          const { uploadGeneratedAssetToConvex } = await import(
+            "@/lib/storage/upload-generated-asset"
+          );
+          
+          const uploadResult = await uploadGeneratedAssetToConvex({
+            sourceUrl: finalUrl,
+            assetType: "image",
+            metadata: {
+              prompt: generation?.prompt,
+              width: image?.width,
+              height: image?.height,
+            },
+          });
+          
+          convexUrl = uploadResult.url;
+          console.log(`[Image Generation] Uploaded to Convex:`, {
+            imageId: id,
+            storageId: uploadResult.storageId,
+            assetId: uploadResult.assetId,
+            isVariation,
+          });
+        } catch (error) {
+          console.error(`[Image Generation] Failed to upload to Convex:`, error);
+          // Continue with fal-ai URL if Convex upload fails
+        }
+      }
+
       canvasState.setImages((prev) =>
         prev.map((img) =>
           img.id === id
-            ? { ...img, isLoading: false, opacity: 1.0, src: finalUrl }
+            ? { ...img, isLoading: false, opacity: 1.0, src: convexUrl }
             : img
         )
       );
@@ -609,10 +681,13 @@ export default function CanvasPage() {
       setTimeout(() => saveToStorage(), ANIMATION.SAVE_DELAY);
     },
     [
+      canvasState.images,
       canvasState.setImages,
       canvasState.setSelectedIds,
+      generationState.activeGenerations,
       generationState.setActiveGenerations,
       generationState.setIsGenerating,
+      isAuthenticated,
       saveToStorage,
     ]
   );
