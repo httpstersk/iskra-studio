@@ -57,6 +57,8 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 ### UI Components
 - `src/components/auth/sign-in-button.tsx` - **CREATED** ✅ - Clerk sign-in button with LogIn icon (68 lines)
 - `src/components/auth/user-menu.tsx` - **CREATED** ✅ - User dropdown with avatar, tier badge, storage quota, and sign-out (210 lines)
+- `src/components/auth/sign-in-prompt-dialog.tsx` - **CREATED** ✅ - Dialog prompting users to sign in before AI generation (134 lines)
+- `src/components/layout/canvas-header.tsx` - **CREATED** ✅ - Top navigation with auth, storage, and auto-save indicators (105 lines)
 - `src/components/projects/project-list.tsx` - **CREATED** ✅ - Project grid with responsive layout, loading/empty states
 - `src/components/projects/project-card.tsx` - **CREATED** ✅ - Project tile with thumbnail, metadata, rename/delete actions
 - `src/components/projects/project-dialog.tsx` - **CREATED** ✅ - New project creation modal with validation
@@ -69,7 +71,8 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `src/hooks/useNetworkStatus.ts` - **CREATED** ✅ - Network status hook with callbacks and notifications (116 lines)
 - `src/store/ui-atoms.ts` - **MODIFIED** ✅ - Added isOnlineAtom for global network status
 - `src/app/core-providers.tsx` - **MODIFIED** ✅ - Integrated NetworkStatusInitializer for app-wide monitoring
-- `src/app/page.tsx` - **MODIFY** - Integrate auth, projects, quotas into main canvas
+- `src/app/page.tsx` - **MODIFIED** ✅ - Integrated CanvasHeader, ProjectPanel, SignInPromptDialog, and authentication checks (Task 7.1)
+- `src/store/project-atoms.ts` - **MODIFIED** ✅ - Added autoSaveErrorAtom for error state tracking
 
 ### Rate Limiting
 - `src/lib/ratelimit/per-user-limiter.ts` - **CREATED** ✅ - User-based rate limiting using Upstash KV with userId as key (206 lines)
@@ -84,6 +87,8 @@ Generated from: `tasks/0001-prd-convex-storage-clerk-auth.md`
 - `src/lib/sync/sync-manager.ts` - **CREATED** ✅ - Sync manager with queue, retry logic, and online/offline detection (459 lines)
 - `src/lib/sync/conflict-resolver.ts` - **CREATED** ✅ - Conflict resolution with last-write-wins strategy (244 lines)
 - `src/hooks/useStorage.ts` - **MODIFIED** ✅ - Integrated sync manager for bidirectional IndexedDB-Convex sync
+- `src/hooks/useQuota.ts` - **MODIFIED** ✅ - Fixed import path for Convex API (relative import)
+- `src/hooks/useAutoSave.ts` - **MODIFIED** ✅ - Fixed import path for useToast and Project.id reference
 
 ### Type Definitions
 - `src/types/auth.ts` - **CREATED** ✅ - User, UserTier, StorageQuota types (78 lines)
@@ -669,12 +674,17 @@ Below are the high-level tasks required to implement the Convex storage and Cler
     - ✅ Callbacks for onOnline and onOffline events
 
 - [ ] 7.0 **End-to-End Integration & Testing**
-  - [ ] 7.1 Integrate authentication into main canvas page (`src/app/page.tsx`)
-    - Add `<SignInButton>` to navigation when not authenticated
-    - Add `<UserMenu>` to navigation when authenticated
-    - Show storage indicator in UI
-    - Add project panel toggle button
-    - Block AI generation for non-authenticated users with sign-in prompt
+  - [x] 7.1 Integrate authentication into main canvas page (`src/app/page.tsx`)
+    - ✅ Created `CanvasHeader` component with SignInButton/UserMenu based on auth state
+    - ✅ Added `SignInPromptDialog` for blocking unauthenticated AI generation
+    - ✅ Integrated `ProjectPanel` with project loading functionality
+    - ✅ Added auto-save indicator with status from Jotai atoms
+    - ✅ Added offline indicator
+    - ✅ Added storage indicator for authenticated users
+    - ✅ Block AI generation (handleRun) for non-authenticated users
+    - ✅ Block video generation (handleConvertToVideo) for non-authenticated users
+    - ✅ Adjusted layout with pt-14 to account for fixed header
+    - ✅ Added autoSaveErrorAtom to project-atoms for error state tracking
   
   - [ ] 7.2 Test complete user flow: Anonymous → Sign-up → Generate → Save
     - Open app as anonymous user

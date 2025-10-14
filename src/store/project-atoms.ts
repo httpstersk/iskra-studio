@@ -103,6 +103,22 @@ export const projectLoadingAtom = atom<boolean>(false);
 export const canvasDirtyAtom = atom<boolean>(false);
 
 /**
+ * Auto-save error message.
+ * 
+ * Error message from the last failed save attempt, or null if no error.
+ * Used to display error state in auto-save indicator.
+ * 
+ * @remarks
+ * Set when:
+ * - Save operation fails with error
+ * 
+ * Cleared when:
+ * - Next save attempt starts
+ * - Save succeeds
+ */
+export const autoSaveErrorAtom = atom<string | null>(null);
+
+/**
  * Derived atom for current project ID.
  * 
  * Returns the ID of the current project, or null if no project is loaded.

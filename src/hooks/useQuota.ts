@@ -2,7 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { useEffect, useState } from "react";
-import { api } from "@/convex/_generated/api";
+import { api } from "../../convex/_generated/api";
 import { useAuth } from "./useAuth";
 import { calculateStorageQuota } from "@/utils/quota-utils";
 import type { StorageQuota } from "@/types/auth";

@@ -9,7 +9,7 @@
 
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useProjects } from "./useProjects";
 import {
   activeGenerationsAtom,
@@ -180,7 +180,7 @@ export function useAutoSave(
 
       // Save project
       await saveProject(
-        currentProjectState._id as Id<"projects">,
+        currentProjectState.id as Id<"projects">,
         canvasState,
         thumbnailStorageId
       );

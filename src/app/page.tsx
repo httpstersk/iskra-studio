@@ -5,6 +5,7 @@
  * Provides an infinite canvas for image and video manipulation with AI generation capabilities
  */
 
+import { SignInPromptDialog } from "@/components/auth/sign-in-prompt-dialog";
 import { CanvasContextMenu } from "@/components/canvas/CanvasContextMenu";
 import { CanvasControlPanel } from "@/components/canvas/CanvasControlPanel";
 import { CanvasDialogs } from "@/components/canvas/CanvasDialogs";
@@ -15,9 +16,12 @@ import { StreamingImage } from "@/components/canvas/StreamingImage";
 import { StreamingVideo } from "@/components/canvas/StreamingVideo";
 import { VideoOverlays } from "@/components/canvas/VideoOverlays";
 import { ZoomControls } from "@/components/canvas/ZoomControls";
+import { CanvasHeader } from "@/components/layout/canvas-header";
+import { ProjectPanel } from "@/components/projects/project-panel";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { ANIMATION, ARIA_LABELS, CANVAS_STRINGS } from "@/constants/canvas";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
 import { useCanvasState } from "@/hooks/useCanvasState-jotai";
 import { useDefaultImages } from "@/hooks/useDefaultImages";
@@ -26,6 +30,7 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useGenerationState } from "@/hooks/useGenerationState-jotai";
 import { useHistoryState } from "@/hooks/useHistoryState-jotai";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useProjects } from "@/hooks/useProjects";
 import { useStorage } from "@/hooks/useStorage";
 import { useUIState } from "@/hooks/useUIState-jotai";
 import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
@@ -49,7 +54,7 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import Konva from "konva";
 import { useTheme } from "next-themes";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 
 /**
  * Main Canvas Page Component
@@ -77,6 +82,13 @@ export default function CanvasPage() {
     canvasState.selectedIds
   );
   const uiState = useUIState();
+
+  // Authentication
+  const { isAuthenticated } = useAuth();
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+
+  // Projects
+  const projects = useProjects();
 
   const interactions = useCanvasInteractions(
     canvasState.viewport,
@@ -284,6 +296,12 @@ export default function CanvasPage() {
    * Otherwise, performs standard text-to-image or image-to-image generation
    */
   const handleRun = useCallback(async () => {
+    // Block generation for non-authenticated users
+    if (!isAuthenticated) {
+      setShowSignInPrompt(true);
+      return;
+    }
+
     const isVariationMode =
       canvasState.selectedIds.length === 1 &&
       (uiState.variationMode === "image" || uiState.variationMode === "video");
@@ -328,6 +346,7 @@ export default function CanvasPage() {
       });
     }
   }, [
+    isAuthenticated,
     canvasState.canvasSize,
     canvasState.images,
     canvasState.selectedIds,
@@ -391,12 +410,18 @@ export default function CanvasPage() {
    */
   const handleConvertToVideo = useCallback(
     (imageId: string) => {
+      // Block video generation for non-authenticated users
+      if (!isAuthenticated) {
+        setShowSignInPrompt(true);
+        return;
+      }
+
       const image = canvasState.images.find((img) => img.id === imageId);
       if (!image) return;
       uiState.setIsImageToVideoDialogOpen(true);
       uiState.setSelectedImageForVideo(imageId);
     },
-    [canvasState.images, uiState]
+    [isAuthenticated, canvasState.images, uiState]
   );
 
   /**
@@ -677,6 +702,39 @@ export default function CanvasPage() {
       role="application"
       style={{ height: "100dvh" }}
     >
+      {/* Header with authentication and storage */}
+      <CanvasHeader />
+
+      {/* Project panel for authenticated users */}
+      {isAuthenticated && (
+        <ProjectPanel
+          onOpenProject={async (projectId) => {
+            try {
+              await projects.loadProject(projectId as any);
+              toast({
+                title: "Project loaded",
+                description: "Your project has been loaded successfully.",
+              });
+            } catch (error) {
+              console.error("Failed to load project:", error);
+              toast({
+                title: "Failed to load project",
+                description:
+                  error instanceof Error
+                    ? error.message
+                    : "An error occurred while loading the project.",
+                variant: "destructive",
+              });
+            }
+          }}
+        />
+      )}
+
+      {/* Sign-in prompt dialog */}
+      <SignInPromptDialog
+        open={showSignInPrompt}
+        onOpenChange={setShowSignInPrompt}
+      />
       {/* Streaming Generation Components */}
       {Array.from(generationState.activeGenerations.entries()).map(
         ([imageId, generation]) => (
@@ -704,7 +762,7 @@ export default function CanvasPage() {
         )
       )}
 
-      <main className="flex-1 relative flex items-center justify-center w-full">
+      <main className="flex-1 relative flex items-center justify-center w-full pt-14">
         <div className="relative w-full h-full">
           <ContextMenu>
             <ContextMenuTrigger asChild>
