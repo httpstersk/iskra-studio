@@ -100,11 +100,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Convert .convex.cloud to .convex.site for HTTP actions
+    const convexSiteUrl = convexUrl.replace('.convex.cloud', '.convex.site');
+
     // Upload file to Convex storage via HTTP action
     // Send as raw blob, not FormData
     const blob = await file.arrayBuffer();
 
-    const uploadResponse = await fetch(`${convexUrl}/upload`, {
+    const uploadResponse = await fetch(`${convexSiteUrl}/upload`, {
       body: blob,
       method: "POST",
       headers: {
@@ -118,7 +121,7 @@ export async function POST(req: NextRequest) {
         status: uploadResponse.status,
         statusText: uploadResponse.statusText,
         errorText,
-        uploadUrl: `${convexUrl}/upload`,
+        uploadUrl: `${convexSiteUrl}/upload`,
       });
       throw new Error(
         `Convex upload failed (${uploadResponse.status}): ${errorText}`
@@ -145,24 +148,42 @@ export async function POST(req: NextRequest) {
 
     // Extract metadata from form data if provided
     const metadataStr = formData.get("metadata") as string | null;
-    const metadata = metadataStr ? JSON.parse(metadataStr) : {};
+    const rawMetadata = metadataStr ? JSON.parse(metadataStr) : {};
 
-    // Get image/video dimensions if provided
-    const width = formData.get("width");
-    const height = formData.get("height");
-    const duration = formData.get("duration");
+    // Extract width/height from metadata if present (for backward compatibility)
+    // They should be passed as separate fields, not in metadata
+    const widthFromForm = formData.get("width");
+    const heightFromForm = formData.get("height");
+    const durationFromForm = formData.get("duration");
+
+    const width = widthFromForm
+      ? parseInt(widthFromForm as string)
+      : rawMetadata.width;
+    const height = heightFromForm
+      ? parseInt(heightFromForm as string)
+      : rawMetadata.height;
+    const duration = durationFromForm
+      ? parseFloat(durationFromForm as string)
+      : rawMetadata.duration;
+
+    // Clean metadata to only include schema-valid fields (model, prompt, seed)
+    const metadata = {
+      ...(rawMetadata.model && { model: rawMetadata.model }),
+      ...(rawMetadata.prompt && { prompt: rawMetadata.prompt }),
+      ...(rawMetadata.seed !== undefined && { seed: rawMetadata.seed }),
+    };
 
     // Call uploadAsset mutation to create database record
     const assetId = await convexClient.mutation(api.assets.uploadAsset, {
-      duration: duration ? parseFloat(duration as string) : undefined,
-      height: height ? parseInt(height as string) : undefined,
-      metadata: metadata || {},
+      duration: duration || undefined,
+      height: height || undefined,
+      metadata,
       mimeType,
       sizeBytes: file.size,
       storageId,
       type: assetType,
       userId,
-      width: width ? parseInt(width as string) : undefined,
+      width: width || undefined,
     });
 
     const result: AssetUploadResult = {
