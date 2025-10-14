@@ -1,19 +1,19 @@
 /**
  * Project panel component for sidebar navigation.
- * 
+ *
  * Collapsible sidebar that displays the project list.
  * Supports keyboard shortcut (Cmd/Ctrl+P) when external toggle handler is provided.
  */
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Folder, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { ProjectList } from "./project-list";
-import { ProjectDialog } from "./project-dialog";
 import { useProjects } from "@/hooks/useProjects";
+import { cn } from "@/lib/utils";
+import { Plus, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ProjectDialog } from "./project-dialog";
+import { ProjectList } from "./project-list";
 
 /**
  * Props for ProjectPanel component.
@@ -31,10 +31,10 @@ interface ProjectPanelProps {
 
 /**
  * Project panel sidebar component.
- * 
+ *
  * Collapsible sidebar that shows the project list.
  * Supports keyboard shortcut (Cmd/Ctrl+P) to toggle panel when onToggle is provided.
- * 
+ *
  * @remarks
  * - Controlled component: uses isOpen prop for state
  * - Width: 320px when expanded
@@ -42,7 +42,7 @@ interface ProjectPanelProps {
  * - Smooth slide-in/out animation
  * - Overlay on mobile (< 768px)
  * - Fixed sidebar on desktop (>= 768px)
- * 
+ *
  * @example
  * ```tsx
  * <ProjectPanel
@@ -125,11 +125,9 @@ export function ProjectPanel({
         <div className="border-b border-border/50 px-5 py-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                <Folder className="h-4 w-4 text-foreground" />
-                Library
-              </div>
-              <h2 className="mt-2 text-xl font-semibold text-foreground">Projects</h2>
+              <h2 className="text-xl font-semibold text-foreground">
+                Projects
+              </h2>
               <p className="text-xs text-muted-foreground">{projectSummary}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -171,7 +169,11 @@ export function ProjectPanel({
         </div>
 
         <div className="pointer-events-none relative z-10 mx-5 mb-5 rounded-lg border border-dashed border-border/50 bg-secondary/40 px-4 py-4 text-center text-xs text-muted-foreground">
-          Press <kbd className="rounded bg-input px-2 py-1 text-[11px] uppercase tracking-[0.2em]">Cmd/Ctrl+P</kbd> to toggle
+          Press{" "}
+          <kbd className="rounded bg-input px-2 py-1 text-[11px] uppercase tracking-[0.2em]">
+            Cmd/Ctrl+P
+          </kbd>{" "}
+          to toggle
         </div>
       </div>
 
