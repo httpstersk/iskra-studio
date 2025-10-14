@@ -16,7 +16,7 @@ import {
   projectLoadingAtom,
 } from "@/store/project-atoms";
 import type { Project, ProjectMetadata } from "@/types/project";
-import { useMutation, useQuery } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 import { api } from "../../convex/_generated/api";
@@ -113,6 +113,7 @@ export function useProjects(): UseProjectsReturn {
 
   // Auth check
   const { isAuthenticated } = useAuth();
+  const convex = useConvex();
 
   // Convex mutations
   const createProjectMutation = useMutation(api.projects.createProject);
@@ -152,6 +153,31 @@ export function useProjects(): UseProjectsReturn {
     }
   }, [projectsQuery, setProjectList]);
 
+  useEffect(() => {
+    if (!getProjectQuery) {
+      return;
+    }
+
+    const normalizedProject: Project = {
+      ...getProjectQuery,
+      id: getProjectQuery._id,
+    };
+
+    setCurrentProject((prev) => {
+      if (
+        prev &&
+        prev._id === normalizedProject._id &&
+        prev.updatedAt === normalizedProject.updatedAt &&
+        prev.lastSavedAt === normalizedProject.lastSavedAt
+      ) {
+        return prev;
+      }
+      return normalizedProject;
+    });
+
+    setLastSavedAt(normalizedProject.lastSavedAt ?? null);
+  }, [getProjectQuery, setCurrentProject, setLastSavedAt]);
+
   /**
    * Creates a new project.
    */
@@ -180,22 +206,60 @@ export function useProjects(): UseProjectsReturn {
       try {
         setIsLoading(true);
 
-        // Note: In a real implementation, we would fetch the project here
-        // For now, we'll rely on the query to update
-        // The project will be set via getProjectQuery
+        const project = await convex.query(api.projects.getProject, {
+          projectId,
+        });
 
-        // This is a simplified version - you may want to add explicit fetching
-        throw new Error(
-          "loadProject not yet fully implemented - use getProject query"
-        );
+        if (!project) {
+          throw new Error("Project not found");
+        }
+
+        const normalizedProject: Project = {
+          ...project,
+          id: project._id,
+        };
+
+        setCurrentProject(normalizedProject);
+        setLastSavedAt(normalizedProject.lastSavedAt ?? null);
+
+        setProjectList((prev) => {
+          const metadata: ProjectMetadata = {
+            id: project._id,
+            name: project.name,
+            createdAt: project.createdAt,
+            lastSavedAt: project.lastSavedAt,
+            thumbnailUrl: project.thumbnailUrl,
+            imageCount: project.canvasState.elements.filter(
+              (el) => el.type === "image"
+            ).length,
+            videoCount: project.canvasState.elements.filter(
+              (el) => el.type === "video"
+            ).length,
+          };
+
+          const existingIndex = prev.findIndex((p) => p.id === project._id);
+          if (existingIndex === -1) {
+            return [metadata, ...prev].sort(
+              (a, b) => b.lastSavedAt - a.lastSavedAt
+            );
+          }
+
+          const updated = [...prev];
+          updated[existingIndex] = metadata;
+          return updated.sort((a, b) => b.lastSavedAt - a.lastSavedAt);
+        });
       } catch (error) {
         console.error("Failed to load project:", error);
-        throw error;
+        throw new Error(
+          `Project load failed: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       } finally {
         setIsLoading(false);
       }
     },
-    [setIsLoading]
+    [convex, setCurrentProject, setIsLoading, setLastSavedAt, setProjectList]
   );
 
   /**

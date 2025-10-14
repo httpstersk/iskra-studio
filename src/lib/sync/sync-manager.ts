@@ -8,7 +8,7 @@
 import { ConvexReactClient } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { canvasStorage, type CanvasState } from "../storage";
+import { canvasStorage, type CanvasElement, type CanvasState } from "../storage";
 import { resolveConflict } from "./conflict-resolver";
 
 /**
@@ -73,6 +73,60 @@ export class SyncManager {
     this.convexClient = convexClient;
     this.loadQueue();
     this.setupNetworkListeners();
+  }
+
+  /**
+   * Removes local-only fields from a canvas state before sending to Convex.
+   */
+  private sanitizeCanvasState(state: CanvasState) {
+    const sanitizeElement = (element: CanvasElement) => ({
+      id: element.id,
+      type: element.type,
+      transform: {
+        rotation: element.transform.rotation,
+        scale: element.transform.scale,
+        x: element.transform.x,
+        y: element.transform.y,
+      },
+      zIndex: element.zIndex,
+      ...(element.imageId ? { imageId: element.imageId } : {}),
+      ...(element.videoId ? { videoId: element.videoId } : {}),
+      ...(typeof element.width === "number" ? { width: element.width } : {}),
+      ...(typeof element.height === "number" ? { height: element.height } : {}),
+      ...(typeof element.duration === "number"
+        ? { duration: element.duration }
+        : {}),
+      ...(typeof element.currentTime === "number"
+        ? { currentTime: element.currentTime }
+        : {}),
+      ...(typeof element.isPlaying === "boolean"
+        ? { isPlaying: element.isPlaying }
+        : {}),
+      ...(typeof element.volume === "number" ? { volume: element.volume } : {}),
+      ...(typeof element.muted === "boolean" ? { muted: element.muted } : {}),
+    });
+
+    const {
+      backgroundColor,
+      elements,
+      lastModified,
+      viewport,
+    } = state;
+
+    return {
+      ...(backgroundColor ? { backgroundColor } : {}),
+      elements: (elements ?? []).map(sanitizeElement),
+      lastModified,
+      ...(viewport
+        ? {
+            viewport: {
+              scale: viewport.scale,
+              x: viewport.x,
+              y: viewport.y,
+            },
+          }
+        : {}),
+    };
   }
 
   /**
@@ -194,7 +248,7 @@ export class SyncManager {
       // Save to Convex
       await this.convexClient.mutation(api.projects.saveProject, {
         projectId,
-        canvasState: updatedState,
+        canvasState: this.sanitizeCanvasState(updatedState),
         thumbnailStorageId,
       });
 
