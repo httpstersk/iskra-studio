@@ -5,23 +5,6 @@
  * Provides an infinite canvas for image and video manipulation with AI generation capabilities
  */
 
-import { useToast } from "@/hooks/use-toast";
-import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
-import { useCanvasState } from "@/hooks/useCanvasState-jotai";
-import { useFalClient } from "@/hooks/useFalClient";
-import { useFileUpload } from "@/hooks/useFileUpload";
-import { useGenerationState } from "@/hooks/useGenerationState-jotai";
-import { useHistoryState } from "@/hooks/useHistoryState-jotai";
-import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { useStorage } from "@/hooks/useStorage";
-import { useUIState } from "@/hooks/useUIState-jotai";
-import { useTRPC } from "@/trpc/client";
-import { useMutation } from "@tanstack/react-query";
-import Konva from "konva";
-import { useTheme } from "next-themes";
-import { useCallback, useRef } from "react";
-
-// Components
 import { CanvasContextMenu } from "@/components/canvas/CanvasContextMenu";
 import { CanvasControlPanel } from "@/components/canvas/CanvasControlPanel";
 import { CanvasDialogs } from "@/components/canvas/CanvasDialogs";
@@ -33,8 +16,18 @@ import { StreamingVideo } from "@/components/canvas/StreamingVideo";
 import { VideoOverlays } from "@/components/canvas/VideoOverlays";
 import { ZoomControls } from "@/components/canvas/ZoomControls";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
-
-// Handlers
+import { ANIMATION, ARIA_LABELS, CANVAS_STRINGS } from "@/constants/canvas";
+import { useToast } from "@/hooks/use-toast";
+import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
+import { useCanvasState } from "@/hooks/useCanvasState-jotai";
+import { useDefaultImages } from "@/hooks/useDefaultImages";
+import { useFalClient } from "@/hooks/useFalClient";
+import { useFileUpload } from "@/hooks/useFileUpload";
+import { useGenerationState } from "@/hooks/useGenerationState-jotai";
+import { useHistoryState } from "@/hooks/useHistoryState-jotai";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useStorage } from "@/hooks/useStorage";
+import { useUIState } from "@/hooks/useUIState-jotai";
 import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
 import {
   combineImages,
@@ -49,17 +42,14 @@ import {
 } from "@/lib/handlers/layer-handlers";
 import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
 import {
-  createGenerationId,
-  createImageToVideoConfig,
   dismissToast,
   handleVideoCompletion,
-  uploadMediaIfNeeded,
 } from "@/lib/handlers/video-generation-handlers";
-
-// Types & Utils
-import { ANIMATION, ARIA_LABELS, CANVAS_STRINGS } from "@/constants/canvas";
-import { useDefaultImages } from "@/hooks/useDefaultImages";
-import type { VideoGenerationSettings } from "@/types/canvas";
+import { useTRPC } from "@/trpc/client";
+import { useMutation } from "@tanstack/react-query";
+import Konva from "konva";
+import { useTheme } from "next-themes";
+import { useCallback, useRef } from "react";
 
 /**
  * Main Canvas Page Component
@@ -84,7 +74,7 @@ export default function CanvasPage() {
   const historyState = useHistoryState(
     canvasState.images,
     canvasState.videos,
-    canvasState.selectedIds,
+    canvasState.selectedIds
   );
   const uiState = useUIState();
 
@@ -95,7 +85,7 @@ export default function CanvasPage() {
     canvasState.images,
     canvasState.videos,
     canvasState.selectedIds,
-    canvasState.setSelectedIds,
+    canvasState.setSelectedIds
   );
 
   const { isStorageLoaded, saveToStorage } = useStorage(
@@ -105,18 +95,18 @@ export default function CanvasPage() {
     canvasState.setImages,
     canvasState.setVideos,
     canvasState.setViewport,
-    generationState.activeGenerations.size,
+    generationState.activeGenerations.size
   );
 
   const { handleDrop, handleFileUpload } = useFileUpload(
     canvasState.setImages,
     canvasState.viewport,
-    canvasState.canvasSize,
+    canvasState.canvasSize
   );
 
   // API mutations
   const { mutateAsync: generateTextToImage } = useMutation(
-    trpc.generateTextToImage.mutationOptions(),
+    trpc.generateTextToImage.mutationOptions()
   );
 
   // Load default images
@@ -124,7 +114,7 @@ export default function CanvasPage() {
     isStorageLoaded,
     canvasState.images.length,
     canvasState.canvasSize,
-    canvasState.setImages,
+    canvasState.setImages
   );
 
   // ========================================
@@ -178,7 +168,7 @@ export default function CanvasPage() {
     if (canvasState.selectedIds.length === 0) return;
     historyState.saveToHistory();
     canvasState.setImages(
-      bringForwardHandler(canvasState.images, canvasState.selectedIds),
+      bringForwardHandler(canvasState.images, canvasState.selectedIds)
     );
   }, [canvasState, historyState]);
 
@@ -192,7 +182,7 @@ export default function CanvasPage() {
     try {
       const combinedImage = await combineImages(
         canvasState.images,
-        canvasState.selectedIds,
+        canvasState.selectedIds
       );
       canvasState.setImages((prev) => [
         ...prev.filter((img) => !canvasState.selectedIds.includes(img.id)),
@@ -220,7 +210,7 @@ export default function CanvasPage() {
     const { newImages, newVideos } = deleteElements(
       canvasState.images,
       canvasState.videos,
-      canvasState.selectedIds,
+      canvasState.selectedIds
     );
     canvasState.setImages(newImages);
     canvasState.setSelectedIds([]);
@@ -235,7 +225,7 @@ export default function CanvasPage() {
     const { newImages, newVideos } = duplicateElements(
       canvasState.images,
       canvasState.videos,
-      canvasState.selectedIds,
+      canvasState.selectedIds
     );
     canvasState.setImages((prev) => [...prev, ...newImages]);
     canvasState.setVideos((prev) => [...prev, ...newVideos]);
@@ -271,7 +261,7 @@ export default function CanvasPage() {
         uiState.setGenerationCount(newCount);
       }
     },
-    [canvasState.selectedIds, uiState],
+    [canvasState.selectedIds, uiState]
   );
 
   /**
@@ -285,7 +275,7 @@ export default function CanvasPage() {
         uiState.setGenerationCount(4);
       }
     },
-    [uiState],
+    [uiState]
   );
 
   /**
@@ -349,7 +339,7 @@ export default function CanvasPage() {
     if (canvasState.selectedIds.length === 0) return;
     historyState.saveToHistory();
     canvasState.setImages(
-      sendBackwardHandler(canvasState.images, canvasState.selectedIds),
+      sendBackwardHandler(canvasState.images, canvasState.selectedIds)
     );
   }, [canvasState, historyState]);
 
@@ -360,7 +350,7 @@ export default function CanvasPage() {
     if (canvasState.selectedIds.length === 0) return;
     historyState.saveToHistory();
     canvasState.setImages(
-      sendToBackHandler(canvasState.images, canvasState.selectedIds),
+      sendToBackHandler(canvasState.images, canvasState.selectedIds)
     );
   }, [canvasState, historyState]);
 
@@ -371,7 +361,7 @@ export default function CanvasPage() {
     if (canvasState.selectedIds.length === 0) return;
     historyState.saveToHistory();
     canvasState.setImages(
-      sendToFrontHandler(canvasState.images, canvasState.selectedIds),
+      sendToFrontHandler(canvasState.images, canvasState.selectedIds)
     );
   }, [canvasState, historyState]);
 
@@ -390,57 +380,12 @@ export default function CanvasPage() {
   };
 
   /**
-   * Handles image-to-video conversion
-   */
-  const handleImageToVideoConversion = async (
-    settings: VideoGenerationSettings,
-  ) => {
-    if (!uiState.selectedImageForVideo) return;
-    const image = canvasState.images.find(
-      (img) => img.id === uiState.selectedImageForVideo,
-    );
-    if (!image) return;
-
-    try {
-      generationState.setIsConvertingToVideo(true);
-
-      const imageUrl = await uploadMediaIfNeeded(image.src, falClient);
-      const generationId = createGenerationId("img2vid");
-      const config = createImageToVideoConfig(
-        imageUrl,
-        settings,
-        uiState.selectedImageForVideo,
-      );
-
-      generationState.setActiveVideoGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(generationId, config);
-        return newMap;
-      });
-
-      generationState.setIsConvertingToVideo(false);
-      uiState.setIsImageToVideoDialogOpen(false);
-    } catch (error) {
-      console.error("Error starting image-to-video conversion:", error);
-      toast({
-        description:
-          error instanceof Error
-            ? error.message
-            : CANVAS_STRINGS.ERRORS.CONVERSION_START_FAILED,
-        title: CANVAS_STRINGS.ERRORS.CONVERSION_FAILED,
-        variant: "destructive",
-      });
-      generationState.setIsConvertingToVideo(false);
-    }
-  };
-
-  /**
    * Handles completion of video generation
    */
   const handleVideoGenerationComplete = async (
     videoId: string,
     videoUrl: string,
-    duration: number,
+    duration: number
   ) => {
     try {
       const generation = generationState.activeVideoGenerations.get(videoId);
@@ -460,7 +405,7 @@ export default function CanvasPage() {
                   duration,
                   isLoading: false,
                 }
-              : video,
+              : video
           );
         });
 
@@ -492,7 +437,7 @@ export default function CanvasPage() {
         duration,
         generation || null,
         canvasState.images,
-        uiState.selectedImageForVideo,
+        uiState.selectedImageForVideo
       );
 
       if (newVideo) {
@@ -546,7 +491,7 @@ export default function CanvasPage() {
   const handleVideoGenerationProgress = (
     videoId: string,
     progress: number,
-    status: string,
+    status: string
   ) => {
     console.log(`Video generation progress: ${progress}% - ${status}`);
   };
@@ -614,8 +559,8 @@ export default function CanvasPage() {
                 prev.map((img) =>
                   img.id === id
                     ? { ...img, src: finalUrl, isLoading: false, opacity: 1.0 }
-                    : img,
-                ),
+                    : img
+                )
               );
 
               generationState.setActiveGenerations((prev) => {
@@ -627,7 +572,7 @@ export default function CanvasPage() {
                   // Check if there are any more variations from the same batch still generating
                   const hasMoreFromBatch = Array.from(newMap.keys()).some(
                     (key) =>
-                      key.startsWith(`variation-${variationBatchTimestamp}-`),
+                      key.startsWith(`variation-${variationBatchTimestamp}-`)
                   );
 
                   // If no more variations from this batch, deselect the source image
@@ -655,7 +600,7 @@ export default function CanvasPage() {
 
               // Remove the failed image from canvas
               canvasState.setImages((prev) =>
-                prev.filter((img) => img.id !== id),
+                prev.filter((img) => img.id !== id)
               );
 
               // Remove from active generations
@@ -685,11 +630,11 @@ export default function CanvasPage() {
             }}
             onStreamingUpdate={(id, url) => {
               canvasState.setImages((prev) =>
-                prev.map((img) => (img.id === id ? { ...img, src: url } : img)),
+                prev.map((img) => (img.id === id ? { ...img, src: url } : img))
               );
             }}
           />
-        ),
+        )
       )}
 
       {Array.from(generationState.activeVideoGenerations.entries()).map(
@@ -702,7 +647,7 @@ export default function CanvasPage() {
             onProgress={handleVideoGenerationProgress}
             videoId={id}
           />
-        ),
+        )
       )}
 
       <main className="flex-1 relative flex items-center justify-center w-full">
@@ -785,7 +730,7 @@ export default function CanvasPage() {
           {/* Dimension Display */}
           <DimensionDisplay
             selectedImages={canvasState.images.filter((img) =>
-              canvasState.selectedIds.includes(img.id),
+              canvasState.selectedIds.includes(img.id)
             )}
             viewport={canvasState.viewport}
           />
@@ -823,9 +768,6 @@ export default function CanvasPage() {
 
       {/* All Dialogs */}
       <CanvasDialogs
-        handleImageToVideoConversion={handleImageToVideoConversion}
-        images={canvasState.images}
-        isConvertingToVideo={generationState.isConvertingToVideo}
         isImageToVideoDialogOpen={uiState.isImageToVideoDialogOpen}
         isSettingsDialogOpen={uiState.isSettingsDialogOpen}
         selectedImageForVideo={uiState.selectedImageForVideo}
@@ -838,10 +780,6 @@ export default function CanvasPage() {
         showGrid={uiState.showGrid}
         showMinimap={uiState.showMinimap}
         theme={theme}
-        toast={toast}
-        useSoraPro={generationState.useSoraPro}
-        videoDuration={generationState.videoDuration}
-        videoResolution={generationState.videoResolution}
       />
 
       {/* Video Overlays */}
