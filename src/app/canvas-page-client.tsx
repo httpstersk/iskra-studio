@@ -687,6 +687,7 @@ export function CanvasPageClient() {
 
       {isAuthenticated && (
         <ProjectPanel
+          currentProjectId={projects.currentProject?._id}
           isOpen={isProjectsPanelOpen}
           onToggle={() => setIsProjectsPanelOpen(!isProjectsPanelOpen)}
           onOpenProject={async (projectId) => {

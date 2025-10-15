@@ -59,7 +59,7 @@ export const VIDEO_DEFAULTS = {
 } as const;
 
 export const DEFAULT_IMAGES = {
-  PATHS: ["/egg.jpeg"],
+  PATHS: [""],
 } as const;
 
 export const ANIMATION = {

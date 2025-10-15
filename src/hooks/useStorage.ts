@@ -22,14 +22,14 @@ export function useStorage(
   setImages: (images: PlacedImage[]) => void,
   setVideos: (videos: PlacedVideo[]) => void,
   setViewport: (viewport: Viewport) => void,
-  activeGenerationsSize: number,
+  activeGenerationsSize: number
 ) {
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const convexClient = useConvex();
   const currentProject = useAtomValue(currentProjectAtom);
   const { toast } = useToast();
-  
+
   // Use ref to store syncManager to ensure proper cleanup
   const syncManagerRef = useRef(createSyncManager(convexClient));
 
@@ -49,7 +49,7 @@ export function useStorage(
           ...images.map(imageToCanvasElement),
           ...videos.map(videoToCanvasElement),
         ],
-        backgroundColor: "#ffffff",
+        backgroundColor: "#000",
         lastModified: Date.now(),
         viewport: viewport,
         projectId: currentProject?._id as string | undefined,
@@ -77,29 +77,33 @@ export function useStorage(
       }
 
       await canvasStorage.cleanupOldData();
-      
+
       // Sync to Convex if project is loaded
       if (currentProject?._id) {
         const syncResult = await syncManagerRef.current.syncToConvex(
           currentProject._id as Id<"projects">,
           canvasState
         );
-        
+
         if (!syncResult.success) {
           // Don't show error toast for offline scenarios - offline indicator will handle it
           if (!syncResult.error?.includes("Offline")) {
             toast({
-              description: "Your changes are saved locally but couldn't sync to cloud",
+              description:
+                "Your changes are saved locally but couldn't sync to cloud",
               title: "Sync failed",
               variant: "destructive",
             });
           }
         }
       }
-      
+
       // Debounce hiding the saving indicator to prevent flashing UI
       // setTimeout necessary here for precise timing delay, not animation-dependent
-      setTimeout(() => setIsSaving(false), UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS);
+      setTimeout(
+        () => setIsSaving(false),
+        UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS
+      );
     } catch (error) {
       console.error("Failed to save to storage:", error);
       setIsSaving(false);
@@ -113,15 +117,16 @@ export function useStorage(
         const syncResult = await syncManagerRef.current.syncFromConvex(
           currentProject._id as Id<"projects">
         );
-        
+
         if (!syncResult.success) {
           toast({
-            description: "Loading local version, couldn't fetch latest from cloud",
+            description:
+              "Loading local version, couldn't fetch latest from cloud",
             title: "Sync warning",
           });
         }
       }
-      
+
       const canvasState = canvasStorage.getCanvasState();
       if (!canvasState) {
         setIsStorageLoaded(true);
@@ -207,7 +212,14 @@ export function useStorage(
     }, UI_CONSTANTS.STORAGE_SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [activeGenerationsSize, images, isStorageLoaded, saveToStorage, videos, viewport]);
+  }, [
+    activeGenerationsSize,
+    images,
+    isStorageLoaded,
+    saveToStorage,
+    videos,
+    viewport,
+  ]);
 
   return {
     isStorageLoaded,
