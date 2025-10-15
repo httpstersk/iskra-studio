@@ -9,7 +9,7 @@
  */
 
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
-import type { CanvasElement } from "@/lib/storage";
+import type { CanvasElement } from "@/types/project";
 
 /**
  * Viewport state representing the current view of the canvas.
