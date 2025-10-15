@@ -13,7 +13,7 @@ import {
 } from "@/constants/control-panel";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 import { checkOS } from "@/utils/os-utils";
-import React, { useCallback, type KeyboardEvent } from "react";
+import React, { useCallback, useState, type KeyboardEvent } from "react";
 
 /**
  * Props for the PromptInput component
@@ -40,6 +40,7 @@ export const PromptInput = React.memo(function PromptInput({
   setGenerationSettings,
 }: PromptInputProps) {
   const hasSelection = selectedIds.length > 0;
+  const [isFocused, setIsFocused] = useState(false);
 
   /**
    * Handles keyboard shortcuts for generation
@@ -91,10 +92,17 @@ export const PromptInput = React.memo(function PromptInput({
           className="w-full h-16 resize-none border-none p-2 pr-24"
           onChange={(e) => handleVariationPromptChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={CONTROL_PANEL_STRINGS.VARIATION_PLACEHOLDER}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           style={{ fontSize: "16px" }}
           value={generationSettings.variationPrompt || ""}
         />
+
+        {!isFocused && !((generationSettings.variationPrompt || "").trim()) && (
+          <span
+            className="pointer-events-none absolute left-2 top-2 h-5 w-[2px] caret-sci"
+          />
+        )}
 
         <div className="absolute top-1 right-2 flex items-center justify-end">
           <div className="relative h-12 w-20">
@@ -145,13 +153,34 @@ export const PromptInput = React.memo(function PromptInput({
   return (
     <div className="relative">
       <Textarea
-        className="w-full h-20 resize-none border-none p-2"
+        className="w-full h-20 resize-none border-none p-4"
         onChange={(e) => handlePromptChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={getPromptPlaceholder(shortcut)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
         style={{ fontSize: "16px" }}
         value={generationSettings.prompt}
       />
+      {!isFocused && !(generationSettings.prompt || "").trim() && (
+        <span className="pointer-events-none absolute left-4 top-4 h-6 w-[2px] caret-sci" />
+      )}
+      <style jsx>{`
+        .caret-sci {
+          background: hsl(var(--primary));
+          box-shadow:
+            0 0 6px hsl(var(--primary)),
+            0 0 24px hsl(var(--primary));
+          border-radius: 1px;
+          animation: neon-blink 2.2s ease-in-out infinite;
+          opacity: 0.95;
+          will-change: opacity;
+        }
+        @keyframes neon-blink {
+          0%, 45% { opacity: 1; }
+          50%, 55% { opacity: 0.08; }
+          60%, 100% { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 });
