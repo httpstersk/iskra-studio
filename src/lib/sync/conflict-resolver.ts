@@ -5,7 +5,7 @@
  * using "last write wins" strategy based on timestamps.
  */
 
-import type { CanvasState } from "../storage";
+import type { CanvasState } from "@/types/project";
 
 /**
  * Conflict resolution strategy.

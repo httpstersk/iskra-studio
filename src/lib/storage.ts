@@ -1,5 +1,6 @@
 import { DBSchema, IDBPDatabase, openDB } from "idb";
 import { ERROR_MESSAGES, OBJECT_STORES, STORAGE_CONSTANTS } from "./constants";
+import type { CanvasState } from "@/types/project";
 
 interface CanvasImage {
   createdAt: number;
@@ -16,45 +17,7 @@ interface CanvasVideo {
   uploadedUrl?: string;
 }
 
-interface ImageTransform {
-  rotation: number;
-  scale: number;
-  x: number;
-  y: number;
-}
-
-interface CanvasElement {
-  // Video-specific properties
-  currentTime?: number;
-  duration?: number;
-  height?: number;
-  id: string;
-  imageId?: string; // Reference to IndexedDB image
-  isPlaying?: boolean;
-  muted?: boolean;
-  transform: ImageTransform;
-  type: "image" | "text" | "shape" | "video";
-  videoId?: string; // Reference to IndexedDB video
-  volume?: number;
-  width?: number;
-  zIndex: number;
-}
-
-interface CanvasState {
-  backgroundColor?: string;
-  elements: CanvasElement[];
-  // Sync metadata for offline support
-  isDirty?: boolean; // True if local changes haven't been synced
-  lastModified: number;
-  lastSyncedAt?: number; // Timestamp of last successful sync to Convex
-  projectId?: string; // Optional reference to Convex project ID
-  syncStatus?: "synced" | "pending" | "error"; // Current sync state
-  viewport?: {
-    scale: number;
-    x: number;
-    y: number;
-  };
-}
+// Using shared CanvasState from types/project; localStorage persistence removed
 
 // IndexedDB schema
 interface CanvasDB extends DBSchema {
@@ -102,18 +65,7 @@ class CanvasStorage {
     await this.db!.delete(OBJECT_STORES.VIDEOS, id);
   }
 
-  /**
-   * Retrieves canvas state from localStorage.
-   */
-  getCanvasState(): CanvasState | null {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_CONSTANTS.STATE_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) {
-      console.error("Failed to load canvas state:", e);
-      return null;
-    }
-  }
+  
 
   /**
    * Retrieves an image from IndexedDB.
@@ -131,20 +83,7 @@ class CanvasStorage {
     return await this.db!.get(OBJECT_STORES.VIDEOS, id);
   }
 
-  /**
-   * Persists canvas state to localStorage.
-   */
-  saveCanvasState(state: CanvasState): void {
-    try {
-      localStorage.setItem(STORAGE_CONSTANTS.STATE_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error("Failed to save canvas state:", e);
-      // Handle quota exceeded error by cleaning up old data
-      if (e instanceof DOMException && e.name === "QuotaExceededError") {
-        void this.cleanupOldData();
-      }
-    }
-  }
+  
 
   /**
    * Saves an image to IndexedDB.
@@ -232,10 +171,8 @@ class CanvasStorage {
    * and deletes any assets that are no longer referenced.
    * Uses cursor-based iteration for memory efficiency with large datasets.
    */
-  async cleanupOldData(): Promise<void> {
+  async cleanupOldData(state?: CanvasState): Promise<void> {
     if (!this.db) await this.init();
-
-    const state = this.getCanvasState();
     if (!state) return;
 
     // Get all image IDs currently in use
@@ -284,15 +221,12 @@ class CanvasStorage {
   /**
    * Exports all canvas data for backup or migration.
    */
-  async exportCanvasData(): Promise<{
+  async exportCanvasData(state: CanvasState): Promise<{
     images: CanvasImage[];
     state: CanvasState;
     videos: CanvasVideo[];
   }> {
     if (!this.db) await this.init();
-
-    const state = this.getCanvasState();
-    if (!state) throw new Error(ERROR_MESSAGES.PROJECT_NOT_FOUND);
 
     const images = await this.db!.getAll(OBJECT_STORES.IMAGES);
     const videos = await this.db!.getAll(OBJECT_STORES.VIDEOS);
@@ -328,8 +262,7 @@ class CanvasStorage {
       await videoTx.done;
     }
 
-    // Import state
-    this.saveCanvasState(data.state);
+    // State is no longer persisted locally; callers should handle Convex persistence
   }
 }
 
@@ -338,10 +271,5 @@ export const canvasStorage = new CanvasStorage();
 // Re-export from storage service
 export { createStorageService } from "./storage/index";
 
-export type {
-  CanvasElement,
-  CanvasImage,
-  CanvasState,
-  CanvasVideo,
-  ImageTransform,
-};
+export type { CanvasImage, CanvasVideo };
+export type { CanvasElement, CanvasState } from "@/types/project";

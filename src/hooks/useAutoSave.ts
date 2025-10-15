@@ -8,7 +8,7 @@
 "use client";
 
 import { useToast } from "@/hooks/use-toast";
-import type { CanvasState } from "@/lib/storage";
+import type { CanvasState } from "@/types/project";
 import {
   activeGenerationsAtom,
   activeVideoGenerationsAtom,
