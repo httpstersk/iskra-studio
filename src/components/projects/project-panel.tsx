@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
 import { PanelLeftClose, Plus } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /**
  * Props for ProjectPanel component.
@@ -62,6 +62,7 @@ export function ProjectPanel({
   onToggle,
 }: ProjectPanelProps) {
   const { projects, isLoading, createProject } = useProjects();
+  const [switchingProject, setSwitchingProject] = useState<string | null>(null);
 
   const projectNumbers = useMemo(
     () =>
@@ -116,6 +117,26 @@ export function ProjectPanel({
     }
   };
 
+  /**
+   * Handles opening a project with smooth transition and optimistic updates.
+   */
+  const handleOpenProject = async (projectId: string) => {
+    // Optimistically set this as the active project immediately
+    setSwitchingProject(projectId);
+    
+    try {
+      // Start the project loading immediately while showing loading state
+      await onOpenProject?.(projectId);
+    } catch (error) {
+      // If loading fails, clear the switching state immediately
+      setSwitchingProject(null);
+      throw error;
+    }
+    
+    // On success, clear the switching state with a small delay for smooth transition
+    setTimeout(() => setSwitchingProject(null), 100);
+  };
+
   return (
     <aside>
       {/* Sidebar Panel */}
@@ -164,25 +185,36 @@ export function ProjectPanel({
               {!isLoading &&
                 projectNumbers.map(({ id, label }) => {
                   const isSelected = currentProjectId === id;
+                  const isSwitching = switchingProject === id;
+                  // Optimistically show as selected when switching
+                  const isOptimisticallySelected = isSwitching;
                   return (
                     <button
                       key={id}
-                      onClick={() => onOpenProject?.(id)}
+                      onClick={() => handleOpenProject(id)}
+                      disabled={isSwitching}
                       className={cn(
                         "group flex h-11 w-11 items-center justify-center rounded-2xl border",
                         "bg-card/85 text-xs text-foreground",
-                        "transition-all duration-200",
-                        isSelected
+                        "transition-all duration-200 relative",
+                        (isSelected || isOptimisticallySelected)
                           ? "border-primary/40 bg-primary/8 shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)]"
-                          : "border-border/45 hover:border-border/30 hover:bg-card/90"
+                          : "border-border/45 hover:border-border/30 hover:bg-card/90",
+                        isSwitching && "opacity-80 scale-95"
                       )}
                     >
+                      {isSwitching && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        </div>
+                      )}
                       <span
                         className={cn(
                           "text-sm font-mono transition",
-                          isSelected
+                          (isSelected || isOptimisticallySelected)
                             ? "text-primary"
-                            : "text-muted-foreground group-hover:text-foreground"
+                            : "text-muted-foreground group-hover:text-foreground",
+                          isSwitching && "opacity-0"
                         )}
                       >
                         {label}

@@ -32,6 +32,7 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useGenerationState } from "@/hooks/useGenerationState-jotai";
 import { useHistoryState } from "@/hooks/useHistoryState-jotai";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useProjectSync } from "@/hooks/useProjectSync";
 import { useProjects } from "@/hooks/useProjects";
 import { useStorage } from "@/hooks/useStorage";
 import { useUIState } from "@/hooks/useUIState-jotai";
@@ -84,6 +85,7 @@ export function CanvasPageClient() {
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
   const projects = useProjects();
+  const { restoreLastGoodState } = useProjectSync();
   const [isProjectsPanelOpen, setIsProjectsPanelOpen] = useState(true);
 
   const interactions = useCanvasInteractions(
@@ -699,6 +701,9 @@ export function CanvasPageClient() {
             try {
               await projects.loadProject(projectId as any);
             } catch (error) {
+              // Restore last good state on error to prevent empty canvas
+              restoreLastGoodState();
+              
               toast({
                 title: "Failed to load project",
                 description:
