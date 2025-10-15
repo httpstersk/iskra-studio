@@ -394,12 +394,6 @@ export function CanvasPageClient() {
             });
 
             convexUrl = uploadResult.url;
-            console.log(`[Video Generation] Uploaded to Convex:`, {
-              videoId,
-              storageId: uploadResult.storageId,
-              assetId: uploadResult.assetId,
-              isVariation: !!generation?.isVariation,
-            });
           } catch (error) {
             console.error(
               `[Video Generation] Failed to upload to Convex:`,
@@ -548,12 +542,6 @@ export function CanvasPageClient() {
           });
 
           convexUrl = uploadResult.url;
-          console.log(`[Image Generation] Uploaded to Convex:`, {
-            imageId: id,
-            storageId: uploadResult.storageId,
-            assetId: uploadResult.assetId,
-            isVariation,
-          });
         } catch (error) {
           console.error(
             `[Image Generation] Failed to upload to Convex:`,

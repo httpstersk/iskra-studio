@@ -42,7 +42,7 @@ interface GenerationHandlerDeps {
 export const uploadImageDirect = async (
   dataUrl: string,
   userId: string | undefined,
-  toast: GenerationHandlerDeps["toast"],
+  toast: GenerationHandlerDeps["toast"]
 ) => {
   // Convert data URL to blob first
   const response = await fetch(dataUrl);
@@ -54,7 +54,7 @@ export const uploadImageDirect = async (
       // 10MB warning
       console.warn(
         "Large image detected:",
-        (blob.size / 1024 / 1024).toFixed(2) + "MB",
+        (blob.size / 1024 / 1024).toFixed(2) + "MB"
       );
     }
 
@@ -93,7 +93,7 @@ export const generateImage = (
   setImages: GenerationHandlerDeps["setImages"],
   setActiveGenerations: GenerationHandlerDeps["setActiveGenerations"],
   width: number = 300,
-  height: number = 300,
+  height: number = 300
 ) => {
   const placeholderId = `generated-${Date.now()}`;
   setImages((prev) => [
@@ -116,7 +116,7 @@ export const generateImage = (
     new Map(prev).set(placeholderId, {
       imageUrl,
       prompt: generationSettings.prompt,
-    }),
+    })
   );
 };
 
@@ -127,7 +127,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
     generationSettings,
     canvasSize,
     viewport,
-    falClient,
     setImages,
     setSelectedIds,
     setActiveGenerations,
@@ -192,7 +191,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       const scale = Math.min(
         maxDisplay / Math.max(result.width, 1),
         maxDisplay / Math.max(result.height, 1),
-        1,
+        1
       );
       const width = Math.max(1, Math.round(result.width * scale));
       const height = Math.max(1, Math.round(result.height * scale));
@@ -265,11 +264,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
 
       let uploadResult;
       try {
-        uploadResult = await uploadImageDirect(
-          dataUrl,
-          userId,
-          toast,
-        );
+        uploadResult = await uploadImageDirect(dataUrl, userId, toast);
       } catch (uploadError) {
         console.error("Failed to upload image:", uploadError);
         failureCount++;
@@ -306,7 +301,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
         setImages,
         setActiveGenerations,
         img.width,
-        img.height,
+        img.height
       );
       successCount++;
     } catch (error) {
