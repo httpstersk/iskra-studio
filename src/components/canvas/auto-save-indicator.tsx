@@ -79,7 +79,7 @@ export function AutoSaveIndicator({
   position = "bottom-right",
 }: AutoSaveIndicatorProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [hideTimeout, setHideTimeout] = useState<number | null>(null);
 
   // Show indicator when status changes from idle
   useEffect(() => {
@@ -87,23 +87,23 @@ export function AutoSaveIndicator({
       setIsVisible(true);
 
       // Clear existing timeout
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
+      if (hideTimeout !== null) {
+        cancelIdleCallback(hideTimeout);
         setHideTimeout(null);
       }
     }
 
     // Auto-hide after 3 seconds when saved
     if (status === "saved") {
-      const timeout = setTimeout(() => {
+      const timeout = requestIdleCallback(() => {
         setIsVisible(false);
-      }, 3000);
+      }, { timeout: 3000 });
       setHideTimeout(timeout);
     }
 
     return () => {
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
+      if (hideTimeout !== null) {
+        cancelIdleCallback(hideTimeout);
       }
     };
   }, [status]);

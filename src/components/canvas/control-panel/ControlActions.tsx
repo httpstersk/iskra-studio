@@ -91,7 +91,7 @@ const triggerFileDialog = (
 ) => {
   document.body.appendChild(input);
 
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     try {
       input.click();
     } catch (error) {
@@ -105,14 +105,16 @@ const triggerFileDialog = (
         document.body.removeChild(input);
       }
     }
-  }, FILE_INPUT_CONFIG.CLICK_DELAY);
+  });
 
   // Cleanup after timeout
-  setTimeout(() => {
-    if (input.parentNode) {
-      document.body.removeChild(input);
-    }
-  }, FILE_INPUT_CONFIG.CLEANUP_TIMEOUT);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (input.parentNode) {
+        document.body.removeChild(input);
+      }
+    });
+  });
 };
 
 /**

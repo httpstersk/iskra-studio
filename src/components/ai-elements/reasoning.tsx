@@ -80,12 +80,11 @@ export const Reasoning = memo(
       if (isStreaming && !isOpen) {
         setIsOpen(true);
       } else if (!isStreaming && isOpen && !defaultOpen && !hasAutoClosedRef) {
-        // Add a small delay before closing to allow user to see the content
-        const timer = setTimeout(() => {
+        const timer = requestIdleCallback(() => {
           setIsOpen(false);
           setHasAutoClosedRef(true);
-        }, AUTO_CLOSE_DELAY);
-        return () => clearTimeout(timer);
+        }, { timeout: AUTO_CLOSE_DELAY });
+        return () => cancelIdleCallback(timer);
       }
     }, [isStreaming, isOpen, defaultOpen, setIsOpen, hasAutoClosedRef]);
 

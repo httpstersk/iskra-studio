@@ -123,16 +123,14 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
 
   /**
    * Handles video click - selects video and toggles play/pause if already selected
-   * Note: setTimeout is used to ensure selection state updates before toggling playback
    */
   const handleClick = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
       e.cancelBubble = true;
-      onSelect(e);
       if (isSelected) {
-        setTimeout(() => {
-          onChange({ isPlaying: !video.isPlaying });
-        }, 0);
+        onChange({ isPlaying: !video.isPlaying });
+      } else {
+        onSelect(e);
       }
     },
     [isSelected, onChange, onSelect, video.isPlaying]

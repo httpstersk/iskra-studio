@@ -55,10 +55,10 @@ export function useGenerationState() {
 
     if (previousGenerationCount > 0 && currentCount === 0) {
       setShowSuccess(true);
-      const timeout = setTimeout(() => {
+      const timeout = requestIdleCallback(() => {
         setShowSuccess(false);
-      }, 2000);
-      return () => clearTimeout(timeout);
+      }, { timeout: 2000 });
+      return () => cancelIdleCallback(timeout);
     }
 
     setPreviousGenerationCount(currentCount);
