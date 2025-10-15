@@ -1,18 +1,42 @@
 /**
  * Convex user management functions.
- * 
+ *
  * Handles user creation, quota tracking, and user data retrieval.
  */
 
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
+
+async function ensureProjectForUser(ctx: MutationCtx, userId: string) {
+  const existingProject = await ctx.db
+    .query("projects")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .first();
+
+  if (existingProject) {
+    return existingProject._id;
+  }
+
+  const now = Date.now();
+
+  return await ctx.db.insert("projects", {
+    userId,
+    name: "Project 01",
+    canvasState: {
+      elements: [],
+      lastModified: now,
+    },
+    lastSavedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+}
 
 /**
  * Gets or creates a user record in Convex.
- * 
+ *
  * Automatically creates a new user with default "free" tier on first sign-in.
  * Returns existing user data on subsequent calls.
- * 
+ *
  * @returns User record with tier and storage information
  */
 export const getOrCreateUser = mutation({
@@ -33,26 +57,36 @@ export const getOrCreateUser = mutation({
       .first();
 
     if (existingUser) {
+      await ensureProjectForUser(ctx, userId);
       return existingUser;
     }
 
+    const now = Date.now();
+
     // Create new user with default free tier
     const newUserId = await ctx.db.insert("users", {
-      createdAt: Date.now(),
+      createdAt: now,
       email,
       storageUsedBytes: 0,
       tier: "free",
-      updatedAt: Date.now(),
+      updatedAt: now,
       userId,
     });
 
-    return await ctx.db.get(newUserId);
+    await ensureProjectForUser(ctx, userId);
+
+    const newUser = await ctx.db.get(newUserId);
+    if (!newUser) {
+      throw new Error("Failed to load newly created user");
+    }
+
+    return newUser;
   },
 });
 
 /**
  * Gets current user record.
- * 
+ *
  * @returns User record with tier and storage information
  */
 export const getCurrentUser = query({
@@ -76,7 +110,7 @@ export const getCurrentUser = query({
 
 /**
  * Gets user quota information.
- * 
+ *
  * @returns User's storage quota data
  */
 export const getUserQuota = query({
@@ -107,7 +141,7 @@ export const getUserQuota = query({
 
 /**
  * Updates user's storage quota by recalculating from all assets.
- * 
+ *
  * @returns Updated storage usage in bytes
  */
 export const updateUserQuota = mutation({
