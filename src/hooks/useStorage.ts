@@ -201,6 +201,7 @@ export function useStorage(
     if (!isStorageLoaded) return;
     if (activeGenerationsSize > 0) return;
 
+    // setTimeout necessary here for debouncing save operations with precise timing
     const timeoutId = setTimeout(() => {
       void saveToStorage();
     }, UI_CONSTANTS.STORAGE_SAVE_DEBOUNCE_MS);
