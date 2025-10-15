@@ -1,6 +1,6 @@
 /**
  * Canvas Page Client Component - Extracted from page.tsx
- * 
+ *
  * This is the actual canvas implementation, now separated to allow
  * server-side data pre-fetching in the parent page.tsx
  */
@@ -60,7 +60,7 @@ import { useCallback, useRef, useState } from "react";
 
 /**
  * Main Canvas Client Component
- * 
+ *
  * Separated from page.tsx to enable server-side data pre-fetching.
  * This component receives pre-fetched data via context.
  */
@@ -85,7 +85,7 @@ export function CanvasPageClient() {
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
 
   const projects = useProjects();
-  const [isProjectsPanelOpen, setIsProjectsPanelOpen] = useState(false);
+  const [isProjectsPanelOpen, setIsProjectsPanelOpen] = useState(true);
 
   const interactions = useCanvasInteractions(
     canvasState.viewport,
@@ -376,11 +376,11 @@ export function CanvasPageClient() {
         if (isAuthenticated) {
           try {
             const video = canvasState.videos.find((v) => v.id === videoId);
-            
+
             const { uploadGeneratedAssetToConvex } = await import(
               "@/lib/storage/upload-generated-asset"
             );
-            
+
             const uploadResult = await uploadGeneratedAssetToConvex({
               sourceUrl: videoUrl,
               assetType: "video",
@@ -392,7 +392,7 @@ export function CanvasPageClient() {
                 model: generation?.modelId,
               },
             });
-            
+
             convexUrl = uploadResult.url;
             console.log(`[Video Generation] Uploaded to Convex:`, {
               videoId,
@@ -401,7 +401,10 @@ export function CanvasPageClient() {
               isVariation: !!generation?.isVariation,
             });
           } catch (error) {
-            console.error(`[Video Generation] Failed to upload to Convex:`, error);
+            console.error(
+              `[Video Generation] Failed to upload to Convex:`,
+              error
+            );
           }
         }
 
@@ -529,11 +532,11 @@ export function CanvasPageClient() {
         try {
           const generation = generationState.activeGenerations.get(id);
           const image = canvasState.images.find((img) => img.id === id);
-          
+
           const { uploadGeneratedAssetToConvex } = await import(
             "@/lib/storage/upload-generated-asset"
           );
-          
+
           const uploadResult = await uploadGeneratedAssetToConvex({
             sourceUrl: finalUrl,
             assetType: "image",
@@ -543,7 +546,7 @@ export function CanvasPageClient() {
               height: image?.height,
             },
           });
-          
+
           convexUrl = uploadResult.url;
           console.log(`[Image Generation] Uploaded to Convex:`, {
             imageId: id,
@@ -552,7 +555,10 @@ export function CanvasPageClient() {
             isVariation,
           });
         } catch (error) {
-          console.error(`[Image Generation] Failed to upload to Convex:`, error);
+          console.error(
+            `[Image Generation] Failed to upload to Convex:`,
+            error
+          );
         }
       }
 
@@ -686,12 +692,7 @@ export function CanvasPageClient() {
           onOpenProject={async (projectId) => {
             try {
               await projects.loadProject(projectId as any);
-              toast({
-                title: "Project loaded",
-                description: "Your project has been loaded successfully.",
-              });
             } catch (error) {
-              console.error("Failed to load project:", error);
               toast({
                 title: "Failed to load project",
                 description:
@@ -808,7 +809,9 @@ export function CanvasPageClient() {
 
           <ZoomControls
             canvasSize={canvasState.canvasSize}
-            isProjectsPanelOpen={isAuthenticated ? isProjectsPanelOpen : undefined}
+            isProjectsPanelOpen={
+              isAuthenticated ? isProjectsPanelOpen : undefined
+            }
             onToggleProjectsPanel={
               isAuthenticated
                 ? () => setIsProjectsPanelOpen(!isProjectsPanelOpen)

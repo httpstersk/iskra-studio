@@ -11,8 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
 import { PanelLeftClose, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { ProjectDialog } from "./project-dialog";
+import { useEffect, useMemo } from "react";
 
 /**
  * Props for ProjectPanel component.
@@ -58,8 +57,7 @@ export function ProjectPanel({
   onOpenProject,
   onToggle,
 }: ProjectPanelProps) {
-  const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
-  const { projects, isLoading } = useProjects();
+  const { projects, isLoading, createProject } = useProjects();
 
   const projectNumbers = useMemo(
     () =>
@@ -97,20 +95,20 @@ export function ProjectPanel({
   }, []);
 
   /**
-   * Handles opening the new project dialog.
+   * Handles creating a new project with auto-generated name.
    */
-  const handleNewProject = () => {
-    setIsNewProjectDialogOpen(true);
-  };
+  const handleNewProject = async () => {
+    try {
+      const projectNumber = String(projects.length + 1).padStart(2, "0");
+      const projectName = `Project ${projectNumber}`;
+      
+      const projectId = await createProject(projectName);
 
-  /**
-   * Handles project creation completion.
-   */
-  const handleProjectCreated = (projectId: string) => {
-    setIsNewProjectDialogOpen(false);
-
-    if (onOpenProject) {
-      onOpenProject(projectId);
+      if (onOpenProject) {
+        onOpenProject(projectId);
+      }
+    } catch (error) {
+      console.error("Failed to create project:", error);
     }
   };
 
@@ -211,13 +209,6 @@ export function ProjectPanel({
           aria-hidden="true"
         />
       )}
-
-      {/* New Project Dialog */}
-      <ProjectDialog
-        open={isNewProjectDialogOpen}
-        onClose={() => setIsNewProjectDialogOpen(false)}
-        onProjectCreated={handleProjectCreated}
-      />
     </aside>
   );
 }
