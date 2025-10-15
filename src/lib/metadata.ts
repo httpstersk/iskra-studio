@@ -1,13 +1,13 @@
 /**
  * Dynamic metadata generation utilities for Next.js
- * 
+ *
  * Provides helper functions for generating SEO-optimized metadata
  * based on application state and user data.
  */
 
 import type { Metadata } from "next";
 
-const APP_NAME = "Iskra ✸";
+const APP_NAME = "Iskra ✸ Studio";
 const APP_DESCRIPTION = "AI-powered canvas for image and video creation";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 

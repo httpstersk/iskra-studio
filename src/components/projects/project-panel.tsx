@@ -11,13 +11,15 @@ import { Button } from "@/components/ui/button";
 import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
 import { PanelLeftClose, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { ProjectDialog } from "./project-dialog";
+import { useEffect, useMemo } from "react";
 
 /**
  * Props for ProjectPanel component.
  */
 interface ProjectPanelProps {
+  /** ID of the currently selected project */
+  currentProjectId?: string;
+
   /** Whether the panel is open */
   isOpen?: boolean;
 
@@ -54,12 +56,12 @@ interface ProjectPanelProps {
  * ```
  */
 export function ProjectPanel({
+  currentProjectId,
   isOpen = false,
   onOpenProject,
   onToggle,
 }: ProjectPanelProps) {
-  const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
-  const { projects, isLoading } = useProjects();
+  const { projects, isLoading, createProject } = useProjects();
 
   const projectNumbers = useMemo(
     () =>
@@ -97,20 +99,20 @@ export function ProjectPanel({
   }, []);
 
   /**
-   * Handles opening the new project dialog.
+   * Handles creating a new project with auto-generated name.
    */
-  const handleNewProject = () => {
-    setIsNewProjectDialogOpen(true);
-  };
+  const handleNewProject = async () => {
+    try {
+      const projectNumber = String(projects.length + 1).padStart(2, "0");
+      const projectName = `Project ${projectNumber}`;
 
-  /**
-   * Handles project creation completion.
-   */
-  const handleProjectCreated = (projectId: string) => {
-    setIsNewProjectDialogOpen(false);
+      const projectId = await createProject(projectName);
 
-    if (onOpenProject) {
-      onOpenProject(projectId);
+      if (onOpenProject) {
+        onOpenProject(projectId);
+      }
+    } catch (error) {
+      console.error("Failed to create project:", error);
     }
   };
 
@@ -142,13 +144,9 @@ export function ProjectPanel({
               <PanelLeftClose className="h-5 w-5" />
               <span className="sr-only">Toggle sidebar</span>
             </Button>
-
           </div>
 
-          <div
-            className="mt-6 h-px w-10 bg-border/40"
-            aria-hidden="true"
-          />
+          <div className="mt-6 h-px w-10 bg-border/40" aria-hidden="true" />
 
           <div className="mt-6 w-full overflow-y-auto">
             <div className="flex flex-col items-center gap-2.5 pb-4">
@@ -164,26 +162,34 @@ export function ProjectPanel({
               )}
 
               {!isLoading &&
-                projectNumbers.map(({ id, label }) => (
-                  <button
-                    key={id}
-                    onClick={() => {
-                      onOpenProject?.(id);
-                      if (window.innerWidth < 768 && isOpen) {
-                        togglePanel();
-                      }
-                    }}
-                    className={cn(
-                      "group flex h-11 w-11 items-center justify-center rounded-2xl border border-border/45",
-                      "bg-card/85 text-xs font-medium text-foreground",
-                      "transition hover:border-border/30 hover:bg-card/90"
-                    )}
-                  >
-                    <span className="text-sm font-mono text-muted-foreground transition group-hover:text-foreground">
-                      {label}
-                    </span>
-                  </button>
-                ))}
+                projectNumbers.map(({ id, label }) => {
+                  const isSelected = currentProjectId === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => onOpenProject?.(id)}
+                      className={cn(
+                        "group flex h-11 w-11 items-center justify-center rounded-2xl border",
+                        "bg-card/85 text-xs text-foreground",
+                        "transition-all duration-200",
+                        isSelected
+                          ? "border-primary/40 bg-primary/8 shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)]"
+                          : "border-border/45 hover:border-border/30 hover:bg-card/90"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "text-sm font-mono transition",
+                          isSelected
+                            ? "text-primary"
+                            : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
 
               <Button
                 variant="ghost"
@@ -202,22 +208,6 @@ export function ProjectPanel({
           </div>
         </div>
       </div>
-
-      {/* Overlay (mobile only) */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
-          onClick={togglePanel}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* New Project Dialog */}
-      <ProjectDialog
-        open={isNewProjectDialogOpen}
-        onClose={() => setIsNewProjectDialogOpen(false)}
-        onProjectCreated={handleProjectCreated}
-      />
     </aside>
   );
 }

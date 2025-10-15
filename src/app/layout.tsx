@@ -6,8 +6,7 @@ import { Suspense } from "react";
 import { CoreProviders } from "./core-providers";
 import "./globals.css";
 
-
-const TITLE = "Iskra ✸";
+const TITLE = "Iskra ✸ Studio";
 const DESCRIPTION = "✸";
 
 export const metadata: Metadata = {
