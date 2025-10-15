@@ -373,11 +373,27 @@ export function CanvasPageClient() {
           dismissToast(generation.toastId);
         }
 
+        // Extract actual video dimensions before upload
+        let naturalWidth: number | undefined;
+        let naturalHeight: number | undefined;
+
+        try {
+          const videoElement = document.createElement("video");
+          videoElement.crossOrigin = "anonymous";
+          await new Promise((resolve, reject) => {
+            videoElement.onloadedmetadata = resolve;
+            videoElement.onerror = reject;
+            videoElement.src = videoUrl;
+          });
+          naturalWidth = videoElement.videoWidth;
+          naturalHeight = videoElement.videoHeight;
+        } catch (error) {
+          console.warn("Failed to extract dimensions from video:", error);
+        }
+
         let convexUrl = videoUrl;
         if (isAuthenticated) {
           try {
-            const video = canvasState.videos.find((v) => v.id === videoId);
-
             const { uploadGeneratedAssetToConvex } = await import(
               "@/lib/storage/upload-generated-asset"
             );
@@ -387,8 +403,8 @@ export function CanvasPageClient() {
               assetType: "video",
               metadata: {
                 prompt: generation?.prompt,
-                width: video?.width,
-                height: video?.height,
+                width: naturalWidth,
+                height: naturalHeight,
                 duration,
                 model: generation?.modelId,
               },
@@ -525,11 +541,35 @@ export function CanvasPageClient() {
       // Get generation metadata early for natural dimensions
       const generation = generationState.activeGenerations.get(id);
 
+      // Extract natural dimensions from generation metadata
+      let naturalWidth: number | undefined;
+      let naturalHeight: number | undefined;
+
+      if (generation?.imageSize && typeof generation.imageSize === "object") {
+        naturalWidth = generation.imageSize.width;
+        naturalHeight = generation.imageSize.height;
+      }
+
+      // If dimensions are not available from generation metadata, try to extract from image
+      if (!naturalWidth || !naturalHeight) {
+        try {
+          const img = new window.Image();
+          img.crossOrigin = "anonymous";
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = finalUrl;
+          });
+          naturalWidth = img.naturalWidth;
+          naturalHeight = img.naturalHeight;
+        } catch (error) {
+          console.warn("Failed to extract dimensions from image:", error);
+        }
+      }
+
       let convexUrl = finalUrl;
       if (isAuthenticated) {
         try {
-          const image = canvasState.images.find((img) => img.id === id);
-
           const { uploadGeneratedAssetToConvex } = await import(
             "@/lib/storage/upload-generated-asset"
           );
@@ -539,8 +579,8 @@ export function CanvasPageClient() {
             assetType: "image",
             metadata: {
               prompt: generation?.prompt,
-              width: image?.width,
-              height: image?.height,
+              width: naturalWidth,
+              height: naturalHeight,
             },
           });
 
@@ -551,15 +591,6 @@ export function CanvasPageClient() {
             error
           );
         }
-      }
-
-      // Get natural dimensions from generation metadata if available
-      let naturalWidth: number | undefined;
-      let naturalHeight: number | undefined;
-
-      if (generation?.imageSize && typeof generation.imageSize === "object") {
-        naturalWidth = generation.imageSize.width;
-        naturalHeight = generation.imageSize.height;
       }
 
       canvasState.setImages((prev) =>
