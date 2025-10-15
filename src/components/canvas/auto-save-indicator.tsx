@@ -94,6 +94,7 @@ export function AutoSaveIndicator({
     }
 
     // Auto-hide after 3 seconds when saved
+    // Use requestIdleCallback for non-critical UI updates to avoid blocking main thread
     if (status === "saved") {
       const timeout = requestIdleCallback(() => {
         setIsVisible(false);

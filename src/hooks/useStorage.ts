@@ -97,7 +97,8 @@ export function useStorage(
         }
       }
       
-      // Debounce hiding the saving indicator
+      // Debounce hiding the saving indicator to prevent flashing UI
+      // setTimeout necessary here for precise timing delay, not animation-dependent
       setTimeout(() => setIsSaving(false), UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS);
     } catch (error) {
       console.error("Failed to save to storage:", error);

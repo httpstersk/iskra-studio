@@ -91,6 +91,7 @@ const triggerFileDialog = (
 ) => {
   document.body.appendChild(input);
 
+  // Use requestAnimationFrame to ensure DOM operations are synchronized with browser's render cycle
   requestAnimationFrame(() => {
     try {
       input.click();
@@ -107,7 +108,7 @@ const triggerFileDialog = (
     }
   });
 
-  // Cleanup after timeout
+  // Cleanup after 2 frames to ensure file dialog has been triggered
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       if (input.parentNode) {

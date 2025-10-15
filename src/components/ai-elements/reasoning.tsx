@@ -80,6 +80,7 @@ export const Reasoning = memo(
       if (isStreaming && !isOpen) {
         setIsOpen(true);
       } else if (!isStreaming && isOpen && !defaultOpen && !hasAutoClosedRef) {
+        // Use requestIdleCallback for non-critical auto-close to improve performance
         const timer = requestIdleCallback(() => {
           setIsOpen(false);
           setHasAutoClosedRef(true);

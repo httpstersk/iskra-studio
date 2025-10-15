@@ -55,6 +55,7 @@ export function useGenerationState() {
 
     if (previousGenerationCount > 0 && currentCount === 0) {
       setShowSuccess(true);
+      // Use requestIdleCallback for non-critical success indicator to avoid blocking generation completion
       const timeout = requestIdleCallback(() => {
         setShowSuccess(false);
       }, { timeout: 2000 });
