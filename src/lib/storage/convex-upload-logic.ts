@@ -97,25 +97,19 @@ export async function uploadFileToConvex(
   const convexClient = new ConvexHttpClient(convexUrl);
   convexClient.setAuth(authToken);
 
-  // Extract dimensions from metadata
+  // Extract dimensions and originalUrl from metadata
   const width = metadata.width;
   const height = metadata.height;
   const duration = metadata.duration;
-
-  // Clean metadata to only include schema-valid fields (model, prompt, seed)
-  const cleanMetadata = {
-    ...(metadata.model && { model: metadata.model }),
-    ...(metadata.prompt && { prompt: metadata.prompt }),
-    ...(metadata.seed !== undefined && { seed: metadata.seed }),
-  };
+  const originalUrl = (metadata as { originalFalUrl?: string }).originalFalUrl;
 
   // Call uploadAsset mutation to create database record
   // Note: userId is derived from auth token on the backend
   const assetId = await convexClient.mutation(api.assets.uploadAsset, {
     duration: duration || undefined,
     height: height || undefined,
-    metadata: cleanMetadata,
     mimeType,
+    originalUrl: originalUrl || undefined,
     sizeBytes: file.size,
     storageId,
     type: assetType,

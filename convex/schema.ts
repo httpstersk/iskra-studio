@@ -56,18 +56,12 @@ export default defineSchema({
    * @property duration - Video duration in seconds (nullable, video only)
    * @property mimeType - MIME type (e.g., "image/png", "video/mp4")
    * @property sizeBytes - File size in bytes
-   * @property metadata - Additional metadata (generation params, prompts, etc.)
    * @property createdAt - Upload timestamp
    */
   assets: defineTable({
     createdAt: v.number(),
     duration: v.optional(v.number()),
     height: v.optional(v.number()),
-    metadata: v.object({
-      model: v.optional(v.string()),
-      prompt: v.optional(v.string()),
-      seed: v.optional(v.number()),
-    }),
     mimeType: v.string(),
     originalUrl: v.optional(v.string()),
     sizeBytes: v.number(),

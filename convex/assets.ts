@@ -22,7 +22,6 @@ export const uploadAsset = mutation({
   args: {
     duration: v.optional(v.number()),
     height: v.optional(v.number()),
-    metadata: v.optional(v.any()),
     mimeType: v.string(),
     originalUrl: v.optional(v.string()),
     sizeBytes: v.number(),
@@ -65,7 +64,6 @@ export const uploadAsset = mutation({
       createdAt: Date.now(),
       duration: args.duration,
       height: args.height,
-      metadata: args.metadata,
       mimeType: args.mimeType,
       originalUrl: args.originalUrl,
       sizeBytes: args.sizeBytes,

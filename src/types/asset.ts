@@ -52,7 +52,6 @@ export interface AssetMetadata {
  * - storageId references the file in Convex storage
  * - userId links asset to the owner for quota tracking
  * - sizeBytes is used for storage quota calculations
- * - metadata stores AI generation parameters
  */
 export interface Asset {
   /** Timestamp when the asset was created (ms since epoch) */
@@ -66,9 +65,6 @@ export interface Asset {
   
   /** Unique identifier for the asset record */
   id: string;
-  
-  /** Additional metadata (generation params, original URLs, etc.) */
-  metadata?: AssetMetadata;
   
   /** MIME type of the file (e.g., "image/png", "video/mp4") */
   mimeType: string;
