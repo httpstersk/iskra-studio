@@ -163,12 +163,6 @@ export function ProjectPanel({
                 </div>
               )}
 
-              {!isLoading && projectNumbers.length === 0 && (
-                <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                  No projects yet
-                </p>
-              )}
-
               {!isLoading &&
                 projectNumbers.map(({ id, label }) => (
                   <button

@@ -36,7 +36,6 @@ export const ZoomControls = memo(function ZoomControls({
 
   const canZoomIn = clampScale(viewport.scale + 0.1) !== viewport.scale;
   const canZoomOut = clampScale(viewport.scale - 0.1) !== viewport.scale;
-  console.log({ canZoomOut });
 
   return (
     <div className="pointer-events-auto fixed right-6 md:bottom-6 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-center gap-2">
