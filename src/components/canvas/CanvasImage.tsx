@@ -11,15 +11,15 @@
  * @module components/canvas/CanvasImage
  */
 
-import React, { useRef, useMemo, useCallback } from "react";
-import { Image as KonvaImage } from "react-konva";
-import Konva from "konva";
-import useImage from "use-image";
-import { useStreamingImage } from "@/hooks/useStreamingImage";
 import { useImageAnimation } from "@/hooks/useImageAnimation";
+import { useImageCache } from "@/hooks/useImageCache";
 import { useImageDrag } from "@/hooks/useImageDrag";
 import { useImageInteraction } from "@/hooks/useImageInteraction";
+import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
+import Konva from "konva";
+import React, { useCallback, useMemo, useRef } from "react";
+import { Image as KonvaImage } from "react-konva";
 
 /**
  * Props for the CanvasImage component
@@ -52,7 +52,7 @@ interface CanvasImageProps {
 /**
  * Custom hook to get the appropriate image source (streaming or normal).
  * Uses streaming image hook for generated images to show progressive loading,
- * and regular image loading for uploaded images.
+ * and cached image loading for uploaded images to prevent duplicate network requests.
  *
  * @param src - Image source URL
  * @param isGenerated - Whether the image was AI-generated
@@ -60,11 +60,11 @@ interface CanvasImageProps {
  */
 const useCanvasImageSource = (src: string, isGenerated: boolean) => {
   const [streamingImg] = useStreamingImage(isGenerated ? src : "");
-  const [normalImg] = useImage(isGenerated ? "" : src, "anonymous");
+  const [cachedImg] = useImageCache(isGenerated ? "" : src, "anonymous");
 
   return useMemo(
-    () => (isGenerated ? streamingImg : normalImg),
-    [isGenerated, normalImg, streamingImg],
+    () => (isGenerated ? streamingImg : cachedImg),
+    [isGenerated, cachedImg, streamingImg]
   );
 };
 
@@ -156,7 +156,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       onChange,
       setImages,
       throttleFrame,
-    },
+    }
   );
 
   // Handle interaction states
@@ -182,7 +182,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       handleDragEndInternal();
       onDragEnd();
     },
-    [handleDragEndInternal, onDragEnd],
+    [handleDragEndInternal, onDragEnd]
   );
 
   // Handle double-click to toggle variation mode
@@ -193,35 +193,35 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
         onDoubleClick(image.id);
       }
     },
-    [onDoubleClick, image.id],
+    [onDoubleClick, image.id]
   );
 
   return (
     <KonvaImage
-      ref={shapeRef}
+      draggable={isDraggable}
+      height={image.height}
       id={image.id}
       image={img}
-      x={image.x}
-      y={image.y}
-      width={image.width}
-      height={image.height}
-      rotation={image.rotation}
-      draggable={isDraggable}
+      imageSmoothingEnabled={true}
       onClick={onSelect}
-      onTap={onSelect}
       onDblClick={handleDoubleClickWrapper}
+      onDragEnd={handleDragEndWrapper}
+      onDragMove={handleDragMove}
+      onDragStart={handleDragStartInternal}
+      onMouseDown={handleMouseDown}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
-      onDragStart={handleDragStartInternal}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEndWrapper}
+      onTap={onSelect}
       opacity={finalOpacity}
+      perfectDrawEnabled={false}
+      ref={shapeRef}
+      rotation={image.rotation}
       stroke={strokeColor}
       strokeWidth={strokeWidth}
-      perfectDrawEnabled={false}
-      imageSmoothingEnabled={true}
+      width={image.width}
+      x={image.x}
+      y={image.y}
     />
   );
 };

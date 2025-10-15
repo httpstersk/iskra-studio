@@ -94,6 +94,8 @@ export function useFileUpload(
                     width,
                     height,
                     rotation: 0,
+                    naturalWidth,
+                    naturalHeight,
                   },
                 ]);
 

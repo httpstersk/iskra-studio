@@ -65,7 +65,6 @@ import { useCallback, useRef, useState } from "react";
  * This component receives pre-fetched data via context.
  */
 export function CanvasPageClient() {
-  // All the existing canvas logic from page.tsx
   const { setTheme, theme } = useTheme();
   const { toast } = useToast();
   const falClient = useFalClient();
@@ -394,12 +393,6 @@ export function CanvasPageClient() {
             });
 
             convexUrl = uploadResult.url;
-            console.log(`[Video Generation] Uploaded to Convex:`, {
-              videoId,
-              storageId: uploadResult.storageId,
-              assetId: uploadResult.assetId,
-              isVariation: !!generation?.isVariation,
-            });
           } catch (error) {
             console.error(
               `[Video Generation] Failed to upload to Convex:`,
@@ -527,10 +520,12 @@ export function CanvasPageClient() {
         }
       }
 
+      // Get generation metadata early for natural dimensions
+      const generation = generationState.activeGenerations.get(id);
+
       let convexUrl = finalUrl;
       if (isAuthenticated) {
         try {
-          const generation = generationState.activeGenerations.get(id);
           const image = canvasState.images.find((img) => img.id === id);
 
           const { uploadGeneratedAssetToConvex } = await import(
@@ -548,12 +543,6 @@ export function CanvasPageClient() {
           });
 
           convexUrl = uploadResult.url;
-          console.log(`[Image Generation] Uploaded to Convex:`, {
-            imageId: id,
-            storageId: uploadResult.storageId,
-            assetId: uploadResult.assetId,
-            isVariation,
-          });
         } catch (error) {
           console.error(
             `[Image Generation] Failed to upload to Convex:`,
@@ -562,10 +551,26 @@ export function CanvasPageClient() {
         }
       }
 
+      // Get natural dimensions from generation metadata if available
+      let naturalWidth: number | undefined;
+      let naturalHeight: number | undefined;
+
+      if (generation?.imageSize && typeof generation.imageSize === "object") {
+        naturalWidth = generation.imageSize.width;
+        naturalHeight = generation.imageSize.height;
+      }
+
       canvasState.setImages((prev) =>
         prev.map((img) =>
           img.id === id
-            ? { ...img, isLoading: false, opacity: 1.0, src: convexUrl }
+            ? {
+                ...img,
+                isLoading: false,
+                opacity: 1.0,
+                src: convexUrl,
+                naturalWidth,
+                naturalHeight,
+              }
             : img
         )
       );

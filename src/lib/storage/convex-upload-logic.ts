@@ -1,6 +1,6 @@
 /**
  * Shared Convex upload logic for server-side use.
- * 
+ *
  * This module contains the core upload logic that can be used both
  * from API routes and from server-side storage service calls.
  */
@@ -29,7 +29,7 @@ export interface UploadFileOptions {
 
 /**
  * Uploads a file to Convex storage and creates an asset record.
- * 
+ *
  * @param options - Upload options including file, userId, and metadata
  * @returns Upload result with storageId, URL, and assetId
  * @throws Error if upload fails or validation fails
@@ -50,7 +50,9 @@ export async function uploadFileToConvex(
   );
 
   if (!isAllowedType) {
-    throw new Error("Unsupported file type. Only images and videos are allowed.");
+    throw new Error(
+      "Unsupported file type. Only images and videos are allowed."
+    );
   }
 
   // Determine asset type from MIME type
@@ -65,7 +67,7 @@ export async function uploadFileToConvex(
   }
 
   // Convert .convex.cloud to .convex.site for HTTP actions
-  const convexSiteUrl = convexUrl.replace('.convex.cloud', '.convex.site');
+  const convexSiteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
 
   // Upload file to Convex storage via HTTP action
   const blob = file instanceof Blob ? await file.arrayBuffer() : file;
@@ -74,6 +76,7 @@ export async function uploadFileToConvex(
     body: blob,
     method: "POST",
     headers: {
+      Authorization: `Bearer ${authToken}`,
       "Content-Type": mimeType,
     },
   });
@@ -101,7 +104,6 @@ export async function uploadFileToConvex(
   const width = metadata.width;
   const height = metadata.height;
   const duration = metadata.duration;
-  const originalUrl = (metadata as { originalFalUrl?: string }).originalFalUrl;
 
   // Call uploadAsset mutation to create database record
   // Note: userId is derived from auth token on the backend
@@ -109,7 +111,7 @@ export async function uploadFileToConvex(
     duration: duration || undefined,
     height: height || undefined,
     mimeType,
-    originalUrl: originalUrl || undefined,
+    originalUrl: undefined,
     sizeBytes: file.size,
     storageId,
     type: assetType,

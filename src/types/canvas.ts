@@ -1,27 +1,29 @@
 export interface PlacedImage {
-  id: string;
-  src: string;
-  x: number;
-  y: number;
-  width: number;
   height: number;
-  rotation: number;
-  opacity?: number;
+  id: string;
   isGenerated?: boolean;
   isLoading?: boolean;
+  naturalHeight?: number;
+  naturalWidth?: number;
+  opacity?: number;
   parentGroupId?: string;
+  rotation: number;
+  src: string;
+  width: number;
+  x: number;
+  y: number;
 }
 
 export interface PlacedVideo extends Omit<PlacedImage, "isGenerated"> {
-  isVideo: true;
-  duration: number;
   currentTime: number;
-  isPlaying: boolean;
-  volume: number;
-  muted: boolean;
-  isLooping?: boolean; // Whether the video should loop when it reaches the end
+  duration: number;
   isGenerating?: boolean; // Similar to isGenerated for images
   isLoaded?: boolean; // Whether the video has loaded its metadata
+  isLooping?: boolean; // Whether the video should loop when it reaches the end
+  isPlaying: boolean;
+  isVideo: true;
+  muted: boolean;
+  volume: number;
 }
 
 export interface HistoryState {
@@ -37,16 +39,16 @@ export interface GenerationSettings {
 }
 
 export interface VideoGenerationSettings {
-  prompt: string;
-  duration?: number | string; // Can be number or string for different models
-  styleId?: string;
-  motion?: string; // For image-to-video
-  sourceUrl?: string; // For image-to-video or video-to-video
-  modelId?: string; // Model identifier from video-models.ts
-  resolution?: "auto" | "480p" | "720p" | "1080p"; // Video resolution
   aspectRatio?: "auto" | "9:16" | "16:9" | "1:1"; // Aspect ratio
   cameraFixed?: boolean; // Whether to fix the camera position
+  duration?: number | string; // Can be number or string for different models
+  modelId?: string; // Model identifier from video-models.ts
+  motion?: string; // For image-to-video
+  prompt: string;
+  resolution?: "auto" | "480p" | "720p" | "1080p"; // Video resolution
   seed?: number; // Random seed to control video generation
+  sourceUrl?: string; // For image-to-video or video-to-video
+  styleId?: string;
   [key: string]: unknown; // Allow additional model-specific fields
 }
 
@@ -67,27 +69,27 @@ export interface ActiveGeneration {
 }
 
 export interface ActiveVideoGeneration {
-  videoUrl?: string;
-  imageUrl?: string; // For image-to-video
-  prompt: string;
-  duration?: number | string; // Can be number or string for different models
-  motion?: string;
-  styleId?: string;
-  modelId?: string; // Model identifier from video-models.ts
-  modelConfig?: any; // Model configuration from video-models.ts
-  resolution?: "auto" | "480p" | "720p" | "1080p"; // Video resolution
   aspectRatio?: "auto" | "9:16" | "16:9" | "1:1"; // Aspect ratio
   cameraFixed?: boolean; // Whether to fix the camera position
+  duration?: number | string; // Can be number or string for different models
+  imageUrl?: string; // For image-to-video
+  modelConfig?: any; // Model configuration from video-models.ts
+  modelId?: string; // Model identifier from video-models.ts
+  motion?: string;
+  prompt: string;
+  resolution?: "auto" | "480p" | "720p" | "1080p"; // Video resolution
   seed?: number; // Random seed to control video generation
   sourceImageId?: string; // ID of the image used for img2vid
+  styleId?: string;
   toastId?: string; // ID of the toast notification
+  videoUrl?: string;
   [key: string]: unknown; // Allow additional model-specific fields
 }
 
 export interface SelectionBox {
-  startX: number;
-  startY: number;
   endX: number;
   endY: number;
+  startX: number;
+  startY: number;
   visible: boolean;
 }

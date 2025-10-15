@@ -1,122 +1,18 @@
-import { FAL_UPLOAD_PATH } from "@/lib/fal/constants";
 import { formatImageVariationPrompt } from "@/lib/prompt-formatters/image-variation-prompt-formatter";
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
 import { snapPosition } from "@/utils/snap-utils";
 import type { FalClient } from "@fal-ai/client";
-
-/**
- * Optimized upload function that accepts blob directly (no FileReader conversion)
- * Uses server-side proxy to avoid CORS issues
- */
-async function uploadBlobDirect(
-  blob: Blob,
-  toast: VariationHandlerDeps["toast"]
-): Promise<{ url: string }> {
-  try {
-    if (blob.size > 10 * 1024 * 1024) {
-      console.warn("Large image:", (blob.size / 1024 / 1024).toFixed(2) + "MB");
-    }
-
-    // Create FormData to send the blob to our upload proxy
-    const formData = new FormData();
-    formData.append("file", blob, "image.png");
-
-    // Use our server-side upload proxy to avoid CORS
-    const response = await fetch(FAL_UPLOAD_PATH, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.message || `Upload failed with status ${response.status}`
-      );
-    }
-
-    const result = await response.json();
-    return { url: result.url };
-  } catch (error: unknown) {
-    const isRateLimit =
-      (error as { status?: number; message?: string }).status === 429 ||
-      (error as { message?: string }).message?.includes("429") ||
-      (error as { message?: string }).message?.includes("rate limit") ||
-      (error as { message?: string }).message?.includes("Rate limit");
-
-    if (isRateLimit) {
-      toast({
-        title: "Rate limit exceeded",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
-    }
-    throw error;
-  }
-}
-
-/**
- * Process image to blob efficiently without FileReader
- */
-async function processImageToBlob(
-  selectedImage: PlacedImage
-): Promise<{ blob: Blob; dimensions: { width: number; height: number } }> {
-  // Load image
-  const imgElement = new window.Image();
-  imgElement.crossOrigin = "anonymous";
-  imgElement.src = selectedImage.src;
-
-  await new Promise<void>((resolve, reject) => {
-    imgElement.onload = () => resolve();
-    imgElement.onerror = reject;
-  });
-
-  // Create canvas for the source image
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d", { alpha: true });
-  if (!ctx) throw new Error("Failed to get canvas context");
-
-  canvas.width = imgElement.naturalWidth;
-  canvas.height = imgElement.naturalHeight;
-
-  // Draw the image
-  ctx.drawImage(imgElement, 0, 0);
-
-  // Convert to blob directly (no FileReader needed)
-  // Use JPEG for better performance if no transparency needed
-  const hasTransparency =
-    selectedImage.src.includes(".png") ||
-    selectedImage.src.includes("image/png");
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) resolve(blob);
-        else reject(new Error("Failed to create blob"));
-      },
-      hasTransparency ? "image/png" : "image/jpeg",
-      0.95
-    );
-  });
-
-  return {
-    blob,
-    dimensions: { width: canvas.width, height: canvas.height },
-  };
-}
+import {
+  ensureImageInConvex,
+  validateSingleImageSelection,
+} from "./variation-utils";
 
 interface VariationHandlerDeps {
+  falClient: FalClient;
   images: PlacedImage[];
   selectedIds: string[];
-  viewport: { x: number; y: number; scale: number };
-  falClient: FalClient;
-  userId?: string;
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   setVideos?: React.Dispatch<
     React.SetStateAction<import("@/types/canvas").PlacedVideo[]>
@@ -133,10 +29,12 @@ interface VariationHandlerDeps {
     description?: string;
     variant?: "default" | "destructive";
   }) => void;
+  userId?: string;
   variationPrompt?: string;
   variationMode?: "image" | "video";
   variationCount?: number;
   videoSettings?: import("@/types/canvas").VideoGenerationSettings;
+  viewport: { x: number; y: number; scale: number };
 }
 
 /**
@@ -240,23 +138,21 @@ export function calculateBalancedPosition(
 export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   const {
     images,
-    selectedIds,
-    viewport,
     falClient,
-    userId,
-    setImages,
-    setVideos,
-    setIsGenerating,
+    selectedIds,
     setActiveGenerations,
     setActiveVideoGenerations,
+    setImages,
+    setIsGenerating,
+    setVideos,
     toast,
-    variationPrompt,
-    variationMode = "image",
+    userId,
     variationCount = 4,
+    variationMode = "image",
+    variationPrompt,
     videoSettings,
+    viewport,
   } = deps;
-
-  console.log("[Variation Handler] Mode:", variationMode);
 
   // Route to appropriate handler based on variation mode:
   // - Video mode: Uses Sora 2 with AI analysis (image analysis + storyline generation)
@@ -276,16 +172,16 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     );
 
     return handleSoraVideoVariations({
+      basePrompt: variationPrompt,
       images,
       selectedIds,
-      viewport,
-      userId,
-      setVideos,
-      setIsGenerating,
       setActiveVideoGenerations,
+      setIsGenerating,
+      setVideos,
       toast,
-      basePrompt: variationPrompt,
+      userId,
       videoSettings,
+      viewport,
     });
   }
 
@@ -293,22 +189,12 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // This path is taken when variationMode === "image"
 
   // Validate selection early
-  if (selectedIds.length !== 1) {
-    toast({
-      title: "Select one image",
-      description: "Please select exactly one image to generate variations",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  const selectedImage = images.find((img) => img.id === selectedIds[0]);
+  const selectedImage = validateSingleImageSelection(
+    images,
+    selectedIds,
+    toast
+  );
   if (!selectedImage) {
-    toast({
-      title: "Image not found",
-      description: "The selected image could not be found",
-      variant: "destructive",
-    });
     return;
   }
 
@@ -334,6 +220,13 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     positionIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
   }
 
+  // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
+  // Calculate this early so we can add natural dimensions to placeholders
+  const imageSizeDimensions = getOptimalImageDimensions(
+    selectedImage.width,
+    selectedImage.height
+  );
+
   // OPTIMIZATION 1: Create placeholders IMMEDIATELY (optimistic UI)
   // Users see instant feedback before any async operations
 
@@ -351,15 +244,17 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       );
 
       return {
-        id: `variation-${timestamp}-${index}`,
-        src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
-        x: position.x,
-        y: position.y,
-        width: selectedImage.width,
         height: selectedImage.height,
-        rotation: 0,
+        id: `variation-${timestamp}-${index}`,
         isGenerated: true,
         isLoading: true,
+        rotation: 0,
+        src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        width: selectedImage.width,
+        x: position.x,
+        y: position.y,
+        naturalWidth: imageSizeDimensions.width,
+        naturalHeight: imageSizeDimensions.height,
       };
     }
   );
@@ -367,27 +262,9 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // Add placeholders immediately - single state update
   setImages((prev) => [...prev, ...placeholderImages]);
 
-  // Show immediate feedback
-  toast({
-    title: "Generating variations",
-    description: `Creating ${variationCount} image variations...`,
-  });
-
   try {
-    // OPTIMIZATION 2: Process image to blob without FileReader
-    const { blob } = await processImageToBlob(selectedImage);
-
-    // OPTIMIZATION 3: Upload blob via server proxy to avoid CORS
-    const blobUpload = await uploadBlobDirect(blob, toast);
-
-    // Snap source image position for consistent alignment
-    const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
-
-    // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
-    const imageSizeDimensions = getOptimalImageDimensions(
-      selectedImage.width,
-      selectedImage.height
-    );
+    // Ensure image is in Convex (reuses existing URL if already there)
+    const imageUrl = await ensureImageInConvex(selectedImage.src, toast);
 
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
     setActiveGenerations((prev) => {
@@ -400,7 +277,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         );
 
         newMap.set(placeholderId, {
-          imageUrl: blobUpload.url,
+          imageUrl,
           prompt: formattedPrompt,
           isVariation: true,
           imageSize: imageSizeDimensions,

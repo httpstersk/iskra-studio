@@ -15,11 +15,14 @@ import type {
 } from "@/types/canvas";
 import { snapPosition } from "@/utils/snap-utils";
 import { calculateBalancedPosition } from "./variation-handler";
+import {
+  ensureImageInConvex,
+  validateSingleImageSelection,
+} from "./variation-utils";
 
 // Constants
 const API_ENDPOINTS = {
   ANALYZE_IMAGE: "/api/analyze-image",
-  FAL_UPLOAD: "/api/fal/upload",
 } as const;
 
 const ERROR_MESSAGES = {
@@ -33,19 +36,6 @@ const ERROR_MESSAGES = {
 
 const HTTP_STATUS = {
   RATE_LIMIT: 429,
-} as const;
-
-const IMAGE_CONFIG = {
-  CROSS_ORIGIN: "anonymous",
-  FILE_NAME: "image.png",
-  MIME_TYPE: "image/png",
-  QUALITY: 0.95,
-} as const;
-
-const TOAST_MESSAGES = {
-  EXPANDING_PROMPTS: "Building shot-by-shot sequences...",
-  GENERATING_STORYLINES: "Creating unique cinematic narratives...",
-  PREPARING_IMAGE: "Uploading reference image...",
 } as const;
 
 const VARIATION_COUNT = 4;
@@ -107,163 +97,6 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
 
   const result = await response.json();
   return result.analysis;
-}
-
-/**
- * Checks if an error is a rate limit error
- * @param error - Error to check
- * @returns True if error is rate limit related
- */
-function isRateLimitError(error: unknown): boolean {
-  const errorObj = error as { message?: string; status?: number };
-  return (
-    errorObj.status === HTTP_STATUS.RATE_LIMIT ||
-    errorObj.message?.includes("429") ||
-    errorObj.message?.includes("rate limit") ||
-    false
-  );
-}
-
-/**
- * Uploads an image blob to Convex storage
- * @param blob - Image blob to upload
- * @param userId - User ID for authentication
- * @param toast - Toast notification function
- * @returns Promise resolving to uploaded image URL
- * @throws Error if upload fails
- */
-async function uploadImageToConvex(
-  blob: Blob,
-  userId: string,
-  toast: (props: ToastProps) => void
-): Promise<string> {
-  try {
-    const formData = new FormData();
-    formData.append("file", blob, IMAGE_CONFIG.FILE_NAME);
-
-    const response = await fetch("/api/convex/upload", {
-      body: formData,
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.message ||
-          `${ERROR_MESSAGES.UPLOAD_FAILED} with status ${response.status}`
-      );
-    }
-
-    const result = await response.json();
-    return result.url;
-  } catch (error: unknown) {
-    toast({
-      description: error instanceof Error ? error.message : "Unknown error",
-      title: ERROR_MESSAGES.UPLOAD_FAILED,
-      variant: "destructive",
-    });
-    throw error;
-  }
-}
-
-/**
- * Loads an image from a source URL
- * @param imageSrc - Source URL of the image
- * @returns Promise resolving to loaded HTMLImageElement
- */
-function loadImage(imageSrc: string): Promise<HTMLImageElement> {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new window.Image();
-    img.crossOrigin = IMAGE_CONFIG.CROSS_ORIGIN;
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = imageSrc;
-  });
-}
-
-/**
- * Converts a canvas to a blob
- * @param canvas - Canvas element to convert
- * @returns Promise resolving to blob
- */
-function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error("Failed to create blob"));
-        }
-      },
-      IMAGE_CONFIG.MIME_TYPE,
-      IMAGE_CONFIG.QUALITY
-    );
-  });
-}
-
-/**
- * Converts an image to a blob
- * @param imageSrc - Source URL of the image
- * @returns Promise resolving to image blob
- * @throws Error if conversion fails
- */
-async function imageToBlob(imageSrc: string): Promise<Blob> {
-  const img = await loadImage(imageSrc);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    throw new Error("Failed to get canvas context");
-  }
-
-  ctx.drawImage(img, 0, 0);
-
-  return canvasToBlob(canvas);
-}
-
-interface ValidateSelectionParams {
-  images: PlacedImage[];
-  selectedIds: string[];
-  toast: (props: ToastProps) => void;
-}
-
-/**
- * Validates that exactly one image is selected
- * @param params - Validation parameters
- * @param params.images - Array of placed images
- * @param params.selectedIds - Array of selected image IDs
- * @param params.toast - Toast notification function
- * @returns Selected image or undefined if validation fails
- */
-function validateSelection(
-  params: ValidateSelectionParams
-): PlacedImage | undefined {
-  const { images, selectedIds, toast } = params;
-
-  if (selectedIds.length !== 1) {
-    toast({
-      description: ERROR_MESSAGES.SELECT_ONE_IMAGE,
-      title: "Select one image",
-      variant: "destructive",
-    });
-    return undefined;
-  }
-
-  const selectedImage = images.find((img) => img.id === selectedIds[0]);
-  if (!selectedImage) {
-    toast({
-      description: ERROR_MESSAGES.IMAGE_NOT_FOUND,
-      title: "Image not found",
-      variant: "destructive",
-    });
-    return undefined;
-  }
-
-  return selectedImage;
 }
 
 /**
@@ -387,16 +220,19 @@ export const handleSoraVideoVariations = async (
   const {
     images,
     selectedIds,
-    setVideos,
-    setIsGenerating,
     setActiveVideoGenerations,
+    setIsGenerating,
+    setVideos,
     toast,
     userId,
-    basePrompt = "",
     videoSettings = {},
   } = deps;
 
-  const selectedImage = validateSelection({ images, selectedIds, toast });
+  const selectedImage = validateSingleImageSelection(
+    images,
+    selectedIds,
+    toast
+  );
   if (!selectedImage) {
     return;
   }
@@ -415,53 +251,18 @@ export const handleSoraVideoVariations = async (
       return;
     }
 
-    // Upload the reference image
-    toast({
-      description: TOAST_MESSAGES.PREPARING_IMAGE,
-      title: "Preparing image",
-    });
-
-    const selectedImageBlob = await imageToBlob(selectedImage.src);
-    const imageUrl = await uploadImageToConvex(selectedImageBlob, userId, toast);
+    // Ensure image is in Convex (reuses existing URL if already there)
+    const imageUrl = await ensureImageInConvex(selectedImage.src, toast);
 
     // Stage 1: Analyze image style/mood
     const imageAnalysis = await analyzeImage(imageUrl);
-    console.log("[Sora Variations] Stage 1: Image analysis completed:", {
-      colorPalette: imageAnalysis.colorPalette.dominant,
-      mood: imageAnalysis.mood.primary,
-      energy: imageAnalysis.mood.energy,
-      aesthetics: imageAnalysis.visualStyle.aesthetic,
-    });
-
-    toast({
-      description: TOAST_MESSAGES.GENERATING_STORYLINES,
-      title: "Generating storylines",
-    });
 
     // Stage 2: Generate storyline concepts using AI
     const duration = parseDuration(videoSettings.duration);
 
-    console.log(
-      "[Sora Variations] Using duration:",
-      duration,
-      "from settings:",
-      videoSettings.duration
-    );
-
     const storylineSet = await generateStorylines({
       styleAnalysis: imageAnalysis,
       duration,
-    });
-
-    console.log("[Sora Variations] Stage 2: Generated storylines:", {
-      count: storylineSet.storylines.length,
-      styleTheme: storylineSet.styleTheme,
-      titles: storylineSet.storylines.map((s) => s.title),
-    });
-
-    toast({
-      description: TOAST_MESSAGES.EXPANDING_PROMPTS,
-      title: "Expanding into prompts",
     });
 
     // Stage 3: Expand storylines into full Sora prompts
@@ -470,13 +271,6 @@ export const handleSoraVideoVariations = async (
       imageAnalysis,
       duration
     );
-
-    console.log("[Sora Variations] Stage 3: Expanded prompts:", {
-      promptCount: videoPrompts.length,
-      avgLength: Math.round(
-        videoPrompts.reduce((sum, p) => sum + p.length, 0) / videoPrompts.length
-      ),
-    });
 
     // Create video placeholders immediately for optimistic UI
     const timestamp = Date.now();
@@ -494,12 +288,6 @@ export const handleSoraVideoVariations = async (
     const modelId = videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID;
     const modelName = modelId === "sora-2-pro" ? "Sora 2 Pro" : "Sora 2";
 
-    console.log("[Sora Variations] Using model:", {
-      modelId,
-      modelName,
-      duration,
-    });
-
     // Show generation started toast
     toast({
       title: "Generating video variations",
@@ -512,12 +300,6 @@ export const handleSoraVideoVariations = async (
 
       videoPrompts.forEach((variationPrompt, index) => {
         const videoId = `sora-video-${timestamp}-${index}`;
-
-        // Use the AI-generated variation prompt based on image analysis
-        console.log(`[Sora Variation ${index}] Setting AI-generated prompt:`, {
-          promptLength: variationPrompt.length,
-          promptPreview: variationPrompt.substring(0, 150),
-        });
 
         const config = createVideoGenerationConfig({
           duration,
