@@ -1,7 +1,7 @@
-import React, { useCallback, useRef, useState } from "react";
-import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 import { cn } from "@/lib/utils";
+import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 import { Crosshair } from "lucide-react";
+import React, { useCallback, useRef, useState } from "react";
 
 interface MiniMapProps {
   images: PlacedImage[];
@@ -77,32 +77,22 @@ export const MiniMap: React.FC<MiniMapProps> = ({
   const offsetX = (miniMapWidth - contentWidth * scale) / 2;
   const offsetY = (miniMapHeight - contentHeight * scale) / 2;
 
-  // Handle viewport dragging
-  const handleViewportMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (!setViewport) return;
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(true);
-    },
-    [setViewport]
-  );
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging || !setViewport || !minimapRef.current) return;
+  // Handle viewport navigation (click/drag to move)
+  const updateViewportFromMinimap = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!setViewport || !minimapRef.current) return;
 
       const rect = minimapRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left - offsetX;
-      const y = e.clientY - rect.top - offsetY;
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
 
-      // Convert minimap coordinates to canvas coordinates
-      const canvasX = (x / scale + minX) * viewport.scale;
-      const canvasY = (y / scale + minY) * viewport.scale;
+      // Convert minimap pixel coordinates to world coordinates
+      const worldX = (x - offsetX) / scale + minX;
+      const worldY = (y - offsetY) / scale + minY;
 
-      // Center the viewport on the clicked position
-      const newViewportX = -(canvasX - canvasSize.width / (2 * viewport.scale)) * viewport.scale;
-      const newViewportY = -(canvasY - canvasSize.height / (2 * viewport.scale)) * viewport.scale;
+      // Center the viewport on this world position
+      const newViewportX = -(worldX * viewport.scale - canvasSize.width / 2);
+      const newViewportY = -(worldY * viewport.scale - canvasSize.height / 2);
 
       setViewport({
         x: newViewportX,
@@ -110,7 +100,27 @@ export const MiniMap: React.FC<MiniMapProps> = ({
         scale: viewport.scale,
       });
     },
-    [isDragging, setViewport, scale, minX, minY, offsetX, offsetY, viewport.scale, canvasSize]
+    [setViewport, scale, minX, minY, offsetX, offsetY, viewport.scale, canvasSize]
+  );
+
+  const handleMinimapMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!setViewport) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(true);
+      // Immediately move viewport on click
+      updateViewportFromMinimap(e.clientX, e.clientY);
+    },
+    [setViewport, updateViewportFromMinimap]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
+      updateViewportFromMinimap(e.clientX, e.clientY);
+    },
+    [isDragging, updateViewportFromMinimap]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -179,6 +189,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
               "shadow-inner",
               setViewport && "cursor-crosshair"
             )}
+            onMouseDown={handleMinimapMouseDown}
           >
             {/* Grid pattern background */}
             <div
@@ -240,11 +251,10 @@ export const MiniMap: React.FC<MiniMapProps> = ({
             {/* Viewport indicator */}
             <div
               className={cn(
-                "absolute rounded-sm transition-all duration-100",
+                "absolute rounded-sm transition-all duration-100 pointer-events-none",
                 "border-2 border-foreground/70",
                 "bg-foreground/5",
                 "backdrop-blur-[2px]",
-                setViewport && "cursor-move hover:border-foreground/90 hover:bg-foreground/10",
                 isDragging && "border-foreground bg-foreground/15 shadow-lg"
               )}
               style={{
@@ -253,7 +263,6 @@ export const MiniMap: React.FC<MiniMapProps> = ({
                 width: `${(canvasSize.width / viewport.scale) * scale}px`,
                 height: `${(canvasSize.height / viewport.scale) * scale}px`,
               }}
-              onMouseDown={handleViewportMouseDown}
             >
               {/* Corner indicators */}
               <div className="absolute top-0 left-0 w-1 h-1 bg-foreground/60 rounded-full" />
