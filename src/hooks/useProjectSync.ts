@@ -8,16 +8,21 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAtom } from "jotai";
 import { currentProjectAtom, projectLoadingAtom } from "@/store/project-atoms";
-import { imagesAtom, selectedIdsAtom, videosAtom, viewportAtom } from "@/store/canvas-atoms";
+import {
+  imagesAtom,
+  selectedIdsAtom,
+  videosAtom,
+  viewportAtom,
+} from "@/store/canvas-atoms";
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 
 /**
  * Hook to sync canvas state with the current project
- * 
+ *
  * This hook ensures that when the current project changes,
  * the canvas state is immediately updated to match the project's
  * canvas state, preventing flicker during project switches.
- * 
+ *
  * It also tracks the last known good state to restore from
  * if a project load fails.
  */
@@ -42,25 +47,28 @@ export function useProjectSync() {
    * Note: The actual canvas state loading is handled by the existing project system
    * This hook mainly focuses on preventing flicker during transitions
    */
-  const syncCanvasToProject = useCallback((project: typeof currentProject) => {
-    if (!project?.canvasState) return;
+  const syncCanvasToProject = useCallback(
+    (project: typeof currentProject) => {
+      if (!project?.canvasState) return;
 
-    // Clear selection when switching projects
-    setSelectedIds([]);
+      // Clear selection when switching projects
+      setSelectedIds([]);
 
-    // Update viewport if available
-    if (project.canvasState.viewport) {
-      setViewport(project.canvasState.viewport);
-    }
+      // Update viewport if available
+      if (project.canvasState.viewport) {
+        setViewport(project.canvasState.viewport);
+      }
 
-    // Store current state as last good state
-    lastGoodStateRef.current = {
-      images,
-      videos,
-      selectedIds: [],
-      viewport: project.canvasState.viewport || { scale: 1, x: 0, y: 0 },
-    };
-  }, [images, videos, setSelectedIds, setViewport]);
+      // Store current state as last good state
+      lastGoodStateRef.current = {
+        images,
+        videos,
+        selectedIds: [],
+        viewport: project.canvasState.viewport || { scale: 1, x: 0, y: 0 },
+      };
+    },
+    [images, videos, setSelectedIds, setViewport]
+  );
 
   /**
    * Restores canvas state from the last known good state
@@ -87,10 +95,20 @@ export function useProjectSync() {
     };
   }, [images, videos, selectedIds, viewport]);
 
+  // Track the last synced project ID to avoid re-syncing on object reference changes
+  const lastSyncedProjectIdRef = useRef<string | null>(null);
+
   // Sync canvas when current project changes (but not when loading)
   useEffect(() => {
     if (!isLoading && currentProject) {
-      syncCanvasToProject(currentProject);
+      // Only sync if the project ID actually changed (not just the object reference)
+      if (lastSyncedProjectIdRef.current !== currentProject._id) {
+        syncCanvasToProject(currentProject);
+        lastSyncedProjectIdRef.current = currentProject._id;
+      }
+    } else if (!currentProject) {
+      // Reset when project is cleared
+      lastSyncedProjectIdRef.current = null;
     }
   }, [currentProject, isLoading, syncCanvasToProject]);
 

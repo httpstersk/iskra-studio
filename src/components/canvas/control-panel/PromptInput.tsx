@@ -94,8 +94,8 @@ export const PromptInput = React.memo(function PromptInput({
           value={generationSettings.variationPrompt || ""}
         />
 
-        {!isFocused && !((generationSettings.variationPrompt || "").trim()) && (
-          <BlinkingCaret className="left-2 top-2 h-5" />
+        {!isFocused && !(generationSettings.variationPrompt || "").trim() && (
+          <BlinkingCaret className="left-4 top-4 h-6" />
         )}
 
         <div className="absolute top-1 right-2 flex items-center justify-end">
