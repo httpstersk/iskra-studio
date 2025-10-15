@@ -1,4 +1,4 @@
-import { commitMono, focal, hal, halMono, inconsolata } from "@/lib/fonts";
+import { geistMono, geistSans } from "@/lib/fonts";
 import { BotIdClient } from "botid/client";
 import type { Metadata, Viewport } from "next";
 import { CoreProviders } from "./core-providers";
@@ -73,13 +73,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={[
-        hal.variable,
-        halMono.variable,
-        focal.variable,
-        inconsolata.variable,
-        commitMono.variable,
-      ].join(" ")}
+      className={[geistSans.variable, geistMono.variable].join(" ")}
       suppressHydrationWarning
     >
       <head>

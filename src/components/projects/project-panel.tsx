@@ -120,9 +120,9 @@ export function ProjectPanel({
       <div
         className={cn(
           "fixed left-0 top-0 z-[60] flex h-full w-[5.5rem]",
-          "flex-col items-center overflow-hidden border-r border-sidebar-border/60",
-          "bg-sidebar/95 backdrop-blur-xl",
-          "shadow-[0_20px_40px_rgba(0,0,0,0.5)]",
+          "flex-col items-center overflow-hidden border border-border/55 border-l-0",
+          "bg-card/96 backdrop-blur-2xl",
+          "shadow-[0_8px_32px_rgba(0,0,0,0.45)]",
           "transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -134,74 +134,77 @@ export function ProjectPanel({
               size="icon"
               onClick={togglePanel}
               customVariant={cn(
-                "h-11 w-11 rounded-2xl border border-sidebar-border/60",
-                "bg-sidebar-accent/35 text-muted-foreground",
-                "shadow-[0_10px_24px_rgba(0,0,0,0.45)] transition hover:border-sidebar-ring/60 hover:bg-sidebar-accent/55 hover:text-foreground"
+                "h-11 w-11 rounded-2xl border border-border/50",
+                "bg-card/85 text-muted-foreground",
+                "transition hover:border-border/40 hover:bg-card/90 hover:text-foreground"
               )}
             >
               <PanelLeftClose className="h-5 w-5" />
               <span className="sr-only">Toggle sidebar</span>
             </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNewProject}
-              customVariant={cn(
-                "h-11 w-11 rounded-2xl border border-sidebar-border/60",
-                "bg-sidebar-accent/35 text-foreground",
-                "shadow-[0_10px_26px_rgba(0,0,0,0.45)] transition hover:border-sidebar-ring/60 hover:bg-sidebar-accent/55"
-              )}
-            >
-              <Plus className="h-5 w-5" />
-              <span className="sr-only">New project</span>
-            </Button>
           </div>
 
           <div
-            className="mt-6 h-px w-10 bg-sidebar-border/50"
+            className="mt-6 h-px w-10 bg-border/40"
             aria-hidden="true"
           />
 
-          <div className="mt-6 flex w-full flex-1 flex-col items-center gap-2.5 overflow-y-auto pb-8">
-            {isLoading && (
-              <div className="flex w-full flex-col items-center gap-2">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-11 w-11 animate-pulse rounded-2xl border border-sidebar-border/55 bg-sidebar-accent/35"
-                  />
+          <div className="mt-6 w-full overflow-y-auto">
+            <div className="flex flex-col items-center gap-2.5 pb-4">
+              {isLoading && (
+                <div className="flex w-full flex-col items-center gap-2">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="h-11 w-11 animate-pulse rounded-2xl border border-border/45 bg-card/85"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {!isLoading && projectNumbers.length === 0 && (
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  No projects yet
+                </p>
+              )}
+
+              {!isLoading &&
+                projectNumbers.map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => {
+                      onOpenProject?.(id);
+                      if (window.innerWidth < 768 && isOpen) {
+                        togglePanel();
+                      }
+                    }}
+                    className={cn(
+                      "group flex h-11 w-11 items-center justify-center rounded-2xl border border-border/45",
+                      "bg-card/85 text-xs font-medium text-foreground",
+                      "transition hover:border-border/30 hover:bg-card/90"
+                    )}
+                  >
+                    <span className="text-sm font-mono text-muted-foreground transition group-hover:text-foreground">
+                      {label}
+                    </span>
+                  </button>
                 ))}
-              </div>
-            )}
 
-            {!isLoading && projectNumbers.length === 0 && (
-              <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                No projects yet
-              </p>
-            )}
-
-            {!isLoading &&
-              projectNumbers.map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => {
-                    onOpenProject?.(id);
-                    if (window.innerWidth < 768 && isOpen) {
-                      togglePanel();
-                    }
-                  }}
-                  className={cn(
-                    "group flex h-11 w-11 items-center justify-center rounded-2xl border border-sidebar-border/60",
-                    "bg-sidebar/80 text-xs font-semibold text-foreground shadow-[0_8px_24px_rgba(0,0,0,0.35)]",
-                    "transition hover:border-sidebar-ring/60 hover:bg-sidebar/85"
-                  )}
-                >
-                  <span className="text-base font-normal text-muted-foreground transition group-hover:text-foreground">
-                    {label}
-                  </span>
-                </button>
-              ))}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleNewProject}
+                customVariant={cn(
+                  "mt-2 h-11 w-11 rounded-2xl border border-border/45",
+                  "bg-card/88 text-foreground",
+                  "transition hover:border-border/30 hover:bg-card/95"
+                )}
+              >
+                <Plus className="h-5 w-5" />
+                <span className="sr-only">New project</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -773,7 +773,7 @@ export default function CanvasPage() {
   return (
     <div
       aria-label={ARIA_LABELS.CANVAS_MAIN}
-      className="bg-background text-foreground font-focal relative flex flex-col w-full overflow-hidden h-screen"
+      className="bg-background text-foreground font-sans relative flex flex-col w-full overflow-hidden h-screen"
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) =>
         handleDrop(e, stageRef as React.RefObject<{ container(): HTMLElement }>)

@@ -77,28 +77,20 @@ module.exports = {
         "3xl": "1rem",
       },
       fontFamily: {
-        focal: [
-          "var(--font-focal)",
+        sans: [
+          "var(--font-geist-sans)",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
         ],
-        hal: ["var(--font-hal)", "ui-serif", "serif"],
-        halmono: [
-          "var(--font-hal-mono)",
-          "ui-monospace",
-          "system-ui",
-          "monospace",
-        ],
-        sans: ["var(--font-focal)", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: [
-          "var(--font-inconsolata)",
+          "var(--font-geist-mono)",
           "ui-monospace",
           "system-ui",
           "monospace",
         ],
         heading: [
-          "var(--font-focal)",
+          "var(--font-geist-sans)",
           "ui-sans-serif",
           "system-ui",
           "sans-serif",
