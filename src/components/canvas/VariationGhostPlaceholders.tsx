@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Group, Rect, Image as KonvaImage, Text } from "react-konva";
 import Konva from "konva";
-import useImage from "use-image";
+import { useImageCache } from "@/hooks/useImageCache";
 import type { PlacedImage } from "@/types/canvas";
 import { calculateBalancedPosition } from "@/lib/handlers/variation-handler";
 import { snapPosition } from "@/utils/snap-utils";
@@ -39,7 +39,7 @@ export const VariationGhostPlaceholders: React.FC<
   const [blurredClone, setBlurredClone] = useState<HTMLCanvasElement | null>(
     null,
   );
-  const [sourceImage] = useImage(selectedImage.src, "anonymous");
+  const [sourceImage] = useImageCache(selectedImage.src, "anonymous");
 
   useEffect(() => {
     nodeRef.current = stageRef.current?.findOne(`#${selectedImage.id}`) ?? null;

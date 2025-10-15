@@ -19,68 +19,39 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
   const image = hasSingleSelection ? selectedImages[0] : null;
 
   /**
-   * Calculate the natural (API) dimensions that get sent to generation endpoints.
-   * We show these instead of display dimensions because:
+   * Get the natural (API) dimensions that get sent to generation endpoints.
+   * Uses cached dimensions if available, otherwise falls back to display dimensions.
+   * We show natural dimensions instead of display dimensions because:
    * - They represent the actual pixel data AI models process
    * - They're consistent regardless of canvas zoom/scaling
    * - Users need to know the true resolution for generation quality
    */
-  const getApiDimensions = async (img: PlacedImage) => {
-    try {
-      // Load the image to get natural dimensions
-      const imgElement = new window.Image();
-      imgElement.crossOrigin = "anonymous";
-      imgElement.src = img.src;
+  const getApiDimensions = React.useMemo(() => {
+    if (!image) return null;
 
-      await new Promise((resolve) => {
-        imgElement.onload = resolve;
-      });
-
+    // Use cached natural dimensions if available
+    if (image.naturalWidth !== undefined && image.naturalHeight !== undefined) {
       return {
-        width: Math.round(imgElement.naturalWidth),
-        height: Math.round(imgElement.naturalHeight),
-      };
-    } catch (error) {
-      // Fallback to display dimensions if image loading fails
-      return {
-        width: Math.round(img.width),
-        height: Math.round(img.height),
+        width: Math.round(image.naturalWidth),
+        height: Math.round(image.naturalHeight),
       };
     }
-  };
 
-  const [apiDimensions, setApiDimensions] = React.useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-
-  React.useEffect(() => {
-    if (!hasSingleSelection || !image) {
-      setApiDimensions(null);
-      return;
-    }
-
-    let isMounted = true;
-
-    getApiDimensions(image).then((dims) => {
-      if (isMounted) {
-        setApiDimensions(dims);
-      }
-    });
-
-    return () => {
-      isMounted = false;
+    // Fallback to display dimensions if natural dimensions aren't cached
+    return {
+      width: Math.round(image.width),
+      height: Math.round(image.height),
     };
-  }, [hasSingleSelection, image?.src]);
+  }, [image?.naturalWidth, image?.naturalHeight, image?.width, image?.height]);
 
-  if (!hasSingleSelection || !image || !apiDimensions) return null;
+  if (!hasSingleSelection || !image || !getApiDimensions) return null;
 
   // Get rotation-aware bottom center position using bounding box
   const boundingBox = calculateBoundingBox(image);
   const { x: screenX, y: screenY } = canvasToScreen(
     boundingBox.x + boundingBox.width / 2,
     boundingBox.y + boundingBox.height,
-    viewport,
+    viewport
   );
 
   return (
@@ -94,7 +65,7 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
     >
       <div className="flex flex-col gap-0.5">
         <div className="font-medium">
-          {apiDimensions.width} × {apiDimensions.height} px
+          {getApiDimensions.width} × {getApiDimensions.height} px
         </div>
       </div>
     </div>

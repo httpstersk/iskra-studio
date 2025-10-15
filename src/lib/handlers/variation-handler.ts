@@ -220,6 +220,13 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     positionIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
   }
 
+  // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
+  // Calculate this early so we can add natural dimensions to placeholders
+  const imageSizeDimensions = getOptimalImageDimensions(
+    selectedImage.width,
+    selectedImage.height
+  );
+
   // OPTIMIZATION 1: Create placeholders IMMEDIATELY (optimistic UI)
   // Users see instant feedback before any async operations
 
@@ -246,6 +253,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         width: selectedImage.width,
         x: position.x,
         y: position.y,
+        naturalWidth: imageSizeDimensions.width,
+        naturalHeight: imageSizeDimensions.height,
       };
     }
   );
@@ -256,15 +265,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   try {
     // Ensure image is in Convex (reuses existing URL if already there)
     const imageUrl = await ensureImageInConvex(selectedImage.src, toast);
-
-    // Snap source image position for consistent alignment
-    const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
-
-    // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
-    const imageSizeDimensions = getOptimalImageDimensions(
-      selectedImage.width,
-      selectedImage.height
-    );
 
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
     setActiveGenerations((prev) => {
