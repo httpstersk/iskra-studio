@@ -1,10 +1,11 @@
+import LoadingFallback from "@/components/loading-fallback";
 import { geistMono, geistSans } from "@/lib/fonts";
 import { BotIdClient } from "botid/client";
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { CoreProviders } from "./core-providers";
 import "./globals.css";
 
-import { FAL_PROXY_PATH, FAL_UPLOAD_PATH } from "@/lib/fal/constants";
 
 const TITLE = "Iskra ✸";
 const DESCRIPTION = "✸";
@@ -89,7 +90,9 @@ export default function RootLayout({
       </head>
 
       <body className={`font-sans bg-background text-foreground min-h-screen`}>
-        <CoreProviders>{children}</CoreProviders>
+        <Suspense fallback={<LoadingFallback />}>
+          <CoreProviders>{children}</CoreProviders>
+        </Suspense>
       </body>
     </html>
   );
