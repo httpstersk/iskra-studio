@@ -183,7 +183,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
           <div
             ref={minimapRef}
             className={cn(
-              "relative w-32 h-24 md:w-48 md:h-32 rounded-lg overflow-hidden",
+              "relative w-32 h-24 md:w-48 md:h-32 overflow-hidden",
               "bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20",
               "border border-border/30",
               "shadow-inner",
@@ -192,16 +192,26 @@ export const MiniMap: React.FC<MiniMapProps> = ({
             onMouseDown={handleMinimapMouseDown}
           >
             {/* Grid pattern background */}
-            <div
-              className="absolute inset-0 opacity-20"
-              style={{
-                backgroundImage: `
-                  linear-gradient(to right, currentColor 1px, transparent 1px),
-                  linear-gradient(to bottom, currentColor 1px, transparent 1px)
-                `,
-                backgroundSize: "10px 10px",
-              }}
-            />
+            <svg
+              className="absolute inset-0 w-full h-full opacity-20"
+            >
+              <defs>
+                <pattern
+                  id="minimap-grid"
+                  width="10"
+                  height="10"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <path
+                    d="M 10 0 L 0 0 0 10"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="0.5"
+                  />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#minimap-grid)" />
+            </svg>
 
             {!hasContent && (
               <div className="absolute inset-0 flex items-center justify-center">
