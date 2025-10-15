@@ -96,8 +96,20 @@ module.exports = {
           "sans-serif",
         ],
       },
+      keyframes: {
+        neonBlink: {
+          "0%, 45%": { opacity: "1" },
+          "50%, 55%": { opacity: "0.08" },
+          "60%, 100%": { opacity: "1" },
+        },
+      },
       animation: {
         "logo-spin": "logoSpin 4s ease-in-out infinite",
+        "neon-blink": "neonBlink 2.2s ease-in-out infinite",
+      },
+      boxShadow: {
+        "neon-primary":
+          "0 0 6px oklch(var(--primary) / 1), 0 0 24px oklch(var(--primary) / 1)",
       },
     },
   },

@@ -7,12 +7,8 @@
  */
 
 import { Textarea } from "@/components/ui/textarea";
-import {
-  CONTROL_PANEL_STRINGS,
-  getPromptPlaceholder,
-} from "@/constants/control-panel";
+import { BlinkingCaret } from "@/components/ui/BlinkingCaret";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
-import { checkOS } from "@/utils/os-utils";
 import React, { useCallback, useState, type KeyboardEvent } from "react";
 
 /**
@@ -99,9 +95,7 @@ export const PromptInput = React.memo(function PromptInput({
         />
 
         {!isFocused && !((generationSettings.variationPrompt || "").trim()) && (
-          <span
-            className="pointer-events-none absolute left-2 top-2 h-5 w-[2px] caret-sci"
-          />
+          <BlinkingCaret className="left-2 top-2 h-5" />
         )}
 
         <div className="absolute top-1 right-2 flex items-center justify-end">
@@ -148,8 +142,6 @@ export const PromptInput = React.memo(function PromptInput({
     );
   }
 
-  const shortcut = checkOS("Win") || checkOS("Linux") ? "Ctrl" : "⌘";
-
   return (
     <div className="relative">
       <Textarea
@@ -162,25 +154,8 @@ export const PromptInput = React.memo(function PromptInput({
         value={generationSettings.prompt}
       />
       {!isFocused && !(generationSettings.prompt || "").trim() && (
-        <span className="pointer-events-none absolute left-4 top-4 h-6 w-[2px] caret-sci" />
+        <BlinkingCaret className="left-4 top-4 h-6" />
       )}
-      <style jsx>{`
-        .caret-sci {
-          background: hsl(var(--primary));
-          box-shadow:
-            0 0 6px hsl(var(--primary)),
-            0 0 24px hsl(var(--primary));
-          border-radius: 1px;
-          animation: neon-blink 2.2s ease-in-out infinite;
-          opacity: 0.95;
-          will-change: opacity;
-        }
-        @keyframes neon-blink {
-          0%, 45% { opacity: 1; }
-          50%, 55% { opacity: 0.08; }
-          60%, 100% { opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 });
