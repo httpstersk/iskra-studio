@@ -126,6 +126,7 @@ export const CodeBlockCopyButton = ({
       await navigator.clipboard.writeText(code);
       setIsCopied(true);
       onCopy?.();
+      // setTimeout necessary here for UI feedback timing (copied state reset)
       setTimeout(() => setIsCopied(false), timeout);
     } catch (error) {
       onError?.(error as Error);

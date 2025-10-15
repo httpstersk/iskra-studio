@@ -98,6 +98,7 @@ export const CanvasContextMenu = React.memo<CanvasContextMenuProps>(
             link.href = blobUrl;
             link.click();
 
+            // Delay URL revocation to ensure download has started
             setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
           } catch (error) {
             console.error("Failed to download video:", error);

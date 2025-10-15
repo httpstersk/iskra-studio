@@ -60,6 +60,7 @@ const addToRemoveQueue = (toastId: string) => {
     return;
   }
 
+  // setTimeout necessary here for toast auto-dismiss timing
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId);
     dispatch({

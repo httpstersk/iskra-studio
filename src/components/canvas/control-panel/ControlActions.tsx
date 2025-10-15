@@ -91,7 +91,8 @@ const triggerFileDialog = (
 ) => {
   document.body.appendChild(input);
 
-  setTimeout(() => {
+  // Use requestAnimationFrame to ensure DOM operations are synchronized with browser's render cycle
+  requestAnimationFrame(() => {
     try {
       input.click();
     } catch (error) {
@@ -105,14 +106,16 @@ const triggerFileDialog = (
         document.body.removeChild(input);
       }
     }
-  }, FILE_INPUT_CONFIG.CLICK_DELAY);
+  });
 
-  // Cleanup after timeout
-  setTimeout(() => {
-    if (input.parentNode) {
-      document.body.removeChild(input);
-    }
-  }, FILE_INPUT_CONFIG.CLEANUP_TIMEOUT);
+  // Cleanup after 2 frames to ensure file dialog has been triggered
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (input.parentNode) {
+        document.body.removeChild(input);
+      }
+    });
+  });
 };
 
 /**

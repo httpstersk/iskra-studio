@@ -451,6 +451,7 @@ export class SyncManager {
             }
 
             // Wait before next retry with exponential backoff and jitter
+            // setTimeout necessary here for precise async delay in retry logic (not UI-dependent)
             const baseDelay = SYNC_CONSTANTS.RETRY_DELAY_MS * Math.pow(2, change.retries);
             const jitter = Math.random() * SYNC_CONSTANTS.MAX_JITTER_MS;
             await new Promise((resolve) =>

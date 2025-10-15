@@ -588,6 +588,7 @@ export function CanvasPageClient() {
         return newMap;
       });
 
+      // Delay save to allow animation to complete before potentially blocking storage operation
       setTimeout(() => saveToStorage(), ANIMATION.SAVE_DELAY);
     },
     [

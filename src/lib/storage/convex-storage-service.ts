@@ -83,6 +83,7 @@ export class ConvexStorageService implements StorageService {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const controller = new AbortController();
+        // setTimeout necessary here for network request timeout using AbortController
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         const response = await fetch(url, {
@@ -105,6 +106,7 @@ export class ConvexStorageService implements StorageService {
         }
 
         // Exponential backoff: 1s, 2s, 4s
+        // setTimeout necessary here for precise async delay in retry logic
         const delay = Math.pow(2, attempt) * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
@@ -187,6 +189,7 @@ export class ConvexStorageService implements StorageService {
         }
 
         // Exponential backoff with jitter to prevent thundering herd
+        // setTimeout necessary here for precise async delay in retry logic
         const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
