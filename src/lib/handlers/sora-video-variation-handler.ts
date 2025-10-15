@@ -415,14 +415,24 @@ export const handleSoraVideoVariations = async (
       return;
     }
 
-    // Upload the reference image
-    toast({
-      description: TOAST_MESSAGES.PREPARING_IMAGE,
-      title: "Preparing image",
-    });
-
-    const selectedImageBlob = await imageToBlob(selectedImage.src);
-    const imageUrl = await uploadImageToConvex(selectedImageBlob, userId, toast);
+    // Check if image is already in Convex - if so, reuse the URL
+    const isConvexUrl = selectedImage.src.includes('.convex.cloud') || selectedImage.src.includes('.convex.site');
+    
+    let imageUrl: string;
+    if (isConvexUrl) {
+      // Image is already in Convex, use it directly
+      console.log('[Sora Variations] Reusing Convex URL:', selectedImage.src);
+      imageUrl = selectedImage.src;
+    } else {
+      // Image needs to be uploaded
+      toast({
+        description: TOAST_MESSAGES.PREPARING_IMAGE,
+        title: "Preparing image",
+      });
+      
+      const selectedImageBlob = await imageToBlob(selectedImage.src);
+      imageUrl = await uploadImageToConvex(selectedImageBlob, userId, toast);
+    }
 
     // Stage 1: Analyze image style/mood
     const imageAnalysis = await analyzeImage(imageUrl);

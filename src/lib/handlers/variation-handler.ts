@@ -374,11 +374,21 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   });
 
   try {
-    // OPTIMIZATION 2: Process image to blob without FileReader
-    const { blob } = await processImageToBlob(selectedImage);
-
-    // OPTIMIZATION 3: Upload blob via server proxy to avoid CORS
-    const blobUpload = await uploadBlobDirect(blob, toast);
+    // OPTIMIZATION 2: Check if image is already in Convex - if so, reuse the URL
+    const isConvexUrl = selectedImage.src.includes('.convex.cloud') || selectedImage.src.includes('.convex.site');
+    
+    let imageUrl: string;
+    if (isConvexUrl) {
+      // Image is already in Convex, use it directly
+      console.log('[Variation Handler] Reusing Convex URL:', selectedImage.src);
+      imageUrl = selectedImage.src;
+    } else {
+      // Image needs to be uploaded - process and upload
+      console.log('[Variation Handler] Uploading image to Convex...');
+      const { blob } = await processImageToBlob(selectedImage);
+      const blobUpload = await uploadBlobDirect(blob, toast);
+      imageUrl = blobUpload.url;
+    }
 
     // Snap source image position for consistent alignment
     const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
@@ -400,7 +410,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         );
 
         newMap.set(placeholderId, {
-          imageUrl: blobUpload.url,
+          imageUrl,
           prompt: formattedPrompt,
           isVariation: true,
           imageSize: imageSizeDimensions,
