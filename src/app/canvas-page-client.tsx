@@ -801,6 +801,7 @@ export function CanvasPageClient() {
               images={canvasState.images}
               videos={canvasState.videos}
               viewport={canvasState.viewport}
+              setViewport={canvasState.setViewport}
             />
           )}
 
