@@ -85,7 +85,7 @@ export const PromptInput = React.memo(function PromptInput({
     return (
       <div className="relative">
         <Textarea
-          className="w-full h-16 resize-none border-none p-2 pr-24"
+          className="w-full h-16 resize-none border-none p-4 pr-24"
           onChange={(e) => handleVariationPromptChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsFocused(true)}
