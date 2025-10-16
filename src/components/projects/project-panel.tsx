@@ -118,12 +118,23 @@ export function ProjectPanel({
   };
 
   /**
+   * Clear switching state when currentProjectId actually updates to match.
+   * This ensures the optimistic UI persists until the real state updates.
+   */
+  useEffect(() => {
+    if (switchingProject && currentProjectId === switchingProject) {
+      // Current project has updated to match our target, clear switching state
+      setSwitchingProject(null);
+    }
+  }, [currentProjectId, switchingProject]);
+
+  /**
    * Handles opening a project with smooth transition and optimistic updates.
    */
   const handleOpenProject = async (projectId: string) => {
     // Optimistically set this as the active project immediately
     setSwitchingProject(projectId);
-    
+
     try {
       // Start the project loading immediately while showing loading state
       await onOpenProject?.(projectId);
@@ -132,9 +143,9 @@ export function ProjectPanel({
       setSwitchingProject(null);
       throw error;
     }
-    
-    // On success, clear the switching state with a small delay for smooth transition
-    setTimeout(() => setSwitchingProject(null), 100);
+
+    // Note: We no longer clear switching state with a timeout.
+    // Instead, the useEffect above clears it when currentProjectId updates.
   };
 
   return (
@@ -171,7 +182,8 @@ export function ProjectPanel({
 
           <div className="mt-6 w-full overflow-y-auto">
             <div className="flex flex-col items-center gap-2.5 pb-4">
-              {isLoading && (
+              {/* Show skeleton loaders only on initial load (when no projects exist yet) */}
+              {isLoading && projects.length === 0 && (
                 <div className="flex w-full flex-col items-center gap-2">
                   {Array.from({ length: 4 }).map((_, index) => (
                     <div
@@ -182,7 +194,8 @@ export function ProjectPanel({
                 </div>
               )}
 
-              {!isLoading &&
+              {/* Always show projects once loaded, even during project switching */}
+              {projectNumbers.length > 0 &&
                 projectNumbers.map(({ id, label }) => {
                   const isSelected = currentProjectId === id;
                   const isSwitching = switchingProject === id;
@@ -197,7 +210,7 @@ export function ProjectPanel({
                         "group flex h-11 w-11 items-center justify-center rounded-2xl border",
                         "bg-card/85 text-xs text-foreground",
                         "transition-all duration-200 relative",
-                        (isSelected || isOptimisticallySelected)
+                        isSelected || isOptimisticallySelected
                           ? "border-primary/40 bg-primary/8 shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)]"
                           : "border-border/45 hover:border-border/30 hover:bg-card/90",
                         isSwitching && "opacity-80 scale-95"
@@ -211,7 +224,7 @@ export function ProjectPanel({
                       <span
                         className={cn(
                           "text-sm font-mono transition",
-                          (isSelected || isOptimisticallySelected)
+                          isSelected || isOptimisticallySelected
                             ? "text-primary"
                             : "text-muted-foreground group-hover:text-foreground",
                           isSwitching && "opacity-0"

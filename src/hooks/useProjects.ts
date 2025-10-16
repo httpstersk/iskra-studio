@@ -18,7 +18,7 @@ import {
 import type { Project, ProjectMetadata } from "@/types/project";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
-import { startTransition, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "./useAuth";
@@ -200,39 +200,37 @@ export function useProjects(): UseProjectsReturn {
           id: project._id,
         };
 
-        // Batch all state updates together to prevent flicker using React's startTransition
-        startTransition(() => {
-          setCurrentProject(normalizedProject);
-          setLastSavedAt(normalizedProject.lastSavedAt ?? null);
+        // Update state immediately for instant UI feedback
+        setCurrentProject(normalizedProject);
+        setLastSavedAt(normalizedProject.lastSavedAt ?? null);
 
-          // Update project list with loaded project data
-          setProjectList((prev) => {
-            const metadata: ProjectMetadata = {
-              id: project._id,
-              name: project.name,
-              createdAt: project.createdAt,
-              lastSavedAt: project.lastSavedAt,
-              thumbnailUrl: project.thumbnailUrl,
-              imageCount: project.canvasState.elements.filter(
-                (el) => el.type === "image"
-              ).length,
-              videoCount: project.canvasState.elements.filter(
-                (el) => el.type === "video"
-              ).length,
-            };
+        // Update project list with loaded project data
+        setProjectList((prev) => {
+          const metadata: ProjectMetadata = {
+            id: project._id,
+            name: project.name,
+            createdAt: project.createdAt,
+            lastSavedAt: project.lastSavedAt,
+            thumbnailUrl: project.thumbnailUrl,
+            imageCount: project.canvasState.elements.filter(
+              (el) => el.type === "image"
+            ).length,
+            videoCount: project.canvasState.elements.filter(
+              (el) => el.type === "video"
+            ).length,
+          };
 
-            const existingIndex = prev.findIndex((p) => p.id === project._id);
+          const existingIndex = prev.findIndex((p) => p.id === project._id);
 
-            if (existingIndex === -1) {
-              return [metadata, ...prev].sort(
-                (a, b) => b.lastSavedAt - a.lastSavedAt
-              );
-            }
+          if (existingIndex === -1) {
+            return [metadata, ...prev].sort(
+              (a, b) => b.lastSavedAt - a.lastSavedAt
+            );
+          }
 
-            const updated = [...prev];
-            updated[existingIndex] = metadata;
-            return updated.sort((a, b) => b.lastSavedAt - a.lastSavedAt);
-          });
+          const updated = [...prev];
+          updated[existingIndex] = metadata;
+          return updated.sort((a, b) => b.lastSavedAt - a.lastSavedAt);
         });
       } catch (error) {
         console.error("Failed to load project:", error);
