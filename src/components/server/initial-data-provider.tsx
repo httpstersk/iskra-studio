@@ -12,9 +12,9 @@ import { InitialDataClient } from "./initial-data-client";
  * Server Component: Loads initial data and passes to client wrapper.
  * 
  * Benefits:
- * - Pre-fetches user data, quota, and projects on server
+ * - Pre-fetches user data and projects on server
  * - Reduces Time to First Byte (TTFB) for authenticated users
- * - Eliminates client-side waterfall of auth → user → quota → projects
+ * - Eliminates client-side waterfall of auth → user → projects
  * - Data is available immediately on page load
  */
 export async function InitialDataProvider({

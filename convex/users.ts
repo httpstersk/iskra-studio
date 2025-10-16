@@ -108,36 +108,7 @@ export const getCurrentUser = query({
   },
 });
 
-/**
- * Gets user quota information.
- *
- * @returns User's storage quota data
- */
-export const getUserQuota = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
 
-    const userId = identity.subject;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    return {
-      storageUsedBytes: user.storageUsedBytes,
-      tier: user.tier,
-    };
-  },
-});
 
 /**
  * Updates user's storage quota by recalculating from all assets.

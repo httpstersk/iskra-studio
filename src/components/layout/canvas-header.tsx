@@ -3,8 +3,7 @@
 /**
  * Canvas header component with authentication and navigation.
  *
- * Displays application title, authentication state, storage quota,
- * and auto-save indicator.
+ * Displays application title, authentication state, and auto-save indicator.
  */
 
 import { SignInButton } from "@/components/auth/sign-in-button";
@@ -14,7 +13,7 @@ import {
   type SaveStatus,
 } from "@/components/canvas/auto-save-indicator";
 import { OfflineIndicator } from "@/components/canvas/offline-indicator";
-import { StorageIndicator } from "@/components/quota/storage-indicator";
+
 import { useAuth } from "@/hooks/useAuth";
 import {
   autoSaveErrorAtom,
@@ -39,14 +38,14 @@ interface CanvasHeaderProps {
  * Top navigation bar that displays:
  * - Application branding
  * - Authentication state (SignInButton or UserMenu)
- * - Storage quota indicator (for authenticated users)
+
  * - Auto-save status indicator (for authenticated users)
  * - Offline indicator (when disconnected)
  *
  * @remarks
  * - Fixed position at top of viewport
  * - Shows SignInButton when not authenticated
- * - Shows UserMenu with storage quota when authenticated
+ * - Shows UserMenu when authenticated
  * - Auto-save indicator only visible when authenticated
  * - Responsive design with proper spacing
  *
@@ -88,7 +87,7 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
             <>
               {isAuthenticated ? (
                 <>
-                  <StorageIndicator />
+
                   <UserMenu />
                 </>
               ) : (

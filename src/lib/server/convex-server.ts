@@ -54,21 +54,7 @@ export async function getCurrentUser() {
   }
 }
 
-/**
- * Server-side: Gets user's quota information.
- * 
- * @returns User quota data or null if not available
- */
-export async function getUserQuota() {
-  try {
-    const client = await getAuthenticatedConvexClient();
-    const quota = await client.query(api.users.getUserQuota);
-    return quota;
-  } catch (error) {
-    console.error("[Server] Error fetching quota:", error);
-    return null;
-  }
-}
+
 
 /**
  * Server-side: Lists user's projects with optional limit.
@@ -90,7 +76,7 @@ export async function listProjects(limit = 10) {
 /**
  * Server-side: Pre-fetches initial application data.
  * 
- * Fetches user, quota, and recent projects in parallel for optimal SSR.
+ * Fetches user and recent projects in parallel for optimal SSR.
  * 
  * @returns Object containing all initial data or defaults
  */
@@ -100,21 +86,18 @@ export async function preloadAppData() {
   if (!userId) {
     return {
       user: null,
-      quota: null,
       projects: [],
       isAuthenticated: false,
     };
   }
 
-  const [user, quota, projects] = await Promise.all([
+  const [user, projects] = await Promise.all([
     getCurrentUser(),
-    getUserQuota(),
     listProjects(10),
   ]);
 
   return {
     user,
-    quota,
     projects,
     isAuthenticated: true,
   };

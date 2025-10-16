@@ -13,7 +13,7 @@ import { CanvasPageClient } from "./canvas-page-client";
  * 
  * Benefits of this architecture:
  * - Server-side data pre-fetching eliminates waterfall requests
- * - User data, projects, and quota loaded before client hydration
+ * - User data and projects loaded before client hydration
  * - Improved perceived performance and faster Time to Interactive
  * - Progressive loading with Suspense boundaries
  */

@@ -38,41 +38,4 @@ export interface User {
   userId: string;
 }
 
-/**
- * Storage quota information for a user.
- * 
- * Provides real-time information about a user's storage usage,
- * limits, and whether they are approaching or exceeding their quota.
- * 
- * @remarks
- * - Used for displaying storage indicators in the UI
- * - isApproachingLimit triggers warning indicators at 80%
- * - isExceeded prevents new uploads when quota is reached
- * 
- * @example
- * ```ts
- * const quota: StorageQuota = {
- *   limit: 524288000, // 500 MB
- *   percentage: 85,
- *   used: 445644800, // 425 MB
- *   isApproachingLimit: true,
- *   isExceeded: false,
- * };
- * ```
- */
-export interface StorageQuota {
-  /** Whether the user is approaching their storage limit (≥80%) */
-  isApproachingLimit: boolean;
-  
-  /** Whether the user has exceeded their storage limit (≥100%) */
-  isExceeded: boolean;
-  
-  /** Maximum storage allowed in bytes based on user tier */
-  limit: number;
-  
-  /** Percentage of storage quota used (0-100+) */
-  percentage: number;
-  
-  /** Current storage used in bytes */
-  used: number;
-}
+

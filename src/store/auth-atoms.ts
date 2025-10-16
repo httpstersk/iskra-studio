@@ -1,17 +1,17 @@
 /**
  * Jotai atoms for authentication state management.
  * 
- * Manages Clerk user authentication, user tier, and storage quota information.
+ * Manages Clerk user authentication and user tier information.
  * 
  * @remarks
  * - userAtom stores the current Clerk user object and Convex user data
- * - Derived atoms calculate tier and quota information
+ * - Derived atoms calculate tier information
  * - All atoms are null when user is not authenticated
  */
 
 import { atom } from "jotai";
 import type { User as ClerkUser } from "@clerk/nextjs/server";
-import type { StorageQuota, User, UserTier } from "@/types/auth";
+import type { User, UserTier } from "@/types/auth";
 
 /**
  * Combined user information from Clerk and Convex.
@@ -63,12 +63,4 @@ export const userTierAtom = atom<UserTier>((get) => {
   return convexUser?.tier ?? "free";
 });
 
-/**
- * Atom for user's storage quota information.
- * 
- * @remarks
- * - Initialized as null until quota data is fetched
- * - Updated by useQuota hook
- * - Used to display storage indicators and enforce limits
- */
-export const storageQuotaAtom = atom<StorageQuota | null>(null);
+
