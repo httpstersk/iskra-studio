@@ -3,7 +3,7 @@
 import { GenerationsIndicator } from "@/components/generations-indicator";
 import { CONTROL_PANEL_STYLES } from "@/constants/control-panel";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 
 /**
  * Props for the GenerationsIndicatorWrapper component

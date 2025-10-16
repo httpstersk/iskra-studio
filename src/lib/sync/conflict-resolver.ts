@@ -66,11 +66,7 @@ export function resolveConflict(
 
   // If timestamps are the same, no conflict
   if (localModified === remoteModified) {
-    return {
-      ...remoteState,
-      syncStatus: "synced",
-      isDirty: false,
-    };
+    return remoteState;
   }
 
   // Last write wins strategy
@@ -80,11 +76,7 @@ export function resolveConflict(
 
   // Default to remote state if strategy not recognized
   console.warn(`Unknown conflict strategy: ${strategy}, defaulting to remote state`);
-  return {
-    ...remoteState,
-    syncStatus: "synced",
-    isDirty: false,
-  };
+  return remoteState;
 }
 
 /**
@@ -106,20 +98,11 @@ function resolveLastWriteWins(
   if (localModified > remoteModified) {
     // Local state is newer, keep it but mark as needing sync
     console.log("Conflict resolved: local state is newer");
-    return {
-      ...localState,
-      syncStatus: "pending",
-      isDirty: true,
-    };
+    return localState;
   } else {
     // Remote state is newer, use it
     console.log("Conflict resolved: remote state is newer");
-    return {
-      ...remoteState,
-      syncStatus: "synced",
-      isDirty: false,
-      lastSyncedAt: Date.now(),
-    };
+    return remoteState;
   }
 }
 
@@ -152,15 +135,11 @@ export function resolveConflictWithMetadata(
   const remoteModified = remoteState.lastModified || 0;
 
   // Check if there's a conflict
-  const hadConflict = localModified !== remoteModified && localState.isDirty;
+  const hadConflict = localModified !== remoteModified;
 
   if (!hadConflict) {
     return {
-      state: {
-        ...remoteState,
-        syncStatus: "synced",
-        isDirty: false,
-      },
+      state: remoteState,
       hadConflict: false,
     };
   }
@@ -172,28 +151,15 @@ export function resolveConflictWithMetadata(
   if (strategy === "last-write-wins") {
     if (localModified > remoteModified) {
       winner = "local";
-      resolvedState = {
-        ...localState,
-        syncStatus: "pending",
-        isDirty: true,
-      };
+      resolvedState = localState;
     } else {
       winner = "remote";
-      resolvedState = {
-        ...remoteState,
-        syncStatus: "synced",
-        isDirty: false,
-        lastSyncedAt: Date.now(),
-      };
+      resolvedState = remoteState;
     }
   } else {
     // Default to remote
     winner = "remote";
-    resolvedState = {
-      ...remoteState,
-      syncStatus: "synced",
-      isDirty: false,
-    };
+    resolvedState = remoteState;
   }
 
   return {
@@ -224,10 +190,7 @@ export function hasConflict(
   const localModified = localState.lastModified || 0;
   const remoteModified = remoteState.lastModified || 0;
 
-  return (
-    localModified !== remoteModified &&
-    localState.isDirty === true
-  );
+  return localModified !== remoteModified;
 }
 
 /**
