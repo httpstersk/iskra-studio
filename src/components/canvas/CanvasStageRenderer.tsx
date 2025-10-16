@@ -23,7 +23,7 @@ import type {
   SelectionBox,
 } from "@/types/canvas";
 import type Konva from "konva";
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Layer, Stage } from "react-konva";
 import { CanvasGrid } from "./CanvasGrid";
 import { CanvasImage } from "./CanvasImage";
@@ -36,6 +36,7 @@ import { VariationGhostPlaceholders } from "./VariationGhostPlaceholders";
  */
 interface CanvasStageRendererProps {
   canvasSize: { height: number; width: number };
+  generationCount?: number;
   generationSettings: GenerationSettings;
   hiddenVideoControlsIds: Set<string>;
   images: PlacedImage[];
@@ -68,10 +69,9 @@ interface CanvasStageRendererProps {
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
   showGrid: boolean;
   stageRef: React.RefObject<Konva.Stage | null>;
+  variationMode?: "image" | "video";
   videos: PlacedVideo[];
   viewport: Viewport;
-  variationMode?: "image" | "video";
-  generationCount?: number;
 }
 
 /**
@@ -158,108 +158,231 @@ export function CanvasStageRenderer({
   videos,
   viewport,
 }: CanvasStageRendererProps) {
-  const visibleImages = useMemo(
-    () => getVisibleItems(images, viewport, canvasSize),
-    [images, viewport, canvasSize]
+  const selectedIdsSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
+  /**
+   * Handles right-click context menu on canvas elements
+   * Selects the topmost element under cursor for context operations
+   */
+  const handleContextMenu = React.useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
+      const stage = e.target.getStage();
+      if (!stage) return;
+      const point = stage.getPointerPosition();
+      if (!point) return;
+
+      const canvasPoint = {
+        x: (point.x - viewport.x) / viewport.scale,
+        y: (point.y - viewport.y) / viewport.scale,
+      };
+
+      // Find clicked video by iterating in reverse without array copy
+      let clickedVideo: PlacedVideo | null = null;
+
+      for (let i = videos.length - 1; i >= 0; i--) {
+        const vid = videos[i];
+        if (
+          canvasPoint.x >= vid.x &&
+          canvasPoint.x <= vid.x + vid.width &&
+          canvasPoint.y >= vid.y &&
+          canvasPoint.y <= vid.y + vid.height
+        ) {
+          clickedVideo = vid;
+          break;
+        }
+      }
+
+      if (clickedVideo && !selectedIdsSet.has(clickedVideo.id)) {
+        setSelectedIds([clickedVideo.id]);
+        return;
+      }
+
+      // Find clicked image by iterating in reverse without array copy
+      let clickedImage: PlacedImage | null = null;
+
+      for (let i = images.length - 1; i >= 0; i--) {
+        const img = images[i];
+        if (
+          canvasPoint.x >= img.x &&
+          canvasPoint.x <= img.x + img.width &&
+          canvasPoint.y >= img.y &&
+          canvasPoint.y <= img.y + img.height
+        ) {
+          clickedImage = img;
+          break;
+        }
+      }
+
+      if (clickedImage && !selectedIdsSet.has(clickedImage.id)) {
+        setSelectedIds([clickedImage.id]);
+      }
+    },
+    [images, selectedIdsSet, setSelectedIds, videos, viewport]
   );
-  const visibleVideos = useMemo(
-    () => getVisibleItems(videos, viewport, canvasSize),
-    [videos, viewport, canvasSize]
+
+  /**
+   * Creates optimized onChange handler for image property updates
+   * Memoized to prevent function recreation on each render
+   */
+  const handleImageChange = useCallback(
+    (imageId: string) => (newAttrs: Partial<PlacedImage>) => {
+      setImages((prev) =>
+        prev.map((img) => (img.id === imageId ? { ...img, ...newAttrs } : img))
+      );
+    },
+    [setImages]
   );
 
-  const isVariationMode =
-    selectedIds.length === 1 &&
-    (variationMode === "image" || variationMode === "video");
-  const selectedImageForVariation = isVariationMode
-    ? images.find((img) => img.id === selectedIds[0])
-    : null;
-
-  const handleContextMenu = React.useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
-    const stage = e.target.getStage();
-    if (!stage) return;
-    const point = stage.getPointerPosition();
-    if (!point) return;
-
-    const canvasPoint = {
-      x: (point.x - viewport.x) / viewport.scale,
-      y: (point.y - viewport.y) / viewport.scale,
-    };
-
-    const clickedVideo = [...videos].reverse().find((vid) => {
-      return (
-        canvasPoint.x >= vid.x &&
-        canvasPoint.x <= vid.x + vid.width &&
-        canvasPoint.y >= vid.y &&
-        canvasPoint.y <= vid.y + vid.height
-      );
-    });
-
-    if (clickedVideo && !selectedIds.includes(clickedVideo.id)) {
-      setSelectedIds([clickedVideo.id]);
-      return;
-    }
-
-    const clickedImage = [...images].reverse().find((img) => {
-      return (
-        canvasPoint.x >= img.x &&
-        canvasPoint.x <= img.x + img.width &&
-        canvasPoint.y >= img.y &&
-        canvasPoint.y <= img.y + img.height
-      );
-    });
-
-    if (clickedImage && !selectedIds.includes(clickedImage.id)) {
-      setSelectedIds([clickedImage.id]);
-    }
-  }, [images, selectedIds, setSelectedIds, videos, viewport]);
-
-  const handleImageDragStart = React.useCallback((imageId: string) => {
-    let currentSelectedIds = selectedIds;
-    if (!selectedIds.includes(imageId)) {
-      currentSelectedIds = [imageId];
-      setSelectedIds(currentSelectedIds);
-    }
-    interactions.setIsDraggingImage(true);
-    const positions = new Map<string, { x: number; y: number }>();
-    currentSelectedIds.forEach((id) => {
-      const img = images.find((i) => i.id === id);
-      if (img) positions.set(id, { x: img.x, y: img.y });
-    });
-    interactions.setDragStartPositions(positions);
-  }, [images, interactions, selectedIds, setSelectedIds]);
-
+  /**
+   * Handles end of image drag operation
+   * Saves canvas state to history for undo/redo
+   */
   const handleImageDragEnd = React.useCallback(() => {
     interactions.setIsDraggingImage(false);
     saveToHistory();
     interactions.setDragStartPositions(new Map());
   }, [interactions, saveToHistory]);
 
-  const handleVideoDragStart = React.useCallback((videoId: string) => {
-    let currentSelectedIds = selectedIds;
-    if (!selectedIds.includes(videoId)) {
-      currentSelectedIds = [videoId];
-      setSelectedIds(currentSelectedIds);
-    }
-    interactions.setIsDraggingImage(true);
-    setHiddenVideoControlsIds((prev) => new Set([...prev, videoId]));
-    const positions = new Map<string, { x: number; y: number }>();
-    currentSelectedIds.forEach((id) => {
-      const vid = videos.find((v) => v.id === id);
-      if (vid) positions.set(id, { x: vid.x, y: vid.y });
-    });
-    interactions.setDragStartPositions(positions);
-  }, [interactions, selectedIds, setHiddenVideoControlsIds, setSelectedIds, videos]);
+  /**
+   * Handles start of image drag operation
+   * Ensures dragged image is selected and stores initial positions for multi-drag
+   */
+  const handleImageDragStart = React.useCallback(
+    (imageId: string) => {
+      let currentSelectedIds = selectedIds;
+      if (!selectedIdsSet.has(imageId)) {
+        currentSelectedIds = [imageId];
+        setSelectedIds(currentSelectedIds);
+      }
+      interactions.setIsDraggingImage(true);
+      const positions = new Map<string, { x: number; y: number }>();
+      currentSelectedIds.forEach((id) => {
+        const img = images.find((i) => i.id === id);
+        if (img) positions.set(id, { x: img.x, y: img.y });
+      });
+      interactions.setDragStartPositions(positions);
+    },
+    [images, interactions, selectedIdsSet, selectedIds, setSelectedIds]
+  );
 
-  const handleVideoDragEnd = React.useCallback((videoId: string) => {
-    interactions.setIsDraggingImage(false);
-    setHiddenVideoControlsIds((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(videoId);
-      return newSet;
-    });
-    saveToHistory();
-    interactions.setDragStartPositions(new Map());
-  }, [interactions, saveToHistory, setHiddenVideoControlsIds]);
+  /**
+   * Creates optimized onChange handler for video property updates
+   * Memoized to prevent function recreation on each render
+   */
+  const handleVideoChange = useCallback(
+    (videoId: string) => (newAttrs: Partial<PlacedVideo>) => {
+      setVideos((prev) =>
+        prev.map((vid) => (vid.id === videoId ? { ...vid, ...newAttrs } : vid))
+      );
+    },
+    [setVideos]
+  );
+
+  /**
+   * Handles end of video drag operation
+   * Saves canvas state and restores video controls
+   */
+  const handleVideoDragEnd = React.useCallback(
+    (videoId: string) => {
+      interactions.setIsDraggingImage(false);
+      setHiddenVideoControlsIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(videoId);
+        return newSet;
+      });
+      saveToHistory();
+      interactions.setDragStartPositions(new Map());
+    },
+    [interactions, saveToHistory, setHiddenVideoControlsIds]
+  );
+
+  /**
+   * Handles start of video drag operation
+   * Ensures dragged video is selected and hides controls during drag
+   */
+  const handleVideoDragStart = React.useCallback(
+    (videoId: string) => {
+      let currentSelectedIds = selectedIds;
+      if (!selectedIdsSet.has(videoId)) {
+        currentSelectedIds = [videoId];
+        setSelectedIds(currentSelectedIds);
+      }
+      interactions.setIsDraggingImage(true);
+      setHiddenVideoControlsIds((prev) => new Set([...prev, videoId]));
+      const positions = new Map<string, { x: number; y: number }>();
+      currentSelectedIds.forEach((id) => {
+        const vid = videos.find((v) => v.id === id);
+        if (vid) positions.set(id, { x: vid.x, y: vid.y });
+      });
+      interactions.setDragStartPositions(positions);
+    },
+    [
+      interactions,
+      selectedIds,
+      selectedIdsSet,
+      setHiddenVideoControlsIds,
+      setSelectedIds,
+      videos,
+    ]
+  );
+
+  /**
+   * Creates handler for video resize end event
+   * Restores video controls after resize operation
+   */
+  const handleVideoResizeEnd = useCallback(
+    (videoId: string) => () => {
+      setHiddenVideoControlsIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(videoId);
+        return newSet;
+      });
+    },
+    [setHiddenVideoControlsIds]
+  );
+
+  /**
+   * Creates handler for video resize start event
+   * Hides video controls during resize for cleaner UX
+   */
+  const handleVideoResizeStart = useCallback(
+    (videoId: string) => () => {
+      setHiddenVideoControlsIds((prev) => new Set([...prev, videoId]));
+    },
+    [setHiddenVideoControlsIds]
+  );
+
+  const isVariationMode = useMemo(
+    () =>
+      selectedIds.length === 1 &&
+      (variationMode === "image" || variationMode === "video"),
+    [selectedIds.length, variationMode]
+  );
+
+  const roundedViewport = useMemo(
+    () => ({
+      scale: Math.round(viewport.scale * 100) / 100,
+      x: Math.round(viewport.x / 10) * 10,
+      y: Math.round(viewport.y / 10) * 10,
+    }),
+    [viewport.scale, viewport.x, viewport.y]
+  );
+
+  const selectedImageForVariation = useMemo(
+    () =>
+      isVariationMode ? images.find((img) => img.id === selectedIds[0]) : null,
+    [images, isVariationMode, selectedIds]
+  );
+
+  const visibleImages = useMemo(
+    () => getVisibleItems(images, roundedViewport, canvasSize),
+    [canvasSize, images, roundedViewport]
+  );
+
+  const visibleVideos = useMemo(
+    () => getVisibleItems(videos, roundedViewport, canvasSize),
+    [canvasSize, roundedViewport, videos]
+  );
 
   if (!isCanvasReady) return null;
 
@@ -271,7 +394,7 @@ export function CanvasStageRenderer({
         height={canvasSize.height}
         onContextMenu={handleContextMenu}
         onMouseDown={interactions.handleMouseDown}
-        onMouseLeave={() => { }}
+        onMouseLeave={() => {}}
         onMouseMove={interactions.handleMouseMove}
         onMouseUp={interactions.handleMouseUp}
         onTouchEnd={interactions.handleTouchEnd}
@@ -291,21 +414,14 @@ export function CanvasStageRenderer({
           )}
           <SelectionBoxComponent selectionBox={interactions.selectionBox} />
 
-          {/* Render visible images */}
           {visibleImages.map((image) => (
             <CanvasImage
               dragStartPositions={interactions.dragStartPositions}
               image={image}
               isDraggingImage={interactions.isDraggingImage}
-              isSelected={selectedIds.includes(image.id)}
+              isSelected={selectedIdsSet.has(image.id)}
               key={image.id}
-              onChange={(newAttrs) => {
-                setImages((prev) =>
-                  prev.map((img) =>
-                    img.id === image.id ? { ...img, ...newAttrs } : img
-                  )
-                );
-              }}
+              onChange={handleImageChange(image.id)}
               onDragEnd={handleImageDragEnd}
               onDragStart={() => handleImageDragStart(image.id)}
               onDoubleClick={onImageDoubleClick}
@@ -315,7 +431,6 @@ export function CanvasStageRenderer({
             />
           ))}
 
-          {/* Ghost placeholders for variation mode */}
           {isVariationMode && selectedImageForVariation && (
             <VariationGhostPlaceholders
               generationCount={generationCount}
@@ -326,34 +441,17 @@ export function CanvasStageRenderer({
             />
           )}
 
-          {/* Render visible videos */}
           {visibleVideos.map((video) => (
             <CanvasVideo
               dragStartPositions={interactions.dragStartPositions}
               isDraggingVideo={interactions.isDraggingImage}
-              isSelected={selectedIds.includes(video.id)}
+              isSelected={selectedIdsSet.has(video.id)}
               key={video.id}
-              onChange={(newAttrs) => {
-                setVideos((prev) =>
-                  prev.map((vid) =>
-                    vid.id === video.id ? { ...vid, ...newAttrs } : vid
-                  )
-                );
-              }}
+              onChange={handleVideoChange(video.id)}
               onDragEnd={() => handleVideoDragEnd(video.id)}
               onDragStart={() => handleVideoDragStart(video.id)}
-              onResizeEnd={() =>
-                setHiddenVideoControlsIds((prev) => {
-                  const newSet = new Set(prev);
-                  newSet.delete(video.id);
-                  return newSet;
-                })
-              }
-              onResizeStart={() =>
-                setHiddenVideoControlsIds(
-                  (prev) => new Set([...prev, video.id])
-                )
-              }
+              onResizeEnd={handleVideoResizeEnd(video.id)}
+              onResizeStart={handleVideoResizeStart(video.id)}
               onSelect={(e) => interactions.handleSelect(video.id, e)}
               selectedIds={selectedIds}
               setVideos={setVideos}
