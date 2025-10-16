@@ -43,7 +43,7 @@ interface SignInPromptDialogProps {
  * - Explains benefits of authentication:
  *   - Persistent storage across devices
  *   - Save and manage projects
- *   - Track storage quota
+ *   - Track storage usage
  * - Provides prominent Sign In button
  * - Can be dismissed (user can cancel generation)
  * 
@@ -111,7 +111,7 @@ export function SignInPromptDialog({
                 </li>
                 <li className="flex items-start gap-2">
                   <Sparkles className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
-                  <span>Track your storage and quotas</span>
+                  <span>Track your storage usage</span>
                 </li>
               </ul>
             </div>

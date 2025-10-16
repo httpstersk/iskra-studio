@@ -48,25 +48,7 @@ export const AUTOSAVE_CONSTANTS = {
   MAX_DEBOUNCE_MS: 60000,
 } as const;
 
-/**
- * Storage quota limits by tier (in bytes).
- */
-export const QUOTA_LIMITS = {
-  /** Free tier storage limit: 500 MB */
-  free: 500 * 1024 * 1024,
-  /** Paid tier storage limit: 10 GB */
-  paid: 10 * 1024 * 1024 * 1024,
-} as const;
 
-/**
- * Quota warning thresholds (as percentages).
- */
-export const QUOTA_THRESHOLDS = {
-  /** Show warning when storage usage exceeds this percentage */
-  WARNING: 80,
-  /** Storage quota fully exceeded at this percentage */
-  EXCEEDED: 100,
-} as const;
 
 /**
  * File validation constants.
@@ -133,7 +115,7 @@ export const ERROR_MESSAGES = {
   NAME_EMPTY: "Project name cannot be empty",
   NOT_AUTHENTICATED: "Not authenticated",
   PROJECT_NOT_FOUND: "Project not found",
-  QUOTA_EXCEEDED: "Storage quota exceeded",
+  
   SYNC_FAILED: "Failed to sync to cloud",
   UNAUTHORIZED: "Unauthorized",
   UPLOAD_FAILED: "Upload failed",

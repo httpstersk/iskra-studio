@@ -11,7 +11,6 @@ import { createContext, useContext, ReactNode } from "react";
 
 type InitialData = {
   user: any | null;
-  quota: any | null;
   projects: any[];
   isAuthenticated: boolean;
 };
@@ -21,7 +20,7 @@ const InitialDataContext = createContext<InitialData | null>(null);
 /**
  * Hook to access server-fetched initial data in client components.
  * 
- * @returns Initial data object with user, quota, and projects
+ * @returns Initial data object with user and projects
  * @throws Error if used outside InitialDataClient provider
  */
 export function useInitialData() {
