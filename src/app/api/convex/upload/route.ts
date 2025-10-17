@@ -3,11 +3,13 @@
  *
  * Handles file uploads to Convex storage with authentication,
  * quota validation, and asset record creation.
+ * Accepts optional thumbnail blob for bandwidth optimization.
  */
 
 import { auth } from "@clerk/nextjs/server";
+import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
-import { uploadFileToConvex } from "@/lib/storage/convex-upload-logic";
+import { api } from "../../../../../convex/_generated/api";
 
 /**
  * POST handler for uploading files to Convex storage.
@@ -48,14 +50,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get the file from the request body
-    const formData = await req.formData();
-    const file = formData.get("file");
-
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-
     // Get auth token
     const token = await authData.getToken({ template: "convex" });
     if (!token) {
@@ -63,6 +57,15 @@ export async function POST(req: NextRequest) {
         { error: "Failed to get auth token" },
         { status: 401 }
       );
+    }
+
+    // Parse form data (file + optional thumbnail)
+    const formData = await req.formData();
+    const file = formData.get("file");
+    const thumbnail = formData.get("thumbnail");
+
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
     // Extract metadata from form data if provided
@@ -87,16 +90,59 @@ export async function POST(req: NextRequest) {
         : rawMetadata.duration,
     };
 
-    // Use shared upload logic
-    const result = await uploadFileToConvex({
-      file,
-      userId,
-      mimeType: file.type,
-      metadata,
-      authToken: token,
+    // Upload to Convex via HTTP endpoint
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+    if (!convexUrl) {
+      throw new Error("Convex configuration missing");
+    }
+
+    const convexSiteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
+
+    // Create multipart form data for Convex HTTP endpoint
+    const convexFormData = new FormData();
+    convexFormData.append("file", file);
+    if (thumbnail instanceof Blob) {
+      convexFormData.append("thumbnail", thumbnail);
+    }
+
+    const uploadResponse = await fetch(`${convexSiteUrl}/upload`, {
+      body: convexFormData,
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
 
-    return NextResponse.json(result);
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      throw new Error(`Convex upload failed (${uploadResponse.status}): ${errorText}`);
+    }
+
+    const { storageId, thumbnailStorageId, url } = await uploadResponse.json();
+
+    // Create asset record in database via Convex mutation
+    const convexClient = new ConvexHttpClient(convexUrl);
+    convexClient.setAuth(token);
+
+    const assetId = await convexClient.mutation(api.assets.uploadAsset, {
+      duration: metadata.duration || undefined,
+      height: metadata.height || undefined,
+      mimeType: file.type,
+      originalUrl: undefined,
+      sizeBytes: file.size,
+      storageId,
+      thumbnailStorageId: thumbnailStorageId || undefined,
+      type: file.type.startsWith("image/") ? "image" : "video",
+      width: metadata.width || undefined,
+    });
+
+    return NextResponse.json({
+      assetId,
+      sizeBytes: file.size,
+      storageId,
+      thumbnailStorageId,
+      url,
+    });
   } catch (error) {
     console.error("Upload error:", error);
 

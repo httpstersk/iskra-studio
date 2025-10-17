@@ -11,7 +11,8 @@ import { mutation, query } from "./_generated/server";
 /**
  * Creates an asset record after file upload to storage.
  * 
- * @param storageId - Convex storage ID of the uploaded file
+ * @param storageId - Convex storage ID of the uploaded file (full-size)
+ * @param thumbnailStorageId - Optional Convex storage ID for thumbnail
  * @param type - Type of asset (image or video)
  * @param sizeBytes - Size of the file in bytes
  * @param mimeType - MIME type of the file
@@ -26,6 +27,7 @@ export const uploadAsset = mutation({
     originalUrl: v.optional(v.string()),
     sizeBytes: v.number(),
     storageId: v.string(),
+    thumbnailStorageId: v.optional(v.string()),
     type: v.union(v.literal("image"), v.literal("video")),
     width: v.optional(v.number()),
   },
@@ -68,6 +70,7 @@ export const uploadAsset = mutation({
       originalUrl: args.originalUrl,
       sizeBytes: args.sizeBytes,
       storageId: args.storageId,
+      thumbnailStorageId: args.thumbnailStorageId,
       type: args.type,
       userId,
       width: args.width,

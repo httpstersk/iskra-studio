@@ -49,7 +49,8 @@ export default defineSchema({
    * 
    * @property userId - Owner's Clerk user ID (indexed)
    * @property type - Asset type ("image" | "video")
-   * @property storageId - Convex file storage ID
+   * @property storageId - Convex file storage ID (full-size, for FAL API)
+   * @property thumbnailStorageId - Convex file storage ID for thumbnail (nullable, for UI)
    * @property originalUrl - Original FAL URL (nullable, for reference)
    * @property width - Asset width in pixels
    * @property height - Asset height in pixels
@@ -66,6 +67,7 @@ export default defineSchema({
     originalUrl: v.optional(v.string()),
     sizeBytes: v.number(),
     storageId: v.string(),
+    thumbnailStorageId: v.optional(v.string()),
     type: v.union(v.literal("image"), v.literal("video")),
     userId: v.string(),
     width: v.optional(v.number()),

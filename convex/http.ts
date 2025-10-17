@@ -2,6 +2,7 @@
  * Convex HTTP actions for file uploads.
  *
  * Handles large file uploads (up to 25MB) via HTTP POST requests.
+ * Accepts optional pre-generated thumbnail blob.
  * Returns storage ID and URL for uploaded files.
  */
 
@@ -53,11 +54,22 @@ http.route({
         );
       }
 
-      // Read the request body as a blob
-      const blob = await request.blob();
+      // Parse multipart form data (file + optional thumbnail)
+      const formData = await request.formData();
+      const file = formData.get("file");
 
-      // Validate blob size (25MB limit)
-      if (blob.size > 25 * 1024 * 1024) {
+      if (!(file instanceof Blob)) {
+        return new Response(
+          JSON.stringify({ error: "No file provided" }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Validate file size (25MB limit)
+      if (file.size > 25 * 1024 * 1024) {
         return new Response(
           JSON.stringify({ error: "File too large. Maximum size is 25MB." }),
           {
@@ -67,23 +79,23 @@ http.route({
         );
       }
 
-      // Validate content type from request headers
-      const contentType = request.headers.get("Content-Type");
-      if (contentType) {
-        const isAllowedType = contentType.startsWith("image/") || contentType.startsWith("video/");
-        if (!isAllowedType) {
-          return new Response(
-            JSON.stringify({ error: "Unsupported file type. Only images and videos are allowed." }),
-            {
-              status: 400,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
-        }
+      // Validate content type
+      const contentType = file.type;
+      const isImage = contentType?.startsWith("image/");
+      const isVideo = contentType?.startsWith("video/");
+      
+      if (contentType && !isImage && !isVideo) {
+        return new Response(
+          JSON.stringify({ error: "Unsupported file type. Only images and videos are allowed." }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
 
-      // Store file in Convex storage
-      const storageId = await ctx.storage.store(blob);
+      // Store full-size file in Convex storage
+      const storageId = await ctx.storage.store(file);
 
       // Get URL for the stored file
       const url = await ctx.storage.getUrl(storageId);
@@ -98,9 +110,22 @@ http.route({
         );
       }
 
+      // Store optional thumbnail if provided by client (bandwidth optimization)
+      let thumbnailStorageId: string | undefined;
+      try {
+        const thumbnail = formData.get("thumbnail");
+        if (thumbnail instanceof Blob && thumbnail.size > 0) {
+          thumbnailStorageId = await ctx.storage.store(thumbnail);
+        }
+      } catch (thumbError) {
+        console.error("Thumbnail storage failed:", thumbError);
+        // Continue without thumbnail - not critical
+      }
+
       return new Response(
         JSON.stringify({
           storageId,
+          thumbnailStorageId,
           url,
         }),
         {

@@ -99,15 +99,19 @@ export interface CanvasState {
  * Project record from Convex database.
  * 
  * Represents a saved canvas workspace with all its state and metadata.
+ * Includes asset thumbnail URLs to optimize bandwidth on project load.
  * 
  * @remarks
  * - canvasState contains the complete canvas snapshot
  * - thumbnailStorageId references a 300x200px preview image
+ * - assetThumbnails maps assetId to thumbnail URLs (bandwidth optimization)
  * - userId links to the project owner for access control
  */
 export interface Project {
   /** Convex document ID */
   _id: string;
+  /** Map of asset IDs to thumbnail URLs (for bandwidth optimization) */
+  assetThumbnails?: Record<string, string>;
   /** Complete canvas state */
   canvasState: CanvasState;
   /** Timestamp when the project was created (ms since epoch) */
@@ -130,12 +134,16 @@ export interface Project {
  * Lightweight project metadata for list views.
  * 
  * Contains only the essential information needed to display
- * a project card in the project list UI.
+ * a project card in the project list UI. Includes asset thumbnails
+ * for efficient preview rendering without loading full-size images.
  * 
  * @remarks
  * Used to avoid loading full canvas state when listing projects.
+ * assetThumbnails maps asset IDs to small thumbnail URLs for preview cards.
  */
 export interface ProjectMetadata {
+  /** Map of asset IDs to thumbnail URLs (for bandwidth optimization) */
+  assetThumbnails?: Record<string, string>;
   /** Timestamp when created (ms since epoch) */
   createdAt: number;
   /** Unique project identifier */
