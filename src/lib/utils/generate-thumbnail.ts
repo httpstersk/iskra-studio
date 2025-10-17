@@ -31,32 +31,19 @@ export async function generateThumbnail(
   maxSize: number = 400
 ): Promise<Blob | undefined> {
   try {
-    console.log("[Thumbnail] Starting generation, blob type:", imageBlob.type, "size:", imageBlob.size);
-    
     // Read the image as a data URL
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => {
-        console.error("[Thumbnail] FileReader error:", error);
-        reject(error);
-      };
+      reader.onerror = reject;
       reader.readAsDataURL(imageBlob);
     });
-
-    console.log("[Thumbnail] Data URL created, length:", dataUrl.length);
 
     // Create an image element to get dimensions
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const image = new Image();
-      image.onload = () => {
-        console.log("[Thumbnail] Image loaded, dimensions:", image.width, "x", image.height);
-        resolve(image);
-      };
-      image.onerror = (error) => {
-        console.error("[Thumbnail] Image load error:", error);
-        reject(new Error("Failed to load image"));
-      };
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Failed to load image"));
       image.src = dataUrl;
     });
 
@@ -92,14 +79,12 @@ export async function generateThumbnail(
     });
 
     if (!blob) {
-      console.error("[Thumbnail] Failed to create thumbnail blob from canvas");
       throw new Error("Failed to create thumbnail blob");
     }
 
-    console.log("[Thumbnail] Successfully generated thumbnail, size:", blob.size, "type:", blob.type);
     return blob;
   } catch (error) {
-    console.error("[Thumbnail] Generation failed:", error);
+    console.error("Thumbnail generation failed:", error);
     // Return undefined to allow upload to continue without thumbnail
     return undefined;
   }

@@ -71,9 +71,6 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file");
     const thumbnail = formData.get("thumbnail");
 
-    console.log("[Upload Route] Received file:", file instanceof File ? `${file.size} bytes` : "none");
-    console.log("[Upload Route] Received thumbnail:", thumbnail instanceof Blob ? `${thumbnail.size} bytes` : "none");
-
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
