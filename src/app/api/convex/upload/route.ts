@@ -9,6 +9,8 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { uploadFileToConvex } from "@/lib/storage/convex-upload-logic";
 
+export const maxDuration = 60;
+
 /**
  * POST handler for uploading files to Convex storage.
  *

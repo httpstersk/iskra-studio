@@ -3,6 +3,11 @@ import { withBotId } from "botid/next/config";
 
 const nextConfig = {
   devIndicators: false,
+  api: {
+    bodyParser: {
+      sizeLimit: "50mb",
+    },
+  },
   webpack: (config) => {
     // Ignore canvas module which is required by Konva in Node environments
     config.resolve.alias.canvas = false;
