@@ -115,13 +115,16 @@ http.route({
       let thumbnailUrl: string | undefined;
       try {
         const thumbnail = formData.get("thumbnail");
+        console.log("[Convex HTTP] Thumbnail received:", thumbnail instanceof Blob ? `${thumbnail.size} bytes` : "none");
         if (thumbnail instanceof Blob && thumbnail.size > 0) {
           thumbnailStorageId = await ctx.storage.store(thumbnail);
+          console.log("[Convex HTTP] Thumbnail stored with ID:", thumbnailStorageId);
           // Get URL for the thumbnail
           if (thumbnailStorageId) {
             const thumbUrl = await ctx.storage.getUrl(thumbnailStorageId);
             if (thumbUrl) {
               thumbnailUrl = thumbUrl;
+              console.log("[Convex HTTP] Thumbnail URL generated");
             }
           }
         }

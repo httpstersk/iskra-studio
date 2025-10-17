@@ -108,9 +108,13 @@ export async function uploadGeneratedAssetToConvex(
 
     // Generate thumbnail for images (bandwidth optimization)
     if (assetType === "image") {
+      console.log("[Upload] Generating thumbnail for image, blob size:", blob.size);
       const thumbnailBlob = await generateThumbnail(blob);
       if (thumbnailBlob) {
+        console.log("[Upload] Thumbnail generated successfully, size:", thumbnailBlob.size);
         formData.append("thumbnail", thumbnailBlob);
+      } else {
+        console.warn("[Upload] Thumbnail generation returned undefined");
       }
     }
 
