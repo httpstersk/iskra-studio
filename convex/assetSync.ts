@@ -70,7 +70,7 @@ export const validateProjectAssets = query({
       }
 
       // Check if asset exists
-      const asset = assetMap.get(element.assetId);
+      const asset = assetMap.get(element.assetId as any);
       if (!asset) {
         invalidElements.push({
           elementId: element.id,

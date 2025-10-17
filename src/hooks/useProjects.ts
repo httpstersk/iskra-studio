@@ -138,10 +138,10 @@ export function useProjects(): UseProjectsReturn {
       lastSavedAt: project.lastSavedAt,
       thumbnailUrl: project.thumbnailUrl,
       imageCount: project.canvasState.elements.filter(
-        (el) => el.type === "image"
+        (el: any) => el.type === "image"
       ).length,
       videoCount: project.canvasState.elements.filter(
-        (el) => el.type === "video"
+        (el: any) => el.type === "video"
       ).length,
     }));
   }, [projectsQuery]);
@@ -213,10 +213,10 @@ export function useProjects(): UseProjectsReturn {
             lastSavedAt: project.lastSavedAt,
             thumbnailUrl: project.thumbnailUrl,
             imageCount: project.canvasState.elements.filter(
-              (el) => el.type === "image"
+              (el: any) => el.type === "image"
             ).length,
             videoCount: project.canvasState.elements.filter(
-              (el) => el.type === "video"
+              (el: any) => el.type === "video"
             ).length,
           };
 

@@ -112,8 +112,8 @@ export function useStorage(
       const loadedVideos: PlacedVideo[] = [];
 
       for (const element of canvasState.elements) {
-        if (element.type === "image" && element.imageId) {
-          const imageData = await canvasStorage.getImage(element.imageId);
+        if (element.type === "image" && element.assetId) {
+          const imageData = await canvasStorage.getImage(element.assetId);
           if (imageData) {
             loadedImages.push({
               height: element.height || 300,
@@ -125,8 +125,8 @@ export function useStorage(
               y: element.transform.y,
             });
           }
-        } else if (element.type === "video" && element.videoId) {
-          const videoData = await canvasStorage.getVideo(element.videoId);
+        } else if (element.type === "video" && element.assetId) {
+          const videoData = await canvasStorage.getVideo(element.assetId);
           if (videoData) {
             loadedVideos.push({
               currentTime: element.currentTime || 0,

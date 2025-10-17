@@ -128,7 +128,7 @@ export async function loadProjectWithAssets(
 
     // Auto-fix if requested
     if (options.autoFix) {
-      let fixedElements = [...canvasState.elements];
+      const fixedElements = [...canvasState.elements];
 
       // Sync stale metadata
       for (const stale of validation.staleMetadata) {

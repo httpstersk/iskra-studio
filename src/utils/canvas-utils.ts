@@ -34,16 +34,16 @@ export interface Viewport {
  * ```
  */
 export const imageToCanvasElement = (image: PlacedImage): CanvasElement => ({
+  assetId: image.id,
   id: image.id,
   type: "image",
-  imageId: image.id, // We'll use the same ID for both
   transform: {
     x: image.x,
     y: image.y,
-    scale: 1, // We store width/height separately, so scale is 1
+    scale: 1,
     rotation: image.rotation,
   },
-  zIndex: 0, // We'll use array order instead
+  zIndex: 0,
   width: image.width,
   height: image.height,
 });
@@ -61,16 +61,16 @@ export const imageToCanvasElement = (image: PlacedImage): CanvasElement => ({
  * ```
  */
 export const videoToCanvasElement = (video: PlacedVideo): CanvasElement => ({
+  assetId: video.id,
   id: video.id,
   type: "video",
-  videoId: video.id, // We'll use the same ID for both
   transform: {
     x: video.x,
     y: video.y,
-    scale: 1, // We store width/height separately, so scale is 1
+    scale: 1,
     rotation: video.rotation,
   },
-  zIndex: 0, // We'll use array order instead
+  zIndex: 0,
   width: video.width,
   height: video.height,
   duration: video.duration,

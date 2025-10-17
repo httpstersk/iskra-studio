@@ -175,18 +175,18 @@ class CanvasStorage {
     if (!this.db) await this.init();
     if (!state) return;
 
-    // Get all image IDs currently in use
+    // Get all asset IDs currently in use
     const usedImageIds = new Set(
       state.elements
-        .filter((el) => el.type === "image" && el.imageId)
-        .map((el) => el.imageId!)
+        .filter((el) => el.type === "image" && el.assetId)
+        .map((el) => el.assetId!)
     );
 
-    // Get all video IDs currently in use
+    // Get all asset IDs currently in use
     const usedVideoIds = new Set(
       state.elements
-        .filter((el) => el.type === "video" && el.videoId)
-        .map((el) => el.videoId!)
+        .filter((el) => el.type === "video" && el.assetId)
+        .map((el) => el.assetId!)
     );
 
     // Delete unused images using cursor for memory efficiency

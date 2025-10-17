@@ -287,7 +287,6 @@ The project uses Husky and lint-staged for automated formatting:
 - Always use the Compound Component Pattern while creating new components.
 - Never hardcode strings, always extract them into constants for reuse.
 - Make the components accessible following the WCAG 2.1 guidelines.
-- Always use the 'gitmoji' standard when generating commit messages and capitalize the first letter. For example: `✨ feat: Add new feature` or `🐛 fix: Fix some bug`.
 - Treat UI's as a thin layer over your data. Avoid local state (e.g. `useState`) unless it is absolutely necessary and clearly separate from business logic. Use `useRef` for variables that don't need to be reactive and Jotai's `useAtom` for global state.
 - When you find yourself with nested if/else statements or complex conditional rendering, create a new component. Reserve inline ternaries for tiny, readable sections.
 - Choose to derive data rather than using useEffect. Only use useEffect to synchronise with an external system (e.g. document-level events). This can cause confusion over what the logic is doing. Explicitly define logic rather than depending on implicit reactive behaviour.

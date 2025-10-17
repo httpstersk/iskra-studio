@@ -121,9 +121,11 @@ export function validateElementAsset(
 
   // Check if metadata differs significantly
   const metadataDiffers =
-    (element.width && asset.width && element.width !== asset.width) ||
-    (element.height && asset.height && element.height !== asset.height) ||
-    (element.duration && asset.duration && element.duration !== asset.duration);
+    !!(
+      (element.width && asset.width && element.width !== asset.width) ||
+      (element.height && asset.height && element.height !== asset.height) ||
+      (element.duration && asset.duration && element.duration !== asset.duration)
+    );
 
   result.asset = asset;
   result.hasValidAsset = true;

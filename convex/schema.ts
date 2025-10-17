@@ -93,6 +93,9 @@ export default defineSchema({
       backgroundColor: v.optional(v.string()),
       elements: v.array(
         v.object({
+          assetId: v.optional(v.string()),
+          assetSyncedAt: v.optional(v.number()),
+          assetType: v.optional(v.union(v.literal("image"), v.literal("video"))),
           currentTime: v.optional(v.number()),
           duration: v.optional(v.number()),
           height: v.optional(v.number()),
