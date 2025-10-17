@@ -3,6 +3,7 @@
  *
  * This module contains the core upload logic that can be used both
  * from API routes and from server-side storage service calls.
+ * Note: Thumbnails should be generated on client-side before upload.
  */
 
 import { ConvexHttpClient } from "convex/browser";
@@ -69,11 +70,12 @@ export async function uploadFileToConvex(
   // Convert .convex.cloud to .convex.site for HTTP actions
   const convexSiteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
 
-  // Upload file to Convex storage via HTTP action
-  const blob = file instanceof Blob ? await file.arrayBuffer() : file;
+  // Note: Thumbnail should be generated on client-side and included in FormData
+  // by the caller (e.g., convex-storage-service.ts)
+  // This server-side code just passes it through to Convex storage.
 
   const uploadResponse = await fetch(`${convexSiteUrl}/upload`, {
-    body: blob,
+    body: file,
     method: "POST",
     headers: {
       Authorization: `Bearer ${authToken}`,
@@ -94,7 +96,7 @@ export async function uploadFileToConvex(
     );
   }
 
-  const { storageId, url } = await uploadResponse.json();
+  const { storageId, thumbnailStorageId, url } = await uploadResponse.json();
 
   // Create asset record in database via Convex mutation
   const convexClient = new ConvexHttpClient(convexUrl);
@@ -114,6 +116,7 @@ export async function uploadFileToConvex(
     originalUrl: undefined,
     sizeBytes: file.size,
     storageId,
+    thumbnailStorageId: thumbnailStorageId || undefined,
     type: assetType,
     width: width || undefined,
   });
@@ -122,6 +125,7 @@ export async function uploadFileToConvex(
     assetId: assetId as string,
     sizeBytes: file.size,
     storageId,
+    thumbnailStorageId,
     url,
   };
 

@@ -149,8 +149,10 @@ export const saveProject = mutation({
 /**
  * Lists all projects for the authenticated user.
  * 
+ * Includes asset thumbnail URLs for efficient list rendering.
+ * 
  * @param limit - Maximum number of projects to return (default: 50)
- * @returns Array of projects sorted by lastSavedAt DESC
+ * @returns Array of projects sorted by lastSavedAt DESC with asset thumbnails
  */
 export const listProjects = query({
   args: {
@@ -171,7 +173,7 @@ export const listProjects = query({
       .order("desc")
       .take(limit);
 
-    // Convert to include storage URLs for thumbnails
+    // Convert to include storage URLs for thumbnails and asset preview thumbnails
     const projectsWithUrls = await Promise.all(
       projects.map(async (project) => {
         let thumbnailUrl: string | undefined;
@@ -180,9 +182,34 @@ export const listProjects = query({
           thumbnailUrl = url ?? undefined;
         }
 
+        // Collect asset IDs from project elements
+        const assetIds = new Set<string>();
+        for (const element of project.canvasState.elements) {
+          if (element.assetId) {
+            assetIds.add(element.assetId);
+          }
+        }
+
+        // Fetch asset thumbnails for preview (optimize bandwidth)
+        const assetThumbnails: Record<string, string> = {};
+        for (const assetId of assetIds) {
+          const asset = await ctx.db
+            .query("assets")
+            .filter((q) => q.eq(q.field("_id"), assetId as any))
+            .unique();
+
+          if (asset && asset.thumbnailStorageId) {
+            const thumbUrl = await ctx.storage.getUrl(asset.thumbnailStorageId);
+            if (thumbUrl) {
+              assetThumbnails[assetId] = thumbUrl;
+            }
+          }
+        }
+
         return {
           ...project,
           thumbnailUrl,
+          assetThumbnails,
         };
       })
     );
@@ -194,8 +221,10 @@ export const listProjects = query({
 /**
  * Gets a single project by ID with ownership verification.
  * 
+ * Includes asset thumbnail URLs for display (full-size URLs available on-demand).
+ * 
  * @param projectId - ID of the project to retrieve
- * @returns Project record
+ * @returns Project record with asset thumbnails
  */
 export const getProject = query({
   args: {
@@ -224,9 +253,34 @@ export const getProject = query({
       thumbnailUrl = url ?? undefined;
     }
 
+    // Collect asset IDs from project elements
+    const assetIds = new Set<string>();
+    for (const element of project.canvasState.elements) {
+      if (element.assetId) {
+        assetIds.add(element.assetId);
+      }
+    }
+
+    // Fetch asset thumbnails for canvas display (optimize bandwidth on load)
+    const assetThumbnails: Record<string, string> = {};
+    for (const assetId of assetIds) {
+      const asset = await ctx.db
+        .query("assets")
+        .filter((q) => q.eq(q.field("_id"), assetId as any))
+        .unique();
+
+      if (asset && asset.thumbnailStorageId) {
+        const thumbUrl = await ctx.storage.getUrl(asset.thumbnailStorageId);
+        if (thumbUrl) {
+          assetThumbnails[assetId] = thumbUrl;
+        }
+      }
+    }
+
     return {
       ...project,
       thumbnailUrl,
+      assetThumbnails,
     };
   },
 });

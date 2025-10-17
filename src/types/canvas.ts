@@ -11,6 +11,7 @@ export interface PlacedImage {
   parentGroupId?: string;
   rotation: number;
   src: string;
+  thumbnailSrc?: string;
   width: number;
   x: number;
   y: number;

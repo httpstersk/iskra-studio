@@ -11,6 +11,7 @@ import type {
   StorageService,
   UploadOptions,
 } from "./storage-service";
+import { generateThumbnail } from "@/lib/utils/generate-thumbnail";
 
 /**
  * Convex storage service implementation.
@@ -129,18 +130,17 @@ export class ConvexStorageService implements StorageService {
   /**
    * Uploads a file to Convex storage.
    * 
-   * Performs a two-step upload process:
-   * 1. Uploads file to Convex storage via HTTP action
-   * 2. Creates asset record in database via API route
+   * Performs upload with optional thumbnail generation for images:
+   * 1. Generates thumbnail on client-side for images (Canvas API)
+   * 2. Uploads file + optional thumbnail via API route
+   * 3. Creates asset record in database
    * 
    * Includes automatic retry logic for failed uploads.
-   * 
-   * On the client, uses the HTTP API route.
-   * On the server, should not be used - use uploadFileToConvex directly instead.
+   * Thumbnail generation failures don't block the upload.
    * 
    * @param file - File blob to upload
    * @param options - Upload options (userId, type, metadata)
-   * @returns Upload result with storageId, URL, and assetId
+   * @returns Upload result with storageId, URL, assetId, and optional thumbnailStorageId
    * @throws Error if upload fails or quota is exceeded
    */
   async upload(file: Blob, options: UploadOptions): Promise<AssetUploadResult> {
@@ -151,6 +151,14 @@ export class ConvexStorageService implements StorageService {
       try {
         const formData = new FormData();
         formData.append("file", file);
+
+        // Generate thumbnail for images on client-side (bandwidth optimization)
+        if (file.type.startsWith("image/")) {
+          const thumbnailBlob = await generateThumbnail(file);
+          if (thumbnailBlob) {
+            formData.append("thumbnail", thumbnailBlob);
+          }
+        }
 
         // Send metadata including dimensions if available
         if (options.metadata) {

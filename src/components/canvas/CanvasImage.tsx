@@ -50,21 +50,41 @@ interface CanvasImageProps {
 }
 
 /**
- * Custom hook to get the appropriate image source (streaming or normal).
- * Uses streaming image hook for generated images to show progressive loading,
- * and cached image loading for uploaded images to prevent duplicate network requests.
+ * Custom hook to get the appropriate image source with thumbnail fallback.
+ * 
+ * Loading priority:
+ * 1. Thumbnail (if available) - displays immediately while full-size loads
+ * 2. Full-size image - loads in parallel, switches when ready
+ * 3. For generated images, uses streaming for progressive updates
  *
- * @param src - Image source URL
+ * @param src - Full-size image source URL
+ * @param thumbnailSrc - Optional thumbnail URL (shown first)
  * @param isGenerated - Whether the image was AI-generated
- * @returns Loaded image element or undefined
+ * @returns Loaded image element or undefined (thumbnail first, then full-size)
  */
-const useCanvasImageSource = (src: string, isGenerated: boolean) => {
+const useCanvasImageSource = (
+  src: string,
+  thumbnailSrc: string | undefined,
+  isGenerated: boolean
+) => {
+  // Load thumbnail first if available (shows immediately)
+  const [thumbnailImg] = useImageCache(thumbnailSrc || "", "anonymous");
+  
+  // Load full-size in parallel
   const [streamingImg] = useStreamingImage(isGenerated ? src : "");
   const [cachedImg] = useImageCache(isGenerated ? "" : src, "anonymous");
 
-  return useMemo(
+  // Full-size image (once loaded, switch from thumbnail)
+  const fullSizeImg = useMemo(
     () => (isGenerated ? streamingImg : cachedImg),
     [isGenerated, cachedImg, streamingImg]
+  );
+
+  // Priority: full-size image > thumbnail > nothing
+  // This way thumbnail displays first, then switches to full-size when ready
+  return useMemo(
+    () => fullSizeImg || thumbnailImg,
+    [fullSizeImg, thumbnailImg]
   );
 };
 
@@ -133,8 +153,12 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   const shapeRef = useRef<Konva.Image>(null);
   const throttleFrame = useFrameThrottle();
 
-  // Get image source (streaming or normal)
-  const img = useCanvasImageSource(image.src, !!image.isGenerated);
+  // Get image source (thumbnail first, then full-size)
+  const img = useCanvasImageSource(
+    image.src,
+    image.thumbnailSrc,
+    !!image.isGenerated
+  );
 
   // Handle loading and fade-in animations
   const { displayOpacity } = useImageAnimation({

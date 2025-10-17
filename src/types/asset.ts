@@ -92,7 +92,8 @@ export interface Asset {
  * Result returned from asset upload operations.
  * 
  * Provides essential information needed to reference and display
- * the uploaded asset in the application.
+ * the uploaded asset in the application. Includes thumbnail data for images
+ * to optimize bandwidth usage.
  * 
  * @example
  * ```ts
@@ -100,6 +101,7 @@ export interface Asset {
  *   assetId: "k17abc123def",
  *   sizeBytes: 2048576,
  *   storageId: "kg2xyz789abc",
+ *   thumbnailStorageId: "kg2xyz789def",
  *   url: "https://example.convex.cloud/api/storage/kg2xyz789abc",
  * };
  * ```
@@ -111,8 +113,11 @@ export interface AssetUploadResult {
   /** Size of the uploaded file in bytes */
   sizeBytes: number;
   
-  /** Convex storage ID for the uploaded file */
+  /** Convex storage ID for the uploaded file (full-size, for FAL API) */
   storageId: string;
+  
+  /** Convex storage ID for thumbnail (optional, images only) */
+  thumbnailStorageId?: string;
   
   /** Public URL to access the uploaded file */
   url: string;
