@@ -156,7 +156,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       assetId,
       sizeBytes: file.size,
+      signedUrl: url,
       storageId,
+      thumbnailSignedUrl: thumbnailUrl,
       thumbnailStorageId,
       url: proxyUrl,
       thumbnailProxyUrl,

@@ -24,6 +24,20 @@ export function isConvexStorageUrl(url: string): boolean {
 }
 
 /**
+ * Extracts the signed URL from a proxy URL
+ * Proxy URLs have format: /api/storage/proxy?url=<encoded-signed-url>
+ */
+export function extractSignedUrlFromProxy(proxyUrl: string): string | null {
+  try {
+    const urlObj = new URL(proxyUrl, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+    const signedUrl = urlObj.searchParams.get("url");
+    return signedUrl ? decodeURIComponent(signedUrl) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Converts an image source to a Blob
  */
 export async function imageToBlob(imageSrc: string): Promise<Blob> {
@@ -86,6 +100,7 @@ export async function uploadToConvex(
     }
 
     const result = await response.json();
+    // Return proxy URL for client-side display (includes thumbnails)
     return result.url;
   } catch (error: unknown) {
     const isRateLimit =
@@ -112,13 +127,13 @@ export async function uploadToConvex(
 
 /**
  * Ensures an image is stored in Convex, uploading if necessary
- * Returns the Convex URL (either existing or newly uploaded)
+ * Returns a URL (either proxy or full, depending on input)
  */
 export async function ensureImageInConvex(
   imageSrc: string,
   toast: ToastFunction
 ): Promise<string> {
-  // If already in Convex, return as-is
+  // If already in Convex, return as-is (could be proxy or signed URL)
   if (isConvexStorageUrl(imageSrc)) {
     return imageSrc;
   }
@@ -126,6 +141,23 @@ export async function ensureImageInConvex(
   // Otherwise, convert and upload
   const blob = await imageToBlob(imageSrc);
   return await uploadToConvex(blob, toast);
+}
+
+/**
+ * Converts a proxy URL or Convex URL to a signed URL suitable for tRPC
+ * Extracts signed URL from proxy URLs, returns full URLs as-is
+ */
+export function toSignedUrl(imageUrl: string): string {
+  // If it's a proxy URL, extract the signed URL from the query parameter
+  if (imageUrl.includes("/api/storage/proxy")) {
+    const signedUrl = extractSignedUrlFromProxy(imageUrl);
+    if (signedUrl) {
+      return signedUrl;
+    }
+  }
+
+  // Otherwise return as-is (already a full URL)
+  return imageUrl;
 }
 
 /**

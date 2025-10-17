@@ -6,6 +6,7 @@ import { snapPosition } from "@/utils/snap-utils";
 import type { FalClient } from "@fal-ai/client";
 import {
   ensureImageInConvex,
+  toSignedUrl,
   validateSingleImageSelection,
 } from "./variation-utils";
 
@@ -267,6 +268,9 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     const imageUrl = await ensureImageInConvex(selectedImage.src, toast);
 
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
+    // Convert proxy URL to signed URL for tRPC (imageUrl could be proxy or full Convex URL)
+    const signedImageUrl = toSignedUrl(imageUrl);
+    
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       variationsToGenerate.forEach((cameraDirective, index) => {
@@ -277,7 +281,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         );
 
         newMap.set(placeholderId, {
-          imageUrl,
+          imageUrl: signedImageUrl,
           prompt: formattedPrompt,
           isVariation: true,
           imageSize: imageSizeDimensions,
