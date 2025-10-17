@@ -64,8 +64,28 @@ export async function uploadGeneratedAssetToConvex(
   const { sourceUrl, assetType, metadata = {} } = options;
 
   try {
+    // Handle proxy URLs - extract the actual signed URL if it's a proxy URL
+    let downloadUrl = sourceUrl;
+    
+    if (sourceUrl.includes("/api/storage/proxy")) {
+      // Extract the signed URL from the proxy URL's query parameter
+      try {
+        const url = new URL(sourceUrl, typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+        const signedUrl = url.searchParams.get("url");
+        if (signedUrl) {
+          downloadUrl = signedUrl;
+        }
+      } catch {
+        // If URL parsing fails, fall back to the original URL
+        downloadUrl = sourceUrl;
+      }
+    } else if (sourceUrl.startsWith("/")) {
+      // Handle other relative URLs by making them absolute
+      downloadUrl = `${typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"}${sourceUrl}`;
+    }
+
     // Download the asset from the source URL
-    const response = await fetch(sourceUrl);
+    const response = await fetch(downloadUrl);
     if (!response.ok) {
       throw new Error(`Failed to download asset: ${response.statusText}`);
     }

@@ -285,6 +285,7 @@ The project uses Husky and lint-staged for automated formatting:
 - Always add `TSdocs` to your code.
 - Always sort all props, fields, functions and type properties in alphabetical order.
 - Always use the Compound Component Pattern while creating new components.
+- Never compromise on security for the sake of speed. Always validate your solution for possible security vulnerabilities.
 - Never hardcode strings, always extract them into constants for reuse.
 - Make the components accessible following the WCAG 2.1 guidelines.
 - Treat UI's as a thin layer over your data. Avoid local state (e.g. `useState`) unless it is absolutely necessary and clearly separate from business logic. Use `useRef` for variables that don't need to be reactive and Jotai's `useAtom` for global state.
