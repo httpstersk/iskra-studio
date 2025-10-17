@@ -1,6 +1,5 @@
 "use client";
 
-import { SpinnerIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -13,10 +12,10 @@ import {
   FILE_INPUT_CONFIG,
   getRunTooltipText,
 } from "@/constants/control-panel";
+import { cn } from "@/lib/utils";
 import type { GenerationSettings } from "@/types/canvas";
 import { checkOS } from "@/utils/os-utils";
-import { cn } from "@/lib/utils";
-import { Paperclip, PlayIcon, SlidersHorizontal } from "lucide-react";
+import { Paperclip, SlidersHorizontal, SparkleIcon } from "lucide-react";
 import { ShortcutBadge } from "../ShortcutBadge";
 
 /**
@@ -102,6 +101,7 @@ const triggerFileDialog = (
         title: CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE,
         variant: "destructive",
       });
+
       if (input.parentNode) {
         document.body.removeChild(input);
       }
@@ -137,12 +137,8 @@ export function ControlActions({
 
   const hasSelection = selectedIds.length > 0;
   const hasPrompt = generationSettings.prompt.trim().length > 0;
-  const isRunDisabled = isGenerating || (!hasSelection && !hasPrompt);
-
-  const runTooltipText = getRunTooltipText(
-    selectedIds.length === 1,
-    hasPrompt
-  );
+  const isRunDisabled = !hasSelection && !hasPrompt;
+  const runTooltipText = getRunTooltipText(selectedIds.length === 1, hasPrompt);
   const shortcut =
     checkOS("Win") || checkOS("Linux") ? "ctrl+enter" : "meta+enter";
 
@@ -198,13 +194,10 @@ export function ControlActions({
               size="icon"
               variant="primary"
             >
-              {isGenerating ? (
-                <SpinnerIcon className="h-4 w-4 animate-spin text-white" />
-              ) : (
-                <PlayIcon className="h-4 w-4 text-white fill-white" />
-              )}
+              <SparkleIcon className="h-4 w-4 text-white fill-white" />
             </Button>
           </TooltipTrigger>
+
           <TooltipContent>
             <div className="flex items-center gap-2">
               <span>{runTooltipText}</span>
