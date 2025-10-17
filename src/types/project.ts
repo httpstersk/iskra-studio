@@ -23,30 +23,45 @@ export interface ElementTransform {
  * Canvas element (image, video, text, or shape).
  */
 export interface CanvasElement {
+  /** Reference to asset ID in Convex assets table (replaces imageId/videoId) */
+  assetId?: string;
+
+  /** Timestamp when asset was last validated/synced (ms since epoch) */
+  assetSyncedAt?: number;
+
+  /** Asset type for quick lookup without fetching (cached from asset record) */
+  assetType?: "image" | "video";
+
   /** Current playback time for videos (seconds) */
   currentTime?: number;
-  /** Duration for videos (seconds) */
+
+  /** Duration for videos (seconds) - may differ from asset duration if resized by user */
   duration?: number;
-  /** Element height in pixels */
+
+  /** Element height in pixels - may differ from asset height if resized by user */
   height?: number;
+
   /** Unique element identifier */
   id: string;
-  /** Reference to image asset ID */
-  imageId?: string;
+
   /** Video playback state */
   isPlaying?: boolean;
+
   /** Video mute state */
   muted?: boolean;
+
   /** Element transform (position, rotation, scale) */
   transform: ElementTransform;
+
   /** Element type */
   type: "image" | "video" | "text" | "shape";
-  /** Reference to video asset ID */
-  videoId?: string;
+
   /** Video volume (0.0 to 1.0) */
   volume?: number;
-  /** Element width in pixels */
+
+  /** Element width in pixels - may differ from asset width if resized by user */
   width?: number;
+
   /** Z-index for layering */
   zIndex: number;
 }

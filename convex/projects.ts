@@ -77,11 +77,13 @@ export const saveProject = mutation({
       backgroundColor: v.optional(v.string()),
       elements: v.array(
         v.object({
+          assetId: v.optional(v.id("assets")),
+          assetSyncedAt: v.optional(v.number()),
+          assetType: v.optional(v.union(v.literal("image"), v.literal("video"))),
           currentTime: v.optional(v.number()),
           duration: v.optional(v.number()),
           height: v.optional(v.number()),
           id: v.string(),
-          imageId: v.optional(v.string()),
           isPlaying: v.optional(v.boolean()),
           muted: v.optional(v.boolean()),
           transform: v.object({
@@ -90,13 +92,7 @@ export const saveProject = mutation({
             x: v.number(),
             y: v.number(),
           }),
-          type: v.union(
-            v.literal("image"),
-            v.literal("video"),
-            v.literal("text"),
-            v.literal("shape")
-          ),
-          videoId: v.optional(v.string()),
+          type: v.union(v.literal("image"), v.literal("video"), v.literal("text"), v.literal("shape")),
           volume: v.optional(v.number()),
           width: v.optional(v.number()),
           zIndex: v.number(),

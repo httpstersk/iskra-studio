@@ -124,13 +124,18 @@ export function useFileUpload(
                         },
                       });
                       
-                      console.log("[Upload] Upload successful:", uploadResult.url);
+                      console.log("[Upload] Upload successful:", uploadResult.url, "assetId:", uploadResult.assetId);
                       
-                      // Update the image with the Convex URL
+                      // Update the image with the Convex URL and asset reference
                       setImages((prev) =>
                         prev.map((img) =>
                           img.id === id
-                            ? { ...img, src: uploadResult.url }
+                            ? {
+                                ...img,
+                                src: uploadResult.url,
+                                assetId: uploadResult.assetId,
+                                assetSyncedAt: Date.now(),
+                              }
                             : img
                         )
                       );
