@@ -54,12 +54,12 @@ interface UseImageInteractionReturn {
  * Stroke color constants for different interaction states
  */
 const STROKE_COLORS = {
-  /** Gray stroke for loading images */
-  LOADING: "#6b7280",
-  /** Blue stroke for selected images */
-  SELECTED: "#3b82f6",
-  /** Blue stroke for hovered images */
-  HOVERED: "#3b82f6",
+  /** Subtle gray stroke for loading images */
+  LOADING: "#94a3b8",
+  /** Subtle blue stroke for selected images */
+  SELECTED: "#0ea5e9",
+  /** Subtle blue stroke for hovered images */
+  HOVERED: "#0ea5e9",
   /** Transparent stroke for default state */
   NONE: "transparent",
 } as const;
@@ -124,10 +124,10 @@ export const useImageInteraction = ({
     return STROKE_COLORS.NONE;
   }, [image.isLoading, isSelected, isHovered]);
 
-  // Calculate stroke width based on state
+  // Calculate stroke width based on state (minimalist, hair-thin strokes)
   const strokeWidth = useMemo(() => {
-    if (image.isLoading) return 2;
-    if (isSelected || isHovered) return 1;
+    if (image.isLoading) return 0.5;
+    if (isSelected || isHovered) return 0.5;
     return 0;
   }, [image.isLoading, isSelected, isHovered]);
 
