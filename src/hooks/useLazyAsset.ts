@@ -70,8 +70,10 @@ export function useLazyAsset(
 
       // If not in cache, fetch it using the proxy
       if (!urlPromise) {
+        // Just return the proxy URL directly
+        // The proxy endpoint will fetch from Convex and add CORS headers
         urlPromise = Promise.resolve(
-          `/api/storage/proxy?storageId=${storageId}`
+          `/api/storage/proxy?storageId=${encodeURIComponent(storageId)}`
         );
 
         urlCache.set(storageId, urlPromise);

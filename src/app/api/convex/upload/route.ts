@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
       throw new Error(`Convex upload failed (${uploadResponse.status}): ${errorText}`);
     }
 
-    const { storageId, thumbnailStorageId, url } = await uploadResponse.json();
+    const { storageId, thumbnailStorageId, url, thumbnailUrl } = await uploadResponse.json();
 
     // Create asset record in database via Convex mutation
     const convexClient = new ConvexHttpClient(convexUrl);
@@ -143,12 +143,15 @@ export async function POST(req: NextRequest) {
       width: metadata.width || undefined,
     });
 
-    // Use proxy URL to ensure CORS headers are included for browser image loading
-    const proxyUrl = `/api/storage/proxy?storageId=${storageId}`;
+    // Wrap Convex signed URLs with CORS proxy to enable browser image loading
+    // The proxy will fetch from the signed URL and add CORS headers
+    const proxyUrl = `/api/storage/proxy?url=${encodeURIComponent(url)}`;
     let thumbnailProxyUrl: string | undefined;
-    if (thumbnailStorageId) {
-      thumbnailProxyUrl = `/api/storage/proxy?storageId=${thumbnailStorageId}`;
+    if (thumbnailUrl) {
+      thumbnailProxyUrl = `/api/storage/proxy?url=${encodeURIComponent(thumbnailUrl)}`;
     }
+
+    console.log("[Upload] Created proxy URLs:", { proxyUrl, thumbnailProxyUrl });
 
     return NextResponse.json({
       assetId,

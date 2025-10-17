@@ -24,68 +24,112 @@ type ProxyMode = "blob" | "data-url";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
+    const providedUrl = searchParams.get("url");
     const storageId = searchParams.get("storageId");
     const mode: ProxyMode = (searchParams.get("mode") as ProxyMode) || "blob";
 
-    if (!storageId) {
+    // Accept either a signed URL or a storageId
+    if (!providedUrl && !storageId) {
       return NextResponse.json(
-        { error: "storageId parameter required" },
+        { error: "Either 'url' or 'storageId' parameter required" },
         { status: 400 }
       );
     }
 
-    // Get the Convex URL from environment
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-    if (!convexUrl) {
+    let storageUrl: string;
+
+    if (providedUrl) {
+      // Use the provided signed URL directly
+      storageUrl = providedUrl;
+      console.log("[Storage Proxy] Using provided signed URL");
+    } else if (storageId) {
+      // Legacy support: construct URL from storageId (less reliable)
+      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+      if (!convexUrl) {
+        return NextResponse.json(
+          { error: "Convex configuration missing" },
+          { status: 500 }
+        );
+      }
+
+      // Note: constructing URLs directly from storageId is deprecated
+      // Prefer using signed URLs from ctx.storage.getUrl()
+      const convexSiteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
+      const storageUrlCloud = `${convexUrl}/api/storage/${storageId}`;
+      const storageUrlSite = `${convexSiteUrl}/api/storage/${storageId}`;
+      
+      console.log("[Storage Proxy] StorageId:", storageId);
+      console.log("[Storage Proxy] Primary URL:", storageUrlCloud, "| Fallback URL:", storageUrlSite);
+
+      // Try primary URL first, then fallback
+      let foundUrl: string | null = null;
+      let lastError: Error | null = null;
+      
+      for (const url of [storageUrlCloud, storageUrlSite]) {
+        try {
+          console.log("[Storage Proxy] Testing URL:", url);
+          const testResponse = await fetch(url, {
+            headers: {
+              "Accept": "image/*, video/*, */*",
+              "User-Agent": "Spark-Videos-Proxy/1.0",
+            },
+            signal: AbortSignal.timeout(30000),
+          });
+          
+          console.log("[Storage Proxy] URL test status:", testResponse.status);
+          
+          if (testResponse.ok) {
+            foundUrl = url;
+            break;
+          }
+        } catch (fetchError) {
+          console.error("[Storage Proxy] URL test failed for", url);
+          lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+          continue;
+        }
+      }
+      
+      if (!foundUrl) {
+        console.error("[Storage Proxy] No working URL found. Last error:", lastError?.message);
+        return NextResponse.json(
+          { error: "Failed to fetch from storage", details: lastError?.message || "Unknown error" },
+          { status: 502 }
+        );
+      }
+      
+      storageUrl = foundUrl;
+    } else {
+      // Should never happen due to earlier check, but satisfy TypeScript
       return NextResponse.json(
-        { error: "Convex configuration missing" },
-        { status: 500 }
+        { error: "Either 'url' or 'storageId' parameter required" },
+        { status: 400 }
       );
     }
 
-    // Construct storage URLs - try both .convex.cloud and .convex.site
-    // The Convex storage API might be available on both domains
-    const convexSiteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
-    const storageUrlCloud = `${convexUrl}/api/storage/${storageId}`;
-    const storageUrlSite = `${convexSiteUrl}/api/storage/${storageId}`;
-    
-    console.log("[Storage Proxy] Mode:", mode, "| Primary URL:", storageUrlCloud, "| Fallback URL:", storageUrlSite);
-
-    // Fetch the file from Convex storage
-    // Try primary URL first, then fallback URL if it fails
+    // Fetch the file from the storage URL (signed or constructed)
     let response;
-    let lastError: Error | null = null;
-    
-    for (const storageUrl of [storageUrlCloud, storageUrlSite]) {
-      try {
-        console.log("[Storage Proxy] Attempting fetch from:", storageUrl);
-        response = await fetch(storageUrl, {
-          headers: {
-            "Accept": "image/*, video/*, */*",
-            "User-Agent": "Spark-Videos-Proxy/1.0",
-          },
-          // Add timeout
-          signal: AbortSignal.timeout(30000),
-        });
-        
-        console.log("[Storage Proxy] Response status:", response.status, response.statusText);
-        
-        // If we got a response (even if it's an error), break out of the loop
-        // We'll handle the error status below
-        break;
-      } catch (fetchError) {
-        console.error("[Storage Proxy] Fetch failed for", storageUrl, ":", fetchError);
-        lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
-        // Continue to try the next URL
-        continue;
-      }
+    try {
+      console.log("[Storage Proxy] Fetching from:", storageUrl);
+      response = await fetch(storageUrl, {
+        headers: {
+          "Accept": "image/*, video/*, */*",
+          "User-Agent": "Spark-Videos-Proxy/1.0",
+        },
+        signal: AbortSignal.timeout(30000),
+      });
+      
+      console.log("[Storage Proxy] Response status:", response.status, response.statusText);
+    } catch (fetchError) {
+      console.error("[Storage Proxy] Fetch failed:", fetchError);
+      return NextResponse.json(
+        { error: "Failed to fetch from storage", details: String(fetchError) },
+        { status: 502 }
+      );
     }
     
     if (!response) {
-      // Both URLs failed
-      console.error("[Storage Proxy] All fetch attempts failed. Last error:", lastError);
       return NextResponse.json(
-        { error: "Failed to fetch from Convex storage", details: lastError?.message || "Unknown error" },
+        { error: "Failed to fetch from storage" },
         { status: 502 }
       );
     }

@@ -112,10 +112,18 @@ http.route({
 
       // Store optional thumbnail if provided by client (bandwidth optimization)
       let thumbnailStorageId: string | undefined;
+      let thumbnailUrl: string | undefined;
       try {
         const thumbnail = formData.get("thumbnail");
         if (thumbnail instanceof Blob && thumbnail.size > 0) {
           thumbnailStorageId = await ctx.storage.store(thumbnail);
+          // Get URL for the thumbnail
+          if (thumbnailStorageId) {
+            const thumbUrl = await ctx.storage.getUrl(thumbnailStorageId);
+            if (thumbUrl) {
+              thumbnailUrl = thumbUrl;
+            }
+          }
         }
       } catch (thumbError) {
         console.error("Thumbnail storage failed:", thumbError);
@@ -127,6 +135,7 @@ http.route({
           storageId,
           thumbnailStorageId,
           url,
+          thumbnailUrl,
         }),
         {
           headers: {
