@@ -5,6 +5,8 @@
  * and uploading to Convex for permanent storage.
  */
 
+import { generateThumbnail } from "@/lib/utils/generate-thumbnail";
+
 interface UploadGeneratedAssetOptions {
   /**
    * URL of the generated asset (from fal-ai or other generation service)
@@ -49,6 +51,11 @@ interface UploadGeneratedAssetResult {
    * File size in bytes
    */
   sizeBytes: number;
+  
+  /**
+   * Thumbnail proxy URL (for images only)
+   */
+  thumbnailUrl?: string;
 }
 
 /**
@@ -99,6 +106,14 @@ export async function uploadGeneratedAssetToConvex(
     const formData = new FormData();
     formData.append("file", blob, assetType === "image" ? "generated.png" : "generated.mp4");
 
+    // Generate thumbnail for images (bandwidth optimization)
+    if (assetType === "image") {
+      const thumbnailBlob = await generateThumbnail(blob);
+      if (thumbnailBlob) {
+        formData.append("thumbnail", thumbnailBlob);
+      }
+    }
+
     // Add metadata if provided
     if (metadata.width) {
       formData.append("width", metadata.width.toString());
@@ -140,6 +155,7 @@ export async function uploadGeneratedAssetToConvex(
       storageId: result.storageId,
       assetId: result.assetId,
       sizeBytes: result.sizeBytes,
+      thumbnailUrl: result.thumbnailProxyUrl,
     };
   } catch (error) {
     console.error("Failed to upload generated asset to Convex:", error);

@@ -568,6 +568,8 @@ export function CanvasPageClient() {
       }
 
       let convexUrl = finalUrl;
+      let thumbnailUrl: string | undefined;
+
       if (isAuthenticated) {
         try {
           const { uploadGeneratedAssetToConvex } = await import(
@@ -585,6 +587,7 @@ export function CanvasPageClient() {
           });
 
           convexUrl = uploadResult.url;
+          thumbnailUrl = uploadResult.thumbnailUrl;
         } catch (error) {
           console.error(
             `[Image Generation] Failed to upload to Convex:`,
@@ -601,6 +604,7 @@ export function CanvasPageClient() {
                 isLoading: false,
                 opacity: 1.0,
                 src: convexUrl,
+                thumbnailSrc: thumbnailUrl,
                 naturalWidth,
                 naturalHeight,
               }
@@ -734,7 +738,7 @@ export function CanvasPageClient() {
             } catch (error) {
               // Restore last good state on error to prevent empty canvas
               restoreLastGoodState();
-              
+
               toast({
                 title: "Failed to load project",
                 description:
