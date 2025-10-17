@@ -119,6 +119,9 @@ export interface AssetUploadResult {
   /** Convex storage ID for thumbnail (optional, images only) */
   thumbnailStorageId?: string;
   
-  /** Public URL to access the uploaded file */
+  /** Public URL to access the uploaded file with CORS support */
   url: string;
+  
+  /** Public proxy URL to access the thumbnail with CORS support (optional, images only) */
+  thumbnailProxyUrl?: string;
 }

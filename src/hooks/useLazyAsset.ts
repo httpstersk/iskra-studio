@@ -68,13 +68,11 @@ export function useLazyAsset(
       // Check cache first
       let urlPromise = urlCache.get(storageId);
 
-      // If not in cache, fetch it
+      // If not in cache, fetch it using the proxy
       if (!urlPromise) {
-        urlPromise = fetch(`/api/storage/${storageId}`)
-          .then((res) => {
-            if (!res.ok) throw new Error(`Failed to fetch asset: ${res.status}`);
-            return res.url || `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${storageId}`;
-          });
+        urlPromise = Promise.resolve(
+          `/api/storage/proxy?storageId=${storageId}`
+        );
 
         urlCache.set(storageId, urlPromise);
       }

@@ -143,12 +143,20 @@ export async function POST(req: NextRequest) {
       width: metadata.width || undefined,
     });
 
+    // Use proxy URL to ensure CORS headers are included for browser image loading
+    const proxyUrl = `/api/storage/proxy?storageId=${storageId}`;
+    let thumbnailProxyUrl: string | undefined;
+    if (thumbnailStorageId) {
+      thumbnailProxyUrl = `/api/storage/proxy?storageId=${thumbnailStorageId}`;
+    }
+
     return NextResponse.json({
       assetId,
       sizeBytes: file.size,
       storageId,
       thumbnailStorageId,
-      url,
+      url: proxyUrl,
+      thumbnailProxyUrl,
     });
   } catch (error) {
     console.error("Upload error:", error);

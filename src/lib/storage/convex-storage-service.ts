@@ -119,12 +119,15 @@ export class ConvexStorageService implements StorageService {
   /**
    * Gets the public URL for a file stored in Convex.
    * 
+   * Returns a proxy URL to ensure CORS headers are included for browser image loading.
+   * Convex storage URLs don't include CORS headers by default.
+   * 
    * @param storageId - Convex storage ID
-   * @returns Public URL for accessing the file
+   * @returns Public proxy URL for accessing the file with CORS support
    */
   async getUrl(storageId: string): Promise<string> {
-    // Convex storage URLs follow this pattern
-    return `${this.convexUrl}/api/storage/${storageId}`;
+    // Return proxy URL to ensure CORS headers are included
+    return `/api/storage/proxy?storageId=${storageId}`;
   }
 
   /**

@@ -35,16 +35,25 @@ function loadImage(
     img.crossOrigin = crossOrigin;
 
     img.onload = () => {
+      console.log("[ImageCache] Image loaded successfully:", src);
       imageCache.set(src, img);
       loadingPromises.delete(src);
       resolve(img);
     };
 
     img.onerror = (error) => {
+      console.error("[ImageCache] Image load error for:", src, {
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+        complete: img.complete,
+        currentSrc: img.currentSrc,
+        error: error,
+      });
       loadingPromises.delete(src);
-      reject(error);
+      reject(new Error(`Failed to load image from ${src}`));
     };
 
+    console.log("[ImageCache] Starting to load image:", src);
     img.src = src;
   });
 

@@ -126,21 +126,14 @@ export function useFileUpload(
                       
                       console.log("[Upload] Upload successful:", uploadResult.url, "assetId:", uploadResult.assetId);
                       
-                      // Generate thumbnail URL if available
-                      let thumbnailUrl: string | undefined;
-                      if (uploadResult.thumbnailStorageId) {
-                        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "";
-                        thumbnailUrl = `${convexUrl}/api/storage/${uploadResult.thumbnailStorageId}`;
-                      }
-                      
-                      // Update the image with the Convex URL, asset reference, and thumbnail
+                      // Update the image with the proxy URL, asset reference, and thumbnail
                       setImages((prev) =>
                         prev.map((img) =>
                           img.id === id
                             ? {
                                 ...img,
                                 src: uploadResult.url,
-                                thumbnailSrc: thumbnailUrl,
+                                thumbnailSrc: uploadResult.thumbnailProxyUrl,
                                 assetId: uploadResult.assetId,
                                 assetSyncedAt: Date.now(),
                               }
