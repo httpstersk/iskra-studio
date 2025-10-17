@@ -9,41 +9,6 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 /**
- * Migrates canvas state from old format (imageId/videoId) to new format (assetId).
- * 
- * @param canvasState - Canvas state that may have old field names
- * @returns Migrated canvas state with assetId fields
- */
-function migrateCanvasStateToAssetId(canvasState: any) {
-  return {
-    ...canvasState,
-    elements: canvasState.elements.map((element: any) => {
-      // If already has assetId, return as-is
-      if (element.assetId) {
-        const { imageId, videoId, ...rest } = element;
-        return rest;
-      }
-
-      // Migrate from old format
-      const migrated: any = { ...element };
-      
-      // Copy imageId or videoId to assetId and remove old field
-      if (element.imageId) {
-        migrated.assetId = element.imageId;
-        migrated.assetType = "image";
-        delete migrated.imageId;
-      } else if (element.videoId) {
-        migrated.assetId = element.videoId;
-        migrated.assetType = "video";
-        delete migrated.videoId;
-      }
-
-      return migrated;
-    }),
-  };
-}
-
-/**
  * Creates a new project with default name and empty canvas state.
  * 
  * @param name - Optional project name (defaults to "Iskra Project")
@@ -119,7 +84,6 @@ export const saveProject = mutation({
           duration: v.optional(v.number()),
           height: v.optional(v.number()),
           id: v.string(),
-          imageId: v.optional(v.string()),
           isPlaying: v.optional(v.boolean()),
           muted: v.optional(v.boolean()),
           transform: v.object({
@@ -129,7 +93,6 @@ export const saveProject = mutation({
             y: v.number(),
           }),
           type: v.union(v.literal("image"), v.literal("video"), v.literal("text"), v.literal("shape")),
-          videoId: v.optional(v.string()),
           volume: v.optional(v.number()),
           width: v.optional(v.number()),
           zIndex: v.number(),
@@ -164,11 +127,8 @@ export const saveProject = mutation({
       throw new Error("Unauthorized");
     }
 
-    // Migrate canvas state to new format if needed
-    const migratedCanvasState = migrateCanvasStateToAssetId(args.canvasState);
-
     // Validate canvas state
-    if (migratedCanvasState.elements.length > 1000) {
+    if (args.canvasState.elements.length > 1000) {
       throw new Error("Too many canvas elements (max 1000)");
     }
 
@@ -176,7 +136,7 @@ export const saveProject = mutation({
 
     // Update project
     await ctx.db.patch(args.projectId, {
-      canvasState: migratedCanvasState,
+      canvasState: args.canvasState,
       thumbnailStorageId: args.thumbnailStorageId,
       lastSavedAt: now,
       updatedAt: now,
@@ -211,7 +171,7 @@ export const listProjects = query({
       .order("desc")
       .take(limit);
 
-    // Convert to include storage URLs for thumbnails and migrate data
+    // Convert to include storage URLs for thumbnails
     const projectsWithUrls = await Promise.all(
       projects.map(async (project) => {
         let thumbnailUrl: string | undefined;
@@ -220,12 +180,8 @@ export const listProjects = query({
           thumbnailUrl = url ?? undefined;
         }
 
-        // Migrate canvas state to new format if needed
-        const migratedCanvasState = migrateCanvasStateToAssetId(project.canvasState);
-
         return {
           ...project,
-          canvasState: migratedCanvasState,
           thumbnailUrl,
         };
       })
@@ -261,12 +217,6 @@ export const getProject = query({
       throw new Error("Unauthorized");
     }
 
-    // Migrate canvas state to new format if needed
-    const migratedProject = {
-      ...project,
-      canvasState: migrateCanvasStateToAssetId(project.canvasState),
-    };
-
     // Get thumbnail URL if exists
     let thumbnailUrl: string | undefined;
     if (project.thumbnailStorageId) {
@@ -275,7 +225,7 @@ export const getProject = query({
     }
 
     return {
-      ...migratedProject,
+      ...project,
       thumbnailUrl,
     };
   },

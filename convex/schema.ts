@@ -100,7 +100,6 @@ export default defineSchema({
           duration: v.optional(v.number()),
           height: v.optional(v.number()),
           id: v.string(),
-          imageId: v.optional(v.string()),
           isPlaying: v.optional(v.boolean()),
           muted: v.optional(v.boolean()),
           transform: v.object({
@@ -115,7 +114,6 @@ export default defineSchema({
             v.literal("text"),
             v.literal("shape")
           ),
-          videoId: v.optional(v.string()),
           volume: v.optional(v.number()),
           width: v.optional(v.number()),
           zIndex: v.number(),
