@@ -10,6 +10,7 @@ import {
   VIDEO_OVERLAY_Z_INDEX,
   VIDEO_SELECTED_BORDER_COLOR,
   VIDEO_SELECTED_BORDER_WIDTH,
+  VIDEO_SELECTED_SHADOW,
 } from "@/constants/video-overlays";
 import { useVideoPositioning } from "@/hooks/useVideoPositioning";
 import type { PlacedVideo } from "@/types/canvas";
@@ -66,6 +67,7 @@ export const VideoElement = React.memo<VideoElementProps>(function VideoElement(
       border: isSelected
         ? `${VIDEO_SELECTED_BORDER_WIDTH} solid ${VIDEO_SELECTED_BORDER_COLOR}`
         : "none",
+      boxShadow: isSelected ? VIDEO_SELECTED_SHADOW : "none",
       height: position.height,
       left: position.left,
       objectFit: "cover" as const,
@@ -74,6 +76,7 @@ export const VideoElement = React.memo<VideoElementProps>(function VideoElement(
       top: position.top,
       transform: `rotate(${video.rotation || 0}deg)`,
       transformOrigin: "center",
+      transition: "box-shadow 0.2s ease-out, border-color 0.2s ease-out",
       width: position.width,
       zIndex: VIDEO_OVERLAY_Z_INDEX,
     };

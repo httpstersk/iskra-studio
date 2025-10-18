@@ -114,6 +114,38 @@ export const snapImageToGrid = (
 };
 
 /**
+ * Snaps a placed video to the grid by adjusting its position.
+ * Returns the same object if already snapped (no changes needed).
+ *
+ * @param video - The placed video to snap
+ * @param gridSize - Size of grid cells (default: GRID_SIZE constant)
+ * @returns Video with position snapped to grid
+ *
+ * @example
+ * ```typescript
+ * const video = { id: '1', x: 127, y: 83, width: 100, height: 100, rotation: 0, ... };
+ * const snapped = snapVideoToGrid(video, 50);
+ * // Returns { ...video, x: 150, y: 100 }
+ * ```
+ */
+export const snapVideoToGrid = (
+  video: import("@/types/canvas").PlacedVideo,
+  gridSize: number = GRID_SIZE,
+): import("@/types/canvas").PlacedVideo => {
+  const snapped = snapPosition(video.x, video.y, gridSize);
+
+  if (snapped.x === video.x && snapped.y === video.y) {
+    return video;
+  }
+
+  return {
+    ...video,
+    x: snapped.x,
+    y: snapped.y,
+  };
+};
+
+/**
  * Snaps multiple images to the grid in a single operation.
  * Returns the same array reference if no changes needed (optimization).
  *
@@ -148,6 +180,33 @@ export const snapImagesToGrid = (
   });
 
   return hasChanges ? snappedImages : images;
+};
+
+/**
+ * Snaps multiple videos to the grid in a single operation.
+ * Returns the same array reference if no changes needed (optimization).
+ *
+ * @param videos - Array of placed videos to snap
+ * @param gridSize - Size of grid cells (default: GRID_SIZE constant)
+ * @returns Array of videos with positions snapped to grid
+ */
+export const snapVideosToGrid = (
+  videos: import("@/types/canvas").PlacedVideo[],
+  gridSize: number = GRID_SIZE,
+): import("@/types/canvas").PlacedVideo[] => {
+  let hasChanges = false;
+
+  const snappedVideos = videos.map((video) => {
+    const snappedVideo = snapVideoToGrid(video, gridSize);
+
+    if (snappedVideo !== video) {
+      hasChanges = true;
+    }
+
+    return snappedVideo;
+  });
+
+  return hasChanges ? snappedVideos : videos;
 };
 
 /**

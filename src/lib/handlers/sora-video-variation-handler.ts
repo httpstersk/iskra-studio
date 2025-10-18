@@ -13,7 +13,7 @@ import type {
   PlacedVideo,
   VideoGenerationSettings,
 } from "@/types/canvas";
-import { snapPosition } from "@/utils/snap-utils";
+import { snapPosition, snapVideosToGrid } from "@/utils/snap-utils";
 import { calculateBalancedPosition } from "./variation-handler";
 import {
   ensureImageInConvex,
@@ -147,6 +147,9 @@ function createVideoPlaceholders(
       selectedImage.width,
       selectedImage.height
     );
+    
+    // Snap position to grid to align perfectly with ghost placeholders
+    const snappedPosition = snapPosition(position.x, position.y);
 
     return {
       currentTime: VIDEO_DEFAULTS.CURRENT_TIME,
@@ -162,8 +165,8 @@ function createVideoPlaceholders(
       src: "", // Will be filled when generation completes
       volume: VIDEO_DEFAULTS.VOLUME,
       width: selectedImage.width,
-      x: position.x,
-      y: position.y,
+      x: snappedPosition.x,
+      y: snappedPosition.y,
     };
   });
 }
