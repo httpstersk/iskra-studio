@@ -173,7 +173,8 @@ export const listProjects = query({
       .order("desc")
       .take(limit);
 
-    // Convert to include storage URLs for thumbnails and asset preview thumbnails
+    // Convert to include storage URLs for project thumbnails only
+    // Asset thumbnails are fetched on-demand when opening a project
     const projectsWithUrls = await Promise.all(
       projects.map(async (project) => {
         let thumbnailUrl: string | undefined;
@@ -182,34 +183,9 @@ export const listProjects = query({
           thumbnailUrl = url ?? undefined;
         }
 
-        // Collect asset IDs from project elements
-        const assetIds = new Set<string>();
-        for (const element of project.canvasState.elements) {
-          if (element.assetId) {
-            assetIds.add(element.assetId);
-          }
-        }
-
-        // Fetch asset thumbnails for preview (optimize bandwidth)
-        const assetThumbnails: Record<string, string> = {};
-        for (const assetId of assetIds) {
-          const asset = await ctx.db
-            .query("assets")
-            .filter((q) => q.eq(q.field("_id"), assetId as any))
-            .unique();
-
-          if (asset && asset.thumbnailStorageId) {
-            const thumbUrl = await ctx.storage.getUrl(asset.thumbnailStorageId);
-            if (thumbUrl) {
-              assetThumbnails[assetId] = thumbUrl;
-            }
-          }
-        }
-
         return {
           ...project,
           thumbnailUrl,
-          assetThumbnails,
         };
       })
     );
@@ -262,18 +238,20 @@ export const getProject = query({
     }
 
     // Fetch asset thumbnails for canvas display (optimize bandwidth on load)
+    // Use db.get() directly for better performance
     const assetThumbnails: Record<string, string> = {};
     for (const assetId of assetIds) {
-      const asset = await ctx.db
-        .query("assets")
-        .filter((q) => q.eq(q.field("_id"), assetId as any))
-        .unique();
-
-      if (asset && asset.thumbnailStorageId) {
-        const thumbUrl = await ctx.storage.getUrl(asset.thumbnailStorageId);
-        if (thumbUrl) {
-          assetThumbnails[assetId] = thumbUrl;
+      try {
+        const asset = await ctx.db.get(assetId as any);
+        if (asset && asset.thumbnailStorageId) {
+          const thumbUrl = await ctx.storage.getUrl(asset.thumbnailStorageId);
+          if (thumbUrl) {
+            assetThumbnails[assetId] = thumbUrl;
+          }
         }
+      } catch (error) {
+        // Asset might have been deleted, skip it
+        console.warn(`Asset ${assetId} not found or deleted`);
       }
     }
 
