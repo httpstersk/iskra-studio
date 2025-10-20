@@ -35,25 +35,16 @@ function loadImage(
     img.crossOrigin = crossOrigin;
 
     img.onload = () => {
-      console.log("[ImageCache] Image loaded successfully:", src);
       imageCache.set(src, img);
       loadingPromises.delete(src);
       resolve(img);
     };
 
     img.onerror = (error) => {
-      console.error("[ImageCache] Image load error for:", src, {
-        naturalWidth: img.naturalWidth,
-        naturalHeight: img.naturalHeight,
-        complete: img.complete,
-        currentSrc: img.currentSrc,
-        error: error,
-      });
       loadingPromises.delete(src);
       reject(new Error(`Failed to load image from ${src}`));
     };
 
-    console.log("[ImageCache] Starting to load image:", src);
     img.src = src;
   });
 
@@ -64,7 +55,7 @@ function loadImage(
 /**
  * Hook to load and cache images, preventing duplicate network requests
  * Much more efficient than use-image library for our use case
- * 
+ *
  * @param src - Image source URL
  * @param crossOrigin - CORS mode (default: "anonymous")
  * @returns [image | undefined, status: "loading" | "loaded" | "error"]
@@ -110,7 +101,6 @@ export function useImageCache(
         }
       })
       .catch((error) => {
-        console.error(`Failed to load image: ${src}`, error);
         if (isMountedRef.current) {
           setImage(undefined);
           setStatus("error");

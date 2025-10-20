@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     }
 
     const result = await generateObject({
-      model: openai("gpt-5-mini"),
+      model: openai("gpt-5"),
       schema: imageStyleMoodAnalysisSchema,
       messages: [
         {
