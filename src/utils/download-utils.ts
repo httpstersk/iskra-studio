@@ -70,10 +70,10 @@ const getFilenameFromUrl = (url: string, index: number): string => {
 
     // Generate filename based on URL or index
     const extension = url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)?.[0] || ".jpg";
-    return `image-${index + 1}${extension}`;
+    return `image-${Date.now()}-${index + 1}${extension}`;
   } catch {
     // If URL parsing fails, use index-based naming
-    return `image-${index + 1}.jpg`;
+    return `image-${Date.now()}-${index + 1}.jpg`;
   }
 };
 
