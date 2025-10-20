@@ -1,6 +1,6 @@
 /**
  * B-roll Concept Generation API Route
- * 
+ *
  * Generates contextually relevant B-roll concepts using OpenAI's structured output.
  */
 
@@ -12,7 +12,7 @@ import { z } from "zod";
 import { B_ROLL_GENERATION_SYSTEM_PROMPT } from "@/lib/b-roll-concept-generator";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 
-const OPENAI_MODEL = "gpt-4o-2024-08-06";
+const OPENAI_MODEL = "gpt-4o";
 
 /**
  * Schema for B-roll concept generation response.
@@ -25,7 +25,7 @@ const bRollConceptSetSchema = z.object({
 
 /**
  * POST handler for B-roll concept generation.
- * 
+ *
  * Generates contextually relevant B-roll concepts based on image analysis.
  * Uses OpenAI's structured output for reliable JSON responses.
  */
@@ -109,6 +109,36 @@ MOOD:
 - Energy: ${styleAnalysis.mood.energy}
 - Atmosphere: ${styleAnalysis.mood.atmosphere}
 
+STYLE SIGNATURE:
+- Aspect Ratio: ${styleAnalysis.styleSignature.aspectRatio}
+- Lens Language:
+  - focalLengthMm: ${styleAnalysis.styleSignature.lensLanguage.focalLengthMm}
+  - apertureF: ${styleAnalysis.styleSignature.lensLanguage.apertureF}
+  - depthOfField: ${styleAnalysis.styleSignature.lensLanguage.depthOfField}
+  - lensType: ${styleAnalysis.styleSignature.lensLanguage.lensType}
+  - look: ${styleAnalysis.styleSignature.lensLanguage.look}
+- Colorimetry:
+  - brightness: ${styleAnalysis.styleSignature.colorimetry.brightness}
+  - contrast: ${styleAnalysis.styleSignature.colorimetry.contrast}
+  - harmony: ${styleAnalysis.styleSignature.colorimetry.harmony}
+  - warmth: ${styleAnalysis.styleSignature.colorimetry.warmth}
+  - highlightTint: ${styleAnalysis.styleSignature.colorimetry.highlightTint}
+  - shadowTint: ${styleAnalysis.styleSignature.colorimetry.shadowTint}
+  - saturation: ${styleAnalysis.styleSignature.colorimetry.saturation}
+- Lighting Signature:
+  - key: ${styleAnalysis.styleSignature.lightingSignature.key}
+  - fill: ${styleAnalysis.styleSignature.lightingSignature.fill}
+  - back: ${styleAnalysis.styleSignature.lightingSignature.back}
+  - contrastRatio: ${styleAnalysis.styleSignature.lightingSignature.contrastRatio}
+- Post-Processing Signature:
+  - filmGrainIntensity: ${styleAnalysis.styleSignature.postProcessingSignature.filmGrainIntensity}
+  - halation: ${styleAnalysis.styleSignature.postProcessingSignature.halation}
+  - vignette: ${styleAnalysis.styleSignature.postProcessingSignature.vignette}
+- Rhythm:
+  - cadence: ${styleAnalysis.styleSignature.rhythm.cadence}
+  - tempo: ${styleAnalysis.styleSignature.rhythm.tempo}
+- Style Lock: "${styleAnalysis.styleSignature.styleLockPrompt}"
+
 NARRATIVE TONE:
 - Cinematographer Style: ${styleAnalysis.narrativeTone.cinematographer}
 - Director Aesthetic: ${styleAnalysis.narrativeTone.director}
@@ -126,6 +156,13 @@ CRITICAL: Generate ${count} diverse B-roll concepts that:
 7. Follow ${styleAnalysis.narrativeTone.director}'s visual aesthetic and storytelling approach
 8. Maintain IDENTICAL atmospheric qualities: ${styleAnalysis.lighting.atmosphere.join(", ")}
 9. Preserve the ${styleAnalysis.mood.primary} mood with ${styleAnalysis.mood.energy} energy
+10. EXACTLY match aspect ratio: ${styleAnalysis.styleSignature.aspectRatio}
+11. EXACTLY match lens language (focal length, aperture, DoF, lens type, look)
+12. EXACTLY match colorimetry values (brightness, contrast, harmony, warmth, highlight/shadow tint, saturation)
+13. EXACTLY match lighting signature (key/fill/back and contrast ratio)
+14. EXACTLY match post-processing signature (vignette level, halation presence, and film grain intensity ${styleAnalysis.styleSignature.postProcessingSignature.filmGrainIntensity})
+15. EXACTLY match rhythm (cadence and tempo)
+16. Start each B-roll prompt by PREPENDING this exact style lock sentence VERBATIM: "${styleAnalysis.styleSignature.styleLockPrompt}"
 
 Each B-roll must look IDENTICAL to the reference image in every technical aspect except the subject/scene.
 Include film grain and all post-processing effects explicitly in every prompt.
@@ -144,7 +181,10 @@ Include film grain and all post-processing effects explicitly in every prompt.
         },
       ],
       model: OPENAI_MODEL,
-      response_format: zodResponseFormat(bRollConceptSetSchema, "broll_concepts"),
+      response_format: zodResponseFormat(
+        bRollConceptSetSchema,
+        "broll_concepts"
+      ),
       temperature: 0.9, // High temperature for creative variety while maintaining style constraints
     });
 

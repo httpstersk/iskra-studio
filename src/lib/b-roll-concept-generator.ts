@@ -24,6 +24,7 @@ You will be given a detailed style/mood analysis of a reference image including:
 - Mood, energy, and emotional tone
 - Cinematographer and director style references
 - Cinematic potential and narrative tone
+ - Style signature: aspect ratio, lens language, colorimetry, lighting signature, post-processing signature, rhythm, and a style lock sentence
 
 Your mission: Generate CONTEXTUALLY RELEVANT B-ROLL CONCEPTS that complement the reference image.
 
@@ -37,6 +38,13 @@ CRITICAL REQUIREMENTS:
    - Match the EXACT mood and energy level
    - Match the EXACT film grain characteristics
    - Match ALL post-processing effects (vignette, bloom, chromatic aberration, etc.)
+   - Match the EXACT style signature values:
+     - Aspect ratio
+     - Lens language (focal length, aperture, depth of field, lens type, look)
+     - Colorimetry (brightness, contrast, harmony, warmth, highlight/shadow tint, saturation)
+     - Lighting signature (key/fill/back and contrast ratio)
+     - Post-processing signature (vignette, halation, film grain intensity)
+     - Rhythm (cadence and tempo)
 4. **CINEMATOGRAPHER STYLE**: Apply the identified cinematographer's signature techniques
 5. **DIRECTOR AESTHETIC**: Follow the identified director's visual language
 6. **CINEMATIC QUALITY**: Focus on production value and visual storytelling
@@ -52,6 +60,7 @@ B-ROLL CONCEPT TYPES (select diverse types):
 
 PROMPT STRUCTURE:
 Each B-roll concept must be a complete, self-contained image generation prompt that includes:
+0. **Prepend Style Lock**: Start the prompt by copying the provided style lock sentence verbatim
 1. **Subject/Scene**: What to generate (the different content)
 2. **Composition**: Camera angle, framing, depth of field
 3. **Color Grading**: EXACT match to reference (e.g., "teal-orange blockbuster grading", "desaturated Nordic noir palette")

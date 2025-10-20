@@ -48,11 +48,41 @@ MOOD & ATMOSPHERE:
 - Energy: choose ONLY ONE from these exact values: calm, moderate, dynamic, or explosive (no additional text)
 - Describe the overall atmospheric feeling
 
+STYLE SIGNATURE (precise fingerprint for exact matching):
+- Aspect Ratio: choose ONLY ONE from these exact values: 1:1, 3:2, 4:3, 9:16, 16:9, 1.85:1, 2.39:1, or 21:9
+- Lens Language: report all values
+  - focalLengthMm (number): approximate 35mm-equivalent focal length (10-300)
+  - apertureF (string): estimated aperture (e.g., f/1.8)
+  - depthOfField: choose ONLY ONE: deep, medium, or shallow
+  - lensType: choose ONLY ONE: anamorphic, spherical, or unknown
+  - look (string): lens look characteristics (e.g., oval bokeh, barrel distortion, edge softness)
+- Colorimetry: report all values
+  - brightness: choose ONLY ONE: low, medium, or high
+  - contrast: choose ONLY ONE: low, medium, or high
+  - harmony: choose ONLY ONE: monochromatic, analogous, complementary, split-complementary, triadic, tetradic, or neutral
+  - warmth: choose ONLY ONE: cool, neutral, warm, or mixed
+  - highlightTint (string): highlight color cast
+  - shadowTint (string): shadow color cast
+  - saturation: choose ONLY ONE: muted, balanced, vibrant, or hyper-saturated
+- Lighting Signature: report all values
+  - key (string): key light characteristics
+  - fill (string): fill light characteristics
+  - back (string): back/rim light characteristics
+  - contrastRatio: choose ONLY ONE: high-key, mid-key, low-key, or unknown
+- Post-Processing Signature: report all values
+  - filmGrainIntensity (0-100): numeric grain/noise intensity
+  - halation (boolean): presence of halation/glow
+  - vignette: choose ONLY ONE: none, subtle, moderate, or heavy
+- Rhythm: report all values
+  - cadence (string): perceived cadence/pacing
+  - tempo: choose ONLY ONE: still, slow, measured, brisk, or frantic
+- styleLockPrompt (string): one concise sentence that locks color, lighting, lens, grain, and emotion for prompts (to prepend to prompts)
+
 CINEMATIC POTENTIAL:
 - List AT LEAST TWO motion styles that fit (e.g., smooth, frenetic, slow, rhythmic)
 - List AT LEAST TWO camera techniques (e.g., push-in, orbit, tilt, dolly, pan)
-- Editing pace: choose ONLY ONE from these exact values: slow-contemplative, measured, fast-cuts, or rapid-fire (no additional text)
 - List AT LEAST TWO visual effects that would amplify the mood (e.g., light streaks, particles, bloom)
+- Editing pace: choose ONLY ONE from these exact values: slow-contemplative, measured, fast-cuts, or rapid-fire (no additional text)
 
 NARRATIVE TONE:
 - Identify which cinematographer's style this most resembles (e.g., Roger Deakins, Emmanuel Lubezki, Hoyte van Hoytema, Vittorio Storaro, Bradford Young)
