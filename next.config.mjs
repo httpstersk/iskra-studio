@@ -21,7 +21,6 @@ const nextConfig = {
       },
     ],
   },
-  middlewareClientMaxBodySize: 50 * 1024 * 1024,
   webpack: (config) => {
     // Ignore canvas module which is required by Konva in Node environments
     config.resolve.alias.canvas = false;

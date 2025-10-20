@@ -19,7 +19,6 @@ export function formatImageVariationPrompt(
         - Apply this cinematography directive: ${directive}.
         - Recompose the scene with Fincher-style controlled framing and meticulous visual discipline.
     CAMERA AESTHETICS:
-        - Camera: ARRI Alexa LF, full-frame digital sensor.
         - Lens: 35mm or 50mm prime, deep focus (f/4–f/5.6) for clinical clarity.
     LIGHTING AND TONE:
         - Controlled, low-key lighting with soft diffusion and strong contrast edges.
