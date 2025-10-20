@@ -25,31 +25,33 @@ COLOR PALETTE:
 - List 3-5 dominant colors with evocative names (e.g., "midnight indigo", "electric cobalt", "sunset amber")
 - Provide detailed color grading description (e.g., "teal-orange blockbuster look", "desaturated Nordic noir palette", "warm golden hour glow with crushed blacks")
 - Describe the overall mood the colors create
-- Specify saturation level: muted, balanced, vibrant, or hyper-saturated
-- Specify temperature: cool, neutral, warm, or mixed
+- Saturation: choose ONLY ONE from these exact values: muted, balanced, vibrant, or hyper-saturated (no additional text)
+- Temperature: choose ONLY ONE from these exact values: cool, neutral, warm, or mixed (no additional text)
 
 LIGHTING:
-- Quality: choose from soft-diffused, hard-dramatic, natural, artificial, or mixed
-- Describe the direction and characteristics of the light
-- Describe the emotional quality and mood of the lighting
-- List atmospheric qualities (e.g., haze, volumetric, clear, crisp)
+- Quality: choose ONLY ONE from these exact values: soft-diffused, hard-dramatic, natural, artificial, or mixed (do not add any additional text, just the enum value)
+- Direction: Describe the direction and characteristics of the light (e.g., "side lighting with backlight rim", "overhead with bounce fill")
+- Mood: Describe the emotional quality and mood of the lighting
+- Atmosphere: List atmospheric qualities (e.g., haze, volumetric, clear, crisp)
 
 VISUAL STYLE:
 - List aesthetic styles (e.g., cinematic, editorial, surreal, minimalist, dramatic)
-- List textures present (e.g., rough, smooth, grainy, glossy)
 - Describe the compositional approach
-- Depth: choose from flat, layered, or deep-perspective
+- Depth: choose ONLY ONE from these exact values: flat, layered, or deep-perspective (no additional text)
+- Film grain: Analyze grain characteristics - none, subtle, moderate, heavy, or specific type (e.g., "35mm Kodak grain", "16mm texture", "digital noise", "Super 8 grain")
+- Post-processing effects: List ALL visible effects (e.g., vignette, bloom, chromatic aberration, lens distortion, halation, light leaks, lens flares, color fringing)
+- List textures present (e.g., rough, smooth, grainy, glossy)
 
 MOOD & ATMOSPHERE:
 - Primary emotional tone (one word or short phrase)
 - List 2-4 secondary emotional layers
-- Energy level: choose from calm, moderate, dynamic, or explosive
+- Energy: choose ONLY ONE from these exact values: calm, moderate, dynamic, or explosive (no additional text)
 - Describe the overall atmospheric feeling
 
 CINEMATIC POTENTIAL:
 - List AT LEAST TWO motion styles that fit (e.g., smooth, frenetic, slow, rhythmic)
 - List AT LEAST TWO camera techniques (e.g., push-in, orbit, tilt, dolly, pan)
-- Editing pace: choose from slow-contemplative, measured, fast-cuts, or rapid-fire
+- Editing pace: choose ONLY ONE from these exact values: slow-contemplative, measured, fast-cuts, or rapid-fire (no additional text)
 - List AT LEAST TWO visual effects that would amplify the mood (e.g., light streaks, particles, bloom)
 
 NARRATIVE TONE:

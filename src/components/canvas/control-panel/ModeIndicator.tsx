@@ -1,7 +1,10 @@
 "use client";
 
 import { Switch } from "@/components/ui/switch";
-import { CONTROL_PANEL_STRINGS, CONTROL_PANEL_STYLES } from "@/constants/control-panel";
+import {
+  CONTROL_PANEL_STRINGS,
+  CONTROL_PANEL_STYLES,
+} from "@/constants/control-panel";
 import { cn } from "@/lib/utils";
 import { ImagesIcon, PlayIcon } from "lucide-react";
 
@@ -93,11 +96,11 @@ export function ModeIndicator({
         >
           <div className="flex items-center gap-1.5 text-xs font-medium">
             <span className="text-blue-600 dark:text-blue-500 text-[10px] uppercase tracking-wide">
-              {imageVariationType === "camera-angles" ? "Angles" : "B-rolls"}
+              {imageVariationType === "camera-angles" ? "Camera" : "B-roll"}
             </span>
             <Switch
               checked={imageVariationType === "b-rolls"}
-              className="h-5 w-9 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-blue-600"
+              className="h-5 w-9 data-[state=checked]:bg-cyan-600 data-[state=unchecked]:bg-blue-600"
               onCheckedChange={(checked) => {
                 setImageVariationType(checked ? "b-rolls" : "camera-angles");
               }}

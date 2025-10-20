@@ -97,9 +97,11 @@ LIGHTING:
 
 VISUAL STYLE:
 - Aesthetic: ${styleAnalysis.visualStyle.aesthetic.join(", ")}
-- Texture: ${styleAnalysis.visualStyle.texture.join(", ")}
 - Composition: ${styleAnalysis.visualStyle.composition}
 - Depth: ${styleAnalysis.visualStyle.depth}
+- Film Grain: ${styleAnalysis.visualStyle.filmGrain}
+- Post-Processing Effects: ${styleAnalysis.visualStyle.postProcessing.join(", ")}
+- Texture: ${styleAnalysis.visualStyle.texture.join(", ")}
 
 MOOD:
 - Primary: ${styleAnalysis.mood.primary}
@@ -118,12 +120,15 @@ CRITICAL: Generate ${count} diverse B-roll concepts that:
 1. Feature completely different scenes/objects/subjects than the reference
 2. EXACTLY match the color grading: "${styleAnalysis.colorPalette.grading}"
 3. EXACTLY match the lighting: ${styleAnalysis.lighting.quality} with ${styleAnalysis.lighting.direction}
-4. Apply ${styleAnalysis.narrativeTone.cinematographer}'s signature cinematography techniques
-5. Follow ${styleAnalysis.narrativeTone.director}'s visual aesthetic and storytelling approach
-6. Maintain IDENTICAL atmospheric qualities: ${styleAnalysis.lighting.atmosphere.join(", ")}
-7. Preserve the ${styleAnalysis.mood.primary} mood with ${styleAnalysis.mood.energy} energy
+4. EXACTLY match the film grain: ${styleAnalysis.visualStyle.filmGrain}
+5. EXACTLY match ALL post-processing effects: ${styleAnalysis.visualStyle.postProcessing.join(", ")}
+6. Apply ${styleAnalysis.narrativeTone.cinematographer}'s signature cinematography techniques
+7. Follow ${styleAnalysis.narrativeTone.director}'s visual aesthetic and storytelling approach
+8. Maintain IDENTICAL atmospheric qualities: ${styleAnalysis.lighting.atmosphere.join(", ")}
+9. Preserve the ${styleAnalysis.mood.primary} mood with ${styleAnalysis.mood.energy} energy
 
-Each B-roll must look like it was shot in the same session as the reference image.
+Each B-roll must look IDENTICAL to the reference image in every technical aspect except the subject/scene.
+Include film grain and all post-processing effects explicitly in every prompt.
 `;
 
     // Call OpenAI with structured output

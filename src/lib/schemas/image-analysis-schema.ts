@@ -62,14 +62,25 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .describe(
         "Visual aesthetics: cinematic, editorial, surreal, minimalist, etc.",
       ),
-    texture: z
-      .array(z.string())
-      .min(1)
-      .describe("Surface qualities and textures present"),
     composition: z
       .string()
       .describe("Overall compositional approach and balance"),
     depth: z.enum(["flat", "layered", "deep-perspective"]),
+    filmGrain: z
+      .string()
+      .describe(
+        "Film grain characteristics: none, subtle, moderate, heavy, or specific type (e.g., '35mm Kodak grain', 'digital noise', '16mm texture')",
+      ),
+    postProcessing: z
+      .array(z.string())
+      .min(1)
+      .describe(
+        "Post-processing effects present: vignette, bloom, chromatic aberration, lens distortion, halation, etc.",
+      ),
+    texture: z
+      .array(z.string())
+      .min(1)
+      .describe("Surface qualities and textures present"),
   }),
 
   mood: z.object({
