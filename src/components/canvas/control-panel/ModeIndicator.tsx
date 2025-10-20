@@ -11,6 +11,8 @@ import { ImagesIcon, PlayIcon } from "lucide-react";
 interface ModeIndicatorProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   hasSelection: boolean;
+  imageVariationType?: "camera-angles" | "b-rolls";
+  setImageVariationType?: (type: "camera-angles" | "b-rolls") => void;
   variationMode: "image" | "video";
 }
 
@@ -20,6 +22,8 @@ interface ModeIndicatorProps {
 export function ModeIndicator({
   handleVariationModeChange,
   hasSelection,
+  imageVariationType = "camera-angles",
+  setImageVariationType,
   variationMode,
 }: ModeIndicatorProps) {
   if (!hasSelection) {
@@ -44,38 +48,63 @@ export function ModeIndicator({
   }
 
   return (
-    <div
-      className={cn(
-        "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
-        variationMode === "image"
-          ? CONTROL_PANEL_STYLES.BLUE_BADGE
-          : CONTROL_PANEL_STYLES.PURPLE_BADGE
-      )}
-    >
-      <div className="flex items-center gap-2 text-xs font-medium">
-        {variationMode === "image" ? (
-          <>
-            <ImagesIcon className="w-4 h-4 text-blue-600 dark:text-blue-500" />
-            <span className="text-blue-600 dark:text-blue-500">
-              {CONTROL_PANEL_STRINGS.IMAGE_MODE}
-            </span>
-          </>
-        ) : (
-          <>
-            <PlayIcon className="w-4 h-4 text-purple-600 dark:text-purple-500 fill-purple-600 dark:fill-purple-500" />
-            <span className="text-purple-600 dark:text-purple-500">
-              {CONTROL_PANEL_STRINGS.VIDEO_MODE}
-            </span>
-          </>
+    <>
+      <div
+        className={cn(
+          "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
+          variationMode === "image"
+            ? CONTROL_PANEL_STYLES.BLUE_BADGE
+            : CONTROL_PANEL_STYLES.PURPLE_BADGE
         )}
+      >
+        <div className="flex items-center gap-2 text-xs font-medium">
+          {variationMode === "image" ? (
+            <>
+              <ImagesIcon className="w-4 h-4 text-blue-600 dark:text-blue-500" />
+              <span className="text-blue-600 dark:text-blue-500">
+                {CONTROL_PANEL_STRINGS.IMAGE_MODE}
+              </span>
+            </>
+          ) : (
+            <>
+              <PlayIcon className="w-4 h-4 text-purple-600 dark:text-purple-500 fill-purple-600 dark:fill-purple-500" />
+              <span className="text-purple-600 dark:text-purple-500">
+                {CONTROL_PANEL_STRINGS.VIDEO_MODE}
+              </span>
+            </>
+          )}
+        </div>
+        <Switch
+          checked={variationMode === "video"}
+          className="h-5 w-9 data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-blue-600"
+          onCheckedChange={(checked) => {
+            handleVariationModeChange(checked ? "video" : "image");
+          }}
+        />
       </div>
-      <Switch
-        checked={variationMode === "video"}
-        className="h-5 w-9 data-[state=checked]:bg-purple-600 data-[state=unchecked]:bg-blue-600"
-        onCheckedChange={(checked) => {
-          handleVariationModeChange(checked ? "video" : "image");
-        }}
-      />
-    </div>
+
+      {/* Camera Angles vs B-rolls switcher - only show in Image mode */}
+      {variationMode === "image" && setImageVariationType && (
+        <div
+          className={cn(
+            "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
+            CONTROL_PANEL_STYLES.BLUE_BADGE
+          )}
+        >
+          <div className="flex items-center gap-1.5 text-xs font-medium">
+            <span className="text-blue-600 dark:text-blue-500 text-[10px] uppercase tracking-wide">
+              {imageVariationType === "camera-angles" ? "Angles" : "B-rolls"}
+            </span>
+            <Switch
+              checked={imageVariationType === "b-rolls"}
+              className="h-5 w-9 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-blue-600"
+              onCheckedChange={(checked) => {
+                setImageVariationType(checked ? "b-rolls" : "camera-angles");
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

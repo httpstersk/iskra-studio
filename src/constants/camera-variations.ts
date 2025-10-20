@@ -1,4 +1,16 @@
 /**
+ * B-roll specific variations for cinematic supporting footage
+ * These focus on atmospheric details, textures, and transitional elements
+ */
+export const B_ROLL_VARIATIONS = [
+  "B-ROLL: ATMOSPHERIC ELEMENTS — CAPTURE of light rays, dust particles, steam, or weather effects; adds mood and cinematic quality.",
+  "B-ROLL: ENVIRONMENTAL TEXTURE — DETAIL SHOT of surfaces, materials, or patterns in scene; establishes atmosphere and production value.",
+  "B-ROLL: ESTABLISHING WIDE — EXPANSIVE SHOT showing location and context; orients viewer to space before closer shots.",
+  "B-ROLL: HANDS IN ACTION — CLOSE-UP of hands performing task or gesture; adds human element and narrative detail.",
+  "B-ROLL: TRANSITION ELEMENT — ABSTRACT MOVEMENT or color that serves as visual bridge; smooth cuts between main footage.",
+] as const;
+
+/**
  * Camera setting variation prompts for image generation
  * Includes diverse camera angles, movements, and B-roll footage options
  * Ordered to provide maximum variety in perspective and style

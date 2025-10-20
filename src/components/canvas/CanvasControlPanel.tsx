@@ -23,11 +23,13 @@ interface CanvasControlPanelProps {
   handleFileUpload: (files: FileList | null) => void;
   handleRun: () => void;
   handleVariationModeChange: (mode: "image" | "video") => void;
+  imageVariationType?: "camera-angles" | "b-rolls";
   images: PlacedImage[];
   isGenerating: boolean;
   redo: () => void;
   selectedIds: string[];
   setGenerationSettings: (settings: GenerationSettings) => void;
+  setImageVariationType?: (type: "camera-angles" | "b-rolls") => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   setUseSoraPro: (value: boolean) => void;
   setVideoDuration: (value: "4" | "8" | "12") => void;
@@ -58,11 +60,13 @@ export function CanvasControlPanel({
   handleFileUpload,
   handleRun,
   handleVariationModeChange,
+  imageVariationType = "camera-angles",
   images,
   isGenerating,
   redo,
   selectedIds,
   setGenerationSettings,
+  setImageVariationType,
   setIsSettingsDialogOpen,
   setUseSoraPro,
   setVideoDuration,
@@ -107,6 +111,8 @@ export function CanvasControlPanel({
               <ModeIndicator
                 handleVariationModeChange={handleVariationModeChange}
                 hasSelection={hasSelection}
+                imageVariationType={imageVariationType}
+                setImageVariationType={setImageVariationType}
                 variationMode={variationMode}
               />
 
