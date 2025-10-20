@@ -106,12 +106,14 @@ export const downloadImagesAsZip = async (
     // Fetch all images in parallel
     const imagePromises = selectedImages.map(async (image, index) => {
       try {
-        const blob = await fetchImageAsBlob(image.src);
-        const filename = getFilenameFromUrl(image.src, index);
+        // Use full-size image if available (for thumbnails), otherwise use src
+        const downloadUrl = image.fullSizeSrc || image.src;
+        const blob = await fetchImageAsBlob(downloadUrl);
+        const filename = getFilenameFromUrl(downloadUrl, index);
         folder.file(filename, blob);
       } catch (error) {
         console.error(
-          `${DOWNLOAD_ERROR_MESSAGES.FAILED_TO_FETCH}: ${image.src}`,
+          `${DOWNLOAD_ERROR_MESSAGES.FAILED_TO_FETCH}: ${image.fullSizeSrc || image.src}`,
           error
         );
         // Continue with other images even if one fails

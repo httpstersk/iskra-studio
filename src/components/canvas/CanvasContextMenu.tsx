@@ -85,7 +85,8 @@ export const CanvasContextMenu = React.memo<CanvasContextMenuProps>(
         if (image) {
           const link = document.createElement("a");
           link.download = `image-${Date.now()}.png`;
-          link.href = image.src;
+          // Use full-size image if available (for thumbnails), otherwise use src
+          link.href = image.fullSizeSrc || image.src;
           link.click();
         } else if (video) {
           try {

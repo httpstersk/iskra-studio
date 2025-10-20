@@ -10,6 +10,12 @@ import {
   MAX_IMAGE_HEIGHT,
   MAX_IMAGE_WIDTH,
 } from "@/constants/image-compression";
+import {
+  blobToDataUrl,
+  canvasToBlob,
+  getCanvasContext,
+  loadImage,
+} from "./image-utils";
 
 /**
  * Compresses an image blob to JPEG format with maximum dimensions.
@@ -39,21 +45,8 @@ export async function compressImage(
   quality: number = JPEG_QUALITY
 ): Promise<Blob> {
   try {
-    // Read the image as a data URL
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(imageBlob);
-    });
-
-    // Create an image element to get dimensions
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("Failed to load image"));
-      image.src = dataUrl;
-    });
+    const dataUrl = await blobToDataUrl(imageBlob);
+    const img = await loadImage(dataUrl);
 
     // Calculate new dimensions maintaining aspect ratio
     let width = img.width;
@@ -74,19 +67,12 @@ export async function compressImage(
     canvas.width = width;
     canvas.height = height;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Failed to get canvas context");
+    const ctx = getCanvasContext(canvas);
 
     ctx.drawImage(img, 0, 0, width, height);
 
     // Convert canvas to JPEG blob
-    const blob = await new Promise<Blob | null>((resolve) => {
-      canvas.toBlob(resolve, "image/jpeg", quality);
-    });
-
-    if (!blob) {
-      throw new Error("Failed to create compressed blob");
-    }
+    const blob = await canvasToBlob(canvas, "image/jpeg", quality);
 
     return blob;
   } catch (error) {

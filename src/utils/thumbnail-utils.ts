@@ -1,6 +1,6 @@
 /**
  * Thumbnail generation utilities for project previews.
- * 
+ *
  * Provides functions to capture canvas screenshots and upload them
  * to Convex storage for use as project thumbnails.
  */
@@ -11,20 +11,20 @@ import type Konva from "konva";
  * Default thumbnail dimensions.
  */
 const THUMBNAIL_WIDTH = 300;
-const THUMBNAIL_HEIGHT = 200;
+const THUMBNAIL_HEIGHT = 169;
 
 /**
  * Generates a thumbnail from a Konva stage.
- * 
+ *
  * Captures the current canvas state as a 300x200px image.
  * The stage is temporarily scaled to fit the thumbnail dimensions
  * while preserving the aspect ratio.
- * 
+ *
  * @param stage - Konva stage instance to capture
  * @param width - Thumbnail width in pixels (default: 300)
  * @param height - Thumbnail height in pixels (default: 200)
  * @returns Data URL of the thumbnail image (PNG format)
- * 
+ *
  * @example
  * ```ts
  * const thumbnailDataUrl = await generateThumbnail(stageRef.current);
@@ -33,7 +33,7 @@ const THUMBNAIL_HEIGHT = 200;
 export async function generateThumbnail(
   stage: Konva.Stage | null,
   width: number = THUMBNAIL_WIDTH,
-  height: number = THUMBNAIL_HEIGHT,
+  height: number = THUMBNAIL_HEIGHT
 ): Promise<string> {
   if (!stage) {
     throw new Error("Stage is not available");
@@ -67,21 +67,21 @@ export async function generateThumbnail(
   } catch (error) {
     console.error("Failed to generate thumbnail:", error);
     throw new Error(
-      `Thumbnail generation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Thumbnail generation failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
 
 /**
  * Uploads a thumbnail to Convex storage.
- * 
+ *
  * Converts a data URL to a Blob and uploads it via the Convex upload API.
  * Returns the storage ID which can be stored in the project record.
- * 
+ *
  * @param dataUrl - Data URL of the thumbnail image
  * @param userId - User ID for authentication
  * @returns Storage ID and URL from Convex
- * 
+ *
  * @example
  * ```ts
  * const dataUrl = await generateThumbnail(stage);
@@ -90,7 +90,7 @@ export async function generateThumbnail(
  */
 export async function uploadThumbnail(
   dataUrl: string,
-  userId: string,
+  userId: string
 ): Promise<{ storageId: string; url: string }> {
   try {
     // Convert data URL to blob
@@ -121,27 +121,27 @@ export async function uploadThumbnail(
   } catch (error) {
     console.error("Failed to upload thumbnail:", error);
     throw new Error(
-      `Thumbnail upload failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Thumbnail upload failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
 
 /**
  * Generates and uploads a project thumbnail in one operation.
- * 
+ *
  * Convenience function that combines generateThumbnail and uploadThumbnail.
- * 
+ *
  * @param stage - Konva stage instance to capture
  * @param userId - User ID for authentication
  * @returns Storage ID and URL from Convex
- * 
+ *
  * @example
  * ```ts
  * const { storageId, url } = await generateAndUploadThumbnail(
  *   stageRef.current,
  *   userId
  * );
- * 
+ *
  * // Store storageId in project record
  * await saveProject({
  *   projectId,
@@ -152,7 +152,7 @@ export async function uploadThumbnail(
  */
 export async function generateAndUploadThumbnail(
   stage: Konva.Stage | null,
-  userId: string,
+  userId: string
 ): Promise<{ storageId: string; url: string }> {
   const dataUrl = await generateThumbnail(stage);
   return await uploadThumbnail(dataUrl, userId);
@@ -160,9 +160,9 @@ export async function generateAndUploadThumbnail(
 
 /**
  * Converts a data URL to a Blob.
- * 
+ *
  * Utility function for working with data URLs.
- * 
+ *
  * @param dataUrl - Data URL to convert
  * @returns Blob containing the image data
  */
@@ -173,16 +173,16 @@ export async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
 
 /**
  * Generates a placeholder thumbnail for empty projects.
- * 
+ *
  * Creates a simple gray canvas as a fallback when no canvas content exists.
- * 
+ *
  * @param width - Thumbnail width in pixels (default: 300)
  * @param height - Thumbnail height in pixels (default: 200)
  * @returns Data URL of the placeholder image
  */
 export function generatePlaceholderThumbnail(
   width: number = THUMBNAIL_WIDTH,
-  height: number = THUMBNAIL_HEIGHT,
+  height: number = THUMBNAIL_HEIGHT
 ): string {
   const canvas = document.createElement("canvas");
   canvas.width = width;
