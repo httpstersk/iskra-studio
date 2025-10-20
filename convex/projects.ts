@@ -7,6 +7,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import type { Doc } from "./_generated/dataModel";
 
 /**
  * Creates a new project with default name and empty canvas state.
@@ -242,7 +243,7 @@ export const getProject = query({
     const assetThumbnails: Record<string, string> = {};
     for (const assetId of assetIds) {
       try {
-        const asset = await ctx.db.get(assetId as any);
+        const asset = await ctx.db.get(assetId as any) as Doc<"assets"> | null;
         if (asset && asset.thumbnailStorageId) {
           const thumbUrl = await ctx.storage.getUrl(asset.thumbnailStorageId);
           if (thumbUrl) {

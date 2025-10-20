@@ -5,6 +5,7 @@
 
 export { ActionButtons } from "./ActionButtons";
 export { ControlActions } from "./ControlActions";
+export { DownloadAllButton } from "./DownloadAllButton";
 export { GenerationsIndicatorWrapper } from "./GenerationsIndicatorWrapper";
 export { ModeIndicator } from "./ModeIndicator";
 export { PromptInput } from "./PromptInput";

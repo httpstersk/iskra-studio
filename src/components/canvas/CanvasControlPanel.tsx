@@ -125,6 +125,7 @@ export function CanvasControlPanel({
               generationSettings={generationSettings}
               handleFileUpload={handleFileUpload}
               handleRun={handleRun}
+              images={images}
               isGenerating={isGenerating}
               selectedIds={selectedIds}
               setIsSettingsDialogOpen={setIsSettingsDialogOpen}

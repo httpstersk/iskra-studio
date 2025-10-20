@@ -13,10 +13,11 @@ import {
   getRunTooltipText,
 } from "@/constants/control-panel";
 import { cn } from "@/lib/utils";
-import type { GenerationSettings } from "@/types/canvas";
+import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 import { checkOS } from "@/utils/os-utils";
 import { Paperclip, SlidersHorizontal, SparkleIcon } from "lucide-react";
 import { ShortcutBadge } from "../ShortcutBadge";
+import { DownloadAllButton } from "./DownloadAllButton";
 
 /**
  * Props for the ControlActions component
@@ -25,6 +26,7 @@ interface ControlActionsProps {
   generationSettings: GenerationSettings;
   handleFileUpload: (files: FileList | null) => void;
   handleRun: () => void;
+  images: PlacedImage[];
   isGenerating: boolean;
   selectedIds: string[];
   setIsSettingsDialogOpen: (open: boolean) => void;
@@ -119,12 +121,13 @@ const triggerFileDialog = (
 };
 
 /**
- * Control actions component (Settings, Upload, Run buttons)
+ * Control actions component (Settings, Upload, Download All, Run buttons)
  */
 export function ControlActions({
   generationSettings,
   handleFileUpload,
   handleRun,
+  images,
   isGenerating,
   selectedIds,
   setIsSettingsDialogOpen,
@@ -141,6 +144,10 @@ export function ControlActions({
   const runTooltipText = getRunTooltipText(selectedIds.length === 1, hasPrompt);
   const shortcut =
     checkOS("Win") || checkOS("Linux") ? "ctrl+enter" : "meta+enter";
+
+  // Check if selected items are images (not videos)
+  const selectedImages = images.filter((img) => selectedIds.includes(img.id));
+  const hasSelectedImages = selectedImages.length > 0;
 
   return (
     <div className="flex items-center gap-2">
@@ -180,6 +187,14 @@ export function ControlActions({
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      {hasSelectedImages && (
+        <DownloadAllButton
+          images={images}
+          selectedIds={selectedIds}
+          toast={toast}
+        />
+      )}
 
       <TooltipProvider>
         <Tooltip delayDuration={0}>
