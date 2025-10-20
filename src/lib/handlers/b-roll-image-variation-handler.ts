@@ -4,12 +4,12 @@
  * Uses OpenAI vision analysis to match the reference style
  */
 
+import { formatBrollVariationPrompt } from "@/lib/prompt-formatters/b-roll-variation-prompt-formatter";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomBrollVariations } from "@/utils/b-roll-variation-utils";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
 import { snapPosition } from "@/utils/snap-utils";
-import { formatBrollVariationPrompt } from "@/lib/prompt-formatters/b-roll-variation-prompt-formatter";
 import { calculateBalancedPosition } from "./variation-handler";
 import {
   ensureImageInConvex,
@@ -24,7 +24,8 @@ const API_ENDPOINTS = {
 const ERROR_MESSAGES = {
   IMAGE_ANALYSIS_FAILED: "Image analysis failed",
   IMAGE_NOT_FOUND: "The selected image could not be found",
-  SELECT_ONE_IMAGE: "Please select exactly one image to generate B-roll variations",
+  SELECT_ONE_IMAGE:
+    "Please select exactly one image to generate B-roll variations",
 } as const;
 
 interface ToastProps {
@@ -42,10 +43,8 @@ interface BrollImageVariationHandlerDeps {
     React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
   >;
   toast: (props: ToastProps) => void;
-  userId?: string;
   variationPrompt?: string;
   variationCount?: number;
-  viewport: { x: number; y: number; scale: number };
 }
 
 /**
@@ -89,10 +88,8 @@ export const handleBrollImageVariations = async (
     setImages,
     setIsGenerating,
     toast,
-    userId,
     variationCount = 4,
     variationPrompt,
-    viewport,
   } = deps;
 
   // Validate selection early
@@ -101,6 +98,7 @@ export const handleBrollImageVariations = async (
     selectedIds,
     toast
   );
+
   if (!selectedImage) {
     return;
   }
@@ -117,8 +115,11 @@ export const handleBrollImageVariations = async (
     // Ensure image is in Convex (reuses existing URL if already there)
     const imageUrl = await ensureImageInConvex(selectedImage.src, toast);
 
+    // Convert to signed URL for API calls (handles proxy URLs)
+    const signedImageUrl = toSignedUrl(imageUrl);
+
     // Stage 1: Analyze image style/mood
-    const imageAnalysis = await analyzeImage(imageUrl);
+    const imageAnalysis = await analyzeImage(signedImageUrl);
 
     // Stage 2: Select random B-roll variations
     const brollDirectives = selectRandomBrollVariations(variationCount);
@@ -134,6 +135,7 @@ export const handleBrollImageVariations = async (
 
     // Position indices based on variation count
     let positionIndices: number[];
+
     if (variationCount === 4) {
       positionIndices = [0, 2, 4, 6];
     } else if (variationCount === 8) {
@@ -168,22 +170,19 @@ export const handleBrollImageVariations = async (
           id: `variation-${timestamp}-${index}`,
           isGenerated: true,
           isLoading: true,
+          naturalHeight: imageSizeDimensions.height,
+          naturalWidth: imageSizeDimensions.width,
           rotation: 0,
           src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
           width: selectedImage.width,
           x: position.x,
           y: position.y,
-          naturalWidth: imageSizeDimensions.width,
-          naturalHeight: imageSizeDimensions.height,
         };
       }
     );
 
     // Add placeholders immediately
     setImages((prev) => [...prev, ...placeholderImages]);
-
-    // Convert proxy URL to signed URL for tRPC
-    const signedImageUrl = toSignedUrl(imageUrl);
 
     // Batch all activeGeneration updates into single state update
     setActiveGenerations((prev) => {
