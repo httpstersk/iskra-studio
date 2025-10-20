@@ -4,10 +4,9 @@
  * Uses OpenAI vision analysis to match the reference style
  */
 
-import { formatBrollVariationPrompt } from "@/lib/prompt-formatters/b-roll-variation-prompt-formatter";
+import { generateBRollConcepts } from "@/lib/b-roll-concept-generator";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import type { PlacedImage } from "@/types/canvas";
-import { selectRandomBrollVariations } from "@/utils/b-roll-variation-utils";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
 import { snapPosition } from "@/utils/snap-utils";
 import { calculateBalancedPosition } from "./variation-handler";
@@ -22,6 +21,7 @@ const API_ENDPOINTS = {
 } as const;
 
 const ERROR_MESSAGES = {
+  BROLL_GENERATION_FAILED: "B-roll concept generation failed",
   IMAGE_ANALYSIS_FAILED: "Image analysis failed",
   IMAGE_NOT_FOUND: "The selected image could not be found",
   SELECT_ONE_IMAGE:
@@ -37,14 +37,14 @@ interface ToastProps {
 interface BrollImageVariationHandlerDeps {
   images: PlacedImage[];
   selectedIds: string[];
-  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
-  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
   >;
+  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
+  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   toast: (props: ToastProps) => void;
-  variationPrompt?: string;
   variationCount?: number;
+  variationPrompt?: string;
 }
 
 /**
@@ -75,8 +75,12 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
 }
 
 /**
- * Generates B-roll image variations from a reference image
- * Uses OpenAI analysis to match the reference style
+ * Generates B-roll image variations from a reference image.
+ * 
+ * Uses OpenAI to:
+ * 1. Analyze the reference image's style, mood, and context
+ * 2. Generate contextually relevant B-roll concepts dynamically
+ * 3. Create variations that complement the reference while featuring different content
  */
 export const handleBrollImageVariations = async (
   deps: BrollImageVariationHandlerDeps
@@ -107,8 +111,8 @@ export const handleBrollImageVariations = async (
 
   // Show analyzing toast
   toast({
-    title: "Analyzing image style...",
-    description: "Preparing B-roll variations that match your reference image",
+    description: "Analyzing style and generating contextual B-roll concepts",
+    title: "Analyzing image...",
   });
 
   try {
@@ -121,13 +125,20 @@ export const handleBrollImageVariations = async (
     // Stage 1: Analyze image style/mood
     const imageAnalysis = await analyzeImage(signedImageUrl);
 
-    // Stage 2: Select random B-roll variations
-    const brollDirectives = selectRandomBrollVariations(variationCount);
+    // Stage 2: Generate B-roll concepts dynamically based on analysis
+    toast({
+      description: "Creating contextually relevant B-roll concepts",
+      title: "Generating concepts...",
+    });
 
-    // Stage 3: Format prompts with style analysis
-    const formattedPrompts = brollDirectives.map((directive) =>
-      formatBrollVariationPrompt(directive, imageAnalysis, variationPrompt)
-    );
+    const brollConcepts = await generateBRollConcepts({
+      count: variationCount,
+      styleAnalysis: imageAnalysis,
+      userContext: variationPrompt,
+    });
+
+    // Stage 3: Use generated prompts directly (they're already formatted)
+    const formattedPrompts = brollConcepts.concepts;
 
     // Snap source position for consistent alignment
     const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
@@ -203,8 +214,8 @@ export const handleBrollImageVariations = async (
 
     // Show generation started toast
     toast({
+      description: `Creating ${variationCount} contextually relevant B-roll images`,
       title: "Generating B-roll variations",
-      description: `Creating ${variationCount} AI-analyzed B-roll images...`,
     });
 
     // Setup complete - StreamingImage components will handle generation
@@ -216,7 +227,7 @@ export const handleBrollImageVariations = async (
       description:
         error instanceof Error
           ? error.message
-          : "Failed to generate B-roll variations",
+          : ERROR_MESSAGES.BROLL_GENERATION_FAILED,
       title: "Generation failed",
       variant: "destructive",
     });
