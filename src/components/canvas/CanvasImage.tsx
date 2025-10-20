@@ -53,26 +53,31 @@ interface CanvasImageProps {
  * Custom hook to get the appropriate image source with thumbnail fallback.
  * 
  * Loading priority:
- * 1. Thumbnail (if available) - displays immediately while full-size loads
- * 2. Full-size image - loads in parallel, switches when ready
+ * 1. If displayAsThumbnail is true: only load and return thumbnail
+ * 2. Otherwise: Thumbnail (if available) displays first, then switches to full-size
  * 3. For generated images, uses streaming for progressive updates
  *
  * @param src - Full-size image source URL
  * @param thumbnailSrc - Optional thumbnail URL (shown first)
  * @param isGenerated - Whether the image was AI-generated
+ * @param displayAsThumbnail - If true, only show thumbnail without loading full-size
  * @returns Loaded image element or undefined (thumbnail first, then full-size)
  */
 const useCanvasImageSource = (
   src: string,
   thumbnailSrc: string | undefined,
-  isGenerated: boolean
+  isGenerated: boolean,
+  displayAsThumbnail: boolean
 ) => {
   // Load thumbnail first if available (shows immediately)
   const [thumbnailImg] = useImageCache(thumbnailSrc || "", "anonymous");
   
-  // Load full-size in parallel
-  const [streamingImg] = useStreamingImage(isGenerated ? src : "");
-  const [cachedImg] = useImageCache(isGenerated ? "" : src, "anonymous");
+  // If displayAsThumbnail is true, only load thumbnail and skip full-size
+  const shouldLoadFullSize = !displayAsThumbnail;
+  
+  // Load full-size in parallel (only if not displaying as thumbnail)
+  const [streamingImg] = useStreamingImage(isGenerated && shouldLoadFullSize ? src : "");
+  const [cachedImg] = useImageCache(!isGenerated && shouldLoadFullSize ? src : "", "anonymous");
 
   // Full-size image (once loaded, switch from thumbnail)
   const fullSizeImg = useMemo(
@@ -80,11 +85,17 @@ const useCanvasImageSource = (
     [isGenerated, cachedImg, streamingImg]
   );
 
-  // Priority: full-size image > thumbnail > nothing
-  // This way thumbnail displays first, then switches to full-size when ready
+  // Priority: 
+  // - If displayAsThumbnail: only show thumbnail
+  // - Otherwise: full-size image > thumbnail > nothing
   return useMemo(
-    () => fullSizeImg || thumbnailImg,
-    [fullSizeImg, thumbnailImg]
+    () => {
+      if (displayAsThumbnail) {
+        return thumbnailImg;
+      }
+      return fullSizeImg || thumbnailImg;
+    },
+    [displayAsThumbnail, fullSizeImg, thumbnailImg]
   );
 };
 
@@ -157,7 +168,8 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
   const img = useCanvasImageSource(
     image.src,
     image.thumbnailSrc,
-    !!image.isGenerated
+    !!image.isGenerated,
+    !!image.displayAsThumbnail
   );
 
   // Handle loading and fade-in animations

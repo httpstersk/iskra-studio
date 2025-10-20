@@ -245,6 +245,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       );
 
       return {
+        displayAsThumbnail: true,
         height: selectedImage.height,
         id: `variation-${timestamp}-${index}`,
         isGenerated: true,

@@ -603,8 +603,11 @@ export function CanvasPageClient() {
                 ...img,
                 isLoading: false,
                 opacity: 1.0,
-                src: convexUrl,
+                // If displayAsThumbnail is true, store thumbnail in src and full-size in fullSizeSrc
+                // Otherwise, store full-size in src as usual
+                src: img.displayAsThumbnail && thumbnailUrl ? thumbnailUrl : convexUrl,
                 thumbnailSrc: thumbnailUrl,
+                fullSizeSrc: img.displayAsThumbnail ? convexUrl : undefined,
                 naturalWidth,
                 naturalHeight,
               }

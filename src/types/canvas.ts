@@ -1,6 +1,8 @@
 export interface PlacedImage {
   assetId?: string;
   assetSyncedAt?: number;
+  displayAsThumbnail?: boolean;
+  fullSizeSrc?: string;
   height: number;
   id: string;
   isGenerated?: boolean;
