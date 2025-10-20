@@ -112,20 +112,39 @@ export async function POST(req: NextRequest) {
       convexFormData.append("thumbnail", thumbnail);
     }
 
-    const uploadResponse = await fetch(`${convexSiteUrl}/upload`, {
-      body: convexFormData,
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 50000); // 50 second timeout
+
+    let uploadResponse;
+    try {
+      uploadResponse = await fetch(`${convexSiteUrl}/upload`, {
+        body: convexFormData,
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error(
+          "Upload timeout: File upload took longer than 50 seconds"
+        );
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!uploadResponse.ok) {
       const errorText = await uploadResponse.text();
-      throw new Error(`Convex upload failed (${uploadResponse.status}): ${errorText}`);
+      throw new Error(
+        `Convex upload failed (${uploadResponse.status}): ${errorText}`
+      );
     }
 
-    const { storageId, thumbnailStorageId, url, thumbnailUrl } = await uploadResponse.json();
+    const { storageId, thumbnailStorageId, url, thumbnailUrl } =
+      await uploadResponse.json();
 
     // Create asset record in database via Convex mutation
     const convexClient = new ConvexHttpClient(convexUrl);
@@ -147,11 +166,10 @@ export async function POST(req: NextRequest) {
     // The proxy will fetch from the signed URL and add CORS headers
     const proxyUrl = `/api/storage/proxy?url=${encodeURIComponent(url)}`;
     let thumbnailProxyUrl: string | undefined;
+
     if (thumbnailUrl) {
       thumbnailProxyUrl = `/api/storage/proxy?url=${encodeURIComponent(thumbnailUrl)}`;
     }
-
-    console.log("[Upload] Created proxy URLs:", { proxyUrl, thumbnailProxyUrl });
 
     return NextResponse.json({
       assetId,
