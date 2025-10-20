@@ -84,6 +84,7 @@ SUBJECT:
 
 COLOR PALETTE:
 - Dominant Colors: ${styleAnalysis.colorPalette.dominant.join(", ")}
+- Color Grading: ${styleAnalysis.colorPalette.grading}
 - Saturation: ${styleAnalysis.colorPalette.saturation}
 - Temperature: ${styleAnalysis.colorPalette.temperature}
 - Mood: ${styleAnalysis.colorPalette.mood}
@@ -107,11 +108,22 @@ MOOD:
 - Atmosphere: ${styleAnalysis.mood.atmosphere}
 
 NARRATIVE TONE:
+- Cinematographer Style: ${styleAnalysis.narrativeTone.cinematographer}
+- Director Aesthetic: ${styleAnalysis.narrativeTone.director}
 - Genre: ${styleAnalysis.narrativeTone.genre.join(", ")}
 - Intensity: ${styleAnalysis.narrativeTone.intensity}/10
 - Storytelling Approach: ${styleAnalysis.narrativeTone.storytellingApproach}${userContextSection}
 
-Generate ${count} diverse B-roll concepts that complement this reference while featuring completely different scenes/objects/subjects.
+CRITICAL: Generate ${count} diverse B-roll concepts that:
+1. Feature completely different scenes/objects/subjects than the reference
+2. EXACTLY match the color grading: "${styleAnalysis.colorPalette.grading}"
+3. EXACTLY match the lighting: ${styleAnalysis.lighting.quality} with ${styleAnalysis.lighting.direction}
+4. Apply ${styleAnalysis.narrativeTone.cinematographer}'s signature cinematography techniques
+5. Follow ${styleAnalysis.narrativeTone.director}'s visual aesthetic and storytelling approach
+6. Maintain IDENTICAL atmospheric qualities: ${styleAnalysis.lighting.atmosphere.join(", ")}
+7. Preserve the ${styleAnalysis.mood.primary} mood with ${styleAnalysis.mood.energy} energy
+
+Each B-roll must look like it was shot in the same session as the reference image.
 `;
 
     // Call OpenAI with structured output
@@ -128,7 +140,7 @@ Generate ${count} diverse B-roll concepts that complement this reference while f
       ],
       model: OPENAI_MODEL,
       response_format: zodResponseFormat(bRollConceptSetSchema, "broll_concepts"),
-      temperature: 0.8, // Higher temperature for creative variety
+      temperature: 0.9, // High temperature for creative variety while maintaining style constraints
     });
 
     const messageContent = completion.choices[0]?.message?.content;

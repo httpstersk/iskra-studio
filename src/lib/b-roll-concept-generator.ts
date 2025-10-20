@@ -1,6 +1,6 @@
 /**
  * B-roll Concept Generator
- * 
+ *
  * Dynamically generates contextually relevant B-roll concepts based on
  * image analysis, similar to how Sora 2 generates video storylines.
  */
@@ -9,7 +9,7 @@ import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema
 
 /**
  * System prompt for B-roll concept generation.
- * 
+ *
  * Instructs the AI to generate complementary scenes/objects/subjects
  * that maintain the reference image's aesthetic while featuring different content.
  */
@@ -18,10 +18,11 @@ You are an expert cinematographer specializing in B-roll footage that enhances n
 
 You will be given a detailed style/mood analysis of a reference image including:
 - Subject type, description, and context
-- Color palette, saturation, and temperature
+- Color palette, color grading, saturation, and temperature
 - Lighting quality, direction, and atmosphere
 - Visual style, texture, and composition
 - Mood, energy, and emotional tone
+- Cinematographer and director style references
 - Cinematic potential and narrative tone
 
 Your mission: Generate CONTEXTUALLY RELEVANT B-ROLL CONCEPTS that complement the reference image.
@@ -29,9 +30,15 @@ Your mission: Generate CONTEXTUALLY RELEVANT B-ROLL CONCEPTS that complement the
 CRITICAL REQUIREMENTS:
 1. **DIFFERENT CONTENT**: Generate completely different scenes, objects, or subjects than the reference
 2. **CONTEXTUAL RELEVANCE**: Each B-roll must logically belong in the same world/narrative as the reference
-3. **STYLE MATCHING**: Maintain the exact aesthetic, mood, lighting, and color palette of the reference
-4. **CINEMATIC QUALITY**: Focus on production value and visual storytelling
-5. **VARIETY**: Each concept should explore a different aspect of the scene's world
+3. **EXACT STYLE MATCHING**: Replicate the reference's aesthetic with precision:
+   - Match the EXACT color grading (e.g., teal-orange, desaturated, warm glow)
+   - Match the EXACT lighting quality and direction
+   - Match the EXACT atmospheric qualities (haze, clarity, volumetric effects)
+   - Match the EXACT mood and energy level
+4. **CINEMATOGRAPHER STYLE**: Apply the identified cinematographer's signature techniques
+5. **DIRECTOR AESTHETIC**: Follow the identified director's visual language
+6. **CINEMATIC QUALITY**: Focus on production value and visual storytelling
+7. **VARIETY**: Each concept should explore a different aspect of the scene's world
 
 B-ROLL CONCEPT TYPES (select diverse types):
 - **Atmospheric Element**: Environmental phenomena (light rays, particles, weather, steam, etc.)
@@ -45,20 +52,29 @@ PROMPT STRUCTURE:
 Each B-roll concept must be a complete, self-contained image generation prompt that includes:
 1. **Subject/Scene**: What to generate (the different content)
 2. **Composition**: Camera angle, framing, depth of field
-3. **Lighting**: Match the reference's lighting quality and direction
-4. **Color**: Match the reference's palette, saturation, temperature
-5. **Mood**: Preserve the emotional quality and atmosphere
-6. **Technical Details**: Lens choice, cinematography approach
+3. **Color Grading**: EXACT match to reference (e.g., "teal-orange blockbuster grading", "desaturated Nordic noir palette")
+4. **Lighting**: EXACT match to reference's quality, direction, and atmosphere
+5. **Cinematographer Reference**: Explicitly mention the cinematographer's style
+6. **Director Reference**: Explicitly mention the director's aesthetic
+7. **Mood**: Preserve the emotional quality and energy level
+8. **Technical Details**: Lens choice, cinematography approach
+
+STYLE MATCHING IS CRITICAL:
+- The generated B-roll MUST look like it was shot in the same session as the reference
+- Color grading must be IDENTICAL (not similar, IDENTICAL)
+- Lighting must be IDENTICAL in quality, direction, and atmosphere
+- Mood and energy must be IDENTICAL
+- Only the subject/scene should be different
 
 LENGTH REQUIREMENTS:
-- Each B-roll prompt: 200-300 characters
-- Must be concise yet complete
-- Include all essential visual elements
+- Each B-roll prompt: 250-350 characters
+- Must be detailed and complete
+- Include all essential visual elements for exact style matching
 
-EXAMPLE (for a moody portrait reference):
-"Extreme close-up of a flickering candle flame in darkness, soft amber glow casting dancing shadows on weathered wood surface. Shallow depth of field, 85mm lens. Soft-diffused lighting with warm temperature. Contemplative, intimate mood with calm energy. Cinematic texture, deep shadows."
+EXAMPLE (for a moody portrait reference with Deakins/Villeneuve style):
+"Extreme close-up of a flickering candle flame in darkness, soft amber glow casting dancing shadows on weathered wood surface. Teal-orange blockbuster color grading with crushed blacks. Soft-diffused side lighting with warm temperature. Roger Deakins cinematography style, Denis Villeneuve aesthetic. Contemplative, intimate mood with calm energy. 85mm lens, shallow depth of field, cinematic texture."
 
-Respond ONLY with a JSON object containing a "concepts" array of exactly 4-12 B-roll prompt strings (depending on requested count). Each string should be a complete, ready-to-use image generation prompt.
+Respond ONLY with a JSON object containing a "concepts" array of exactly 4-12 B-roll prompt strings (depending on requested count). Each string should be a complete, ready-to-use image generation prompt with EXACT style matching.
 
 Format: { "concepts": ["prompt1", "prompt2", ...] }
 `;
@@ -87,10 +103,10 @@ export interface GenerateBRollConceptsOptions {
 
 /**
  * Generates B-roll concepts dynamically based on image analysis.
- * 
+ *
  * Calls the API route which uses OpenAI to generate contextually relevant
  * B-roll prompts that complement the reference image.
- * 
+ *
  * @param options - Generation options
  * @returns Promise resolving to B-roll concept set
  * @throws Error if generation fails

@@ -23,6 +23,7 @@ SUBJECT/SCENE:
 
 COLOR PALETTE:
 - List 3-5 dominant colors with evocative names (e.g., "midnight indigo", "electric cobalt", "sunset amber")
+- Provide detailed color grading description (e.g., "teal-orange blockbuster look", "desaturated Nordic noir palette", "warm golden hour glow with crushed blacks")
 - Describe the overall mood the colors create
 - Specify saturation level: muted, balanced, vibrant, or hyper-saturated
 - Specify temperature: cool, neutral, warm, or mixed
@@ -52,11 +53,13 @@ CINEMATIC POTENTIAL:
 - List AT LEAST TWO visual effects that would amplify the mood (e.g., light streaks, particles, bloom)
 
 NARRATIVE TONE:
+- Identify which cinematographer's style this most resembles (e.g., Roger Deakins, Emmanuel Lubezki, Hoyte van Hoytema, Vittorio Storaro, Bradford Young)
+- Identify which director's visual aesthetic this evokes (e.g., Denis Villeneuve, Wes Anderson, Christopher Nolan, Wong Kar-wai, Terrence Malick)
 - List 2-4 cinematic genres this evokes (e.g., thriller, fashion, experimental, noir, drama)
 - Intensity level: number from 1 to 10
 - Describe the storytelling approach
 
-Focus on visual language, style, and mood that can inspire cinematic video sequences.`;
+Focus on visual language, style, and mood that can inspire cinematic video sequences. The cinematographer and director references will be used to guide B-roll generation that matches this exact aesthetic.`;
 
 const analyzeImageRequestSchema = z.object({
   imageUrl: z

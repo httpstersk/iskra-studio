@@ -27,6 +27,11 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .describe(
         "3-5 specific color names (e.g., 'electric cobalt', 'sunset amber')",
       ),
+    grading: z
+      .string()
+      .describe(
+        "Detailed color grading description (e.g., 'teal-orange blockbuster', 'desaturated Nordic noir', 'warm golden hour glow')",
+      ),
     mood: z.string().describe("How the colors make you feel"),
     saturation: z.enum(["muted", "balanced", "vibrant", "hyper-saturated"]),
     temperature: z.enum(["cool", "neutral", "warm", "mixed"]),
@@ -105,6 +110,16 @@ export const imageStyleMoodAnalysisSchema = z.object({
   }),
 
   narrativeTone: z.object({
+    cinematographer: z
+      .string()
+      .describe(
+        "Cinematographer whose style this resembles (e.g., 'Roger Deakins', 'Emmanuel Lubezki', 'Hoyte van Hoytema')",
+      ),
+    director: z
+      .string()
+      .describe(
+        "Director whose visual style this evokes (e.g., 'Denis Villeneuve', 'Wes Anderson', 'Christopher Nolan')",
+      ),
     genre: z
       .array(z.string())
       .min(2)
