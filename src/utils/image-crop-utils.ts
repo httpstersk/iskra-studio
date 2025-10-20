@@ -117,6 +117,6 @@ export async function cropImageToAspectRatio(
     cropDimensions.height,
   );
 
-  // Convert to data URL
-  return canvas.toDataURL("image/png");
+  // Convert to data URL (JPEG for better compression)
+  return canvas.toDataURL("image/jpeg", 0.85);
 }

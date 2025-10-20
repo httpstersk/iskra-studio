@@ -1,0 +1,97 @@
+/**
+ * Client-side image compression utilities.
+ *
+ * Uses Canvas API to compress and resize images to JPEG format
+ * with configurable maximum dimensions and quality settings.
+ */
+
+import {
+  JPEG_QUALITY,
+  MAX_IMAGE_HEIGHT,
+  MAX_IMAGE_WIDTH,
+} from "@/constants/image-compression";
+
+/**
+ * Compresses an image blob to JPEG format with maximum dimensions.
+ *
+ * Resizes the image to fit within maxWidth x maxHeight while maintaining
+ * aspect ratio, then converts to JPEG with specified quality.
+ * Falls back gracefully if compression fails.
+ *
+ * @param imageBlob - The full-size image blob
+ * @param maxWidth - Maximum width in pixels (default: 1920)
+ * @param maxHeight - Maximum height in pixels (default: 1080)
+ * @param quality - JPEG quality 0-1 (default: 0.85)
+ * @returns Compressed JPEG blob, or original blob if compression fails
+ *
+ * @example
+ * ```ts
+ * const imageBlob = new Blob([imageData], { type: 'image/png' });
+ * const compressedBlob = await compressImage(imageBlob);
+ * // Upload compressed version
+ * await storage.upload(compressedBlob, options);
+ * ```
+ */
+export async function compressImage(
+  imageBlob: Blob,
+  maxWidth: number = MAX_IMAGE_WIDTH,
+  maxHeight: number = MAX_IMAGE_HEIGHT,
+  quality: number = JPEG_QUALITY
+): Promise<Blob> {
+  try {
+    // Read the image as a data URL
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(imageBlob);
+    });
+
+    // Create an image element to get dimensions
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Failed to load image"));
+      image.src = dataUrl;
+    });
+
+    // Calculate new dimensions maintaining aspect ratio
+    let width = img.width;
+    let height = img.height;
+
+    // Only resize if image exceeds maximum dimensions
+    if (width > maxWidth || height > maxHeight) {
+      const widthRatio = maxWidth / width;
+      const heightRatio = maxHeight / height;
+      const ratio = Math.min(widthRatio, heightRatio);
+
+      width = Math.round(width * ratio);
+      height = Math.round(height * ratio);
+    }
+
+    // Create canvas and draw resized image
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Failed to get canvas context");
+
+    ctx.drawImage(img, 0, 0, width, height);
+
+    // Convert canvas to JPEG blob
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", quality);
+    });
+
+    if (!blob) {
+      throw new Error("Failed to create compressed blob");
+    }
+
+    return blob;
+  } catch (error) {
+    console.error("Image compression failed:", error);
+    // Return original blob if compression fails
+    return imageBlob;
+  }
+}

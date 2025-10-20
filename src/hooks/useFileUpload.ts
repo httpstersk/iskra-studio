@@ -1,3 +1,5 @@
+import { createStorageService } from "@/lib/storage";
+import { compressImage } from "@/lib/utils/compress-image";
 import type { PlacedImage } from "@/types/canvas";
 import {
   cropImageToAspectRatio,
@@ -5,7 +7,6 @@ import {
 } from "@/utils/image-crop-utils";
 import { useCallback } from "react";
 import type { Viewport } from "./useCanvasState";
-import { createStorageService } from "@/lib/storage";
 
 export function useFileUpload(
   setImages: (fn: (prev: PlacedImage[]) => PlacedImage[]) => void,
@@ -16,7 +17,7 @@ export function useFileUpload(
     title: string;
     description?: string;
     variant?: "default" | "destructive";
-  }) => void,
+  }) => void
 ) {
   const handleFileUpload = useCallback(
     (files: FileList | null, position?: { x: number; y: number }) => {
@@ -33,13 +34,13 @@ export function useFileUpload(
               // Determine best aspect ratio and crop the image
               const targetAspectRatio = determineAspectRatio(
                 img.naturalWidth,
-                img.naturalHeight,
+                img.naturalHeight
               );
 
               // Crop image to 16:9 or 9:16
               const croppedImageSrc = await cropImageToAspectRatio(
                 img,
-                targetAspectRatio,
+                targetAspectRatio
               );
 
               // Create a new image element to get the cropped dimensions
@@ -101,31 +102,51 @@ export function useFileUpload(
 
                 // Upload to Convex storage in the background if userId is provided
                 if (userId) {
-                  console.log("[Upload] Starting background upload for image:", id);
+                  console.log(
+                    "[Upload] Starting background upload for image:",
+                    id
+                  );
                   (async () => {
                     try {
                       // Convert cropped image data URL to blob
                       const response = await fetch(croppedImageSrc);
                       const blob = await response.blob();
-                      
+
                       console.log("[Upload] Blob created, size:", blob.size);
-                      
+
+                      // Compress image to JPEG with max 1920x1080 resolution
+                      const compressedBlob = await compressImage(blob);
+                      console.log(
+                        "[Upload] Image compressed, original size:",
+                        blob.size,
+                        "compressed size:",
+                        compressedBlob.size
+                      );
+
                       // Upload to Convex storage
                       const storage = createStorageService();
-                      const uploadResult = await storage.upload(blob, {
-                        userId,
-                        type: "image",
-                        mimeType: file.type || "image/png",
-                        metadata: {
-                          model: "user-upload",
-                          prompt: file.name,
-                          width: naturalWidth,
-                          height: naturalHeight,
-                        },
-                      });
-                      
-                      console.log("[Upload] Upload successful:", uploadResult.url, "assetId:", uploadResult.assetId);
-                      
+                      const uploadResult = await storage.upload(
+                        compressedBlob,
+                        {
+                          userId,
+                          type: "image",
+                          mimeType: "image/jpeg",
+                          metadata: {
+                            model: "user-upload",
+                            prompt: file.name,
+                            width: naturalWidth,
+                            height: naturalHeight,
+                          },
+                        }
+                      );
+
+                      console.log(
+                        "[Upload] Upload successful:",
+                        uploadResult.url,
+                        "assetId:",
+                        uploadResult.assetId
+                      );
+
                       // Update the image with the proxy URL, asset reference, and thumbnail
                       setImages((prev) =>
                         prev.map((img) =>
@@ -165,13 +186,13 @@ export function useFileUpload(
         }
       });
     },
-    [setImages, viewport, canvasSize, userId, toast],
+    [setImages, viewport, canvasSize, userId, toast]
   );
 
   const handleDrop = useCallback(
     (
       e: React.DragEvent,
-      stageRef: React.RefObject<{ container(): HTMLElement }>,
+      stageRef: React.RefObject<{ container(): HTMLElement }>
     ) => {
       e.preventDefault();
 
@@ -188,7 +209,7 @@ export function useFileUpload(
         handleFileUpload(e.dataTransfer.files);
       }
     },
-    [handleFileUpload],
+    [handleFileUpload]
   );
 
   return {
