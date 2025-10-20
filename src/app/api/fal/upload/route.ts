@@ -1,15 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-
-import { auth } from "@clerk/nextjs/server";
-import { checkBotId } from "botid/server";
-
 import {
   buildRateLimitHeaders,
   checkRateLimit,
   standardLimitHeaders,
   standardRateLimiter,
 } from "@/lib/fal/utils";
-import { uploadFileToConvex } from "@/lib/storage/convex-upload-logic";
+import { uploadFileToConvex } from "@/lib/server/upload-service";
+import { auth } from "@clerk/nextjs/server";
+import { checkBotId } from "botid/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_MIME_PREFIXES = ["image/", "video/"];
@@ -26,33 +24,33 @@ export async function POST(req: NextRequest) {
       return new Response("Access denied", { status: 403 });
     }
 
-  // Disallow user-provided FAL API keys via Authorization header
-  const authHeader = req.headers.get("authorization");
-  if (authHeader) {
-    return NextResponse.json(
-      { error: "Custom FAL API keys are not accepted." },
-      { status: 400 },
-    );
-  }
+    // Disallow user-provided FAL API keys via Authorization header
+    const authHeader = req.headers.get("authorization");
+    if (authHeader) {
+      return NextResponse.json(
+        { error: "Custom FAL API keys are not accepted." },
+        { status: 400 }
+      );
+    }
 
-  // Get userId from Clerk for per-user rate limiting
-  const { userId } = await auth();
+    // Get userId from Clerk for per-user rate limiting
+    const { userId } = await auth();
 
-  // Require authentication for uploads
-  if (!userId) {
-    return NextResponse.json(
-      { error: "Authentication required" },
-      { status: 401 },
-    );
-  }
+    // Require authentication for uploads
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
 
-  // Always apply rate limiting (per-user if authenticated, per-IP otherwise)
-  const limiterResult = await checkRateLimit({
-    limiter: standardRateLimiter,
-    headers: req.headers,
-    userId: userId ?? undefined,
-    limitType: "standard",
-  });
+    // Always apply rate limiting (per-user if authenticated, per-IP otherwise)
+    const limiterResult = await checkRateLimit({
+      limiter: standardRateLimiter,
+      headers: req.headers,
+      userId: userId ?? undefined,
+      limitType: "standard",
+    });
 
     if (limiterResult.shouldLimitRequest) {
       return new Response(
@@ -61,9 +59,9 @@ export async function POST(req: NextRequest) {
           status: 429,
           headers: buildRateLimitHeaders(
             limiterResult.period,
-            standardLimitHeaders,
+            standardLimitHeaders
           ),
-        },
+        }
       );
     }
 
@@ -81,13 +79,13 @@ export async function POST(req: NextRequest) {
 
     const mimeType = (file.type || "").toLowerCase();
     const isAllowedType = ALLOWED_MIME_PREFIXES.some((prefix) =>
-      mimeType.startsWith(prefix),
+      mimeType.startsWith(prefix)
     );
 
     if (!isAllowedType) {
       return NextResponse.json(
         { error: "Unsupported file type" },
-        { status: 415 },
+        { status: 415 }
       );
     }
 
@@ -104,13 +102,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Upload to Convex storage using direct upload logic
+    // Upload to Convex storage using upload service
     const uploadResult = await uploadFileToConvex({
-      file: blob,
-      userId: userId!,
-      mimeType,
-      metadata: {},
       authToken: token,
+      file: blob,
+      metadata: {},
     });
 
     return NextResponse.json({ url: uploadResult.url });
@@ -130,7 +126,7 @@ export async function POST(req: NextRequest) {
           error: "Rate limit exceeded",
           message: "Please try again later.",
         },
-        { status: 429 },
+        { status: 429 }
       );
     }
 
@@ -139,7 +135,7 @@ export async function POST(req: NextRequest) {
         error: "Upload failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
