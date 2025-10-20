@@ -323,6 +323,7 @@ export function CanvasPageClient() {
     generationState.videoResolution,
     toast,
     uiState.generationCount,
+    uiState.imageVariationType,
     uiState.variationMode,
   ]);
 

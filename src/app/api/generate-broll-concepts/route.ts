@@ -12,7 +12,7 @@ import { z } from "zod";
 import { B_ROLL_GENERATION_SYSTEM_PROMPT } from "@/lib/b-roll-concept-generator";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 
-const OPENAI_MODEL = "gpt-4o";
+const OPENAI_MODEL = "gpt-5";
 
 /**
  * Schema for B-roll concept generation response.
@@ -147,6 +147,7 @@ NARRATIVE TONE:
 - Storytelling Approach: ${styleAnalysis.narrativeTone.storytellingApproach}${userContextSection}
 
 CRITICAL: Generate ${count} diverse B-roll concepts that:
+0. ABSOLUTE EXCLUSION: Never include any subjects or on-frame elements that appear in the reference image (main subject, body parts, clothing, props, signage/text/logos, or distinctive background elements)
 1. Feature completely different scenes/objects/subjects than the reference
 2. EXACTLY match the color grading: "${styleAnalysis.colorPalette.grading}"
 3. EXACTLY match the lighting: ${styleAnalysis.lighting.quality} with ${styleAnalysis.lighting.direction}
@@ -163,8 +164,9 @@ CRITICAL: Generate ${count} diverse B-roll concepts that:
 14. EXACTLY match post-processing signature (vignette level, halation presence, and film grain intensity ${styleAnalysis.styleSignature.postProcessingSignature.filmGrainIntensity})
 15. EXACTLY match rhythm (cadence and tempo)
 16. Start each B-roll prompt by PREPENDING this exact style lock sentence VERBATIM: "${styleAnalysis.styleSignature.styleLockPrompt}"
+17. Include an explicit "Exclusions" clause in each prompt stating the omission (e.g., "without the reference subject", "no signage/text/logos")
 
-Each B-roll must look IDENTICAL to the reference image in every technical aspect except the subject/scene.
+In every technical aspect, each B-roll must look identical to the reference image — except for the subject/scene and any on-frame elements from the reference, which must be excluded from the generated output.
 Include film grain and all post-processing effects explicitly in every prompt.
 `;
 
@@ -185,7 +187,6 @@ Include film grain and all post-processing effects explicitly in every prompt.
         bRollConceptSetSchema,
         "broll_concepts"
       ),
-      temperature: 0.9, // High temperature for creative variety while maintaining style constraints
     });
 
     const messageContent = completion.choices[0]?.message?.content;

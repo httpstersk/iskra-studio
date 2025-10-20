@@ -29,6 +29,7 @@ You will be given a detailed style/mood analysis of a reference image including:
 Your mission: Generate CONTEXTUALLY RELEVANT B-ROLL CONCEPTS that complement the reference image.
 
 CRITICAL REQUIREMENTS:
+0. **ABSOLUTE EXCLUSION**: Never include any subjects or on-frame elements that appear in the reference image (main subject, body parts, clothing, props, signage/text/logos, or distinctive background elements). Explicitly state exclusions when helpful (e.g., "without the reference subject", "no signage text").
 1. **DIFFERENT CONTENT**: Generate completely different scenes, objects, or subjects than the reference
 2. **CONTEXTUAL RELEVANCE**: Each B-roll must logically belong in the same world/narrative as the reference
 3. **EXACT STYLE MATCHING**: Replicate the reference's aesthetic with precision:
@@ -71,6 +72,7 @@ Each B-roll concept must be a complete, self-contained image generation prompt t
 8. **Director Reference**: Explicitly mention the director's aesthetic
 9. **Mood**: Preserve the emotional quality and energy level
 10. **Technical Details**: Lens choice, cinematography approach
+11. **Exclusions**: Explicitly include a clause that excludes the reference's subject and elements (e.g., "without the reference subject", "no signage/text/logos").
 
 STYLE MATCHING IS CRITICAL:
 - The generated B-roll MUST look like it was shot in the same session as the reference
@@ -79,7 +81,7 @@ STYLE MATCHING IS CRITICAL:
 - Film grain must be IDENTICAL in type and intensity
 - Post-processing effects must be IDENTICAL (include ALL effects from reference)
 - Mood and energy must be IDENTICAL
-- Only the subject/scene should be different
+- Only the subject/scene and on-frame elements should be different; never repeat subjects or elements from the reference
 
 LENGTH REQUIREMENTS:
 - Each B-roll prompt: 300-400 characters (increased to accommodate technical details)
@@ -87,7 +89,7 @@ LENGTH REQUIREMENTS:
 - Include all essential visual elements for exact style matching
 
 EXAMPLE (for a moody portrait reference with Deakins/Villeneuve style):
-"Extreme close-up of a flickering candle flame in darkness, soft amber glow casting dancing shadows on weathered wood surface. Teal-orange blockbuster color grading with crushed blacks. Soft-diffused side lighting with warm temperature. 35mm Kodak film grain, subtle vignette, bloom on highlights. Roger Deakins cinematography style, Denis Villeneuve aesthetic. Contemplative, intimate mood with calm energy. 85mm lens, shallow depth of field."
+"Extreme close-up of a flickering candle flame in darkness, soft amber glow casting dancing shadows on weathered wood surface. Teal-orange blockbuster color grading with crushed blacks. Soft-diffused side lighting with warm temperature. 35mm Kodak film grain, subtle vignette, bloom on highlights. Roger Deakins cinematography style, Denis Villeneuve aesthetic. Contemplative, intimate mood with calm energy. 85mm lens, shallow depth of field. Without the reference subject."
 
 Respond ONLY with a JSON object containing a "concepts" array of exactly 4-12 B-roll prompt strings (depending on requested count). Each string should be a complete, ready-to-use image generation prompt with EXACT style matching.
 
