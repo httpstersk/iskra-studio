@@ -6,6 +6,7 @@ import {
 import {
   DEFAULT_IMAGE_SIZE_4K_LANDSCAPE,
   TEXT_TO_IMAGE_ENDPOINT,
+  getImageModelEndpoint,
   resolveImageSize,
 } from "@/lib/image-models";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
@@ -433,18 +434,19 @@ export const appRouter = router({
     }),
 
   /**
-   * Generates image variations using Seedream v4 Edit.
+   * Generates image variations using Seedream v4 Edit or Reve Edit.
    *
    * @remarks
    * Non-streaming: subscribes until completion and emits a single completion
    * event with the resulting image. Supports preset sizes or explicit width
-   * and height.
+   * and height. Model can be switched between "seedream" and "reve".
    */
   generateImageVariation: publicProcedure
     .input(
       z.object({
         imageUrl: z.string().url(),
         prompt: z.string(),
+        model: z.enum(["seedream", "reve"]).default("seedream"),
         imageSize: z
           .union([
             z.enum([
@@ -475,10 +477,10 @@ export const appRouter = router({
         const resolvedImageSize = resolveImageSize(input.imageSize);
         // Normalize prompt to a single line for cleaner provider input
         const compactPrompt = toSingleLinePrompt(input.prompt);
-        // Seedream doesn't provide streaming intermediate results, so we just wait for completion
-        const result = await falClient.subscribe(
-          "fal-ai/bytedance/seedream/v4/edit",
-          {
+        // Get the endpoint based on the selected model
+        const endpoint = getImageModelEndpoint(input.model);
+        // Subscribe to the model endpoint and wait for completion
+        const result = await falClient.subscribe(endpoint, {
             input: {
               enable_safety_checker: false,
               image_size: resolvedImageSize,

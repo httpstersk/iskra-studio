@@ -39,6 +39,7 @@ interface VariationHandlerDeps {
   variationPrompt?: string;
   variationMode?: "image" | "video";
   imageVariationType?: "camera-angles" | "b-rolls";
+  imageModel?: "seedream" | "reve";
   variationCount?: number;
   videoSettings?: import("@/types/canvas").VideoGenerationSettings;
   viewport: { x: number; y: number; scale: number };
@@ -157,6 +158,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     variationCount = 4,
     variationMode = "image",
     imageVariationType = "camera-angles",
+    imageModel = "seedream",
     variationPrompt,
     videoSettings,
     viewport,
@@ -207,6 +209,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       setImages,
       setIsGenerating,
       toast,
+      imageModel,
       variationCount,
       variationPrompt,
     });
@@ -322,6 +325,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
           prompt: formattedPrompt,
           isVariation: true,
           imageSize: imageSizeDimensions,
+          model: imageModel,
         });
       });
 

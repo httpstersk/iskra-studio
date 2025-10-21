@@ -277,6 +277,7 @@ export function CanvasPageClient() {
         variationCount: uiState.generationCount,
         variationMode: uiState.variationMode,
         imageVariationType: uiState.imageVariationType,
+        imageModel: uiState.imageModel,
         variationPrompt: generationState.generationSettings.variationPrompt,
         videoSettings: {
           aspectRatio: "auto",
@@ -891,12 +892,14 @@ export function CanvasPageClient() {
         handleFileUpload={handleFileUpload}
         handleRun={handleRun}
         handleVariationModeChange={handleVariationModeChange}
+        imageModel={uiState.imageModel}
         imageVariationType={uiState.imageVariationType}
         images={canvasState.images}
         isGenerating={generationState.isGenerating}
         redo={handleRedo}
         selectedIds={canvasState.selectedIds}
         setGenerationSettings={generationState.setGenerationSettings}
+        setImageModel={uiState.setImageModel}
         setImageVariationType={uiState.setImageVariationType}
         setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
         setUseSoraPro={generationState.setUseSoraPro}
