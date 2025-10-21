@@ -1,6 +1,6 @@
 "use client";
 
-import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SegmentedControl } from "@radix-ui/themes";
 import {
   CONTROL_PANEL_STRINGS,
   CONTROL_PANEL_STYLES,
@@ -52,35 +52,44 @@ export function ModeIndicator({
 
   return (
     <>
-      <SegmentedControl
+      <SegmentedControl.Root
+        className="flex flex-1"
         value={variationMode}
         onValueChange={(value) =>
           handleVariationModeChange(value as "image" | "video")
         }
-        options={[
-          { value: "image", label: "Image", icon: ImagesIcon },
-          { value: "video", label: "Video", icon: PlayIcon },
-        ]}
-        activeColor="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
-        inactiveColor="text-gray-600 dark:text-gray-400"
-        className="h-9"
-      />
+        size="1"
+      >
+        <SegmentedControl.Item value="image">
+          <div className="flex flex-row items-center gap-1.5">
+            <ImagesIcon className="size-3.5" />
+            <span className="text-xs">Image</span>
+          </div>
+        </SegmentedControl.Item>
+        <SegmentedControl.Item value="video">
+          <div className="flex flex-row items-center gap-1.5">
+            <PlayIcon className="size-3.5" />
+            <span className="text-xs">Video</span>
+          </div>
+        </SegmentedControl.Item>
+      </SegmentedControl.Root>
 
       {/* Camera Angles vs B-rolls switcher - only show in Image mode */}
       {variationMode === "image" && setImageVariationType && (
-        <SegmentedControl
+        <SegmentedControl.Root
+          size="1"
           value={imageVariationType}
           onValueChange={(value) =>
             setImageVariationType(value as "camera-angles" | "b-rolls")
           }
-          options={[
-            { value: "camera-angles", label: "Camera Angles" },
-            { value: "b-rolls", label: "B-rolls" },
-          ]}
-          activeColor="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
-          inactiveColor="text-gray-600 dark:text-gray-400"
-          className="h-9"
-        />
+        >
+          <SegmentedControl.Item value="camera-angles">
+            <span className="text-xs whitespace-nowrap">Angles</span>
+          </SegmentedControl.Item>
+          <SegmentedControl.Item value="b-rolls">
+            <span className="text-xs">B-rolls</span>
+          </SegmentedControl.Item>
+        </SegmentedControl.Root>
       )}
     </>
   );

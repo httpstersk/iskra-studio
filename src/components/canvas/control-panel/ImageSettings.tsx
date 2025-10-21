@@ -1,6 +1,6 @@
 "use client";
 
-import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SegmentedControl } from "@radix-ui/themes";
 
 /**
  * Props for the ImageSettings component
@@ -18,16 +18,17 @@ export function ImageSettings({
   setImageModel,
 }: ImageSettingsProps) {
   return (
-    <SegmentedControl
+    <SegmentedControl.Root
+      size="1"
       value={imageModel}
       onValueChange={(value) => setImageModel(value as "seedream" | "reve")}
-      options={[
-        { value: "seedream", label: "Seedream" },
-        { value: "reve", label: "Reve" },
-      ]}
-      activeColor="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
-      inactiveColor="text-gray-600 dark:text-gray-400"
-      className="h-9"
-    />
+    >
+      <SegmentedControl.Item value="seedream">
+        <span className="text-xs">Seedream</span>
+      </SegmentedControl.Item>
+      <SegmentedControl.Item value="reve">
+        <span className="text-xs">Reve</span>
+      </SegmentedControl.Item>
+    </SegmentedControl.Root>
   );
 }

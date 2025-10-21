@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SegmentedControl } from "@/components/ui/segmented-control";
+import { SegmentedControl } from "@radix-ui/themes";
 import {
   CONTROL_PANEL_STRINGS,
   CONTROL_PANEL_STYLES,
@@ -38,17 +38,18 @@ export function VideoSettings({
   return (
     <>
       {/* Sora Pro toggle */}
-      <SegmentedControl
+      <SegmentedControl.Root
+        size="1"
         value={useSoraPro ? "pro" : "off"}
         onValueChange={(value) => setUseSoraPro(value === "pro")}
-        options={[
-          { value: "off", label: "Normal" },
-          { value: "pro", label: "Pro" },
-        ]}
-        activeColor="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
-        inactiveColor="text-gray-600 dark:text-gray-400"
-        className="h-9"
-      />
+      >
+        <SegmentedControl.Item value="off">
+          <span className="text-xs">Normal</span>
+        </SegmentedControl.Item>
+        <SegmentedControl.Item value="pro">
+          <span className="text-xs">Pro</span>
+        </SegmentedControl.Item>
+      </SegmentedControl.Root>
 
       {/* Duration selector */}
       <div
