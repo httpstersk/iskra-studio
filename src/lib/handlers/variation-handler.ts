@@ -207,10 +207,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       setImages,
       setIsGenerating,
       toast,
-      userId,
       variationCount,
       variationPrompt,
-      viewport,
     });
   }
 
@@ -299,9 +297,10 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
     // Convert proxy URL to signed URL for tRPC (imageUrl could be proxy or full Convex URL)
     const signedImageUrl = toSignedUrl(imageUrl);
-    
+
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
+
       variationsToGenerate.forEach((cameraDirective, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
         const recompositionStyle = getRandomRecompositionStyle();
@@ -310,7 +309,12 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         const formattedPrompt = formatImageVariationPrompt(
           cameraDirective,
           variationPrompt,
-          { cinematographerReference, directorReference, recompositionStyle }
+          {
+            cinematographerReference,
+            directorReference,
+            outputFormat: "singleline",
+            recompositionStyle,
+          }
         );
 
         newMap.set(placeholderId, {

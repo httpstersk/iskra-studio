@@ -1,3 +1,7 @@
+/** Prompt formatting: single space */
+const PROMPT_SINGLE_SPACE = " ";
+/** Prompt formatting: whitespace regex */
+const PROMPT_WHITESPACE_REGEX = /\s+/g;
 /**
  * Formats image variation prompts with flexible cinematography recomposition directives
  */
@@ -28,6 +32,12 @@ export interface ImageVariationOptions {
    * Use getAllDirectorReferences() or getRandomDirectorReference() for curated values.
    */
   directorReference?: string;
+  /**
+   * Output formatting for the generated prompt.
+   * - "multiline": Human-readable with headings and line breaks (default)
+   * - "singleline": Compacted single-line string with whitespace collapsed
+   */
+  outputFormat?: "multiline" | "singleline";
   /**
    * Recomposition style family. Use "auto" to allow the model to pick a coherent style
    * that best suits the camera directive. Defaults to "auto".
@@ -199,6 +209,13 @@ function buildStyleGuidance(
 }
 
 /**
+ * Flattens a text block into a single line by collapsing whitespace into single spaces.
+ */
+function flattenToSingleLine(text: string): string {
+  return text.replace(PROMPT_WHITESPACE_REGEX, PROMPT_SINGLE_SPACE).trim();
+}
+
+/**
  * Returns all cinematographer references in alphabetical order.
  */
 export function getAllCinematographerReferences(): readonly string[] {
@@ -259,6 +276,7 @@ export function formatImageVariationPrompt(
   const {
     cinematographerReference,
     directorReference,
+    outputFormat = "multiline",
     recompositionStyle = "auto",
   } = options;
   const userPromptSection = userPrompt
@@ -285,7 +303,7 @@ export function formatImageVariationPrompt(
     ? `\n    ${SECTION_REFERENCE_INFLUENCES}\n${referenceLines.join("\n")}`
     : "";
 
-  return `
+  const prompt = `
     ${SECTION_INSTRUCTIONS}
         - ${INSTRUCTION_APPLY_DIRECTIVE_PREFIX} ${directive}.
         - ${INSTRUCTION_RECOMPOSE_CHOSEN_STYLE}\n${styleGuidance}
@@ -305,4 +323,6 @@ export function formatImageVariationPrompt(
         - ${LINE_CINEMATIC_PRESERVE_CONTINUITY}
     ${userPromptSection}
 `;
+
+  return outputFormat === "singleline" ? flattenToSingleLine(prompt) : prompt;
 }
