@@ -2,10 +2,6 @@
 const PROMPT_SINGLE_SPACE = " ";
 /** Prompt formatting: whitespace regex */
 const PROMPT_WHITESPACE_REGEX = /\s+/g;
-/** Indentation: base level (4 spaces) */
-const INDENT_BASE = "    ";
-/** Indentation: nested level (8 spaces) */
-const INDENT_NESTED = "        ";
 /**
  * Formats image variation prompts with flexible cinematography recomposition directives
  */
@@ -233,16 +229,11 @@ function buildInstructionsSection(
   directive: string,
   styleGuidance: string
 ): string {
-  const indentedStyleGuidance = styleGuidance
-    .split("\n")
-    .map((line) => `${INDENT_NESTED}${line}`)
-    .join("\n");
-
   return [
-    `${INDENT_BASE}${SECTION_INSTRUCTIONS}`,
-    `${INDENT_NESTED}- ${INSTRUCTION_APPLY_DIRECTIVE_PREFIX} ${directive}.`,
-    `${INDENT_NESTED}- ${INSTRUCTION_RECOMPOSE_CHOSEN_STYLE}`,
-    indentedStyleGuidance,
+    SECTION_INSTRUCTIONS,
+    `- ${INSTRUCTION_APPLY_DIRECTIVE_PREFIX} ${directive}.`,
+    `- ${INSTRUCTION_RECOMPOSE_CHOSEN_STYLE}`,
+    styleGuidance,
   ].join("\n");
 }
 
@@ -257,17 +248,17 @@ function buildReferencesSection(
 
   if (directorReference) {
     referenceLines.push(
-      `${INDENT_NESTED}- ${LINE_REFERENCE_DIRECTOR_PREFIX} ${directorReference}`
+      `- ${LINE_REFERENCE_DIRECTOR_PREFIX} ${directorReference}`
     );
   }
   if (cinematographerReference) {
     referenceLines.push(
-      `${INDENT_NESTED}- ${LINE_REFERENCE_CINEMATOGRAPHER_PREFIX} ${cinematographerReference}`
+      `- ${LINE_REFERENCE_CINEMATOGRAPHER_PREFIX} ${cinematographerReference}`
     );
   }
 
   return referenceLines.length
-    ? `${INDENT_BASE}${SECTION_REFERENCE_INFLUENCES}\n${referenceLines.join("\n")}`
+    ? `${SECTION_REFERENCE_INFLUENCES}\n${referenceLines.join("\n")}`
     : "";
 }
 
@@ -276,8 +267,8 @@ function buildReferencesSection(
  */
 function buildCameraAestheticsSection(): string {
   return [
-    `${INDENT_BASE}${SECTION_CAMERA_AESTHETICS}`,
-    `${INDENT_NESTED}- ${LINE_CAMERA_PICK_FOCAL_APERTURE}`,
+    SECTION_CAMERA_AESTHETICS,
+    `- ${LINE_CAMERA_PICK_FOCAL_APERTURE}`,
   ].join("\n");
 }
 
@@ -286,9 +277,9 @@ function buildCameraAestheticsSection(): string {
  */
 function buildLightingToneSection(): string {
   return [
-    `${INDENT_BASE}${SECTION_LIGHTING_TONE}`,
-    `${INDENT_NESTED}- ${LINE_LIGHTING_ALIGN_TO_STYLE}`,
-    `${INDENT_NESTED}- ${LINE_LIGHTING_RETAIN_COLOR_CONTINUITY}`,
+    SECTION_LIGHTING_TONE,
+    `- ${LINE_LIGHTING_ALIGN_TO_STYLE}`,
+    `- ${LINE_LIGHTING_RETAIN_COLOR_CONTINUITY}`,
   ].join("\n");
 }
 
@@ -297,10 +288,10 @@ function buildLightingToneSection(): string {
  */
 function buildVisualDisciplineSection(): string {
   return [
-    `${INDENT_BASE}${SECTION_VISUAL_DISCIPLINE}`,
-    `${INDENT_NESTED}- ${LINE_VISUAL_REMOVE_CONFLICTS}`,
-    `${INDENT_NESTED}- ${LINE_VISUAL_SEPARATION_GEOMETRY}`,
-    `${INDENT_NESTED}- ${LINE_VISUAL_USE_CAMERA_BLOCKING}`,
+    SECTION_VISUAL_DISCIPLINE,
+    `- ${LINE_VISUAL_REMOVE_CONFLICTS}`,
+    `- ${LINE_VISUAL_SEPARATION_GEOMETRY}`,
+    `- ${LINE_VISUAL_USE_CAMERA_BLOCKING}`,
   ].join("\n");
 }
 
@@ -309,10 +300,10 @@ function buildVisualDisciplineSection(): string {
  */
 function buildCinematicMoodSection(): string {
   return [
-    `${INDENT_BASE}${SECTION_CINEMATIC_MOOD}`,
-    `${INDENT_NESTED}- ${LINE_CINEMATIC_MAINTAIN_RENDER_QUALITY}`,
-    `${INDENT_NESTED}- ${LINE_CINEMATIC_SUBTLE_ATMOSPHERE}`,
-    `${INDENT_NESTED}- ${LINE_CINEMATIC_PRESERVE_CONTINUITY}`,
+    SECTION_CINEMATIC_MOOD,
+    `- ${LINE_CINEMATIC_MAINTAIN_RENDER_QUALITY}`,
+    `- ${LINE_CINEMATIC_SUBTLE_ATMOSPHERE}`,
+    `- ${LINE_CINEMATIC_PRESERVE_CONTINUITY}`,
   ].join("\n");
 }
 
@@ -402,7 +393,7 @@ export function formatImageVariationPrompt(
     buildCinematicMoodSection(),
   ].filter(Boolean);
 
-  const prompt = `\n${sections.join("\n")}${buildUserPromptSection(userPrompt)}\n`;
+  const prompt = `${sections.join("\n\n")}${buildUserPromptSection(userPrompt)}`;
 
   return outputFormat === "singleline" ? flattenToSingleLine(prompt) : prompt;
 }
