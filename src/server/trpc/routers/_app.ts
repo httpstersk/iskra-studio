@@ -100,6 +100,16 @@ function extractResultData<T extends object>(input: unknown): T | undefined {
 }
 
 /**
+ * Converts a multi-line prompt string into a single line by collapsing all
+ * whitespace runs (including newlines and tabs) into single spaces.
+ */
+const RE_WHITESPACE = /\s+/g;
+const SINGLE_SPACE = " ";
+function toSingleLinePrompt(input: string): string {
+  return input.replace(RE_WHITESPACE, SINGLE_SPACE).trim();
+}
+
+/**
  * Resolves an authenticated FAL client instance with rate limiting applied.
  *
  * @param ctx - tRPC context containing request and optional userId from Clerk
@@ -463,6 +473,8 @@ export const appRouter = router({
 
         // Resolve imageSize to a concrete {width, height} object
         const resolvedImageSize = resolveImageSize(input.imageSize);
+        // Normalize prompt to a single line for cleaner provider input
+        const compactPrompt = toSingleLinePrompt(input.prompt);
         // Seedream doesn't provide streaming intermediate results, so we just wait for completion
         const result = await falClient.subscribe(
           "fal-ai/bytedance/seedream/v4/edit",
@@ -472,7 +484,7 @@ export const appRouter = router({
               image_size: resolvedImageSize,
               image_urls: [input.imageUrl],
               num_images: 1,
-              prompt: input.prompt,
+              prompt: compactPrompt,
               ...(input.seed !== undefined ? { seed: input.seed } : {}),
             },
             pollInterval: 1000,
