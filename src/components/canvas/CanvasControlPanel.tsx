@@ -3,6 +3,7 @@
 import { ActionButtons } from "@/components/canvas/control-panel/ActionButtons";
 import { ControlActions } from "@/components/canvas/control-panel/ControlActions";
 import { GenerationsIndicatorWrapper } from "@/components/canvas/control-panel/GenerationsIndicatorWrapper";
+import { ImageSettings } from "@/components/canvas/control-panel/ImageSettings";
 import { ModeIndicator } from "@/components/canvas/control-panel/ModeIndicator";
 import { PromptInput } from "@/components/canvas/control-panel/PromptInput";
 import { VideoSettings } from "@/components/canvas/control-panel/VideoSettings";
@@ -23,12 +24,14 @@ interface CanvasControlPanelProps {
   handleFileUpload: (files: FileList | null) => void;
   handleRun: () => void;
   handleVariationModeChange: (mode: "image" | "video") => void;
+  imageModel: "seedream" | "reve";
   imageVariationType?: "camera-angles" | "b-rolls";
   images: PlacedImage[];
   isGenerating: boolean;
   redo: () => void;
   selectedIds: string[];
   setGenerationSettings: (settings: GenerationSettings) => void;
+  setImageModel: (value: "seedream" | "reve") => void;
   setImageVariationType?: (type: "camera-angles" | "b-rolls") => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   setUseSoraPro: (value: boolean) => void;
@@ -60,12 +63,14 @@ export function CanvasControlPanel({
   handleFileUpload,
   handleRun,
   handleVariationModeChange,
+  imageModel,
   imageVariationType = "camera-angles",
   images,
   isGenerating,
   redo,
   selectedIds,
   setGenerationSettings,
+  setImageModel,
   setImageVariationType,
   setIsSettingsDialogOpen,
   setUseSoraPro,
@@ -115,6 +120,14 @@ export function CanvasControlPanel({
                 setImageVariationType={setImageVariationType}
                 variationMode={variationMode}
               />
+
+              {/* Image settings - only show when in image mode */}
+              {hasSelection && variationMode === "image" && (
+                <ImageSettings
+                  imageModel={imageModel}
+                  setImageModel={setImageModel}
+                />
+              )}
 
               {/* Video settings - only show when in video mode */}
               {hasSelection && variationMode === "video" && (

@@ -43,6 +43,7 @@ interface BrollImageVariationHandlerDeps {
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   toast: (props: ToastProps) => void;
+  imageModel?: "seedream" | "reve";
   variationCount?: number;
   variationPrompt?: string;
 }
@@ -92,6 +93,7 @@ export const handleBrollImageVariations = async (
     setImages,
     setIsGenerating,
     toast,
+    imageModel = "seedream",
     variationCount = 4,
     variationPrompt,
   } = deps;
@@ -206,6 +208,7 @@ export const handleBrollImageVariations = async (
           prompt: formattedPrompt,
           isVariation: true,
           imageSize: imageSizeDimensions,
+          model: imageModel,
         });
       });
 

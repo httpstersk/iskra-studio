@@ -50,6 +50,13 @@ export const generationCountAtom = atom<number>(4);
 export const imageVariationTypeAtom = atom<"camera-angles" | "b-rolls">("camera-angles");
 
 /**
+ * Image model atom - controls which model to use for image variations
+ * "seedream": Seedream v4 Edit (default)
+ * "reve": Reve Edit
+ */
+export const imageModelAtom = atom<"seedream" | "reve">("seedream");
+
+/**
  * Network status atom - tracks online/offline state
  * 
  * @remarks

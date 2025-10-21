@@ -58,6 +58,7 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
       {
         imageUrl: generation.imageUrl,
         prompt: generation.prompt,
+        ...(generation.model ? { model: generation.model } : {}),
         ...(generation.imageSize ? { imageSize: generation.imageSize } : {}),
       },
       {

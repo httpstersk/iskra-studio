@@ -61,6 +61,7 @@ export interface ActiveGeneration {
   imageSize?: "landscape_16_9" | "portrait_16_9" | "landscape_4_3" | "portrait_4_3" | "square" | { width: number; height: number };
   imageUrl: string;
   isVariation?: boolean;
+  model?: "seedream" | "reve";
   prompt: string;
 }
 

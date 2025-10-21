@@ -63,6 +63,11 @@ export function resolveImageSize(
 }
 
 /**
+ * Image model identifiers for variation generation.
+ */
+export type ImageModelId = "seedream" | "reve";
+
+/**
  * Seedream v4 Text-to-Image endpoint identifier.
  *
  * @remarks
@@ -70,3 +75,29 @@ export function resolveImageSize(
  */
 export const TEXT_TO_IMAGE_ENDPOINT =
   "fal-ai/bytedance/seedream/v4/text-to-image" as const;
+
+/**
+ * Seedream v4 Edit endpoint for image variations.
+ */
+export const SEEDREAM_EDIT_ENDPOINT =
+  "fal-ai/bytedance/seedream/v4/edit" as const;
+
+/**
+ * Reve Edit endpoint for image variations.
+ */
+export const REVE_EDIT_ENDPOINT = "fal-ai/reve/edit" as const;
+
+/**
+ * Maps model IDs to their corresponding endpoint strings.
+ */
+export const IMAGE_MODEL_ENDPOINTS: Record<ImageModelId, string> = {
+  seedream: SEEDREAM_EDIT_ENDPOINT,
+  reve: REVE_EDIT_ENDPOINT,
+};
+
+/**
+ * Gets the endpoint for a given image model ID.
+ */
+export function getImageModelEndpoint(modelId: ImageModelId): string {
+  return IMAGE_MODEL_ENDPOINTS[modelId];
+}

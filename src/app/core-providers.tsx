@@ -17,6 +17,7 @@ import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@/providers/clerk-provider";
 import { ConvexProvider } from "@/providers/convex-provider";
 import { NetworkStatusInitializer } from "@/components/network-status-initializer";
+import { Theme } from "@radix-ui/themes";
 
 let browserQueryClient: QueryClient | undefined = undefined;
 
@@ -66,9 +67,11 @@ export function CoreProviders({ children }: { children: ReactNode }) {
               enableSystem
               disableTransitionOnChange
             >
-              <NetworkStatusInitializer />
-              {children}
-              <Toaster />
+              <Theme>
+                <NetworkStatusInitializer />
+                {children}
+                <Toaster />
+              </Theme>
             </ThemeProvider>
           </TRPCProvider>
         </QueryClientProvider>
