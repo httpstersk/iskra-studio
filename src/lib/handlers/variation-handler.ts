@@ -1,4 +1,9 @@
-import { formatImageVariationPrompt } from "@/lib/prompt-formatters/image-variation-prompt-formatter";
+import {
+  formatImageVariationPrompt,
+  getRandomCinematographerReference,
+  getRandomDirectorReference,
+  getRandomRecompositionStyle,
+} from "@/lib/prompt-formatters/image-variation-prompt-formatter";
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
@@ -299,9 +304,13 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       const newMap = new Map(prev);
       variationsToGenerate.forEach((cameraDirective, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
+        const recompositionStyle = getRandomRecompositionStyle();
+        const directorReference = getRandomDirectorReference();
+        const cinematographerReference = getRandomCinematographerReference();
         const formattedPrompt = formatImageVariationPrompt(
           cameraDirective,
-          variationPrompt
+          variationPrompt,
+          { cinematographerReference, directorReference, recompositionStyle }
         );
 
         newMap.set(placeholderId, {
