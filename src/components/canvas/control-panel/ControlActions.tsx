@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 import { checkOS } from "@/utils/os-utils";
-import { Paperclip, SlidersHorizontal, SparkleIcon } from "lucide-react";
+import { Paperclip, SparklesIcon } from "lucide-react";
 import { ShortcutBadge } from "../ShortcutBadge";
 import { DownloadAllButton } from "./DownloadAllButton";
 
@@ -130,7 +130,6 @@ export function ControlActions({
   images,
   isGenerating,
   selectedIds,
-  setIsSettingsDialogOpen,
   toast,
 }: ControlActionsProps) {
   const handleUploadClick = () => {
@@ -151,24 +150,6 @@ export function ControlActions({
 
   return (
     <div className="flex items-center gap-2">
-      <TooltipProvider>
-        <Tooltip delayDuration={0}>
-          <TooltipTrigger asChild>
-            <Button
-              className="relative"
-              onClick={() => setIsSettingsDialogOpen(true)}
-              size="icon-sm"
-              variant="secondary"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <span>{CONTROL_PANEL_STRINGS.SETTINGS}</span>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
       <TooltipProvider>
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
@@ -209,7 +190,7 @@ export function ControlActions({
               size="icon"
               variant="primary"
             >
-              <SparkleIcon className="h-4 w-4 text-white fill-white" />
+              <SparklesIcon className="h-4 w-4 text-white fill-white" />
             </Button>
           </TooltipTrigger>
 
