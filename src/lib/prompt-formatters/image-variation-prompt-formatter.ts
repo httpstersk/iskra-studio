@@ -2,6 +2,10 @@
 const PROMPT_SINGLE_SPACE = " ";
 /** Prompt formatting: whitespace regex */
 const PROMPT_WHITESPACE_REGEX = /\s+/g;
+/** Indentation: base level (4 spaces) */
+const INDENT_BASE = "    ";
+/** Indentation: nested level (8 spaces) */
+const INDENT_NESTED = "        ";
 /**
  * Formats image variation prompts with flexible cinematography recomposition directives
  */
@@ -216,6 +220,110 @@ function flattenToSingleLine(text: string): string {
 }
 
 /**
+ * Generic helper to randomly select an item from an array.
+ */
+function getRandomItem<T>(items: readonly T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+/**
+ * Builds the instructions section with directive and style guidance.
+ */
+function buildInstructionsSection(
+  directive: string,
+  styleGuidance: string
+): string {
+  const indentedStyleGuidance = styleGuidance
+    .split("\n")
+    .map((line) => `${INDENT_NESTED}${line}`)
+    .join("\n");
+
+  return [
+    `${INDENT_BASE}${SECTION_INSTRUCTIONS}`,
+    `${INDENT_NESTED}- ${INSTRUCTION_APPLY_DIRECTIVE_PREFIX} ${directive}.`,
+    `${INDENT_NESTED}- ${INSTRUCTION_RECOMPOSE_CHOSEN_STYLE}`,
+    indentedStyleGuidance,
+  ].join("\n");
+}
+
+/**
+ * Builds the reference influences section if references are provided.
+ */
+function buildReferencesSection(
+  directorReference?: string,
+  cinematographerReference?: string
+): string {
+  const referenceLines: string[] = [];
+
+  if (directorReference) {
+    referenceLines.push(
+      `${INDENT_NESTED}- ${LINE_REFERENCE_DIRECTOR_PREFIX} ${directorReference}`
+    );
+  }
+  if (cinematographerReference) {
+    referenceLines.push(
+      `${INDENT_NESTED}- ${LINE_REFERENCE_CINEMATOGRAPHER_PREFIX} ${cinematographerReference}`
+    );
+  }
+
+  return referenceLines.length
+    ? `${INDENT_BASE}${SECTION_REFERENCE_INFLUENCES}\n${referenceLines.join("\n")}`
+    : "";
+}
+
+/**
+ * Builds the camera aesthetics section.
+ */
+function buildCameraAestheticsSection(): string {
+  return [
+    `${INDENT_BASE}${SECTION_CAMERA_AESTHETICS}`,
+    `${INDENT_NESTED}- ${LINE_CAMERA_PICK_FOCAL_APERTURE}`,
+  ].join("\n");
+}
+
+/**
+ * Builds the lighting and tone section.
+ */
+function buildLightingToneSection(): string {
+  return [
+    `${INDENT_BASE}${SECTION_LIGHTING_TONE}`,
+    `${INDENT_NESTED}- ${LINE_LIGHTING_ALIGN_TO_STYLE}`,
+    `${INDENT_NESTED}- ${LINE_LIGHTING_RETAIN_COLOR_CONTINUITY}`,
+  ].join("\n");
+}
+
+/**
+ * Builds the visual discipline section.
+ */
+function buildVisualDisciplineSection(): string {
+  return [
+    `${INDENT_BASE}${SECTION_VISUAL_DISCIPLINE}`,
+    `${INDENT_NESTED}- ${LINE_VISUAL_REMOVE_CONFLICTS}`,
+    `${INDENT_NESTED}- ${LINE_VISUAL_SEPARATION_GEOMETRY}`,
+    `${INDENT_NESTED}- ${LINE_VISUAL_USE_CAMERA_BLOCKING}`,
+  ].join("\n");
+}
+
+/**
+ * Builds the cinematic mood section.
+ */
+function buildCinematicMoodSection(): string {
+  return [
+    `${INDENT_BASE}${SECTION_CINEMATIC_MOOD}`,
+    `${INDENT_NESTED}- ${LINE_CINEMATIC_MAINTAIN_RENDER_QUALITY}`,
+    `${INDENT_NESTED}- ${LINE_CINEMATIC_SUBTLE_ATMOSPHERE}`,
+    `${INDENT_NESTED}- ${LINE_CINEMATIC_PRESERVE_CONTINUITY}`,
+  ].join("\n");
+}
+
+/**
+ * Builds the user prompt section if a user prompt is provided.
+ */
+function buildUserPromptSection(userPrompt?: string): string {
+  return userPrompt ? `\n\n${USER_PROMPT_HEADING}\n${userPrompt}` : "";
+}
+
+/**
  * Returns all cinematographer references in alphabetical order.
  */
 export function getAllCinematographerReferences(): readonly string[] {
@@ -233,31 +341,30 @@ export function getAllDirectorReferences(): readonly string[] {
  * Returns all recomposition styles in alphabetical order.
  */
 export function getAllRecompositionStyles(): readonly ImageVariationRecompositionStyle[] {
-  return Object.keys(RECOMPOSITION_STYLE_GUIDANCE).sort() as ImageVariationRecompositionStyle[];
+  return Object.keys(
+    RECOMPOSITION_STYLE_GUIDANCE
+  ).sort() as ImageVariationRecompositionStyle[];
 }
 
 /**
  * Randomly selects one cinematographer reference from the available set.
  */
 export function getRandomCinematographerReference(): string {
-  const list = CINEMATOGRAPHER_REFERENCES;
-  return list[Math.floor(Math.random() * list.length)];
+  return getRandomItem(CINEMATOGRAPHER_REFERENCES);
 }
 
 /**
  * Randomly selects one director reference from the available set.
  */
 export function getRandomDirectorReference(): string {
-  const list = DIRECTOR_REFERENCES;
-  return list[Math.floor(Math.random() * list.length)];
+  return getRandomItem(DIRECTOR_REFERENCES);
 }
 
 /**
  * Randomly selects one recomposition style from the available set.
  */
 export function getRandomRecompositionStyle(): ImageVariationRecompositionStyle {
-  const styles = getAllRecompositionStyles();
-  return styles[Math.floor(Math.random() * styles.length)];
+  return getRandomItem(getAllRecompositionStyles());
 }
 
 /**
@@ -279,50 +386,23 @@ export function formatImageVariationPrompt(
     outputFormat = "multiline",
     recompositionStyle = "auto",
   } = options;
-  const userPromptSection = userPrompt
-    ? `\n\n${USER_PROMPT_HEADING}\n${userPrompt}`
-    : "";
 
-  const styleGuidance = buildStyleGuidance(recompositionStyle)
-    .split("\n")
-    .map((line) => `        ${line}`)
-    .join("\n");
+  const styleGuidance = buildStyleGuidance(recompositionStyle);
+  const referencesSection = buildReferencesSection(
+    directorReference,
+    cinematographerReference
+  );
 
-  const referenceLines: string[] = [];
-  if (directorReference) {
-    referenceLines.push(
-      `        - ${LINE_REFERENCE_DIRECTOR_PREFIX} ${directorReference}`
-    );
-  }
-  if (cinematographerReference) {
-    referenceLines.push(
-      `        - ${LINE_REFERENCE_CINEMATOGRAPHER_PREFIX} ${cinematographerReference}`
-    );
-  }
-  const referencesSection = referenceLines.length
-    ? `\n    ${SECTION_REFERENCE_INFLUENCES}\n${referenceLines.join("\n")}`
-    : "";
+  const sections = [
+    buildInstructionsSection(directive, styleGuidance),
+    referencesSection,
+    buildCameraAestheticsSection(),
+    buildLightingToneSection(),
+    buildVisualDisciplineSection(),
+    buildCinematicMoodSection(),
+  ].filter(Boolean);
 
-  const prompt = `
-    ${SECTION_INSTRUCTIONS}
-        - ${INSTRUCTION_APPLY_DIRECTIVE_PREFIX} ${directive}.
-        - ${INSTRUCTION_RECOMPOSE_CHOSEN_STYLE}\n${styleGuidance}
-    ${referencesSection}
-    ${SECTION_CAMERA_AESTHETICS}
-        - ${LINE_CAMERA_PICK_FOCAL_APERTURE}
-    ${SECTION_LIGHTING_TONE}
-        - ${LINE_LIGHTING_ALIGN_TO_STYLE}
-        - ${LINE_LIGHTING_RETAIN_COLOR_CONTINUITY}
-    ${SECTION_VISUAL_DISCIPLINE}
-        - ${LINE_VISUAL_REMOVE_CONFLICTS}
-        - ${LINE_VISUAL_SEPARATION_GEOMETRY}
-        - ${LINE_VISUAL_USE_CAMERA_BLOCKING}
-    ${SECTION_CINEMATIC_MOOD}
-        - ${LINE_CINEMATIC_MAINTAIN_RENDER_QUALITY}
-        - ${LINE_CINEMATIC_SUBTLE_ATMOSPHERE}
-        - ${LINE_CINEMATIC_PRESERVE_CONTINUITY}
-    ${userPromptSection}
-`;
+  const prompt = `\n${sections.join("\n")}${buildUserPromptSection(userPrompt)}\n`;
 
   return outputFormat === "singleline" ? flattenToSingleLine(prompt) : prompt;
 }
