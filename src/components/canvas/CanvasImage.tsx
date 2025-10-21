@@ -71,10 +71,10 @@ const useCanvasImageSource = (
 ) => {
   // Load thumbnail first if available (shows immediately)
   const [thumbnailImg] = useImageCache(thumbnailSrc || "", "anonymous");
-  
+
   // If displayAsThumbnail is true, only load thumbnail and skip full-size
   const shouldLoadFullSize = !displayAsThumbnail;
-  
+
   // Load full-size in parallel (only if not displaying as thumbnail)
   const [streamingImg] = useStreamingImage(isGenerated && shouldLoadFullSize ? src : "");
   const [cachedImg] = useImageCache(!isGenerated && shouldLoadFullSize ? src : "", "anonymous");
@@ -149,17 +149,17 @@ const useFrameThrottle = (limitMs = 16) => {
  * />
  * ```
  */
-export const CanvasImage: React.FC<CanvasImageProps> = ({
+const CanvasImageComponent: React.FC<CanvasImageProps> = ({
+  dragStartPositions,
   image,
   isSelected,
-  onSelect,
   onChange,
-  onDragStart,
-  onDragEnd,
   onDoubleClick,
+  onDragEnd,
+  onDragStart,
+  onSelect,
   selectedIds,
   setImages,
-  dragStartPositions,
 }) => {
   const shapeRef = useRef<Konva.Image>(null);
   const throttleFrame = useFrameThrottle();
@@ -254,6 +254,8 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
       ref={shapeRef}
       rotation={image.rotation}
       stroke={strokeColor}
+      shadowForStrokeEnabled={false}
+      strokeScaleEnabled={false}
       strokeWidth={strokeWidth}
       width={image.width}
       x={image.x}
@@ -261,3 +263,7 @@ export const CanvasImage: React.FC<CanvasImageProps> = ({
     />
   );
 };
+
+CanvasImageComponent.displayName = "CanvasImage";
+
+export const CanvasImage = React.memo(CanvasImageComponent);

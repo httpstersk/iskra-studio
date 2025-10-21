@@ -4,11 +4,7 @@ import { useVideoKeyboardShortcuts } from "@/hooks/useVideoKeyboardShortcuts";
 import { useVideoPlayback } from "@/hooks/useVideoPlayback";
 import type { PlacedVideo } from "@/types/canvas";
 import Konva from "konva";
-import React, {
-  useCallback,
-  useRef,
-  useState
-} from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Image as KonvaImage } from "react-konva";
 
 /**
@@ -25,8 +21,6 @@ interface CanvasVideoProps {
   onChange: (newAttrs: Partial<PlacedVideo>) => void;
   onDragEnd: () => void;
   onDragStart: () => void;
-  onResizeEnd?: () => void; // Kept for API compatibility (no-op)
-  onResizeStart?: () => void; // Kept for API compatibility (no-op)
   onSelect: (e: Konva.KonvaEventObject<MouseEvent>) => void;
   selectedIds: string[];
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
@@ -39,7 +33,7 @@ interface CanvasVideoProps {
  *
  * Renders a video frame on Konva and wires up drag, playback, and shortcuts.
  */
-export const CanvasVideo: React.FC<CanvasVideoProps> = ({
+const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   video,
   isSelected,
   onSelect,
@@ -47,12 +41,8 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
   onDragStart,
   onDragEnd,
   selectedIds,
-  // videos is used in the type definition but not in the component
   setVideos,
-  // isDraggingVideo is not used but kept for API compatibility
   dragStartPositions,
-  onResizeStart,
-  onResizeEnd,
 }) => {
   const shapeRef = useRef<Konva.Image>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -127,6 +117,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
   const handleClick = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
       e.cancelBubble = true;
+
       if (isSelected) {
         onChange({ isPlaying: !video.isPlaying });
       } else {
@@ -139,15 +130,14 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
   const handleDragStart = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
       e.cancelBubble = true;
+
       if (!isSelected) {
         onSelect(e as unknown as Konva.KonvaEventObject<MouseEvent>);
       }
-      if (onResizeStart) {
-        onResizeStart();
-      }
+
       onDragStart();
     },
-    [isSelected, onDragStart, onResizeStart, onSelect]
+    [isSelected, onDragStart, onSelect]
   );
 
   const handleDragEnd = useCallback(() => {
@@ -194,7 +184,9 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
       perfectDrawEnabled={false}
       ref={shapeRef}
       rotation={video.rotation}
+      shadowForStrokeEnabled={false}
       stroke={isSelected ? "#0ea5e9" : isHovered ? "#0ea5e9" : "transparent"}
+      strokeScaleEnabled={false}
       strokeWidth={isSelected || isHovered ? 0.5 : 0}
       width={video.width}
       x={video.x}
@@ -202,3 +194,7 @@ export const CanvasVideo: React.FC<CanvasVideoProps> = ({
     />
   );
 };
+
+CanvasVideoComponent.displayName = "CanvasVideo";
+
+export const CanvasVideo = React.memo(CanvasVideoComponent);
