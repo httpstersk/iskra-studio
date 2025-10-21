@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import {
   CONTROL_PANEL_STRINGS,
   CONTROL_PANEL_STYLES,
@@ -38,33 +38,17 @@ export function VideoSettings({
   return (
     <>
       {/* Sora Pro toggle */}
-      <div
-        className={cn(
-          "h-9 rounded-xl overflow-clip flex items-center gap-2 px-3",
-          useSoraPro
-            ? CONTROL_PANEL_STYLES.AMBER_BADGE
-            : CONTROL_PANEL_STYLES.GRAY_BADGE
-        )}
-      >
-        <div className="flex items-center gap-2 text-xs font-medium">
-          <span
-            className={cn(
-              "font-semibold",
-              useSoraPro
-                ? "text-amber-600 dark:text-amber-500"
-                : "text-gray-600 dark:text-gray-400"
-            )}
-          >
-            {CONTROL_PANEL_STRINGS.PRO_LABEL}
-          </span>
-        </div>
-
-        <Switch
-          checked={useSoraPro}
-          className="h-5 w-9 data-[state=checked]:bg-amber-600 data-[state=unchecked]:bg-gray-500"
-          onCheckedChange={setUseSoraPro}
-        />
-      </div>
+      <SegmentedControl
+        value={useSoraPro ? "pro" : "off"}
+        onValueChange={(value) => setUseSoraPro(value === "pro")}
+        options={[
+          { value: "off", label: "Normal" },
+          { value: "pro", label: "Pro" },
+        ]}
+        activeColor="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
+        inactiveColor="text-gray-600 dark:text-gray-400"
+        className="h-9"
+      />
 
       {/* Duration selector */}
       <div
