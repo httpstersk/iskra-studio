@@ -5,9 +5,9 @@ import {
 } from "@/lib/fal/utils";
 import {
   DEFAULT_IMAGE_SIZE_4K_LANDSCAPE,
-  TEXT_TO_IMAGE_ENDPOINT,
   getImageModelEndpoint,
   resolveImageSize,
+  TEXT_TO_IMAGE_ENDPOINT,
 } from "@/lib/image-models";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { tracked } from "@trpc/server";
@@ -479,20 +479,33 @@ export const appRouter = router({
         const compactPrompt = toSingleLinePrompt(input.prompt);
         // Get the endpoint based on the selected model
         const endpoint = getImageModelEndpoint(input.model);
+
+        // Build input based on model - Reve and Seedream have different schemas
+        const falInput =
+          input.model === "reve"
+            ? {
+                // Reve Edit API schema
+                image_url: input.imageUrl,
+                prompt: compactPrompt,
+                num_images: 1,
+                output_format: "png" as const,
+              }
+            : {
+                // Seedream Edit API schema
+                enable_safety_checker: false,
+                image_size: resolvedImageSize,
+                image_urls: [input.imageUrl],
+                num_images: 1,
+                prompt: compactPrompt,
+                ...(input.seed !== undefined ? { seed: input.seed } : {}),
+              };
+
         // Subscribe to the model endpoint and wait for completion
         const result = await falClient.subscribe(endpoint, {
-            input: {
-              enable_safety_checker: false,
-              image_size: resolvedImageSize,
-              image_urls: [input.imageUrl],
-              num_images: 1,
-              prompt: compactPrompt,
-              ...(input.seed !== undefined ? { seed: input.seed } : {}),
-            },
-            pollInterval: 1000,
-            logs: true,
-          }
-        );
+          input: falInput,
+          pollInterval: 1000,
+          logs: true,
+        });
 
         if (signal?.aborted) {
           return;
