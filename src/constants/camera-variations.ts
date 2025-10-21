@@ -1,7 +1,11 @@
 /**
- * Camera setting variation prompts for image generation
- * Includes diverse camera angles, movements, and B-roll footage options
- * Ordered to provide maximum variety in perspective and style
+ * Camera setting variation prompts for image generation.
+ *
+ * Includes diverse camera angles, movements, and cinematography techniques.
+ * Ordered to provide maximum variety in perspective and style.
+ *
+ * Note: B-roll variations are now generated dynamically via AI based on
+ * image analysis rather than using predefined templates.
  */
 export const CAMERA_VARIATIONS = [
   "AMERICAN SHOT — FRAMING FROM KNEES UP; versatile composition showing body language while maintaining facial detail.",

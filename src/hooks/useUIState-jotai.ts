@@ -8,6 +8,7 @@ import { useAtom } from "jotai";
 import {
   generationCountAtom,
   hiddenVideoControlsIdsAtom,
+  imageVariationTypeAtom,
   isImageToVideoDialogOpenAtom,
   isSettingsDialogOpenAtom,
   selectedImageForVideoAtom,
@@ -26,6 +27,9 @@ export function useUIState() {
   const [generationCount, setGenerationCount] = useAtom(generationCountAtom);
   const [hiddenVideoControlsIds, setHiddenVideoControlsIds] = useAtom(
     hiddenVideoControlsIdsAtom
+  );
+  const [imageVariationType, setImageVariationType] = useAtom(
+    imageVariationTypeAtom
   );
   const [isImageToVideoDialogOpen, setIsImageToVideoDialogOpen] = useAtom(
     isImageToVideoDialogOpenAtom
@@ -73,11 +77,13 @@ export function useUIState() {
   return {
     generationCount,
     hiddenVideoControlsIds,
+    imageVariationType,
     isImageToVideoDialogOpen,
     isSettingsDialogOpen,
     selectedImageForVideo,
     setGenerationCount,
     setHiddenVideoControlsIds,
+    setImageVariationType,
     setIsImageToVideoDialogOpen,
     setIsSettingsDialogOpen,
     setSelectedImageForVideo,

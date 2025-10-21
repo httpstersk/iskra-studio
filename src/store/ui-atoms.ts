@@ -43,6 +43,13 @@ export const variationModeAtom = atom<"image" | "video">("image");
 export const generationCountAtom = atom<number>(4);
 
 /**
+ * Image variation type atom - controls type of image variations
+ * "camera-angles": Random camera angle variations (default)
+ * "b-rolls": AI-analyzed cinematic B-roll variations
+ */
+export const imageVariationTypeAtom = atom<"camera-angles" | "b-rolls">("camera-angles");
+
+/**
  * Network status atom - tracks online/offline state
  * 
  * @remarks
