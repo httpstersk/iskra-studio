@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import type Konva from "konva";
 import type { PlacedImage, PlacedVideo, SelectionBox } from "@/types/canvas";
+import type Konva from "konva";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Viewport } from "./useCanvasState";
 
 export function useCanvasInteractions(
@@ -36,6 +36,44 @@ export function useCanvasInteractions(
     y: number;
   } | null>(null);
   const [isTouchingImage, setIsTouchingImage] = useState(false);
+  const viewportRef = useRef(viewport);
+  const pendingViewportRef = useRef<Viewport | null>(null);
+  const viewportRafIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    viewportRef.current = viewport;
+  }, [viewport]);
+
+  const flushViewportUpdate = useCallback(() => {
+    viewportRafIdRef.current = null;
+    if (pendingViewportRef.current) {
+      const nextViewport = pendingViewportRef.current;
+      pendingViewportRef.current = null;
+      viewportRef.current = nextViewport;
+      setViewport(nextViewport);
+    }
+  }, [setViewport]);
+
+  const scheduleViewportUpdate = useCallback(
+    (updater: (previous: Viewport) => Viewport) => {
+      const baseViewport = pendingViewportRef.current ?? viewportRef.current;
+      const nextViewport = updater(baseViewport);
+      pendingViewportRef.current = nextViewport;
+
+      if (viewportRafIdRef.current === null) {
+        viewportRafIdRef.current = requestAnimationFrame(flushViewportUpdate);
+      }
+    },
+    [flushViewportUpdate],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (viewportRafIdRef.current !== null) {
+        cancelAnimationFrame(viewportRafIdRef.current);
+      }
+    };
+  }, []);
 
   const handleSelect = useCallback(
     (id: string, e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -56,16 +94,18 @@ export function useCanvasInteractions(
     (e: Konva.KonvaEventObject<WheelEvent>) => {
       e.evt.preventDefault();
 
+      const currentViewport = viewportRef.current;
+
       if (e.evt.ctrlKey) {
         // Pinch-to-zoom
-        const oldScale = viewport.scale;
+        const oldScale = currentViewport.scale;
         const stage = e.target.getStage();
         const pointer = stage?.getPointerPosition();
         if (!pointer) return;
 
         const mousePointTo = {
-          x: (pointer.x - viewport.x) / oldScale,
-          y: (pointer.y - viewport.y) / oldScale,
+          x: (pointer.x - currentViewport.x) / oldScale,
+          y: (pointer.y - currentViewport.y) / oldScale,
         };
 
         const scaleBy = 1.01;
@@ -83,20 +123,20 @@ export function useCanvasInteractions(
           y: pointer.y - mousePointTo.y * scale,
         };
 
-        setViewport({ x: newPos.x, y: newPos.y, scale });
+        scheduleViewportUpdate(() => ({ x: newPos.x, y: newPos.y, scale }));
       } else {
         // Pan
         const deltaX = e.evt.shiftKey ? e.evt.deltaY : e.evt.deltaX;
         const deltaY = e.evt.shiftKey ? 0 : e.evt.deltaY;
 
-        setViewport({
-          ...viewport,
-          x: viewport.x - deltaX,
-          y: viewport.y - deltaY,
-        });
+        scheduleViewportUpdate((prev) => ({
+          ...prev,
+          x: prev.x - deltaX,
+          y: prev.y - deltaY,
+        }));
       }
     },
-    [viewport, setViewport],
+    [scheduleViewportUpdate],
   );
 
   const handleMouseDown = useCallback(
@@ -136,12 +176,6 @@ export function useCanvasInteractions(
     [setSelectedIds],
   );
 
-  // Use refs to avoid recreating callbacks on every viewport change
-  const viewportRef = useRef(viewport);
-  useEffect(() => {
-    viewportRef.current = viewport;
-  }, [viewport]);
-
   const handleMouseMove = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent>) => {
       const stage = e.target.getStage();
@@ -151,11 +185,11 @@ export function useCanvasInteractions(
         const deltaX = e.evt.clientX - lastPanPosition.x;
         const deltaY = e.evt.clientY - lastPanPosition.y;
 
-        setViewport({
-          ...currentViewport,
-          x: currentViewport.x + deltaX,
-          y: currentViewport.y + deltaY,
-        });
+        scheduleViewportUpdate((prev) => ({
+          ...prev,
+          x: prev.x + deltaX,
+          y: prev.y + deltaY,
+        }));
 
         setLastPanPosition({ x: e.evt.clientX, y: e.evt.clientY });
         return;
@@ -177,7 +211,7 @@ export function useCanvasInteractions(
         }));
       }
     },
-    [isPanningCanvas, lastPanPosition, isSelecting, setViewport],
+    [isPanningCanvas, lastPanPosition, isSelecting, scheduleViewportUpdate],
   );
 
   const handleMouseUp = useCallback(
@@ -229,12 +263,12 @@ export function useCanvasInteractions(
       setSelectionBox({ ...selectionBox, visible: false });
     },
     [
+      images,
       isPanningCanvas,
       isSelecting,
       selectionBox,
-      images,
-      videos,
       setSelectedIds,
+      videos,
     ],
   );
 
@@ -264,9 +298,10 @@ export function useCanvasInteractions(
         if (stage) {
           const pos = stage.getPointerPosition();
           if (pos) {
+            const currentViewport = viewportRef.current;
             const canvasPos = {
-              x: (pos.x - viewport.x) / viewport.scale,
-              y: (pos.y - viewport.y) / viewport.scale,
+              x: (pos.x - currentViewport.x) / currentViewport.scale,
+              y: (pos.y - currentViewport.y) / currentViewport.scale,
             };
 
             const touchedImage = images.some((img) => {
@@ -285,7 +320,7 @@ export function useCanvasInteractions(
         setLastTouchCenter(touch);
       }
     },
-    [viewport, images],
+    [images],
   );
 
   const handleTouchMove = useCallback(
@@ -307,10 +342,11 @@ export function useCanvasInteractions(
           y: (touch1.y + touch2.y) / 2,
         };
 
+        const currentViewport = viewportRef.current;
         const scaleFactor = distance / lastTouchDistance;
         const newScale = Math.max(
           0.1,
-          Math.min(5, viewport.scale * scaleFactor),
+          Math.min(5, currentViewport.scale * scaleFactor),
         );
 
         const stage = e.target.getStage();
@@ -322,8 +358,8 @@ export function useCanvasInteractions(
           };
 
           const mousePointTo = {
-            x: (stageCenter.x - viewport.x) / viewport.scale,
-            y: (stageCenter.y - viewport.y) / viewport.scale,
+            x: (stageCenter.x - currentViewport.x) / currentViewport.scale,
+            y: (stageCenter.y - currentViewport.y) / currentViewport.scale,
           };
 
           const newPos = {
@@ -331,7 +367,11 @@ export function useCanvasInteractions(
             y: stageCenter.y - mousePointTo.y * newScale,
           };
 
-          setViewport({ x: newPos.x, y: newPos.y, scale: newScale });
+          scheduleViewportUpdate(() => ({
+            x: newPos.x,
+            y: newPos.y,
+            scale: newScale,
+          }));
         }
 
         setLastTouchDistance(distance);
@@ -352,23 +392,22 @@ export function useCanvasInteractions(
         const deltaX = touch.x - lastTouchCenter.x;
         const deltaY = touch.y - lastTouchCenter.y;
 
-        setViewport({
-          ...viewport,
-          x: viewport.x + deltaX,
-          y: viewport.y + deltaY,
-        });
+        scheduleViewportUpdate((prev) => ({
+          ...prev,
+          x: prev.x + deltaX,
+          y: prev.y + deltaY,
+        }));
 
         setLastTouchCenter(touch);
       }
     },
     [
-      lastTouchDistance,
-      lastTouchCenter,
-      viewport,
-      isSelecting,
       isDraggingImage,
+      isSelecting,
       isTouchingImage,
-      setViewport,
+      lastTouchCenter,
+      lastTouchDistance,
+      scheduleViewportUpdate,
     ],
   );
 
@@ -382,20 +421,20 @@ export function useCanvasInteractions(
   );
 
   return {
-    selectionBox,
-    isSelecting,
-    isPanningCanvas,
-    isDraggingImage,
-    setIsDraggingImage,
     dragStartPositions,
-    setDragStartPositions,
-    handleSelect,
-    handleWheel,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
-    handleTouchStart,
-    handleTouchMove,
+    handleSelect,
     handleTouchEnd,
+    handleTouchMove,
+    handleTouchStart,
+    handleWheel,
+    isDraggingImage,
+    isPanningCanvas,
+    isSelecting,
+    selectionBox,
+    setDragStartPositions,
+    setIsDraggingImage,
   };
 }
