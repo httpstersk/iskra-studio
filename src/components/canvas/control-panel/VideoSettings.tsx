@@ -42,7 +42,7 @@ export function VideoSettings({
         value={useSoraPro ? "pro" : "off"}
         onValueChange={(value) => setUseSoraPro(value === "pro")}
         options={[
-          { value: "off", label: "Off" },
+          { value: "off", label: "Normal" },
           { value: "pro", label: "Pro" },
         ]}
         activeColor="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
