@@ -30,6 +30,7 @@ import { useCanvasState } from "@/hooks/useCanvasState-jotai";
 import { useDefaultImages } from "@/hooks/useDefaultImages";
 import { useFalClient } from "@/hooks/useFalClient";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { useGenerationHandlers } from "@/hooks/useGenerationHandlers";
 import { useGenerationState } from "@/hooks/useGenerationState-jotai";
 import { useHistoryHandlers } from "@/hooks/useHistoryHandlers";
 import { useHistoryState } from "@/hooks/useHistoryState-jotai";
@@ -38,14 +39,13 @@ import { useProjectSync } from "@/hooks/useProjectSync";
 import { useProjects } from "@/hooks/useProjects";
 import { useStorage } from "@/hooks/useStorage";
 import { useStreamingHandlers } from "@/hooks/useStreamingHandlers";
+import { useUIHandlers } from "@/hooks/useUIHandlers";
 import { useUIState } from "@/hooks/useUIState-jotai";
-import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
-import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import Konva from "konva";
 import { useTheme } from "next-themes";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 /**
  * Main Canvas Client Component
@@ -145,129 +145,42 @@ export function CanvasPageClient() {
     videos: canvasState.videos,
   });
 
-  const handleImageDoubleClick = useCallback(
-    (imageId: string) => {
-      if (
-        canvasState.selectedIds.includes(imageId) &&
-        uiState.variationMode === "image"
-      ) {
-        const currentCount = uiState.generationCount;
-        let newCount: number;
+  const { handleImageDoubleClick, handleVariationModeChange } = useUIHandlers({
+    generationCount: uiState.generationCount,
+    selectedIds: canvasState.selectedIds,
+    setGenerationCount: uiState.setGenerationCount,
+    setVariationMode: uiState.setVariationMode,
+    variationMode: uiState.variationMode,
+  });
 
-        if (currentCount === 4) {
-          newCount = 8;
-        } else if (currentCount === 8) {
-          newCount = 12;
-        } else {
-          newCount = 4;
-        }
-
-        uiState.setGenerationCount(newCount);
-      }
-    },
-    [canvasState.selectedIds, uiState]
-  );
-
-  const handleVariationModeChange = useCallback(
-    (mode: "image" | "video") => {
-      uiState.setVariationMode(mode);
-      if (mode === "video") {
-        uiState.setGenerationCount(4);
-      }
-    },
-    [uiState]
-  );
-
-  const handleRun = useCallback(async () => {
-    if (!isAuthenticated) {
-      setShowSignInPrompt(true);
-      return;
-    }
-
-    const isVariationMode =
-      canvasState.selectedIds.length === 1 &&
-      (uiState.variationMode === "image" || uiState.variationMode === "video");
-
-    if (isVariationMode) {
-      await handleVariationGeneration({
-        falClient,
-        userId: userId ?? undefined,
-        images: canvasState.images,
-        selectedIds: canvasState.selectedIds,
-        setActiveGenerations: generationState.setActiveGenerations,
-        setActiveVideoGenerations: generationState.setActiveVideoGenerations,
-        setImages: canvasState.setImages,
-        setIsGenerating: generationState.setIsGenerating,
-        setVideos: canvasState.setVideos,
-        toast,
-        variationCount: uiState.generationCount,
-        variationMode: uiState.variationMode,
-        imageVariationType: uiState.imageVariationType,
-        imageModel: uiState.imageModel,
-        variationPrompt: generationState.generationSettings.variationPrompt,
-        videoSettings: {
-          aspectRatio: "auto",
-          duration: generationState.videoDuration,
-          modelId: generationState.useSoraPro ? "sora-2-pro" : "sora-2",
-          prompt: generationState.generationSettings.variationPrompt || "",
-          resolution: generationState.videoResolution,
-        },
-        viewport: canvasState.viewport,
-      });
-    } else {
-      await handleRunHandler({
-        canvasSize: canvasState.canvasSize,
-        falClient,
-        generateTextToImage,
-        generationSettings: generationState.generationSettings,
-        images: canvasState.images,
-        selectedIds: canvasState.selectedIds,
-        setActiveGenerations: generationState.setActiveGenerations,
-        setImages: canvasState.setImages,
-        setIsGenerating: generationState.setIsGenerating,
-        setSelectedIds: canvasState.setSelectedIds,
-        toast,
-        viewport: canvasState.viewport,
-      });
-    }
-  }, [
-    isAuthenticated,
-    canvasState.canvasSize,
-    canvasState.images,
-    canvasState.selectedIds,
-    canvasState.setImages,
-    canvasState.setSelectedIds,
-    canvasState.setVideos,
-    canvasState.viewport,
+  const { handleConvertToVideo, handleRun } = useGenerationHandlers({
+    canvasSize: canvasState.canvasSize,
     falClient,
     generateTextToImage,
-    generationState.generationSettings,
-    generationState.setActiveGenerations,
-    generationState.setActiveVideoGenerations,
-    generationState.setIsGenerating,
-    generationState.useSoraPro,
-    generationState.videoDuration,
-    generationState.videoResolution,
+    generationCount: uiState.generationCount,
+    generationSettings: generationState.generationSettings,
+    imageModel: uiState.imageModel,
+    imageVariationType: uiState.imageVariationType,
+    images: canvasState.images,
+    isAuthenticated,
+    selectedIds: canvasState.selectedIds,
+    setActiveGenerations: generationState.setActiveGenerations,
+    setActiveVideoGenerations: generationState.setActiveVideoGenerations,
+    setImages: canvasState.setImages,
+    setIsGenerating: generationState.setIsGenerating,
+    setIsImageToVideoDialogOpen: uiState.setIsImageToVideoDialogOpen,
+    setSelectedIds: canvasState.setSelectedIds,
+    setSelectedImageForVideo: uiState.setSelectedImageForVideo,
+    setShowSignInPrompt,
+    setVideos: canvasState.setVideos,
     toast,
-    uiState.generationCount,
-    uiState.imageVariationType,
-    uiState.variationMode,
-  ]);
-
-  const handleConvertToVideo = useCallback(
-    (imageId: string) => {
-      if (!isAuthenticated) {
-        setShowSignInPrompt(true);
-        return;
-      }
-
-      const image = canvasState.images.find((img) => img.id === imageId);
-      if (!image) return;
-      uiState.setIsImageToVideoDialogOpen(true);
-      uiState.setSelectedImageForVideo(imageId);
-    },
-    [isAuthenticated, canvasState.images, uiState]
-  );
+    useSoraPro: generationState.useSoraPro,
+    userId,
+    variationMode: uiState.variationMode,
+    videoDuration: generationState.videoDuration,
+    videoResolution: generationState.videoResolution,
+    viewport: canvasState.viewport,
+  });
 
   const {
     handleStreamingImageComplete,

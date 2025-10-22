@@ -2,11 +2,6 @@
 import { withBotId } from "botid/next/config";
 
 const nextConfig = {
-  api: {
-    bodyParser: {
-      sizeLimit: "50mb",
-    },
-  },
   devIndicators: false,
   images: {
     domains: ["fal.ai", "storage.googleapis.com"],

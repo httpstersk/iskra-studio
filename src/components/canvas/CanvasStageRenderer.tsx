@@ -450,8 +450,6 @@ export function CanvasStageRenderer({
               onChange={handleVideoChange(video.id)}
               onDragEnd={() => handleVideoDragEnd(video.id)}
               onDragStart={() => handleVideoDragStart(video.id)}
-              onResizeEnd={handleVideoResizeEnd(video.id)}
-              onResizeStart={handleVideoResizeStart(video.id)}
               onSelect={(e) => interactions.handleSelect(video.id, e)}
               selectedIds={selectedIds}
               setVideos={setVideos}

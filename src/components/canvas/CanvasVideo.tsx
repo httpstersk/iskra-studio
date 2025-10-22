@@ -145,14 +145,17 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
     onDragEnd();
   }, [onDragEnd, reset]);
 
-  const handleMouseDown = useCallback((e: Konva.KonvaEventObject<MouseEvent>) => {
-    const isLeftButton = e.evt.button === 0;
-    setIsDraggable(isLeftButton);
+  const handleMouseDown = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
+      const isLeftButton = e.evt.button === 0;
+      setIsDraggable(isLeftButton);
 
-    if (e.evt.button === 1) {
-      return;
-    }
-  }, []);
+      if (e.evt.button === 1) {
+        return;
+      }
+    },
+    []
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDraggable(true);
