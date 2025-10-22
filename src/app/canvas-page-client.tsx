@@ -599,6 +599,28 @@ export function CanvasPageClient() {
         }
       }
 
+      // Generate pixelated overlay for variations
+      let pixelatedSrc: string | undefined;
+      if (isVariation) {
+        try {
+          const { generatePixelatedOverlay } = await import(
+            "@/utils/image-pixelation-helper"
+          );
+
+          // Find the current image to get its dimensions
+          const currentImage = canvasState.images.find((img) => img.id === id);
+          if (currentImage) {
+            pixelatedSrc = await generatePixelatedOverlay(
+              convexUrl,
+              currentImage.width,
+              currentImage.height
+            );
+          }
+        } catch (error) {
+          console.error("Failed to generate pixelated overlay:", error);
+        }
+      }
+
       canvasState.setImages((prev) =>
         prev.map((img) =>
           img.id === id
@@ -611,6 +633,7 @@ export function CanvasPageClient() {
                 src: img.displayAsThumbnail && thumbnailUrl ? thumbnailUrl : convexUrl,
                 thumbnailSrc: thumbnailUrl,
                 fullSizeSrc: img.displayAsThumbnail ? convexUrl : undefined,
+                pixelatedSrc,
                 naturalWidth,
                 naturalHeight,
               }

@@ -11,6 +11,7 @@ export interface PlacedImage {
   naturalWidth?: number;
   opacity?: number;
   parentGroupId?: string;
+  pixelatedSrc?: string;
   rotation: number;
   src: string;
   thumbnailSrc?: string;

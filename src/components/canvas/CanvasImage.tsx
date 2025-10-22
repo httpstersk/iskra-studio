@@ -100,6 +100,22 @@ const useCanvasImageSource = (
 };
 
 /**
+ * Custom hook to load pixelated overlay image if available.
+ * Returns the pixelated image element when pixelatedSrc is provided.
+ * 
+ * @param pixelatedSrc - Optional pixelated overlay source URL
+ * @returns Loaded pixelated image element or undefined
+ */
+const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
+  const [pixelatedImg] = useImageCache(pixelatedSrc || "", "anonymous");
+  
+  return useMemo(
+    () => (pixelatedSrc ? pixelatedImg : undefined),
+    [pixelatedSrc, pixelatedImg]
+  );
+};
+
+/**
  * Custom hook to throttle updates to 60fps for optimal performance.
  * Returns a function that checks if enough time has passed since last update.
  *
@@ -172,6 +188,9 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     !!image.displayAsThumbnail
   );
 
+  // Get pixelated overlay if available
+  const pixelatedImg = usePixelatedOverlay(image.pixelatedSrc);
+
   // Handle loading and fade-in animations
   const { displayOpacity } = useImageAnimation({
     isLoading: !!image.isLoading,
@@ -182,6 +201,10 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   // Use explicit opacity if set, otherwise use animation opacity
   const finalOpacity =
     image.opacity !== undefined ? image.opacity : displayOpacity;
+
+  // When pixelated overlay is present, reduce reference image opacity
+  const referenceOpacity = pixelatedImg ? finalOpacity * 0.4 : finalOpacity;
+  const overlayOpacity = finalOpacity;
 
   // Handle drag behavior
   const { handleDragMove, handleDragEnd: handleDragEndInternal } = useImageDrag(
@@ -232,6 +255,60 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     [onDoubleClick, image.id]
   );
 
+  // If pixelated overlay exists, render both reference and overlay
+  if (pixelatedImg) {
+    return (
+      <>
+        {/* Reference image at reduced opacity */}
+        <KonvaImage
+          draggable={false}
+          height={image.height}
+          id={`${image.id}-reference`}
+          image={img}
+          imageSmoothingEnabled={true}
+          listening={false}
+          opacity={referenceOpacity}
+          perfectDrawEnabled={false}
+          rotation={image.rotation}
+          shadowForStrokeEnabled={false}
+          width={image.width}
+          x={image.x}
+          y={image.y}
+        />
+        {/* Pixelated overlay with full interactivity */}
+        <KonvaImage
+          draggable={isDraggable}
+          height={image.height}
+          id={image.id}
+          image={pixelatedImg}
+          imageSmoothingEnabled={false}
+          onClick={onSelect}
+          onDblClick={handleDoubleClickWrapper}
+          onDragEnd={handleDragEndWrapper}
+          onDragMove={handleDragMove}
+          onDragStart={handleDragStartInternal}
+          onMouseDown={handleMouseDown}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onTap={onSelect}
+          opacity={overlayOpacity}
+          perfectDrawEnabled={false}
+          ref={shapeRef}
+          rotation={image.rotation}
+          stroke={strokeColor}
+          shadowForStrokeEnabled={false}
+          strokeScaleEnabled={false}
+          strokeWidth={strokeWidth}
+          width={image.width}
+          x={image.x}
+          y={image.y}
+        />
+      </>
+    );
+  }
+
+  // Default rendering without pixelated overlay
   return (
     <KonvaImage
       draggable={isDraggable}
