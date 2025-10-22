@@ -21,38 +21,26 @@ import { ZoomControls } from "@/components/canvas/ZoomControls";
 import { CanvasHeader } from "@/components/layout/canvas-header";
 import { ProjectPanel } from "@/components/projects/project-panel";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
-import { ANIMATION, ARIA_LABELS, CANVAS_STRINGS } from "@/constants/canvas";
+import { ARIA_LABELS } from "@/constants/canvas";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useCanvasHandlers } from "@/hooks/useCanvasHandlers";
 import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
 import { useCanvasState } from "@/hooks/useCanvasState-jotai";
 import { useDefaultImages } from "@/hooks/useDefaultImages";
 import { useFalClient } from "@/hooks/useFalClient";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useGenerationState } from "@/hooks/useGenerationState-jotai";
+import { useHistoryHandlers } from "@/hooks/useHistoryHandlers";
 import { useHistoryState } from "@/hooks/useHistoryState-jotai";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useProjectSync } from "@/hooks/useProjectSync";
 import { useProjects } from "@/hooks/useProjects";
 import { useStorage } from "@/hooks/useStorage";
+import { useStreamingHandlers } from "@/hooks/useStreamingHandlers";
 import { useUIState } from "@/hooks/useUIState-jotai";
 import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
-import {
-  combineImages,
-  deleteElements,
-  duplicateElements,
-} from "@/lib/handlers/image-handlers";
-import {
-  bringForward as bringForwardHandler,
-  sendBackward as sendBackwardHandler,
-  sendToBack as sendToBackHandler,
-  sendToFront as sendToFrontHandler,
-} from "@/lib/handlers/layer-handlers";
 import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
-import {
-  dismissToast,
-  handleVideoCompletion,
-} from "@/lib/handlers/video-generation-handlers";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import Konva from "konva";
@@ -127,97 +115,35 @@ export function CanvasPageClient() {
     canvasState.setImages
   );
 
-  const handleUndo = useCallback(() => {
-    const result = historyState.undo();
-    if (result) {
-      canvasState.setImages(result.images);
-      canvasState.setSelectedIds(result.selectedIds);
-      canvasState.setVideos(result.videos);
-      historyState.setHistoryIndex(result.newIndex);
-    }
-  }, [
-    canvasState.setImages,
-    canvasState.setSelectedIds,
-    canvasState.setVideos,
-    historyState,
-  ]);
+  const { handleRedo, handleUndo } = useHistoryHandlers({
+    canRedo: historyState.canRedo,
+    canUndo: historyState.canUndo,
+    redo: historyState.redo,
+    setImages: canvasState.setImages,
+    setSelectedIds: canvasState.setSelectedIds,
+    setVideos: canvasState.setVideos,
+    undo: historyState.undo,
+    updateHistoryIndex: historyState.setHistoryIndex,
+  });
 
-  const handleRedo = useCallback(() => {
-    const result = historyState.redo();
-    if (result) {
-      canvasState.setImages(result.images);
-      canvasState.setSelectedIds(result.selectedIds);
-      canvasState.setVideos(result.videos);
-      historyState.setHistoryIndex(result.newIndex);
-    }
-  }, [
-    canvasState.setImages,
-    canvasState.setSelectedIds,
-    canvasState.setVideos,
-    historyState,
-  ]);
-
-  const handleBringForward = useCallback(() => {
-    if (canvasState.selectedIds.length === 0) return;
-    historyState.saveToHistory();
-    canvasState.setImages(
-      bringForwardHandler(canvasState.images, canvasState.selectedIds)
-    );
-  }, [canvasState, historyState]);
-
-  const handleCombineImages = useCallback(async () => {
-    if (canvasState.selectedIds.length < 2) return;
-    historyState.saveToHistory();
-
-    try {
-      const combinedImage = await combineImages(
-        canvasState.images,
-        canvasState.selectedIds
-      );
-      canvasState.setImages((prev) => [
-        ...prev.filter((img) => !canvasState.selectedIds.includes(img.id)),
-        combinedImage,
-      ]);
-      canvasState.setSelectedIds([combinedImage.id]);
-    } catch (error) {
-      console.error("Failed to combine images:", error);
-      toast({
-        description:
-          error instanceof Error
-            ? error.message
-            : CANVAS_STRINGS.ERRORS.UNKNOWN_ERROR,
-        title: CANVAS_STRINGS.ERRORS.COMBINE_FAILED,
-        variant: "destructive",
-      });
-    }
-  }, [canvasState, historyState, toast]);
-
-  const handleDelete = useCallback(() => {
-    historyState.saveToHistory();
-    const { newImages, newVideos } = deleteElements(
-      canvasState.images,
-      canvasState.videos,
-      canvasState.selectedIds
-    );
-    canvasState.setImages(newImages);
-    canvasState.setSelectedIds([]);
-    canvasState.setVideos(newVideos);
-  }, [canvasState, historyState]);
-
-  const handleDuplicate = useCallback(() => {
-    historyState.saveToHistory();
-    const { newImages, newVideos } = duplicateElements(
-      canvasState.images,
-      canvasState.videos,
-      canvasState.selectedIds
-    );
-    canvasState.setImages((prev) => [...prev, ...newImages]);
-    canvasState.setVideos((prev) => [...prev, ...newVideos]);
-    canvasState.setSelectedIds([
-      ...newImages.map((img) => img.id),
-      ...newVideos.map((vid) => vid.id),
-    ]);
-  }, [canvasState, historyState]);
+  const {
+    handleBringForward,
+    handleCombineImages,
+    handleDelete,
+    handleDuplicate,
+    handleSendBackward,
+    handleSendToBack,
+    handleSendToFront,
+  } = useCanvasHandlers({
+    images: canvasState.images,
+    saveToHistory: historyState.saveToHistory,
+    selectedIds: canvasState.selectedIds,
+    setImages: canvasState.setImages,
+    setSelectedIds: canvasState.setSelectedIds,
+    setVideos: canvasState.setVideos,
+    toast,
+    videos: canvasState.videos,
+  });
 
   const handleImageDoubleClick = useCallback(
     (imageId: string) => {
@@ -328,30 +254,6 @@ export function CanvasPageClient() {
     uiState.variationMode,
   ]);
 
-  const handleSendBackward = useCallback(() => {
-    if (canvasState.selectedIds.length === 0) return;
-    historyState.saveToHistory();
-    canvasState.setImages(
-      sendBackwardHandler(canvasState.images, canvasState.selectedIds)
-    );
-  }, [canvasState, historyState]);
-
-  const handleSendToBack = useCallback(() => {
-    if (canvasState.selectedIds.length === 0) return;
-    historyState.saveToHistory();
-    canvasState.setImages(
-      sendToBackHandler(canvasState.images, canvasState.selectedIds)
-    );
-  }, [canvasState, historyState]);
-
-  const handleSendToFront = useCallback(() => {
-    if (canvasState.selectedIds.length === 0) return;
-    historyState.saveToHistory();
-    canvasState.setImages(
-      sendToFrontHandler(canvasState.images, canvasState.selectedIds)
-    );
-  }, [canvasState, historyState]);
-
   const handleConvertToVideo = useCallback(
     (imageId: string) => {
       if (!isAuthenticated) {
@@ -367,344 +269,32 @@ export function CanvasPageClient() {
     [isAuthenticated, canvasState.images, uiState]
   );
 
-  const handleVideoGenerationComplete = useCallback(
-    async (videoId: string, videoUrl: string, duration: number) => {
-      try {
-        const generation = generationState.activeVideoGenerations.get(videoId);
-
-        if (generation?.toastId) {
-          dismissToast(generation.toastId);
-        }
-
-        // Extract actual video dimensions before upload
-        let naturalWidth: number | undefined;
-        let naturalHeight: number | undefined;
-
-        try {
-          const videoElement = document.createElement("video");
-          videoElement.crossOrigin = "anonymous";
-          await new Promise((resolve, reject) => {
-            videoElement.onloadedmetadata = resolve;
-            videoElement.onerror = reject;
-            videoElement.src = videoUrl;
-          });
-          naturalWidth = videoElement.videoWidth;
-          naturalHeight = videoElement.videoHeight;
-        } catch (error) {
-          console.warn("Failed to extract dimensions from video:", error);
-        }
-
-        let convexUrl = videoUrl;
-        if (isAuthenticated) {
-          try {
-            const { uploadGeneratedAssetToConvex } = await import(
-              "@/lib/storage/upload-generated-asset"
-            );
-
-            const uploadResult = await uploadGeneratedAssetToConvex({
-              sourceUrl: videoUrl,
-              assetType: "video",
-              metadata: {
-                prompt: generation?.prompt,
-                width: naturalWidth,
-                height: naturalHeight,
-                duration,
-                model: generation?.modelId,
-              },
-            });
-
-            convexUrl = uploadResult.url;
-          } catch (error) {
-            console.error(
-              `[Video Generation] Failed to upload to Convex:`,
-              error
-            );
-          }
-        }
-
-        if (generation?.isVariation) {
-          canvasState.setVideos((prev) => {
-            return prev.map((video) =>
-              video.id === videoId
-                ? {
-                    ...video,
-                    src: convexUrl,
-                    duration,
-                    isLoading: false,
-                  }
-                : video
-            );
-          });
-
-          generationState.setActiveVideoGenerations((prev) => {
-            const newMap = new Map(prev);
-            newMap.delete(videoId);
-            return newMap;
-          });
-
-          if (generationState.activeVideoGenerations.size === 1) {
-            historyState.saveToHistory();
-            toast({
-              title: "Video variations complete",
-              description: "All 4 cinematic videos have been generated",
-            });
-          }
-
-          generationState.setIsConvertingToVideo(false);
-          return;
-        }
-
-        const { newVideo } = handleVideoCompletion(
-          videoId,
-          convexUrl,
-          duration,
-          generation || null,
-          canvasState.images,
-          uiState.selectedImageForVideo
-        );
-
-        if (newVideo) {
-          canvasState.setVideos((prev) => [...prev, newVideo]);
-          historyState.saveToHistory();
-          toast({
-            title: CANVAS_STRINGS.SUCCESS.VIDEO_CREATED,
-          });
-        }
-
-        generationState.setActiveVideoGenerations((prev) => {
-          const newMap = new Map(prev);
-          newMap.delete(videoId);
-          return newMap;
-        });
-        generationState.setIsConvertingToVideo(false);
-        uiState.setSelectedImageForVideo(null);
-      } catch (error) {
-        console.error("Error completing video generation:", error);
-        toast({
-          description:
-            error instanceof Error
-              ? error.message
-              : CANVAS_STRINGS.ERRORS.VIDEO_FAILED,
-          title: CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
-          variant: "destructive",
-        });
-      }
-    },
-    [
-      canvasState.images,
-      canvasState.setVideos,
-      canvasState.videos,
-      generationState.activeVideoGenerations,
-      generationState.setActiveVideoGenerations,
-      generationState.setIsConvertingToVideo,
-      historyState.saveToHistory,
-      isAuthenticated,
-      toast,
-      uiState.selectedImageForVideo,
-      uiState.setSelectedImageForVideo,
-    ]
-  );
-
-  const handleVideoGenerationError = useCallback(
-    (videoId: string, error: string) => {
-      console.error("Video generation error:", error);
-      toast({
-        description: error,
-        title: CANVAS_STRINGS.ERRORS.VIDEO_GENERATION_FAILED,
-        variant: "destructive",
-      });
-      generationState.setActiveVideoGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.delete(videoId);
-        return newMap;
-      });
-    },
-    [generationState.setActiveVideoGenerations, toast]
-  );
-
-  const handleVideoGenerationProgress = useCallback(
-    (videoId: string, progress: number, status: string) => {
-      console.log(`Video generation progress: ${progress}% - ${status}`);
-    },
-    []
-  );
-
-  const handleStreamingImageComplete = useCallback(
-    async (id: string, finalUrl: string) => {
-      const isVariation = id.startsWith("variation-");
-
-      let variationBatchTimestamp: string | null = null;
-      if (isVariation) {
-        const match = id.match(/^variation-(\d+)-\d+$/);
-        if (match) {
-          variationBatchTimestamp = match[1];
-        }
-      }
-
-      // Get generation metadata early for natural dimensions
-      const generation = generationState.activeGenerations.get(id);
-
-      // Extract natural dimensions from generation metadata
-      let naturalWidth: number | undefined;
-      let naturalHeight: number | undefined;
-
-      if (generation?.imageSize && typeof generation.imageSize === "object") {
-        naturalWidth = generation.imageSize.width;
-        naturalHeight = generation.imageSize.height;
-      }
-
-      // If dimensions are not available from generation metadata, try to extract from image
-      if (!naturalWidth || !naturalHeight) {
-        try {
-          const img = new window.Image();
-          img.crossOrigin = "anonymous";
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = finalUrl;
-          });
-          naturalWidth = img.naturalWidth;
-          naturalHeight = img.naturalHeight;
-        } catch (error) {
-          console.warn("Failed to extract dimensions from image:", error);
-        }
-      }
-
-      let convexUrl = finalUrl;
-      let thumbnailUrl: string | undefined;
-
-      if (isAuthenticated) {
-        try {
-          const { uploadGeneratedAssetToConvex } = await import(
-            "@/lib/storage/upload-generated-asset"
-          );
-
-          const uploadResult = await uploadGeneratedAssetToConvex({
-            sourceUrl: finalUrl,
-            assetType: "image",
-            metadata: {
-              prompt: generation?.prompt,
-              width: naturalWidth,
-              height: naturalHeight,
-            },
-          });
-
-          convexUrl = uploadResult.url;
-          thumbnailUrl = uploadResult.thumbnailUrl;
-        } catch (error) {
-          console.error(
-            `[Image Generation] Failed to upload to Convex:`,
-            error
-          );
-        }
-      }
-
-      // Preserve existing pixelated overlay for variations
-      // The overlay was already generated from the source image when placeholders were created
-      const currentImage = canvasState.images.find((img) => img.id === id);
-      const pixelatedSrc = currentImage?.pixelatedSrc;
-
-      canvasState.setImages((prev) =>
-        prev.map((img) =>
-          img.id === id
-            ? {
-                ...img,
-                isLoading: false,
-                opacity: 1.0,
-                // If displayAsThumbnail is true, store thumbnail in src and full-size in fullSizeSrc
-                // Otherwise, store full-size in src as usual
-                src: img.displayAsThumbnail && thumbnailUrl ? thumbnailUrl : convexUrl,
-                thumbnailSrc: thumbnailUrl,
-                fullSizeSrc: img.displayAsThumbnail ? convexUrl : undefined,
-                pixelatedSrc,
-                naturalWidth,
-                naturalHeight,
-              }
-            : img
-        )
-      );
-
-      generationState.setActiveGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.delete(id);
-
-        if (variationBatchTimestamp && newMap.size > 0) {
-          const hasMoreFromBatch = Array.from(newMap.keys()).some((key) =>
-            key.startsWith(`variation-${variationBatchTimestamp}-`)
-          );
-
-          if (!hasMoreFromBatch) {
-            canvasState.setSelectedIds([]);
-          }
-        }
-
-        if (newMap.size === 0) {
-          generationState.setIsGenerating(false);
-          if (isVariation) {
-            canvasState.setSelectedIds([]);
-          }
-        }
-
-        return newMap;
-      });
-
-      // Delay save to allow animation to complete before potentially blocking storage operation
-      setTimeout(() => saveToStorage(), ANIMATION.SAVE_DELAY);
-    },
-    [
-      canvasState.images,
-      canvasState.setImages,
-      canvasState.setSelectedIds,
-      generationState.activeGenerations,
-      generationState.setActiveGenerations,
-      generationState.setIsGenerating,
-      isAuthenticated,
-      saveToStorage,
-    ]
-  );
-
-  const handleStreamingImageError = useCallback(
-    (id: string, error: string) => {
-      console.error(`Generation error for ${id}:`, error);
-
-      canvasState.setImages((prev) => prev.filter((img) => img.id !== id));
-
-      generationState.setActiveGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.delete(id);
-
-        if (newMap.size === 0) {
-          generationState.setIsGenerating(false);
-        }
-
-        return newMap;
-      });
-
-      const isVariation = id.startsWith("variation-");
-      toast({
-        description: isVariation ? "One variation failed to generate" : error,
-        title: isVariation
-          ? "Variation failed"
-          : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
-        variant: "destructive",
-      });
-    },
-    [
-      canvasState.setImages,
-      generationState.setActiveGenerations,
-      generationState.setIsGenerating,
-      toast,
-    ]
-  );
-
-  const handleStreamingImageUpdate = useCallback(
-    (id: string, url: string) => {
-      canvasState.setImages((prev) =>
-        prev.map((img) => (img.id === id ? { ...img, src: url } : img))
-      );
-    },
-    [canvasState.setImages]
-  );
+  const {
+    handleStreamingImageComplete,
+    handleStreamingImageError,
+    handleStreamingImageUpdate,
+    handleVideoGenerationComplete,
+    handleVideoGenerationError,
+    handleVideoGenerationProgress,
+  } = useStreamingHandlers({
+    activeGenerations: generationState.activeGenerations,
+    activeVideoGenerations: generationState.activeVideoGenerations,
+    images: canvasState.images,
+    isAuthenticated,
+    saveToHistory: historyState.saveToHistory,
+    saveToStorage,
+    selectedImageForVideo: uiState.selectedImageForVideo,
+    setActiveGenerations: generationState.setActiveGenerations,
+    setActiveVideoGenerations: generationState.setActiveVideoGenerations,
+    setImages: canvasState.setImages,
+    setIsConvertingToVideo: generationState.setIsConvertingToVideo,
+    setIsGenerating: generationState.setIsGenerating,
+    setSelectedIds: canvasState.setSelectedIds,
+    setSelectedImageForVideo: uiState.setSelectedImageForVideo,
+    setVideos: canvasState.setVideos,
+    toast,
+    videos: canvasState.videos,
+  });
 
   useKeyboardShortcuts({
     bringForward: handleBringForward,
