@@ -606,15 +606,24 @@ export function CanvasPageClient() {
           const { generatePixelatedOverlay } = await import(
             "@/utils/image-pixelation-helper"
           );
+          const { cachePixelatedImage } = await import(
+            "@/components/canvas/CanvasImage"
+          );
 
           // Find the current image to get its dimensions
           const currentImage = canvasState.images.find((img) => img.id === id);
           if (currentImage) {
-            pixelatedSrc = await generatePixelatedOverlay(
+            const result = await generatePixelatedOverlay(
               convexUrl,
               currentImage.width,
               currentImage.height
             );
+            
+            if (result) {
+              pixelatedSrc = result.dataUrl;
+              // Cache the preloaded image for immediate rendering
+              cachePixelatedImage(result.dataUrl, result.image);
+            }
           }
         } catch (error) {
           console.error("Failed to generate pixelated overlay:", error);

@@ -18,7 +18,7 @@ import { useImageInteraction } from "@/hooks/useImageInteraction";
 import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
 import Konva from "konva";
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Image as KonvaImage } from "react-konva";
 
 /**
@@ -99,20 +99,41 @@ const useCanvasImageSource = (
   );
 };
 
+// Cache for preloaded pixelated images - allows immediate rendering
+const pixelatedImageCache = new Map<string, HTMLImageElement>();
+
+/**
+ * Store a preloaded pixelated image in the cache for immediate access
+ * @param dataUrl - Data URL of the pixelated image
+ * @param image - Preloaded image element
+ */
+export const cachePixelatedImage = (dataUrl: string, image: HTMLImageElement) => {
+  pixelatedImageCache.set(dataUrl, image);
+};
+
 /**
  * Custom hook to load pixelated overlay image if available.
- * Returns the pixelated image element when pixelatedSrc is provided.
+ * Checks cache first for immediate rendering, then falls back to loading.
  * 
  * @param pixelatedSrc - Optional pixelated overlay source URL
  * @returns Loaded pixelated image element or undefined
  */
 const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
-  const [pixelatedImg] = useImageCache(pixelatedSrc || "", "anonymous");
-  
-  return useMemo(
-    () => (pixelatedSrc ? pixelatedImg : undefined),
-    [pixelatedSrc, pixelatedImg]
+  const cachedImage = useMemo(
+    () => (pixelatedSrc ? pixelatedImageCache.get(pixelatedSrc) : undefined),
+    [pixelatedSrc]
   );
+
+  const [loadedImg] = useImageCache(
+    pixelatedSrc && !cachedImage ? pixelatedSrc : "",
+    "anonymous"
+  );
+
+  return useMemo(() => {
+    if (!pixelatedSrc) return undefined;
+    // Return cached image immediately if available, otherwise use loaded image
+    return cachedImage || loadedImg;
+  }, [pixelatedSrc, cachedImage, loadedImg]);
 };
 
 /**
@@ -133,6 +154,94 @@ const useFrameThrottle = (limitMs = 16) => {
     lastRef.current = now;
     return true;
   }, [limitMs]);
+};
+
+/**
+ * Transition animation configuration
+ */
+const TRANSITION_CONFIG = {
+  /** Duration of pixelated to full image transition in milliseconds */
+  DURATION: 1000,
+  /** Delay before starting transition after full image loads */
+  DELAY: 200,
+} as const;
+
+/**
+ * Easing function for smooth transition animation.
+ * Uses cubic ease-in-out curve for natural motion.
+ *
+ * @param t - Progress value between 0 and 1
+ * @returns Eased value between 0 and 1
+ */
+const easeInOutCubic = (t: number): number => 
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+/**
+ * Custom hook for animating transition from pixelated overlay to full image.
+ * 
+ * @param hasPixelated - Whether pixelated overlay is present
+ * @param hasFullImage - Whether full-size image has loaded
+ * @returns Opacity values for reference and pixelated layers
+ */
+const usePixelationTransition = (
+  hasPixelated: boolean,
+  hasFullImage: boolean
+) => {
+  const [transitionProgress, setTransitionProgress] = useState(0);
+  const animationFrameRef = useRef<number | undefined>(undefined);
+  const transitionStartTimeRef = useRef<number>(0);
+  const hasStartedRef = useRef(false);
+
+  useEffect(() => {
+    // Only start transition if we have pixelated overlay and full image is loaded
+    if (!hasPixelated || !hasFullImage || hasStartedRef.current) {
+      return;
+    }
+
+    // Mark transition as started
+    hasStartedRef.current = true;
+
+    // Delay start slightly for smoother UX
+    const delayTimeout = setTimeout(() => {
+      transitionStartTimeRef.current = performance.now();
+
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - transitionStartTimeRef.current;
+        const progress = Math.min(elapsed / TRANSITION_CONFIG.DURATION, 1);
+        const easedProgress = easeInOutCubic(progress);
+
+        setTransitionProgress(easedProgress);
+
+        if (progress < 1) {
+          animationFrameRef.current = requestAnimationFrame(animate);
+        }
+      };
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    }, TRANSITION_CONFIG.DELAY);
+
+    return () => {
+      clearTimeout(delayTimeout);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [hasPixelated, hasFullImage]);
+
+  // Calculate opacities based on transition progress
+  // Reference: 0.4 -> 1.0
+  // Pixelated: 1.0 -> 0.0
+  const referenceOpacity = useMemo(() => {
+    if (!hasPixelated) return 1.0;
+    return 0.4 + (0.6 * transitionProgress);
+  }, [hasPixelated, transitionProgress]);
+
+  const pixelatedOpacity = useMemo(() => {
+    if (!hasPixelated) return 0;
+    return 1.0 - transitionProgress;
+  }, [hasPixelated, transitionProgress]);
+
+  return { referenceOpacity, pixelatedOpacity, transitionComplete: transitionProgress >= 1 };
 };
 
 /**
@@ -198,13 +307,22 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     hasImage: !!img,
   });
 
+  // Handle transition from pixelated to full image
+  const { 
+    referenceOpacity: transitionRefOpacity, 
+    pixelatedOpacity: transitionPixelOpacity,
+    transitionComplete 
+  } = usePixelationTransition(!!pixelatedImg, !!img && !image.isLoading);
+
   // Use explicit opacity if set, otherwise use animation opacity
   const finalOpacity =
     image.opacity !== undefined ? image.opacity : displayOpacity;
 
-  // When pixelated overlay is present, reduce reference image opacity
-  const referenceOpacity = pixelatedImg ? finalOpacity * 0.4 : finalOpacity;
-  const overlayOpacity = finalOpacity;
+  // Calculate final opacities with transition
+  const referenceOpacity = pixelatedImg 
+    ? finalOpacity * transitionRefOpacity 
+    : finalOpacity;
+  const overlayOpacity = finalOpacity * transitionPixelOpacity;
 
   // Handle drag behavior
   const { handleDragMove, handleDragEnd: handleDragEndInternal } = useImageDrag(
@@ -255,11 +373,11 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     [onDoubleClick, image.id]
   );
 
-  // If pixelated overlay exists, render both reference and overlay
-  if (pixelatedImg) {
+  // If pixelated overlay exists and hasn't fully transitioned, render both layers
+  if (pixelatedImg && !transitionComplete) {
     return (
       <>
-        {/* Reference image at reduced opacity */}
+        {/* Reference image - fades from 0.4 to 1.0 opacity during transition */}
         <KonvaImage
           draggable={false}
           height={image.height}
@@ -275,7 +393,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
           x={image.x}
           y={image.y}
         />
-        {/* Pixelated overlay with full interactivity */}
+        {/* Pixelated overlay - fades from 1.0 to 0.0 opacity during transition */}
         <KonvaImage
           draggable={isDraggable}
           height={image.height}
