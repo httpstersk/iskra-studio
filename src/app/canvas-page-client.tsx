@@ -599,36 +599,10 @@ export function CanvasPageClient() {
         }
       }
 
-      // Generate pixelated overlay for variations
-      let pixelatedSrc: string | undefined;
-      if (isVariation) {
-        try {
-          const { generatePixelatedOverlay } = await import(
-            "@/utils/image-pixelation-helper"
-          );
-          const { cachePixelatedImage } = await import(
-            "@/components/canvas/CanvasImage"
-          );
-
-          // Find the current image to get its dimensions
-          const currentImage = canvasState.images.find((img) => img.id === id);
-          if (currentImage) {
-            const result = await generatePixelatedOverlay(
-              convexUrl,
-              currentImage.width,
-              currentImage.height
-            );
-            
-            if (result) {
-              pixelatedSrc = result.dataUrl;
-              // Cache the preloaded image for immediate rendering
-              cachePixelatedImage(result.dataUrl, result.image);
-            }
-          }
-        } catch (error) {
-          console.error("Failed to generate pixelated overlay:", error);
-        }
-      }
+      // Preserve existing pixelated overlay for variations
+      // The overlay was already generated from the source image when placeholders were created
+      const currentImage = canvasState.images.find((img) => img.id === id);
+      const pixelatedSrc = currentImage?.pixelatedSrc;
 
       canvasState.setImages((prev) =>
         prev.map((img) =>

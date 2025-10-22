@@ -378,22 +378,26 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     return (
       <>
         {/* Reference image - fades from 0.4 to 1.0 opacity during transition */}
-        <KonvaImage
-          draggable={false}
-          height={image.height}
-          id={`${image.id}-reference`}
-          image={img}
-          imageSmoothingEnabled={true}
-          listening={false}
-          opacity={referenceOpacity}
-          perfectDrawEnabled={false}
-          rotation={image.rotation}
-          shadowForStrokeEnabled={false}
-          width={image.width}
-          x={image.x}
-          y={image.y}
-        />
+        {/* Only render if reference image has loaded */}
+        {img && (
+          <KonvaImage
+            draggable={false}
+            height={image.height}
+            id={`${image.id}-reference`}
+            image={img}
+            imageSmoothingEnabled={true}
+            listening={false}
+            opacity={referenceOpacity}
+            perfectDrawEnabled={false}
+            rotation={image.rotation}
+            shadowForStrokeEnabled={false}
+            width={image.width}
+            x={image.x}
+            y={image.y}
+          />
+        )}
         {/* Pixelated overlay - fades from 1.0 to 0.0 opacity during transition */}
+        {/* Always render if pixelatedImg is available */}
         <KonvaImage
           draggable={isDraggable}
           height={image.height}

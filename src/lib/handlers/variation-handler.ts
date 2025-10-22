@@ -257,6 +257,31 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     selectedImage.height
   );
 
+  // Generate pixelated overlay from source image for immediate visual feedback
+  let pixelatedSrc: string | undefined;
+  try {
+    const { generatePixelatedOverlay } = await import(
+      "@/utils/image-pixelation-helper"
+    );
+    const { cachePixelatedImage } = await import(
+      "@/components/canvas/CanvasImage"
+    );
+
+    const result = await generatePixelatedOverlay(
+      selectedImage.src,
+      selectedImage.width,
+      selectedImage.height
+    );
+
+    if (result) {
+      pixelatedSrc = result.dataUrl;
+      // Cache the preloaded image for immediate rendering
+      cachePixelatedImage(result.dataUrl, result.image);
+    }
+  } catch (error) {
+    console.error("Failed to generate pixelated overlay for placeholders:", error);
+  }
+
   // OPTIMIZATION 1: Create placeholders IMMEDIATELY (optimistic UI)
   // Users see instant feedback before any async operations
 
@@ -280,7 +305,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         isGenerated: true,
         isLoading: true,
         rotation: 0,
-        src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+        src: selectedImage.src,
+        pixelatedSrc,
         width: selectedImage.width,
         x: position.x,
         y: position.y,
