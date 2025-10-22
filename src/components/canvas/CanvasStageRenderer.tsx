@@ -121,6 +121,7 @@ function getVisibleItems<
  * - Viewport culling: Only renders visible elements
  * - Memoized visible items calculation
  * - Efficient event delegation
+ * - React.memo to prevent unnecessary rerenders
  *
  * @component
  * @example
@@ -139,7 +140,7 @@ function getVisibleItems<
  * />
  * ```
  */
-export function CanvasStageRenderer({
+export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
   canvasSize,
   generationCount,
   images,
@@ -461,4 +462,4 @@ export function CanvasStageRenderer({
       </Stage>
     </>
   );
-}
+});

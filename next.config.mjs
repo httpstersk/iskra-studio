@@ -3,6 +3,9 @@ import { withBotId } from "botid/next/config";
 
 const nextConfig = {
   devIndicators: false,
+  experimental: {
+    reactCompiler: true,
+  },
   images: {
     domains: ["fal.ai", "storage.googleapis.com"],
     remotePatterns: [
@@ -20,7 +23,7 @@ const nextConfig = {
     // Ignore canvas module which is required by Konva in Node environments
     config.resolve.alias.canvas = false;
     config.resolve.alias.encoding = false;
-  
+
     return config;
   },
 };

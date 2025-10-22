@@ -12,14 +12,13 @@ import { CanvasContextMenu } from "@/components/canvas/CanvasContextMenu";
 import { CanvasControlPanel } from "@/components/canvas/CanvasControlPanel";
 import { CanvasDialogs } from "@/components/canvas/CanvasDialogs";
 import { CanvasStageRenderer } from "@/components/canvas/CanvasStageRenderer";
-import { DimensionDisplay } from "@/components/canvas/DimensionDisplay";
+import { DimensionDisplayWrapper } from "@/components/canvas/DimensionDisplayWrapper";
 import { MiniMap } from "@/components/canvas/MiniMap";
-import { StreamingImage } from "@/components/canvas/StreamingImage";
-import { StreamingVideo } from "@/components/canvas/StreamingVideo";
+import { ProjectPanelWrapper } from "@/components/canvas/ProjectPanelWrapper";
+import { StreamingGenerations } from "@/components/canvas/StreamingGenerations";
 import { VideoOverlays } from "@/components/canvas/VideoOverlays";
 import { ZoomControls } from "@/components/canvas/ZoomControls";
 import { CanvasHeader } from "@/components/layout/canvas-header";
-import { ProjectPanel } from "@/components/projects/project-panel";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { ARIA_LABELS } from "@/constants/canvas";
 import { useToast } from "@/hooks/use-toast";
@@ -45,7 +44,7 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import Konva from "konva";
 import { useTheme } from "next-themes";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 /**
  * Main Canvas Client Component
@@ -75,6 +74,10 @@ export function CanvasPageClient() {
   const projects = useProjects();
   const { restoreLastGoodState } = useProjectSync();
   const [isProjectsPanelOpen, setIsProjectsPanelOpen] = useState(true);
+
+  const handleToggleProjectsPanel = useCallback(() => {
+    setIsProjectsPanelOpen((prev) => !prev);
+  }, []);
 
   const interactions = useCanvasInteractions(
     canvasState.viewport,
@@ -243,27 +246,12 @@ export function CanvasPageClient() {
       <CanvasHeader />
 
       {isAuthenticated && (
-        <ProjectPanel
+        <ProjectPanelWrapper
           currentProjectId={projects.currentProject?._id}
           isOpen={isProjectsPanelOpen}
-          onToggle={() => setIsProjectsPanelOpen(!isProjectsPanelOpen)}
-          onOpenProject={async (projectId) => {
-            try {
-              await projects.loadProject(projectId as any);
-            } catch (error) {
-              // Restore last good state on error to prevent empty canvas
-              restoreLastGoodState();
-
-              toast({
-                title: "Failed to load project",
-                description:
-                  error instanceof Error
-                    ? error.message
-                    : "An error occurred while loading the project.",
-                variant: "destructive",
-              });
-            }
-          }}
+          loadProject={projects.loadProject}
+          onToggle={handleToggleProjectsPanel}
+          restoreLastGoodState={restoreLastGoodState}
         />
       )}
 
@@ -272,31 +260,16 @@ export function CanvasPageClient() {
         onOpenChange={setShowSignInPrompt}
       />
 
-      {Array.from(generationState.activeGenerations.entries()).map(
-        ([imageId, generation]) => (
-          <StreamingImage
-            generation={generation}
-            imageId={imageId}
-            key={imageId}
-            onComplete={handleStreamingImageComplete}
-            onError={handleStreamingImageError}
-            onStreamingUpdate={handleStreamingImageUpdate}
-          />
-        )
-      )}
-
-      {Array.from(generationState.activeVideoGenerations.entries()).map(
-        ([id, generation]) => (
-          <StreamingVideo
-            generation={generation}
-            key={id}
-            onComplete={handleVideoGenerationComplete}
-            onError={handleVideoGenerationError}
-            onProgress={handleVideoGenerationProgress}
-            videoId={id}
-          />
-        )
-      )}
+      <StreamingGenerations
+        activeGenerations={generationState.activeGenerations}
+        activeVideoGenerations={generationState.activeVideoGenerations}
+        onImageComplete={handleStreamingImageComplete}
+        onImageError={handleStreamingImageError}
+        onImageUpdate={handleStreamingImageUpdate}
+        onVideoComplete={handleVideoGenerationComplete}
+        onVideoError={handleVideoGenerationError}
+        onVideoProgress={handleVideoGenerationProgress}
+      />
 
       <main className="flex-1 relative flex items-center justify-center w-full pt-14">
         <div className="relative w-full h-full">
@@ -374,18 +347,15 @@ export function CanvasPageClient() {
               isAuthenticated ? isProjectsPanelOpen : undefined
             }
             onToggleProjectsPanel={
-              isAuthenticated
-                ? () => setIsProjectsPanelOpen(!isProjectsPanelOpen)
-                : undefined
+              isAuthenticated ? handleToggleProjectsPanel : undefined
             }
             setViewport={canvasState.setViewport}
             viewport={canvasState.viewport}
           />
 
-          <DimensionDisplay
-            selectedImages={canvasState.images.filter((img) =>
-              canvasState.selectedIds.includes(img.id)
-            )}
+          <DimensionDisplayWrapper
+            images={canvasState.images}
+            selectedIds={canvasState.selectedIds}
             viewport={canvasState.viewport}
           />
         </div>
