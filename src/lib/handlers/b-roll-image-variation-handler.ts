@@ -8,6 +8,7 @@ import { generateBRollConcepts } from "@/lib/b-roll-concept-generator";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import type { PlacedImage } from "@/types/canvas";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
+import { generateAndCachePixelatedOverlay } from "@/utils/image-pixelation-helper";
 import { snapPosition } from "@/utils/snap-utils";
 import { calculateBalancedPosition } from "./variation-handler";
 import {
@@ -77,7 +78,7 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
 
 /**
  * Generates B-roll image variations from a reference image.
- * 
+ *
  * Uses OpenAI to:
  * 1. Analyze the reference image's style, mood, and context
  * 2. Generate contextually relevant B-roll concepts dynamically
@@ -163,6 +164,9 @@ export const handleBrollImageVariations = async (
       selectedImage.height
     );
 
+    // Generate pixelated overlay from source image for immediate visual feedback
+    const pixelatedSrc = await generateAndCachePixelatedOverlay(selectedImage);
+
     // Create placeholders IMMEDIATELY (optimistic UI)
     const placeholderImages: PlacedImage[] = formattedPrompts.map(
       (_, index) => {
@@ -186,7 +190,8 @@ export const handleBrollImageVariations = async (
           naturalHeight: imageSizeDimensions.height,
           naturalWidth: imageSizeDimensions.width,
           rotation: 0,
-          src: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          src: selectedImage.src,
+          pixelatedSrc,
           width: selectedImage.width,
           x: position.x,
           y: position.y,

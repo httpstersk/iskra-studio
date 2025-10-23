@@ -7,6 +7,7 @@ import {
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
+import { generateAndCachePixelatedOverlay } from "@/utils/image-pixelation-helper";
 import { snapPosition } from "@/utils/snap-utils";
 import type { FalClient } from "@fal-ai/client";
 import {
@@ -258,29 +259,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   );
 
   // Generate pixelated overlay from source image for immediate visual feedback
-  let pixelatedSrc: string | undefined;
-  try {
-    const { generatePixelatedOverlay } = await import(
-      "@/utils/image-pixelation-helper"
-    );
-    const { cachePixelatedImage } = await import(
-      "@/components/canvas/CanvasImage"
-    );
-
-    const result = await generatePixelatedOverlay(
-      selectedImage.src,
-      selectedImage.width,
-      selectedImage.height
-    );
-
-    if (result) {
-      pixelatedSrc = result.dataUrl;
-      // Cache the preloaded image for immediate rendering
-      cachePixelatedImage(result.dataUrl, result.image);
-    }
-  } catch (error) {
-    console.error("Failed to generate pixelated overlay for placeholders:", error);
-  }
+  const pixelatedSrc = await generateAndCachePixelatedOverlay(selectedImage);
 
   // OPTIMIZATION 1: Create placeholders IMMEDIATELY (optimistic UI)
   // Users see instant feedback before any async operations

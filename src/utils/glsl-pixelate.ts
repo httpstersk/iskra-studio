@@ -47,19 +47,23 @@ interface PixelateResources {
 const compileShader = (
   gl: WebGLRenderingContext,
   type: number,
-  source: string,
+  source: string
 ): WebGLShader => {
   const shader = gl.createShader(type);
+
   if (!shader) {
     throw new Error("Failed to create shader");
   }
+
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
+
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     const info = gl.getShaderInfoLog(shader) ?? "unknown";
     gl.deleteShader(shader);
     throw new Error(`Shader compilation failed: ${info}`);
   }
+
   return shader;
 };
 
@@ -67,15 +71,17 @@ const createProgram = (gl: WebGLRenderingContext): PixelateResources => {
   const vertexShader = compileShader(
     gl,
     gl.VERTEX_SHADER,
-    VERTEX_SHADER_SOURCE,
+    VERTEX_SHADER_SOURCE
   );
+
   const fragmentShader = compileShader(
     gl,
     gl.FRAGMENT_SHADER,
-    FRAGMENT_SHADER_SOURCE,
+    FRAGMENT_SHADER_SOURCE
   );
 
   const program = gl.createProgram();
+
   if (!program) {
     throw new Error("Failed to create program");
   }
@@ -101,14 +107,14 @@ const createProgram = (gl: WebGLRenderingContext): PixelateResources => {
   gl.bufferData(
     gl.ARRAY_BUFFER,
     new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
-    gl.STATIC_DRAW,
+    gl.STATIC_DRAW
   );
 
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
   gl.bufferData(
     gl.ARRAY_BUFFER,
     new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
-    gl.STATIC_DRAW,
+    gl.STATIC_DRAW
   );
 
   const attributeLocations = {
@@ -141,11 +147,12 @@ const createProgram = (gl: WebGLRenderingContext): PixelateResources => {
 const configureTexture = (
   gl: WebGLRenderingContext,
   texture: WebGLTexture | null,
-  source: TexImageSource,
+  source: TexImageSource
 ) => {
   if (!texture) {
     throw new Error("Failed to create texture");
   }
+
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -158,7 +165,7 @@ const configureTexture = (
 
 const drawFullscreenQuad = (
   gl: WebGLRenderingContext,
-  resources: PixelateResources,
+  resources: PixelateResources
 ) => {
   gl.bindBuffer(gl.ARRAY_BUFFER, resources.positionBuffer);
   gl.enableVertexAttribArray(resources.attributeLocations.position);
@@ -168,7 +175,7 @@ const drawFullscreenQuad = (
     gl.FLOAT,
     false,
     0,
-    0,
+    0
   );
 
   gl.bindBuffer(gl.ARRAY_BUFFER, resources.texCoordBuffer);
@@ -179,7 +186,7 @@ const drawFullscreenQuad = (
     gl.FLOAT,
     false,
     0,
-    0,
+    0
   );
 
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -189,12 +196,13 @@ const createFallbackPixelateCanvas = (
   image: HTMLImageElement,
   width: number,
   height: number,
-  pixelSize: number,
+  pixelSize: number
 ): HTMLCanvasElement => {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const context = canvas.getContext("2d");
+
   if (context) {
     // Disable smoothing for crisp pixels
     context.imageSmoothingEnabled = false;
@@ -224,7 +232,7 @@ export const createPixelatedCloneCanvas = (
   image: HTMLImageElement,
   width: number,
   height: number,
-  pixelSize = DEFAULT_PIXEL_SIZE,
+  pixelSize = DEFAULT_PIXEL_SIZE
 ): HTMLCanvasElement => {
   const targetWidth = Math.max(1, Math.round(width));
   const targetHeight = Math.max(1, Math.round(height));
@@ -247,7 +255,7 @@ export const createPixelatedCloneCanvas = (
       image,
       targetWidth,
       targetHeight,
-      pixelSize,
+      pixelSize
     );
   }
 
@@ -266,16 +274,19 @@ export const createPixelatedCloneCanvas = (
     // Set uniforms
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, sourceTexture);
+
     if (resources.uniformLocations.image) {
       gl.uniform1i(resources.uniformLocations.image, 0);
     }
+
     if (resources.uniformLocations.resolution) {
       gl.uniform2f(
         resources.uniformLocations.resolution,
         targetWidth,
-        targetHeight,
+        targetHeight
       );
     }
+
     if (resources.uniformLocations.pixelSize) {
       gl.uniform1f(resources.uniformLocations.pixelSize, pixelSize);
     }
@@ -289,7 +300,7 @@ export const createPixelatedCloneCanvas = (
       image,
       targetWidth,
       targetHeight,
-      pixelSize,
+      pixelSize
     );
   }
 };

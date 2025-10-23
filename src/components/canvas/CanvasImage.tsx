@@ -17,6 +17,7 @@ import { useImageDrag } from "@/hooks/useImageDrag";
 import { useImageInteraction } from "@/hooks/useImageInteraction";
 import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
+import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Image as KonvaImage } from "react-konva";
@@ -99,29 +100,17 @@ const useCanvasImageSource = (
   );
 };
 
-// Cache for preloaded pixelated images - allows immediate rendering
-const pixelatedImageCache = new Map<string, HTMLImageElement>();
-
-/**
- * Store a preloaded pixelated image in the cache for immediate access
- * @param dataUrl - Data URL of the pixelated image
- * @param image - Preloaded image element
- */
-export const cachePixelatedImage = (dataUrl: string, image: HTMLImageElement) => {
-  pixelatedImageCache.set(dataUrl, image);
-};
-
 /**
  * Custom hook to load pixelated overlay image if available.
  * Checks cache first for immediate rendering, then falls back to loading.
- * 
+ *
  * @param pixelatedSrc - Optional pixelated overlay source URL
  * @returns Loaded pixelated image element or undefined
  */
 const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
   const cachedImage = useMemo(
-    () => (pixelatedSrc ? pixelatedImageCache.get(pixelatedSrc) : undefined),
-    [pixelatedSrc]
+    () => (pixelatedSrc ? getCachedPixelatedImage(pixelatedSrc) : undefined),
+    [pixelatedSrc],
   );
 
   const [loadedImg] = useImageCache(
