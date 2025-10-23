@@ -19,7 +19,7 @@ import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
 import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { Image as KonvaImage } from "react-konva";
 
 /**
@@ -78,7 +78,7 @@ const useCanvasImageSource = (
   // When displayAsThumbnail is true, ONLY load thumbnail, never load src
   // This prevents loading full-size images when we only want thumbnails
   const effectiveSrc = displayAsThumbnail && thumbnailSrc ? thumbnailSrc : src;
-  
+
   // Load thumbnail if available
   const [thumbnailImg] = useImageCache(thumbnailSrc || "", CORS_MODE);
 
@@ -207,6 +207,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   // Unified animation coordinator for all animations
   const {
     displayOpacity,
+    isTransitionComplete,
     pixelatedOpacity: animatedPixelatedOpacity,
     referenceOpacity: animatedReferenceOpacity,
   } = useAnimationCoordinator({
@@ -227,7 +228,21 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     ? opacityScale * animatedReferenceOpacity
     : finalOpacity;
   const overlayOpacity = opacityScale * animatedPixelatedOpacity;
-  const transitionComplete = animatedPixelatedOpacity === 0;
+
+  // Clear pixelatedSrc after transition completes to free memory
+  useEffect(() => {
+    if (isTransitionComplete && image.pixelatedSrc && !image.isLoading) {
+      onChange({
+        pixelatedSrc: undefined,
+      });
+    }
+  }, [
+    isTransitionComplete,
+    image.pixelatedSrc,
+    image.isLoading,
+    onChange,
+    image.id,
+  ]);
 
   // Handle drag behavior
   const { handleDragMove, handleDragEnd: handleDragEndInternal } = useImageDrag(
@@ -279,31 +294,28 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   );
 
   // If pixelated overlay exists and hasn't fully transitioned, render both layers
-  if (pixelatedImg && !transitionComplete) {
+  // Only enter dual-layer mode if both images are available to prevent gaps
+  if (pixelatedImg && !isTransitionComplete && img) {
     return (
       <>
         {/* Reference image - fades from 0.4 to 1.0 opacity during transition */}
-        {/* Only render if reference image has loaded */}
-        {img && (
-          <KonvaImage
-            draggable={false}
-            height={image.height}
-            id={`${image.id}-reference`}
-            image={img}
-            imageSmoothingEnabled={true}
-            listening={false}
-            opacity={referenceOpacity}
-            perfectDrawEnabled={false}
-            rotation={image.rotation}
-            shadowForStrokeEnabled={false}
-            width={image.width}
-            x={image.x}
-            y={image.y}
-          />
-        )}
+        <KonvaImage
+          draggable={false}
+          height={image.height}
+          id={`${image.id}-reference`}
+          image={img}
+          imageSmoothingEnabled={true}
+          listening={false}
+          opacity={referenceOpacity}
+          perfectDrawEnabled={false}
+          rotation={image.rotation}
+          shadowForStrokeEnabled={false}
+          width={image.width}
+          x={image.x}
+          y={image.y}
+        />
 
         {/* Pixelated overlay - fades from 1.0 to 0.0 opacity during transition */}
-        {/* Always render if pixelatedImg is available */}
         <KonvaImage
           draggable={isDraggable}
           height={image.height}
@@ -333,6 +345,40 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
           y={image.y}
         />
       </>
+    );
+  }
+
+  // If pixelated overlay exists but reference image hasn't loaded yet, show only pixelated
+  if (pixelatedImg && !img) {
+    return (
+      <KonvaImage
+        draggable={isDraggable}
+        height={image.height}
+        id={image.id}
+        image={pixelatedImg}
+        imageSmoothingEnabled={false}
+        onClick={onSelect}
+        onDblClick={handleDoubleClickWrapper}
+        onDragEnd={handleDragEndWrapper}
+        onDragMove={handleDragMove}
+        onDragStart={handleDragStartInternal}
+        onMouseDown={handleMouseDown}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onTap={onSelect}
+        opacity={finalOpacity}
+        perfectDrawEnabled={false}
+        ref={shapeRef}
+        rotation={image.rotation}
+        stroke={strokeColor}
+        shadowForStrokeEnabled={false}
+        strokeScaleEnabled={false}
+        strokeWidth={strokeWidth}
+        width={image.width}
+        x={image.x}
+        y={image.y}
+      />
     );
   }
 

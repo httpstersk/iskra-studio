@@ -70,6 +70,8 @@ interface UseAnimationCoordinatorProps {
 interface UseAnimationCoordinatorReturn {
   /** Current opacity value to apply to the image */
   displayOpacity: number;
+  /** Whether the pixelation transition has completed */
+  isTransitionComplete: boolean;
   /** Opacity for pixelated overlay during transition */
   pixelatedOpacity: number;
   /** Opacity for reference image during transition */
@@ -116,12 +118,14 @@ export const useAnimationCoordinator = ({
   const [transitionProgress, setTransitionProgress] = useState(0);
 
   const animationFrameRef = useRef<number | undefined>(undefined);
-  const wasLoadingRef = useRef(isLoading);
-  const fadeStartTimeRef = useRef<number>(0);
   const fadeStartOpacityRef = useRef<number>(0);
-  const transitionStartTimeRef = useRef<number>(0);
+  const fadeStartTimeRef = useRef<number>(0);
+  const hadPixelatedRef = useRef(hasPixelated);
   const hasStartedTransitionRef = useRef(false);
+  const isTransitionCompleteRef = useRef(false);
   const lastFrameTimeRef = useRef(0);
+  const transitionStartTimeRef = useRef<number>(0);
+  const wasLoadingRef = useRef(isLoading);
 
   useEffect(() => {
     // Check if we just transitioned from loading to loaded
@@ -132,15 +136,26 @@ export const useAnimationCoordinator = ({
       fadeStartOpacityRef.current = displayOpacity;
     }
 
+    // Reset transition state when pixelated overlay changes
+    if (hadPixelatedRef.current !== hasPixelated) {
+      // Pixelated changed (added or removed), reset transition state
+      hasStartedTransitionRef.current = false;
+      isTransitionCompleteRef.current = false;
+      transitionStartTimeRef.current = 0;
+      setTransitionProgress(0);
+      hadPixelatedRef.current = hasPixelated;
+    }
+
     wasLoadingRef.current = isLoading;
-  }, [isLoading, hasImage, displayOpacity]);
+  }, [isLoading, hasImage, displayOpacity, hasPixelated]);
 
   useEffect(() => {
     // Early return if no animations needed
+    // Only skip animation if transition is fully complete
     if (
       !isLoading &&
       !fadeStartTimeRef.current &&
-      (!hasPixelated || hasStartedTransitionRef.current)
+      (!hasPixelated || isTransitionCompleteRef.current)
     ) {
       const finalOpacity = isGenerated
         ? ANIMATION_CONFIG.GENERATED_OPACITY
@@ -231,6 +246,9 @@ export const useAnimationCoordinator = ({
 
         if (progress < 1) {
           shouldContinue = true;
+        } else {
+          // Mark transition as complete
+          isTransitionCompleteRef.current = true;
         }
       }
 
@@ -258,6 +276,7 @@ export const useAnimationCoordinator = ({
 
   return {
     displayOpacity,
+    isTransitionComplete: isTransitionCompleteRef.current,
     pixelatedOpacity: displayOpacity * pixelatedOpacity,
     referenceOpacity: displayOpacity * referenceOpacity,
   };

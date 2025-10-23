@@ -175,13 +175,12 @@ export function useStreamingHandlers(
           img.id === id
             ? {
                 ...img,
-                displayAsThumbnail: !!thumbnailUrl,
+                displayAsThumbnail: !!thumbnailUrl && !img.pixelatedSrc,
                 fullSizeSrc: thumbnailUrl ? convexUrl : undefined,
                 isLoading: false,
                 naturalHeight,
                 naturalWidth,
                 opacity: 1.0,
-                pixelatedSrc: undefined,
                 src: thumbnailUrl || convexUrl,
                 thumbnailSrc: thumbnailUrl,
               }
@@ -263,7 +262,7 @@ export function useStreamingHandlers(
           img.id === id
             ? {
                 ...img,
-                displayAsThumbnail: false,
+                displayAsThumbnail: true,
                 src: url,
               }
             : img
