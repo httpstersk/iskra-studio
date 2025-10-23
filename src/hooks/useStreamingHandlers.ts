@@ -170,19 +170,13 @@ export function useStreamingHandlers(
         }
       }
 
-      const currentImage = images.find((img) => img.id === id);
-      const wasDisplayingAsThumbnail = currentImage?.displayAsThumbnail;
-
       setImages((prev) =>
         prev.map((img) =>
           img.id === id
             ? {
                 ...img,
-                displayAsThumbnail: wasDisplayingAsThumbnail && !!thumbnailUrl,
-                fullSizeSrc:
-                  wasDisplayingAsThumbnail && thumbnailUrl
-                    ? convexUrl
-                    : undefined,
+                displayAsThumbnail: !!thumbnailUrl,
+                fullSizeSrc: thumbnailUrl ? convexUrl : undefined,
                 isLoading: false,
                 naturalHeight,
                 naturalWidth,
