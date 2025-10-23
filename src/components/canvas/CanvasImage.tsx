@@ -75,18 +75,22 @@ const useCanvasImageSource = (
   isGenerated: boolean,
   displayAsThumbnail: boolean
 ) => {
-  // Load thumbnail first if available (shows immediately)
+  // When displayAsThumbnail is true, ONLY load thumbnail, never load src
+  // This prevents loading full-size images when we only want thumbnails
+  const effectiveSrc = displayAsThumbnail && thumbnailSrc ? thumbnailSrc : src;
+  
+  // Load thumbnail if available
   const [thumbnailImg] = useImageCache(thumbnailSrc || "", CORS_MODE);
 
-  // If displayAsThumbnail is true, only load thumbnail and skip full-size
+  // Only load full-size if NOT displaying as thumbnail
   const shouldLoadFullSize = !displayAsThumbnail;
 
-  // Load full-size in parallel (only if not displaying as thumbnail)
+  // Load full-size image (only if shouldLoadFullSize is true)
   const [streamingImg] = useStreamingImage(
-    isGenerated && shouldLoadFullSize ? src : ""
+    isGenerated && shouldLoadFullSize ? effectiveSrc : ""
   );
   const [cachedImg] = useImageCache(
-    !isGenerated && shouldLoadFullSize ? src : "",
+    !isGenerated && shouldLoadFullSize ? effectiveSrc : "",
     CORS_MODE
   );
 

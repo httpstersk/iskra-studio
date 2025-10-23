@@ -259,7 +259,15 @@ export function useStreamingHandlers(
   const handleStreamingImageUpdate = useCallback(
     (id: string, url: string) => {
       setImages((prev) =>
-        prev.map((img) => (img.id === id ? { ...img, src: url } : img))
+        prev.map((img) =>
+          img.id === id
+            ? {
+                ...img,
+                displayAsThumbnail: false,
+                src: url,
+              }
+            : img
+        )
       );
     },
     [setImages]
