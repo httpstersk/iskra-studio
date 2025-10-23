@@ -125,6 +125,7 @@ export const useAnimationCoordinator = ({
   const isTransitionCompleteRef = useRef(false);
   const lastFrameTimeRef = useRef(0);
   const transitionStartTimeRef = useRef<number>(0);
+  const transitionRequestTimeRef = useRef<number | null>(null);
   const wasLoadingRef = useRef(isLoading);
 
   useEffect(() => {
@@ -132,7 +133,7 @@ export const useAnimationCoordinator = ({
     const justFinishedLoading = wasLoadingRef.current && !isLoading && hasImage;
 
     if (justFinishedLoading) {
-      fadeStartTimeRef.current = Date.now();
+      fadeStartTimeRef.current = performance.now();
       fadeStartOpacityRef.current = displayOpacity;
     }
 
@@ -142,6 +143,7 @@ export const useAnimationCoordinator = ({
       hasStartedTransitionRef.current = false;
       isTransitionCompleteRef.current = false;
       transitionStartTimeRef.current = 0;
+      transitionRequestTimeRef.current = null;
       setTransitionProgress(0);
       hadPixelatedRef.current = hasPixelated;
     }
@@ -164,10 +166,8 @@ export const useAnimationCoordinator = ({
       return;
     }
 
-    const startTime = Date.now();
+    const startTime = performance.now();
     let isFading = !!fadeStartTimeRef.current;
-    let isTransitioning = false;
-    let transitionDelayTimeout: NodeJS.Timeout | undefined;
 
     // Start pixelation transition if conditions met
     if (
@@ -177,10 +177,7 @@ export const useAnimationCoordinator = ({
       !hasStartedTransitionRef.current
     ) {
       hasStartedTransitionRef.current = true;
-      transitionDelayTimeout = setTimeout(() => {
-        transitionStartTimeRef.current = performance.now();
-        isTransitioning = true;
-      }, ANIMATION_CONFIG.TRANSITION_DELAY);
+      transitionRequestTimeRef.current = performance.now();
     }
 
     const animate = (currentTime: number) => {
@@ -234,7 +231,21 @@ export const useAnimationCoordinator = ({
       }
 
       // Handle pixelation transition
-      if (transitionStartTimeRef.current > 0) {
+      // Promote pending transition to active after delay
+      if (
+        transitionRequestTimeRef.current !== null &&
+        transitionStartTimeRef.current === 0 &&
+        currentTime - transitionRequestTimeRef.current >=
+          ANIMATION_CONFIG.TRANSITION_DELAY
+      ) {
+        transitionStartTimeRef.current = currentTime;
+        transitionRequestTimeRef.current = null;
+      }
+
+      const isTransitionActive =
+        transitionStartTimeRef.current > 0 && !isTransitionCompleteRef.current;
+
+      if (isTransitionActive) {
         const elapsed = currentTime - transitionStartTimeRef.current;
         const progress = Math.min(
           elapsed / ANIMATION_CONFIG.TRANSITION_DURATION,
@@ -244,12 +255,18 @@ export const useAnimationCoordinator = ({
 
         setTransitionProgress(easedProgress);
 
-        if (progress < 1) {
-          shouldContinue = true;
-        } else {
+        if (progress >= 1) {
           // Mark transition as complete
           isTransitionCompleteRef.current = true;
         }
+      }
+
+      const hasPendingTransition =
+        transitionRequestTimeRef.current !== null &&
+        !isTransitionCompleteRef.current;
+
+      if (isTransitionActive || hasPendingTransition) {
+        shouldContinue = true;
       }
 
       // Continue animation if needed
@@ -261,9 +278,7 @@ export const useAnimationCoordinator = ({
     animationFrameRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (transitionDelayTimeout) {
-        clearTimeout(transitionDelayTimeout);
-      }
+      transitionRequestTimeRef.current = null;
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
