@@ -1,8 +1,15 @@
-import { useCallback } from "react";
-import type { ActiveGeneration, ActiveVideoGeneration, PlacedImage, PlacedVideo } from "@/types/canvas";
-import type { Viewport } from "@/store/canvas-atoms";
 import { ANIMATION, CANVAS_STRINGS } from "@/constants/canvas";
-import { dismissToast, handleVideoCompletion } from "@/lib/handlers/video-generation-handlers";
+import {
+  dismissToast,
+  handleVideoCompletion,
+} from "@/lib/handlers/video-generation-handlers";
+import type {
+  ActiveGeneration,
+  ActiveVideoGeneration,
+  PlacedImage,
+  PlacedVideo,
+} from "@/types/canvas";
+import { useCallback } from "react";
 
 /**
  * Toast function type
@@ -25,10 +32,14 @@ interface StreamingHandlerDeps {
   saveToStorage: () => void;
   selectedImageForVideo: string | null;
   setActiveGenerations: (
-    updater: (prev: Map<string, ActiveGeneration>) => Map<string, ActiveGeneration>
+    updater: (
+      prev: Map<string, ActiveGeneration>
+    ) => Map<string, ActiveGeneration>
   ) => void;
   setActiveVideoGenerations: (
-    updater: (prev: Map<string, ActiveVideoGeneration>) => Map<string, ActiveVideoGeneration>
+    updater: (
+      prev: Map<string, ActiveVideoGeneration>
+    ) => Map<string, ActiveVideoGeneration>
   ) => void;
   setImages: (updater: (prev: PlacedImage[]) => PlacedImage[]) => void;
   setIsConvertingToVideo: (value: boolean) => void;
@@ -53,7 +64,11 @@ interface StreamingHandlers {
     duration: number
   ) => Promise<void>;
   handleVideoGenerationError: (videoId: string, error: string) => void;
-  handleVideoGenerationProgress: (videoId: string, progress: number, status: string) => void;
+  handleVideoGenerationProgress: (
+    videoId: string,
+    progress: number,
+    status: string
+  ) => void;
 }
 
 /**
@@ -65,7 +80,9 @@ interface StreamingHandlers {
  * @param deps - Streaming handler dependencies
  * @returns Streaming event handlers
  */
-export function useStreamingHandlers(deps: StreamingHandlerDeps): StreamingHandlers {
+export function useStreamingHandlers(
+  deps: StreamingHandlerDeps
+): StreamingHandlers {
   const {
     activeGenerations,
     activeVideoGenerations,
@@ -146,25 +163,32 @@ export function useStreamingHandlers(deps: StreamingHandlerDeps): StreamingHandl
           convexUrl = uploadResult.url;
           thumbnailUrl = uploadResult.thumbnailUrl;
         } catch (error) {
-          console.error(`[Image Generation] Failed to upload to Convex:`, error);
+          console.error(
+            `[Image Generation] Failed to upload to Convex:`,
+            error
+          );
         }
       }
 
       const currentImage = images.find((img) => img.id === id);
-      const pixelatedSrc = currentImage?.pixelatedSrc;
+      const wasDisplayingAsThumbnail = currentImage?.displayAsThumbnail;
 
       setImages((prev) =>
         prev.map((img) =>
           img.id === id
             ? {
                 ...img,
-                fullSizeSrc: img.displayAsThumbnail ? convexUrl : undefined,
+                displayAsThumbnail: wasDisplayingAsThumbnail && !!thumbnailUrl,
+                fullSizeSrc:
+                  wasDisplayingAsThumbnail && thumbnailUrl
+                    ? convexUrl
+                    : undefined,
                 isLoading: false,
                 naturalHeight,
                 naturalWidth,
                 opacity: 1.0,
-                pixelatedSrc,
-                src: img.displayAsThumbnail && thumbnailUrl ? thumbnailUrl : convexUrl,
+                pixelatedSrc: undefined,
+                src: thumbnailUrl || convexUrl,
                 thumbnailSrc: thumbnailUrl,
               }
             : img
@@ -240,7 +264,9 @@ export function useStreamingHandlers(deps: StreamingHandlerDeps): StreamingHandl
 
   const handleStreamingImageUpdate = useCallback(
     (id: string, url: string) => {
-      setImages((prev) => prev.map((img) => (img.id === id ? { ...img, src: url } : img)));
+      setImages((prev) =>
+        prev.map((img) => (img.id === id ? { ...img, src: url } : img))
+      );
     },
     [setImages]
   );
@@ -292,7 +318,10 @@ export function useStreamingHandlers(deps: StreamingHandlerDeps): StreamingHandl
 
             convexUrl = uploadResult.url;
           } catch (error) {
-            console.error(`[Video Generation] Failed to upload to Convex:`, error);
+            console.error(
+              `[Video Generation] Failed to upload to Convex:`,
+              error
+            );
           }
         }
 
@@ -356,7 +385,9 @@ export function useStreamingHandlers(deps: StreamingHandlerDeps): StreamingHandl
         console.error("Error completing video generation:", error);
         toast({
           description:
-            error instanceof Error ? error.message : CANVAS_STRINGS.ERRORS.VIDEO_FAILED,
+            error instanceof Error
+              ? error.message
+              : CANVAS_STRINGS.ERRORS.VIDEO_FAILED,
           title: CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
           variant: "destructive",
         });
