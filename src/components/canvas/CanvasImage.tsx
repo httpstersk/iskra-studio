@@ -11,7 +11,7 @@
  * @module components/canvas/CanvasImage
  */
 
-import { useImageAnimation } from "@/hooks/useImageAnimation";
+import { useAnimationCoordinator } from "@/hooks/useAnimationCoordinator";
 import { useImageCache } from "@/hooks/useImageCache";
 import { useImageDrag } from "@/hooks/useImageDrag";
 import { useImageInteraction } from "@/hooks/useImageInteraction";
@@ -19,8 +19,13 @@ import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
 import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useRef } from "react";
 import { Image as KonvaImage } from "react-konva";
+
+/**
+ * Constant for CORS image loading
+ */
+const CORS_MODE = "anonymous" as const;
 
 /**
  * Props for the CanvasImage component
@@ -52,7 +57,7 @@ interface CanvasImageProps {
 
 /**
  * Custom hook to get the appropriate image source with thumbnail fallback.
- * 
+ *
  * Loading priority:
  * 1. If displayAsThumbnail is true: only load and return thumbnail
  * 2. Otherwise: Thumbnail (if available) displays first, then switches to full-size
@@ -71,33 +76,30 @@ const useCanvasImageSource = (
   displayAsThumbnail: boolean
 ) => {
   // Load thumbnail first if available (shows immediately)
-  const [thumbnailImg] = useImageCache(thumbnailSrc || "", "anonymous");
+  const [thumbnailImg] = useImageCache(thumbnailSrc || "", CORS_MODE);
 
   // If displayAsThumbnail is true, only load thumbnail and skip full-size
   const shouldLoadFullSize = !displayAsThumbnail;
 
   // Load full-size in parallel (only if not displaying as thumbnail)
-  const [streamingImg] = useStreamingImage(isGenerated && shouldLoadFullSize ? src : "");
-  const [cachedImg] = useImageCache(!isGenerated && shouldLoadFullSize ? src : "", "anonymous");
+  const [streamingImg] = useStreamingImage(
+    isGenerated && shouldLoadFullSize ? src : ""
+  );
+  const [cachedImg] = useImageCache(
+    !isGenerated && shouldLoadFullSize ? src : "",
+    CORS_MODE
+  );
 
   // Full-size image (once loaded, switch from thumbnail)
-  const fullSizeImg = useMemo(
-    () => (isGenerated ? streamingImg : cachedImg),
-    [isGenerated, cachedImg, streamingImg]
-  );
+  const fullSizeImg = isGenerated ? streamingImg : cachedImg;
 
-  // Priority: 
+  // Priority:
   // - If displayAsThumbnail: only show thumbnail
   // - Otherwise: full-size image > thumbnail > nothing
-  return useMemo(
-    () => {
-      if (displayAsThumbnail) {
-        return thumbnailImg;
-      }
-      return fullSizeImg || thumbnailImg;
-    },
-    [displayAsThumbnail, fullSizeImg, thumbnailImg]
-  );
+  if (displayAsThumbnail) {
+    return thumbnailImg;
+  }
+  return fullSizeImg || thumbnailImg;
 };
 
 /**
@@ -108,21 +110,18 @@ const useCanvasImageSource = (
  * @returns Loaded pixelated image element or undefined
  */
 const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
-  const cachedImage = useMemo(
-    () => (pixelatedSrc ? getCachedPixelatedImage(pixelatedSrc) : undefined),
-    [pixelatedSrc],
-  );
+  const cachedImage = pixelatedSrc
+    ? getCachedPixelatedImage(pixelatedSrc)
+    : undefined;
 
   const [loadedImg] = useImageCache(
     pixelatedSrc && !cachedImage ? pixelatedSrc : "",
-    "anonymous"
+    CORS_MODE
   );
 
-  return useMemo(() => {
-    if (!pixelatedSrc) return undefined;
-    // Return cached image immediately if available, otherwise use loaded image
-    return cachedImage || loadedImg;
-  }, [pixelatedSrc, cachedImage, loadedImg]);
+  if (!pixelatedSrc) return undefined;
+  // Return cached image immediately if available, otherwise use loaded image
+  return cachedImage || loadedImg;
 };
 
 /**
@@ -143,94 +142,6 @@ const useFrameThrottle = (limitMs = 16) => {
     lastRef.current = now;
     return true;
   }, [limitMs]);
-};
-
-/**
- * Transition animation configuration
- */
-const TRANSITION_CONFIG = {
-  /** Duration of pixelated to full image transition in milliseconds */
-  DURATION: 1000,
-  /** Delay before starting transition after full image loads */
-  DELAY: 200,
-} as const;
-
-/**
- * Easing function for smooth transition animation.
- * Uses cubic ease-in-out curve for natural motion.
- *
- * @param t - Progress value between 0 and 1
- * @returns Eased value between 0 and 1
- */
-const easeInOutCubic = (t: number): number => 
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-/**
- * Custom hook for animating transition from pixelated overlay to full image.
- * 
- * @param hasPixelated - Whether pixelated overlay is present
- * @param hasFullImage - Whether full-size image has loaded
- * @returns Opacity values for reference and pixelated layers
- */
-const usePixelationTransition = (
-  hasPixelated: boolean,
-  hasFullImage: boolean
-) => {
-  const [transitionProgress, setTransitionProgress] = useState(0);
-  const animationFrameRef = useRef<number | undefined>(undefined);
-  const transitionStartTimeRef = useRef<number>(0);
-  const hasStartedRef = useRef(false);
-
-  useEffect(() => {
-    // Only start transition if we have pixelated overlay and full image is loaded
-    if (!hasPixelated || !hasFullImage || hasStartedRef.current) {
-      return;
-    }
-
-    // Mark transition as started
-    hasStartedRef.current = true;
-
-    // Delay start slightly for smoother UX
-    const delayTimeout = setTimeout(() => {
-      transitionStartTimeRef.current = performance.now();
-
-      const animate = (currentTime: number) => {
-        const elapsed = currentTime - transitionStartTimeRef.current;
-        const progress = Math.min(elapsed / TRANSITION_CONFIG.DURATION, 1);
-        const easedProgress = easeInOutCubic(progress);
-
-        setTransitionProgress(easedProgress);
-
-        if (progress < 1) {
-          animationFrameRef.current = requestAnimationFrame(animate);
-        }
-      };
-
-      animationFrameRef.current = requestAnimationFrame(animate);
-    }, TRANSITION_CONFIG.DELAY);
-
-    return () => {
-      clearTimeout(delayTimeout);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [hasPixelated, hasFullImage]);
-
-  // Calculate opacities based on transition progress
-  // Reference: 0.4 -> 1.0
-  // Pixelated: 1.0 -> 0.0
-  const referenceOpacity = useMemo(() => {
-    if (!hasPixelated) return 1.0;
-    return 0.4 + (0.6 * transitionProgress);
-  }, [hasPixelated, transitionProgress]);
-
-  const pixelatedOpacity = useMemo(() => {
-    if (!hasPixelated) return 0;
-    return 1.0 - transitionProgress;
-  }, [hasPixelated, transitionProgress]);
-
-  return { referenceOpacity, pixelatedOpacity, transitionComplete: transitionProgress >= 1 };
 };
 
 /**
@@ -289,29 +200,30 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   // Get pixelated overlay if available
   const pixelatedImg = usePixelatedOverlay(image.pixelatedSrc);
 
-  // Handle loading and fade-in animations
-  const { displayOpacity } = useImageAnimation({
-    isLoading: !!image.isLoading,
-    isGenerated: !!image.isGenerated,
+  // Unified animation coordinator for all animations
+  const {
+    displayOpacity,
+    pixelatedOpacity: animatedPixelatedOpacity,
+    referenceOpacity: animatedReferenceOpacity,
+  } = useAnimationCoordinator({
     hasImage: !!img,
+    hasPixelated: !!pixelatedImg,
+    isGenerated: !!image.isGenerated,
+    isLoading: !!image.isLoading,
   });
-
-  // Handle transition from pixelated to full image
-  const { 
-    referenceOpacity: transitionRefOpacity, 
-    pixelatedOpacity: transitionPixelOpacity,
-    transitionComplete 
-  } = usePixelationTransition(!!pixelatedImg, !!img && !image.isLoading);
 
   // Use explicit opacity if set, otherwise use animation opacity
   const finalOpacity =
     image.opacity !== undefined ? image.opacity : displayOpacity;
 
   // Calculate final opacities with transition
-  const referenceOpacity = pixelatedImg 
-    ? finalOpacity * transitionRefOpacity 
+  // When custom opacity is set, scale the animated opacities proportionally
+  const opacityScale = displayOpacity > 0 ? finalOpacity / displayOpacity : 1;
+  const referenceOpacity = pixelatedImg
+    ? opacityScale * animatedReferenceOpacity
     : finalOpacity;
-  const overlayOpacity = finalOpacity * transitionPixelOpacity;
+  const overlayOpacity = opacityScale * animatedPixelatedOpacity;
+  const transitionComplete = animatedPixelatedOpacity === 0;
 
   // Handle drag behavior
   const { handleDragMove, handleDragEnd: handleDragEndInternal } = useImageDrag(
@@ -385,6 +297,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
             y={image.y}
           />
         )}
+
         {/* Pixelated overlay - fades from 1.0 to 0.0 opacity during transition */}
         {/* Always render if pixelatedImg is available */}
         <KonvaImage
@@ -454,4 +367,84 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
 
 CanvasImageComponent.displayName = "CanvasImage";
 
-export const CanvasImage = React.memo(CanvasImageComponent);
+/**
+ * Custom comparison function for React.memo to prevent unnecessary rerenders.
+ * Properly compares Map props and other complex objects.
+ *
+ * @param prevProps - Previous props
+ * @param nextProps - Next props
+ * @returns true if props are equal (skip rerender), false otherwise
+ */
+const arePropsEqual = (
+  prevProps: CanvasImageProps,
+  nextProps: CanvasImageProps
+): boolean => {
+  // Check primitive props
+  if (
+    prevProps.isSelected !== nextProps.isSelected ||
+    prevProps.isDraggingImage !== nextProps.isDraggingImage
+  ) {
+    return false;
+  }
+
+  // Check image object - compare key properties that affect rendering
+  const prevImg = prevProps.image;
+  const nextImg = nextProps.image;
+  if (
+    prevImg.id !== nextImg.id ||
+    prevImg.src !== nextImg.src ||
+    prevImg.thumbnailSrc !== nextImg.thumbnailSrc ||
+    prevImg.pixelatedSrc !== nextImg.pixelatedSrc ||
+    prevImg.x !== nextImg.x ||
+    prevImg.y !== nextImg.y ||
+    prevImg.width !== nextImg.width ||
+    prevImg.height !== nextImg.height ||
+    prevImg.rotation !== nextImg.rotation ||
+    prevImg.opacity !== nextImg.opacity ||
+    prevImg.isLoading !== nextImg.isLoading ||
+    prevImg.isGenerated !== nextImg.isGenerated ||
+    prevImg.displayAsThumbnail !== nextImg.displayAsThumbnail
+  ) {
+    return false;
+  }
+
+  // Check selectedIds array
+  if (prevProps.selectedIds.length !== nextProps.selectedIds.length) {
+    return false;
+  }
+
+  for (let i = 0; i < prevProps.selectedIds.length; i++) {
+    if (prevProps.selectedIds[i] !== nextProps.selectedIds[i]) {
+      return false;
+    }
+  }
+
+  // Check dragStartPositions Map
+  if (prevProps.dragStartPositions.size !== nextProps.dragStartPositions.size) {
+    return false;
+  }
+
+  for (const [key, value] of prevProps.dragStartPositions) {
+    const nextValue = nextProps.dragStartPositions.get(key);
+    if (!nextValue || nextValue.x !== value.x || nextValue.y !== value.y) {
+      return false;
+    }
+  }
+
+  // Callbacks are assumed stable (should be wrapped in useCallback by parent)
+  // If they change reference, we still rerender to be safe
+  if (
+    prevProps.onChange !== nextProps.onChange ||
+    prevProps.onDragEnd !== nextProps.onDragEnd ||
+    prevProps.onDragStart !== nextProps.onDragStart ||
+    prevProps.onSelect !== nextProps.onSelect ||
+    prevProps.onDoubleClick !== nextProps.onDoubleClick ||
+    prevProps.setImages !== nextProps.setImages
+  ) {
+    return false;
+  }
+
+  return true;
+};
+
+export const CanvasImage = React.memo(CanvasImageComponent, arePropsEqual);

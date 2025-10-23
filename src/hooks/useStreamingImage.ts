@@ -1,62 +1,104 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-// Custom hook for streaming images that prevents flickering
+/**
+ * Global cache for streaming images to prevent duplicate network requests.
+ * Images are cached by URL and reused across all components.
+ */
+const streamingImageCache = new Map<string, HTMLImageElement>();
+const streamingLoadingPromises = new Map<string, Promise<HTMLImageElement>>();
+
+/**
+ * Custom hook for streaming images that prevents flickering and caches loaded images.
+ *
+ * @param src - Image source URL
+ * @returns [image | undefined, isLoading]
+ */
 export const useStreamingImage = (src: string) => {
   const [currentImage, setCurrentImage] = useState<
     HTMLImageElement | undefined
-  >(undefined);
-  const [isLoading, setIsLoading] = useState(false);
-  const loadingRef = useRef<{ src: string; img: HTMLImageElement } | null>(
-    null,
-  );
+  >(() => {
+    // Check cache immediately for synchronous return
+    return streamingImageCache.get(src);
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    return src && !streamingImageCache.has(src);
+  });
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     if (!src) {
       setCurrentImage(undefined);
+      setIsLoading(false);
       return;
     }
 
-    // If we already have this image loaded, don't reload it
-    if (currentImage && currentImage.src === src) {
+    // If already in cache, set immediately
+    if (streamingImageCache.has(src)) {
+      setCurrentImage(streamingImageCache.get(src));
+      setIsLoading(false);
       return;
     }
 
-    // If we're already loading this exact URL, don't start another load
-    if (loadingRef.current && loadingRef.current.src === src) {
+    // If already loading, wait for existing promise
+    if (streamingLoadingPromises.has(src)) {
+      streamingLoadingPromises
+        .get(src)!
+        .then((img) => {
+          if (isMountedRef.current) {
+            setCurrentImage(img);
+            setIsLoading(false);
+          }
+        })
+        .catch(() => {
+          if (isMountedRef.current) {
+            setIsLoading(false);
+          }
+        });
       return;
     }
 
+    // Start loading the image
     setIsLoading(true);
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
 
-    loadingRef.current = { src, img };
+    const promise = new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new window.Image();
+      img.crossOrigin = "anonymous";
 
-    img.onload = () => {
-      // Only update if this is still the image we want to load
-      if (loadingRef.current && loadingRef.current.src === src) {
-        setCurrentImage(img);
-        setIsLoading(false);
-        loadingRef.current = null;
-      }
-    };
+      img.onload = () => {
+        streamingImageCache.set(src, img);
+        streamingLoadingPromises.delete(src);
+        resolve(img);
+      };
 
-    img.onerror = () => {
-      if (loadingRef.current && loadingRef.current.src === src) {
-        setIsLoading(false);
-        loadingRef.current = null;
-      }
-    };
+      img.onerror = () => {
+        streamingLoadingPromises.delete(src);
+        reject(new Error(`Failed to load streaming image from ${src}`));
+      };
 
-    img.src = src;
+      img.src = src;
+    });
+
+    streamingLoadingPromises.set(src, promise);
+
+    promise
+      .then((img) => {
+        if (isMountedRef.current) {
+          setCurrentImage(img);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
+      });
 
     return () => {
-      // Clean up if component unmounts or src changes before load completes
-      if (loadingRef.current && loadingRef.current.src === src) {
-        loadingRef.current = null;
-      }
+      isMountedRef.current = false;
     };
   }, [src]);
 
