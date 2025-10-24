@@ -45,17 +45,17 @@ export function GenerationsIndicator({
     <div
       aria-live="polite"
       className={cn(
-        "flex items-center gap-2 rounded-xl border border-border/60 px-3 py-2",
+        "flex items-center justify-center gap-2 rounded-xl border border-border/60 px-3 py-2",
         "bg-card/90 text-sm font-medium text-foreground backdrop-blur-md",
         styles.container,
-        className,
+        className
       )}
       role="status"
     >
       <span
         className={cn(
           "relative inline-flex h-2.5 w-2.5 flex-shrink-0 items-center justify-center rounded-full",
-          styles.dot,
+          styles.dot
         )}
       >
         {!isSuccess && (
@@ -87,9 +87,9 @@ export function GenerationsIndicator({
           className={cn(
             "whitespace-nowrap text-sm font-medium",
             "[--color-muted-foreground:theme(colors.zinc.500)]",
-            styles.shimmerHighlight,
+            styles.shimmerHighlight
           )}
-          duration={2.25}
+          duration={1.5}
         >
           {statusMessage}
         </Shimmer>

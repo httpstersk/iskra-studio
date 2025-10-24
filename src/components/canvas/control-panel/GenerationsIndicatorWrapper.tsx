@@ -37,8 +37,7 @@ export function GenerationsIndicatorWrapper({
     statusMessage ??
     (() => {
       const noun = isVideoGeneration ? "video" : "image";
-      const variations =
-        totalActive === 1 ? "variation" : "variations";
+      const variations = totalActive === 1 ? "variation" : "variations";
       const verb =
         isGenerating || totalActive > 0 ? "Generating" : "Processing";
       return `${verb} ${noun} ${variations}`;
@@ -51,8 +50,8 @@ export function GenerationsIndicatorWrapper({
       <motion.div
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className={cn(
-          "absolute z-50 -top-16 left-1/2 -translate-x-1/2",
-          "pointer-events-none"
+          "pointer-events-none",
+          "absolute inset-x-0 -top-16 z-50 flex justify-center"
         )}
         exit={{ opacity: 0, scale: 0.9, y: -10 }}
         initial={{ opacity: 0, scale: 0.9, y: -10 }}
