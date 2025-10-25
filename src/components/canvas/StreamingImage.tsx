@@ -6,7 +6,11 @@ import React from "react";
 interface StreamingImageProps {
   imageId: string;
   generation: ActiveGeneration;
-  onComplete: (imageId: string, finalUrl: string) => void;
+  onComplete: (
+    imageId: string,
+    finalUrl: string,
+    thumbnailUrl?: string
+  ) => void;
   onError: (imageId: string, error: string) => void;
   onStreamingUpdate: (imageId: string, url: string) => void;
 }
@@ -22,14 +26,15 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
 
   const onData = (data: { data: unknown }) => {
     const eventData = data.data as {
-      type: string;
       data?: {
         images?: Array<{ url: string }>;
       };
-      imageUrl?: string;
       error?: string;
+      imageUrl?: string;
       progress?: number;
       status?: string;
+      thumbnailUrl?: string;
+      type: string;
     };
 
     if (eventData.type === "progress") {
@@ -40,7 +45,7 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
       }
     } else if (eventData.type === "complete") {
       if (eventData.imageUrl) {
-        onComplete(imageId, eventData.imageUrl);
+        onComplete(imageId, eventData.imageUrl, eventData.thumbnailUrl);
       }
     } else if (eventData.type === "error" && eventData.error) {
       onError(imageId, eventData.error);
@@ -65,8 +70,8 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
         enabled: !!generation.isVariation,
         onData,
         onError: onErrorHandler,
-      },
-    ),
+      }
+    )
   );
 
   const regularSubscription = useSubscription(
@@ -79,8 +84,8 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
         enabled: !generation.isVariation,
         onData,
         onError: onErrorHandler,
-      },
-    ),
+      }
+    )
   );
 
   return null;

@@ -57,7 +57,11 @@ interface StreamingHandlerDeps {
  * Streaming handler return type
  */
 interface StreamingHandlers {
-  handleStreamingImageComplete: (id: string, finalUrl: string) => Promise<void>;
+  handleStreamingImageComplete: (
+    id: string,
+    finalUrl: string,
+    thumbnailUrl?: string
+  ) => Promise<void>;
   handleStreamingImageError: (id: string, error: string) => void;
   handleStreamingImageUpdate: (id: string, url: string) => Promise<void>;
   handleVideoGenerationComplete: (
@@ -106,7 +110,7 @@ export function useStreamingHandlers(
   } = deps;
 
   const handleStreamingImageComplete = useCallback(
-    async (id: string, finalUrl: string) => {
+    async (id: string, finalUrl: string, serverThumbnailUrl?: string) => {
       const isVariation = id.startsWith("variation-");
 
       let variationBatchTimestamp: string | null = null;
@@ -127,6 +131,27 @@ export function useStreamingHandlers(
         naturalHeight = generation.imageSize.height;
       }
 
+      // If server provided a thumbnail, use it immediately for display
+      if (serverThumbnailUrl) {
+        setImages((prev) =>
+          prev.map((img) =>
+            img.id === id
+              ? {
+                  ...img,
+                  displayAsThumbnail: true,
+                  fullSizeSrc: finalUrl,
+                  isLoading: false,
+                  naturalHeight,
+                  naturalWidth,
+                  opacity: 1.0,
+                  src: serverThumbnailUrl,
+                  thumbnailSrc: serverThumbnailUrl,
+                }
+              : img
+          )
+        );
+      }
+
       if (!naturalWidth || !naturalHeight) {
         try {
           const img = new window.Image();
@@ -134,7 +159,7 @@ export function useStreamingHandlers(
           await new Promise((resolve, reject) => {
             img.onload = resolve;
             img.onerror = reject;
-            img.src = finalUrl;
+            img.src = serverThumbnailUrl || finalUrl;
           });
           naturalWidth = img.naturalWidth;
           naturalHeight = img.naturalHeight;
@@ -144,7 +169,7 @@ export function useStreamingHandlers(
       }
 
       let convexUrl = finalUrl;
-      let thumbnailUrl: string | undefined;
+      let thumbnailUrl: string | undefined = serverThumbnailUrl;
 
       if (isAuthenticated) {
         try {
@@ -163,7 +188,7 @@ export function useStreamingHandlers(
           });
 
           convexUrl = uploadResult.url;
-          thumbnailUrl = uploadResult.thumbnailUrl;
+          thumbnailUrl = uploadResult.thumbnailUrl || serverThumbnailUrl;
         } catch (error) {
           console.error(
             `[Image Generation] Failed to upload to Convex:`,
@@ -264,7 +289,7 @@ export function useStreamingHandlers(
         const response = await fetch(url);
         const blob = await response.blob();
         const thumbnailBlob = await generateThumbnail(blob);
-        
+
         if (thumbnailBlob) {
           const thumbnailDataUrl = await blobToDataUrl(thumbnailBlob);
           setImages((prev) =>
