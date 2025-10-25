@@ -1,3 +1,5 @@
+import type { GeneratedAssetUploadPayload } from "@/types/generated-asset";
+
 /**
  * Utility for uploading generated assets (images/videos) to Convex storage.
  *
@@ -6,29 +8,7 @@
  * generates thumbnails, and stores everything in Convex.
  */
 
-interface UploadGeneratedAssetOptions {
-  /**
-   * Type of asset being uploaded
-   */
-  assetType: "image" | "video";
-
-  /**
-   * URL of the generated asset (from fal-ai or other generation service)
-   */
-  sourceUrl: string;
-
-  /**
-   * Optional metadata for the asset
-   */
-  metadata?: {
-    duration?: number;
-    height?: number;
-    model?: string;
-    prompt?: string;
-    seed?: number;
-    width?: number;
-  };
-}
+type UploadGeneratedAssetOptions = GeneratedAssetUploadPayload;
 
 interface UploadGeneratedAssetResult {
   /**
@@ -49,7 +29,6 @@ interface UploadGeneratedAssetResult {
   /**
    * Thumbnail proxy URL (for images only)
    */
-
   thumbnailUrl?: string;
   /**
    * Convex storage URL for accessing the asset
