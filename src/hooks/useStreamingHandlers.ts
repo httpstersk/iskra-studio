@@ -3,6 +3,8 @@ import {
   dismissToast,
   handleVideoCompletion,
 } from "@/lib/handlers/video-generation-handlers";
+import { generateThumbnail } from "@/lib/utils/generate-thumbnail";
+import { blobToDataUrl } from "@/lib/utils/image-utils";
 import type {
   ActiveGeneration,
   ActiveVideoGeneration,
@@ -57,7 +59,7 @@ interface StreamingHandlerDeps {
 interface StreamingHandlers {
   handleStreamingImageComplete: (id: string, finalUrl: string) => Promise<void>;
   handleStreamingImageError: (id: string, error: string) => void;
-  handleStreamingImageUpdate: (id: string, url: string) => void;
+  handleStreamingImageUpdate: (id: string, url: string) => Promise<void>;
   handleVideoGenerationComplete: (
     videoId: string,
     videoUrl: string,
@@ -256,18 +258,55 @@ export function useStreamingHandlers(
   );
 
   const handleStreamingImageUpdate = useCallback(
-    (id: string, url: string) => {
-      setImages((prev) =>
-        prev.map((img) =>
-          img.id === id
-            ? {
-                ...img,
-                displayAsThumbnail: true,
-                src: url,
-              }
-            : img
-        )
-      );
+    async (id: string, url: string) => {
+      try {
+        // Download and generate thumbnail for streaming update
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const thumbnailBlob = await generateThumbnail(blob);
+        
+        if (thumbnailBlob) {
+          const thumbnailDataUrl = await blobToDataUrl(thumbnailBlob);
+          setImages((prev) =>
+            prev.map((img) =>
+              img.id === id
+                ? {
+                    ...img,
+                    displayAsThumbnail: true,
+                    src: thumbnailDataUrl,
+                  }
+                : img
+            )
+          );
+        } else {
+          // Fallback if thumbnail generation fails
+          setImages((prev) =>
+            prev.map((img) =>
+              img.id === id
+                ? {
+                    ...img,
+                    displayAsThumbnail: true,
+                    src: url,
+                  }
+                : img
+            )
+          );
+        }
+      } catch (error) {
+        console.warn("Failed to generate streaming thumbnail:", error);
+        // Fallback to original behavior
+        setImages((prev) =>
+          prev.map((img) =>
+            img.id === id
+              ? {
+                  ...img,
+                  displayAsThumbnail: true,
+                  src: url,
+                }
+              : img
+          )
+        );
+      }
     },
     [setImages]
   );

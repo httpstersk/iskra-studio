@@ -22,13 +22,14 @@ import {
  *
  * Resizes the image to fit within maxWidth x maxHeight while maintaining
  * aspect ratio, then converts to JPEG with specified quality.
+ * Only applies compression if it actually reduces file size.
  * Falls back gracefully if compression fails.
  *
  * @param imageBlob - The full-size image blob
  * @param maxWidth - Maximum width in pixels (default: 1920)
  * @param maxHeight - Maximum height in pixels (default: 1080)
  * @param quality - JPEG quality 0-1 (default: 0.85)
- * @returns Compressed JPEG blob, or original blob if compression fails
+ * @returns Compressed JPEG blob, or original blob if compression doesn't reduce size
  *
  * @example
  * ```ts
@@ -51,6 +52,7 @@ export async function compressImage(
     // Calculate new dimensions maintaining aspect ratio
     let width = img.width;
     let height = img.height;
+    let needsResize = false;
 
     // Only resize if image exceeds maximum dimensions
     if (width > maxWidth || height > maxHeight) {
@@ -60,6 +62,12 @@ export async function compressImage(
 
       width = Math.round(width * ratio);
       height = Math.round(height * ratio);
+      needsResize = true;
+    }
+
+    // If image doesn't need resizing and is already JPEG, return original
+    if (!needsResize && imageBlob.type === "image/jpeg") {
+      return imageBlob;
     }
 
     // Create canvas and draw resized image
@@ -74,7 +82,13 @@ export async function compressImage(
     // Convert canvas to JPEG blob
     const blob = await canvasToBlob(canvas, "image/jpeg", quality);
 
-    return blob;
+    // Only use compressed version if it's actually smaller
+    if (blob.size < imageBlob.size) {
+      return blob;
+    }
+
+    // Return original if compression didn't reduce size
+    return imageBlob;
   } catch (error) {
     console.error("Image compression failed:", error);
     // Return original blob if compression fails

@@ -16,7 +16,7 @@ import {
 // Constants
 const DEFAULT_THUMBNAIL_SIZE = 400;
 const THUMBNAIL_FORMAT = "image/webp" as const;
-const THUMBNAIL_QUALITY = 1.0;
+const THUMBNAIL_QUALITY = 0.75;
 
 /**
  * Calculates thumbnail dimensions while maintaining aspect ratio.

@@ -21,4 +21,4 @@ export const MAX_IMAGE_HEIGHT = 1080;
  * JPEG compression quality (0-1).
  * 0.85 provides a good balance between file size and visual quality.
  */
-export const JPEG_QUALITY = 0.9;
+export const JPEG_QUALITY = 0.85;

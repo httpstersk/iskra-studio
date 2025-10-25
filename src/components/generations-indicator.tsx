@@ -129,7 +129,7 @@ function StatusOrb({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<ShaderContext | null>(null);
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | undefined>(undefined);
   const elapsedRef = useRef(0);
   const [isSupported, setIsSupported] = useState(true);
 
