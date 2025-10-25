@@ -90,7 +90,7 @@ function validateFile(file: File | Blob): void {
   }
 
   // Validate MIME type
-  const mimeType = file instanceof File ? file.type : "application/octet-stream";
+  const mimeType = file.type || "application/octet-stream";
   const isImage = mimeType.startsWith("image/");
   const isVideo = mimeType.startsWith("video/");
 
@@ -174,7 +174,7 @@ async function createAssetRecord(
 ): Promise<string> {
   const convexClient = createConvexClientWithToken(authToken);
 
-  const mimeType = file instanceof File ? file.type : "application/octet-stream";
+  const mimeType = file.type || "application/octet-stream";
   const assetType = mimeType.startsWith("image/") ? "image" : "video";
 
   const assetId = await convexClient.mutation(api.assets.uploadAsset, {
