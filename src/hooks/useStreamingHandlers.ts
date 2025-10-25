@@ -197,19 +197,23 @@ export function useStreamingHandlers(
         }
       }
 
+      const shouldDisplayThumbnail = Boolean(thumbnailUrl);
+      const displaySrc =
+        shouldDisplayThumbnail && thumbnailUrl ? thumbnailUrl : convexUrl;
+
       setImages((prev) =>
         prev.map((img) =>
           img.id === id
             ? {
                 ...img,
-                displayAsThumbnail: !!thumbnailUrl && !img.pixelatedSrc,
-                fullSizeSrc: thumbnailUrl ? convexUrl : undefined,
+                displayAsThumbnail: shouldDisplayThumbnail,
+                fullSizeSrc: convexUrl,
                 isLoading: false,
                 naturalHeight,
                 naturalWidth,
                 opacity: 1.0,
-                src: thumbnailUrl || convexUrl,
-                thumbnailSrc: thumbnailUrl,
+                src: displaySrc,
+                thumbnailSrc: shouldDisplayThumbnail ? thumbnailUrl : undefined,
               }
             : img
         )

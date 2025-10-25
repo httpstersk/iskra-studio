@@ -300,7 +300,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
   try {
     // Ensure image is in Convex (reuses existing URL if already there)
-    const imageUrl = await ensureImageInConvex(selectedImage.src, toast);
+    const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
+    const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
 
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
     // Convert proxy URL to signed URL for tRPC (imageUrl could be proxy or full Convex URL)

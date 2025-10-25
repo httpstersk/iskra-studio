@@ -120,7 +120,8 @@ export const handleBrollImageVariations = async (
 
   try {
     // Ensure image is in Convex (reuses existing URL if already there)
-    const imageUrl = await ensureImageInConvex(selectedImage.src, toast);
+    const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
+    const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
 
     // Convert to signed URL for API calls (handles proxy URLs)
     const signedImageUrl = toSignedUrl(imageUrl);

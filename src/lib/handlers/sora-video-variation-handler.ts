@@ -255,7 +255,8 @@ export const handleSoraVideoVariations = async (
     }
 
     // Ensure image is in Convex (reuses existing URL if already there)
-    const imageUrl = await ensureImageInConvex(selectedImage.src, toast);
+    const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
+    const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
 
     // Stage 1: Analyze image style/mood
     const imageAnalysis = await analyzeImage(imageUrl);
