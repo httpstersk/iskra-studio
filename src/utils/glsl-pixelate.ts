@@ -1,3 +1,5 @@
+import { CANVAS_GRID } from "@/constants/canvas";
+
 const VERTEX_SHADER_SOURCE = `
   attribute vec2 a_position;
   attribute vec2 a_texCoord;
@@ -27,7 +29,7 @@ const FRAGMENT_SHADER_SOURCE = `
   }
 `;
 
-const DEFAULT_PIXEL_SIZE = 20;
+const DEFAULT_PIXEL_SIZE = CANVAS_GRID.PIXEL_SIZE;
 
 interface PixelateResources {
   program: WebGLProgram;
@@ -232,7 +234,7 @@ export const createPixelatedCloneCanvas = (
   image: HTMLImageElement,
   width: number,
   height: number,
-  pixelSize = DEFAULT_PIXEL_SIZE
+  pixelSize: number = DEFAULT_PIXEL_SIZE
 ): HTMLCanvasElement => {
   const targetWidth = Math.max(1, Math.round(width));
   const targetHeight = Math.max(1, Math.round(height));

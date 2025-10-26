@@ -1,10 +1,12 @@
+import { CANVAS_GRID } from "@/constants/canvas";
+
 import { createPixelatedCloneCanvas } from "./glsl-pixelate";
 import { cachePixelatedImage } from "./image-cache";
 
 /**
  * Default pixel size for generated image overlays
  */
-const DEFAULT_PIXEL_SIZE = 20;
+const DEFAULT_PIXEL_SIZE = CANVAS_GRID.PIXEL_SIZE;
 
 /**
  * Interface for image dimensions

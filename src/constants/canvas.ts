@@ -44,6 +44,7 @@ export const CANVAS_GRID = {
   LIGHT_COLOR: "#f0f0f0",
   DARK_COLOR: "#2a2a2a",
   SPACING: 12,
+  PIXEL_SIZE: 12,
 } as const;
 
 export const VIDEO_DEFAULTS = {
