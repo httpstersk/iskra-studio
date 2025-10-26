@@ -26,6 +26,8 @@ Be EXTREMELY PRECISE with all measurements and characteristics:
 
 Provide a detailed analysis in the following categories. Be specific and creative with descriptive language. When lists are requested, ALWAYS supply at least the minimum number of items indicated.
 
+⚠️ CRITICAL: Use exact lowercase field names as specified. Do NOT capitalize field names (use "mood" not "Mood", "quality" not "Quality", etc.)
+
 SUBJECT/SCENE:
 - Identify the main subject type (person, object, landscape, cityscape, abstract, nature, architecture, etc.)
 - Describe what you see in 1-2 sentences
@@ -39,10 +41,12 @@ COLOR PALETTE:
 - Temperature: choose ONLY ONE from these exact values: cool, neutral, warm, or mixed (no additional text)
 
 LIGHTING:
-- Quality: choose ONLY ONE from these exact values: soft-diffused, hard-dramatic, natural, artificial, or mixed (do not add any additional text, just the enum value)
-- Direction: Provide PRECISE direction and characteristics with angles (e.g., "45° side key from camera left, 180° back rim at 2 stops over key, soft fill from camera right at -2 stops", "overhead key at 60° angle with ambient bounce fill")
-- Mood: Describe the emotional quality and mood of the lighting
-- Atmosphere: List atmospheric qualities with measurable details (e.g., "light haze reducing contrast by 20%", "volumetric god rays at 80° angle", "crystal clear with edge contrast", "diffuse overcast reducing shadows to 1:1 ratio")
+- quality: choose ONLY ONE from these exact values: soft-diffused, hard-dramatic, natural, artificial, or mixed (do not add any additional text, just the enum value)
+- direction: Provide PRECISE direction and characteristics with angles (e.g., "45° side key from camera left, 180° back rim at 2 stops over key, soft fill from camera right at -2 stops", "overhead key at 60° angle with ambient bounce fill")
+- mood: Describe the emotional quality and mood of the lighting (note: lowercase 'mood')
+- atmosphere: List atmospheric qualities with measurable details (e.g., "light haze reducing contrast by 20%", "volumetric god rays at 80° angle", "crystal clear with edge contrast", "diffuse overcast reducing shadows to 1:1 ratio")
+
+IMPORTANT: All field names must be lowercase (quality, direction, mood, atmosphere)
 
 VISUAL STYLE:
 - List aesthetic styles (e.g., cinematic, editorial, surreal, minimalist, dramatic)
