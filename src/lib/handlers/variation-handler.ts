@@ -39,7 +39,7 @@ interface VariationHandlerDeps {
   userId?: string;
   variationPrompt?: string;
   variationMode?: "image" | "video";
-  imageVariationType?: "camera-angles" | "b-rolls";
+  imageVariationType?: "camera-angles" | "storyline";
   imageModel?: "seedream" | "reve";
   variationCount?: number;
   videoSettings?: import("@/types/canvas").VideoGenerationSettings;
@@ -167,7 +167,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
   // Route to appropriate handler based on variation mode:
   // - Video mode: Uses Sora 2 with AI analysis (image analysis + storyline generation)
-  // - Image mode with B-rolls: Uses Seedream with AI analysis for style-matched B-rolls
+  // - Image mode with storyline: Uses Seedream with AI analysis for narrative progression with exponential time jumps
   // - Image mode with camera angles: Uses Seedream without AI analysis (continues below)
   if (variationMode === "video") {
     if (!setVideos || !setActiveVideoGenerations) {
@@ -197,13 +197,13 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     });
   }
 
-  // IMAGE MODE with B-rolls: Generate B-roll variations using AI analysis
-  if (variationMode === "image" && imageVariationType === "b-rolls") {
-    const { handleBrollImageVariations } = await import(
-      "./b-roll-image-variation-handler"
+  // IMAGE MODE with storyline: Generate storyline variations using AI analysis
+  if (variationMode === "image" && imageVariationType === "storyline") {
+    const { handleStorylineImageVariations } = await import(
+      "./storyline-image-variation-handler"
     );
 
-    return handleBrollImageVariations({
+    return handleStorylineImageVariations({
       images,
       selectedIds,
       setActiveGenerations,

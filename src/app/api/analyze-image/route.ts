@@ -12,7 +12,17 @@ import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schem
 
 export const maxDuration = 30;
 
-const IMAGE_STYLE_MOOD_PROMPT = `You are analyzing an image to extract structured data for cinematic video generation.
+const IMAGE_STYLE_MOOD_PROMPT = `You are analyzing an image to extract structured data for cinematic video generation and narrative storyline sequences.
+
+VISUAL COHERENCE FOCUS:
+Your analysis will be used to generate visually coherent storyline sequences where multiple images must look like they were created by the same cinematographer in the same session.
+
+Be EXTREMELY PRECISE with all measurements and characteristics:
+- Use specific color values (not "blue" but "midnight indigo #1a2332" with hex codes when possible)
+- Provide exact lighting angles (not "side light" but "45° side key from camera left")
+- Specify measurable characteristics (not "grainy" but "35mm Kodak 5219 grain at ISO 800")
+- Detail post-processing specifics (not "vignette" but "subtle corner vignette -0.3 stops")
+- Include technical film terminology for precision
 
 Provide a detailed analysis in the following categories. Be specific and creative with descriptive language. When lists are requested, ALWAYS supply at least the minimum number of items indicated.
 
@@ -22,24 +32,24 @@ SUBJECT/SCENE:
 - Describe the general context or what's happening (e.g., "in contemplation", "in motion", "at rest")
 
 COLOR PALETTE:
-- List 3-5 dominant colors with evocative names (e.g., "midnight indigo", "electric cobalt", "sunset amber")
-- Provide detailed color grading description (e.g., "teal-orange blockbuster look", "desaturated Nordic noir palette", "warm golden hour glow with crushed blacks")
+- List 3-5 dominant colors with evocative names AND estimated hex codes (e.g., "midnight indigo #1a2332", "electric cobalt #0056b3", "sunset amber #f4a261")
+- Provide EXTREMELY detailed color grading description with technical specifics (e.g., "teal-orange blockbuster look with teal shadows at 180° hue, orange highlights at 30° hue, crushed blacks below 15 IRE", "desaturated Nordic noir palette with -40% global saturation, blue-grey cast at 210° hue")
 - Describe the overall mood the colors create
 - Saturation: choose ONLY ONE from these exact values: muted, balanced, vibrant, or hyper-saturated (no additional text)
 - Temperature: choose ONLY ONE from these exact values: cool, neutral, warm, or mixed (no additional text)
 
 LIGHTING:
 - Quality: choose ONLY ONE from these exact values: soft-diffused, hard-dramatic, natural, artificial, or mixed (do not add any additional text, just the enum value)
-- Direction: Describe the direction and characteristics of the light (e.g., "side lighting with backlight rim", "overhead with bounce fill")
+- Direction: Provide PRECISE direction and characteristics with angles (e.g., "45° side key from camera left, 180° back rim at 2 stops over key, soft fill from camera right at -2 stops", "overhead key at 60° angle with ambient bounce fill")
 - Mood: Describe the emotional quality and mood of the lighting
-- Atmosphere: List atmospheric qualities (e.g., haze, volumetric, clear, crisp)
+- Atmosphere: List atmospheric qualities with measurable details (e.g., "light haze reducing contrast by 20%", "volumetric god rays at 80° angle", "crystal clear with edge contrast", "diffuse overcast reducing shadows to 1:1 ratio")
 
 VISUAL STYLE:
 - List aesthetic styles (e.g., cinematic, editorial, surreal, minimalist, dramatic)
 - Describe the compositional approach
 - Depth: choose ONLY ONE from these exact values: flat, layered, or deep-perspective (no additional text)
-- Film grain: Analyze grain characteristics - none, subtle, moderate, heavy, or specific type (e.g., "35mm Kodak grain", "16mm texture", "digital noise", "Super 8 grain")
-- Post-processing effects: List ALL visible effects (e.g., vignette, bloom, chromatic aberration, lens distortion, halation, light leaks, lens flares, color fringing)
+- Film grain: Analyze grain characteristics with TECHNICAL PRECISION - specify stock type, ISO, and intensity (e.g., "35mm Kodak Vision3 5219 at ISO 800 with pronounced grain structure", "16mm Tri-X pushed 2 stops with heavy grain", "digital noise equivalent to ISO 3200", "Super 8 Ektachrome with fine grain at base ISO", "clean digital sensor at ISO 100 with minimal noise")
+- Post-processing effects: List ALL visible effects with MEASURABLE PARAMETERS (e.g., "corner vignette at -0.8 stops with 30% feather", "bloom on highlights above 90% luminance", "lateral chromatic aberration 2px at frame edges", "barrel lens distortion 3%", "halation glow 15px radius on bright sources", "light leaks in top-left corner at 40% opacity")
 - List textures present (e.g., rough, smooth, grainy, glossy)
 
 MOOD & ATMOSPHERE:
@@ -76,7 +86,7 @@ STYLE SIGNATURE (precise fingerprint for exact matching):
 - Rhythm: report all values
   - cadence (string): perceived cadence/pacing
   - tempo: choose ONLY ONE: still, slow, measured, brisk, or frantic
-- styleLockPrompt (string): one concise sentence that locks color, lighting, lens, grain, and emotion for prompts (to prepend to prompts)
+- styleLockPrompt (string): ONE TECHNICAL SENTENCE encoding ALL critical visual parameters that MUST be prepended to every generation prompt to ensure perfect style matching. Include specific measurable values for: film stock/ISO, lens focal length & aperture, color grading specifics with LUT/preset names, lighting setup with angles & ratios, post-processing effects with parameters, and cinematographer/director references. Example: "Shot on 35mm Kodak Vision3 5219 at ISO 800, 85mm f/1.8 bokeh, teal-orange LUT with teal shadows at 180° hue & orange highlights at 30° hue, 45° side key with 3:1 fill ratio, corner vignette -0.8 stops, Roger Deakins/Denis Villeneuve aesthetic."
 
 CINEMATIC POTENTIAL:
 - List AT LEAST TWO motion styles that fit (e.g., smooth, frenetic, slow, rhythmic)
@@ -91,7 +101,7 @@ NARRATIVE TONE:
 - Intensity level: number from 1 to 10
 - Describe the storytelling approach
 
-Focus on visual language, style, and mood that can inspire cinematic video sequences. The cinematographer and director references will be used to guide B-roll generation that matches this exact aesthetic.`;
+Focus on visual language, style, and mood that can inspire cinematic video sequences and storyline progressions. The cinematographer and director references will be used to guide generation that matches this exact aesthetic across multiple images in a narrative sequence. PRECISION IS CRITICAL for visual coherence.`;
 
 const analyzeImageRequestSchema = z.object({
   imageUrl: z

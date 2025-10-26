@@ -23,7 +23,7 @@ interface GenerationHandlerDeps {
   generationCount: number;
   generationSettings: GenerationSettings;
   imageModel: "seedream" | "reve";
-  imageVariationType: "camera-angles" | "b-rolls";
+  imageVariationType: "camera-angles" | "storyline";
   images: PlacedImage[];
   isAuthenticated: boolean;
   selectedIds: string[];

@@ -14,8 +14,8 @@ import { ImagesIcon, PlayIcon } from "lucide-react";
 interface ModeIndicatorProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   hasSelection: boolean;
-  imageVariationType?: "camera-angles" | "b-rolls";
-  setImageVariationType?: (type: "camera-angles" | "b-rolls") => void;
+  imageVariationType?: "camera-angles" | "storyline";
+  setImageVariationType?: (type: "camera-angles" | "storyline") => void;
   variationMode: "image" | "video";
 }
 
@@ -74,20 +74,20 @@ export function ModeIndicator({
         </SegmentedControl.Item>
       </SegmentedControl.Root>
 
-      {/* Camera Angles vs B-rolls switcher - only show in Image mode */}
+      {/* Camera Angles vs Storyline switcher - only show in Image mode */}
       {variationMode === "image" && setImageVariationType && (
         <SegmentedControl.Root
           size="1"
           value={imageVariationType}
           onValueChange={(value) =>
-            setImageVariationType(value as "camera-angles" | "b-rolls")
+            setImageVariationType(value as "camera-angles" | "storyline")
           }
         >
           <SegmentedControl.Item value="camera-angles">
             <span className="text-xs whitespace-nowrap">Angles</span>
           </SegmentedControl.Item>
-          <SegmentedControl.Item value="b-rolls">
-            <span className="text-xs">B-rolls</span>
+          <SegmentedControl.Item value="storyline">
+            <span className="text-xs">Storyline</span>
           </SegmentedControl.Item>
         </SegmentedControl.Root>
       )}
