@@ -156,24 +156,34 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
         prompt: generationSettings.prompt,
       })) as { width: number; height: number; url: string };
 
+      // Crop the generated image to 16:9 aspect ratio
+      const { cropImageUrlToAspectRatio } = await import(
+        "@/utils/image-crop-utils"
+      );
+      const croppedResult = await cropImageUrlToAspectRatio(result.url);
+
       // Migrate to Convex storage if enabled and userId is provided
-      let finalUrl = result.url;
+      let finalUrl = croppedResult.croppedSrc;
+
       if (useConvexStorage && userId) {
         try {
-          const migrationResult = await downloadAndReupload(result.url, {
-            userId,
-            type: "image",
-            mimeType: "image/png",
-            metadata: {
-              prompt: generationSettings.prompt,
-              width: result.width,
-              height: result.height,
-            },
-          });
+          const migrationResult = await downloadAndReupload(
+            croppedResult.croppedSrc,
+            {
+              userId,
+              type: "image",
+              mimeType: "image/jpeg",
+              metadata: {
+                prompt: generationSettings.prompt,
+                width: croppedResult.width,
+                height: croppedResult.height,
+              },
+            }
+          );
           finalUrl = migrationResult.url;
         } catch (error) {
           console.error("Failed to migrate to Convex storage:", error);
-          // Continue with FAL URL if migration fails
+          // Continue with cropped data URL if migration fails
         }
       }
 
@@ -189,12 +199,12 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       // Preserve aspect ratio while limiting the longest side to 512px
       const maxDisplay = 512;
       const scale = Math.min(
-        maxDisplay / Math.max(result.width, 1),
-        maxDisplay / Math.max(result.height, 1),
+        maxDisplay / Math.max(croppedResult.width, 1),
+        maxDisplay / Math.max(croppedResult.height, 1),
         1
       );
-      const width = Math.max(1, Math.round(result.width * scale));
-      const height = Math.max(1, Math.round(result.height * scale));
+      const width = Math.max(1, Math.round(croppedResult.width * scale));
+      const height = Math.max(1, Math.round(croppedResult.height * scale));
 
       setImages((prev) => [
         ...prev,
@@ -207,6 +217,8 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
           height,
           rotation: 0,
           isGenerated: true,
+          naturalWidth: croppedResult.width,
+          naturalHeight: croppedResult.height,
         },
       ]);
 

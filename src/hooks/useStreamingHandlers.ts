@@ -123,6 +123,29 @@ export function useStreamingHandlers(
 
       const generation = activeGenerations.get(id);
 
+      // Crop the generated/variation image to 16:9 aspect ratio
+      let croppedUrl = finalUrl;
+      let croppedThumbnailUrl = serverThumbnailUrl;
+      
+      try {
+        const { cropImageUrlToAspectRatio } = await import(
+          "@/utils/image-crop-utils"
+        );
+        const croppedResult = await cropImageUrlToAspectRatio(finalUrl);
+        croppedUrl = croppedResult.croppedSrc;
+        
+        // Also crop the thumbnail if provided
+        if (serverThumbnailUrl) {
+          const croppedThumbResult = await cropImageUrlToAspectRatio(
+            serverThumbnailUrl
+          );
+          croppedThumbnailUrl = croppedThumbResult.croppedSrc;
+        }
+      } catch (error) {
+        console.warn("Failed to crop generated image:", error);
+        // Continue with original URLs if cropping fails
+      }
+
       let naturalWidth: number | undefined;
       let naturalHeight: number | undefined;
 
@@ -132,20 +155,20 @@ export function useStreamingHandlers(
       }
 
       // If server provided a thumbnail, use it immediately for display
-      if (serverThumbnailUrl) {
+      if (croppedThumbnailUrl) {
         setImages((prev) =>
           prev.map((img) =>
             img.id === id
               ? {
                   ...img,
                   displayAsThumbnail: true,
-                  fullSizeSrc: finalUrl,
+                  fullSizeSrc: croppedUrl,
                   isLoading: false,
                   naturalHeight,
                   naturalWidth,
                   opacity: 1.0,
-                  src: serverThumbnailUrl,
-                  thumbnailSrc: serverThumbnailUrl,
+                  src: croppedThumbnailUrl,
+                  thumbnailSrc: croppedThumbnailUrl,
                 }
               : img
           )
@@ -159,7 +182,7 @@ export function useStreamingHandlers(
           await new Promise((resolve, reject) => {
             img.onload = resolve;
             img.onerror = reject;
-            img.src = serverThumbnailUrl || finalUrl;
+            img.src = croppedThumbnailUrl || croppedUrl;
           });
           naturalWidth = img.naturalWidth;
           naturalHeight = img.naturalHeight;
@@ -168,8 +191,8 @@ export function useStreamingHandlers(
         }
       }
 
-      let convexUrl = finalUrl;
-      let thumbnailUrl: string | undefined = serverThumbnailUrl;
+      let convexUrl = croppedUrl;
+      let thumbnailUrl: string | undefined = croppedThumbnailUrl;
 
       if (isAuthenticated) {
         try {
@@ -184,11 +207,11 @@ export function useStreamingHandlers(
               prompt: generation?.prompt,
               width: naturalWidth,
             },
-            sourceUrl: finalUrl,
+            sourceUrl: croppedUrl,
           });
 
           convexUrl = uploadResult.url;
-          thumbnailUrl = uploadResult.thumbnailUrl || serverThumbnailUrl;
+          thumbnailUrl = uploadResult.thumbnailUrl || croppedThumbnailUrl;
         } catch (error) {
           console.error(
             `[Image Generation] Failed to upload to Convex:`,
@@ -289,8 +312,14 @@ export function useStreamingHandlers(
   const handleStreamingImageUpdate = useCallback(
     async (id: string, url: string) => {
       try {
+        // Crop the streaming image to 16:9
+        const { cropImageUrlToAspectRatio } = await import(
+          "@/utils/image-crop-utils"
+        );
+        const croppedResult = await cropImageUrlToAspectRatio(url);
+        
         // Download and generate thumbnail for streaming update
-        const response = await fetch(url);
+        const response = await fetch(croppedResult.croppedSrc);
         const blob = await response.blob();
         const thumbnailBlob = await generateThumbnail(blob);
 
@@ -315,14 +344,14 @@ export function useStreamingHandlers(
                 ? {
                     ...img,
                     displayAsThumbnail: true,
-                    src: url,
+                    src: croppedResult.croppedSrc,
                   }
                 : img
             )
           );
         }
       } catch (error) {
-        console.warn("Failed to generate streaming thumbnail:", error);
+        console.warn("Failed to crop/generate streaming thumbnail:", error);
         // Fallback to original behavior
         setImages((prev) =>
           prev.map((img) =>

@@ -14,7 +14,7 @@ export function useDefaultImages(
   isStorageLoaded: boolean,
   imagesLength: number,
   canvasSize: { height: number; width: number },
-  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>,
+  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>
 ) {
   useEffect(() => {
     if (!isStorageLoaded || imagesLength > 0) return;
@@ -29,12 +29,23 @@ export function useDefaultImages(
           const blob = await response.blob();
           const reader = new FileReader();
 
-          reader.onload = (e) => {
+          reader.onload = async (e) => {
             const img = new window.Image();
+
             img.crossOrigin = "anonymous";
-            img.onload = () => {
+            img.onload = async () => {
               const id = `default-${path.replace("/", "").replace(".png", "")}-${Date.now()}`;
-              const aspectRatio = img.width / img.height;
+
+              // Crop image to 16:9 aspect ratio
+              const { cropImageUrlToAspectRatio } = await import(
+                "@/utils/image-crop-utils"
+              );
+
+              const croppedResult = await cropImageUrlToAspectRatio(
+                e.target?.result as string
+              );
+
+              const aspectRatio = croppedResult.width / croppedResult.height;
               const maxSize = CANVAS_DIMENSIONS.DEFAULT_MAX_SIZE;
               let width = maxSize;
               let height = maxSize / aspectRatio;
@@ -59,10 +70,12 @@ export function useDefaultImages(
                   height,
                   id,
                   rotation: 0,
-                  src: e.target?.result as string,
+                  src: croppedResult.croppedSrc,
                   width,
                   x: snapped.x,
                   y: snapped.y,
+                  naturalWidth: croppedResult.width,
+                  naturalHeight: croppedResult.height,
                 },
               ]);
             };

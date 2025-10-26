@@ -6,7 +6,7 @@
  */
 export function determineAspectRatio(
   width: number,
-  height: number,
+  height: number
 ): "landscape_16_9" | "portrait_16_9" {
   const aspectRatio = width / height;
 
@@ -25,7 +25,7 @@ export function determineAspectRatio(
  */
 export function getOptimalImageDimensions(
   width: number,
-  height: number,
+  height: number
 ): { width: number; height: number } {
   const aspectRatioMode = determineAspectRatio(width, height);
 
@@ -45,7 +45,7 @@ export function getOptimalImageDimensions(
 export function calculateCropDimensions(
   originalWidth: number,
   originalHeight: number,
-  targetAspectRatio: "16:9" | "9:16",
+  targetAspectRatio: "16:9" | "9:16"
 ): { width: number; height: number; x: number; y: number } {
   const targetRatio = targetAspectRatio === "16:9" ? 16 / 9 : 9 / 16;
   const currentRatio = originalWidth / originalHeight;
@@ -85,13 +85,13 @@ export function calculateCropDimensions(
  */
 export async function cropImageToAspectRatio(
   imageElement: HTMLImageElement,
-  targetAspectRatio: "landscape_16_9" | "portrait_16_9",
+  targetAspectRatio: "landscape_16_9" | "portrait_16_9"
 ): Promise<string> {
   const aspectRatio = targetAspectRatio === "landscape_16_9" ? "16:9" : "9:16";
   const cropDimensions = calculateCropDimensions(
     imageElement.naturalWidth,
     imageElement.naturalHeight,
-    aspectRatio,
+    aspectRatio
   );
 
   // Create canvas with crop dimensions
@@ -114,9 +114,55 @@ export async function cropImageToAspectRatio(
     0,
     0,
     cropDimensions.width,
-    cropDimensions.height,
+    cropDimensions.height
   );
 
   // Convert to data URL (JPEG for better compression)
   return canvas.toDataURL("image/jpeg", 0.85);
+}
+
+/**
+ * Crops an image URL to 16:9 or 9:16 aspect ratio
+ * @param imageUrl - URL or data URL of the image to crop
+ * @returns Object with cropped image data URL and dimensions
+ */
+export async function cropImageUrlToAspectRatio(imageUrl: string): Promise<{
+  croppedSrc: string;
+  width: number;
+  height: number;
+}> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = async () => {
+      try {
+        const targetAspectRatio = determineAspectRatio(
+          img.naturalWidth,
+          img.naturalHeight
+        );
+
+        const croppedSrc = await cropImageToAspectRatio(img, targetAspectRatio);
+
+        // Get dimensions of cropped image
+        const croppedImg = new window.Image();
+
+        croppedImg.onload = () => {
+          resolve({
+            croppedSrc,
+            width: croppedImg.naturalWidth || croppedImg.width,
+            height: croppedImg.naturalHeight || croppedImg.height,
+          });
+        };
+        croppedImg.onerror = () =>
+          reject(new Error("Failed to load cropped image"));
+        croppedImg.src = croppedSrc;
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = () => reject(new Error("Failed to load image for cropping"));
+    img.src = imageUrl;
+  });
 }
