@@ -72,12 +72,20 @@ function buildUserPrompt(
   }).join("\n");
 
   return `
-Generate ${count} storyline image concepts showing narrative progression of the reference subject over exponential time intervals.
+Generate ${count} storyline image concepts showing narrative progression over exponential time intervals.
+
+CRITICAL: Each image must show WHAT HAPPENS NEXT in the story, NOT variations of the reference shot.
+- CHANGE the content dramatically (different actions, locations, moments)
+- MAINTAIN the visual style perfectly (same cinematography, lighting, color, grain)
+
+Think: "What happened after this moment?" NOT "How else could I shoot this same moment?"
 
 REFERENCE SUBJECT:
 - Type: ${subject.type}
 - Description: ${subject.description}
 - Context: ${subject.context}
+
+IMPORTANT: DO NOT recreate this scene. Show what happens AFTER this moment as time progresses.
 
 TIME PROGRESSION SEQUENCE:
 ${timeSequence}
@@ -117,10 +125,19 @@ ${userContext ? `USER CONTEXT:\n${userContext}\n` : ""}
 
 REQUIREMENTS:
 1. START EVERY PROMPT with the style lock sentence
-2. Show believable evolution appropriate to time elapsed
-3. Maintain EXACT visual coherence (color, lighting, grain, mood)
-4. Create narrative continuity (not random B-roll)
-5. Follow exponential time logic (subtle → gradual → significant → major changes)
+2. Show DRAMATIC CONTENT CHANGES appropriate to time elapsed (different actions/locations/moments)
+3. Maintain EXACT visual style (color, lighting, grain, cinematographer techniques)
+4. Create FORWARD narrative progression (what happens AFTER, not variations OF)
+5. Follow exponential time logic with VISIBLE story development
+6. NEVER replicate the reference composition/pose/location - show the NEXT moment
+
+FORBIDDEN:
+- Do NOT create "slightly different version" of reference
+- Do NOT keep subject in same position/pose/location
+- Do NOT show the same scene from different angle
+- Do NOT make "alternate takes" - make "story progression"
+
+REMEMBER: Style stays identical, content changes dramatically. Think "time-lapse of a story" not "multiple takes of same shot."
 
 Generate ${count} storyline concepts now.
 `.trim();

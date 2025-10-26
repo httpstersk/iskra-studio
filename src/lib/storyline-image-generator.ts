@@ -25,23 +25,43 @@ You will be given:
 - The subject and context of that reference
 - Time elapsed since the reference moment (exponential progression: 1min, 5min, 25min, 2h+, etc.)
 
-Your mission: Generate STORYLINE SHOTS that show HOW THE SUBJECT/SCENE HAS EVOLVED over elapsed time.
+Your mission: Generate STORYLINE SHOTS that show HOW THE STORY HAS PROGRESSED over elapsed time.
+
+CRITICAL SEPARATION: STYLE vs CONTENT
+
+**STYLE (MUST REMAIN IDENTICAL):**
+- Color grading, lighting setup, film grain, lens characteristics
+- Cinematographer techniques, director aesthetic
+- Post-processing effects, mood, atmosphere
+
+**CONTENT (MUST CHANGE DRAMATICALLY):**
+- Subject position, actions, emotional state
+- Scene location, environment, background elements
+- Props, objects, people present
+- Time of day, weather, season (for longer time jumps)
 
 CRITICAL REQUIREMENTS:
 
-1. **NARRATIVE CONTINUITY**: This is NOT B-roll. Each image continues the story of the reference subject.
-   - +1min: Immediate continuation (subtle change - character shifts position, light changes, small action)
-   - +5min: Short-term development (small escalation - new element introduced, minor scene change)
-   - +25min: Medium-term shift (clear progression - environment altered, mood shifted)
-   - +2h+: Long-term transformation (major change - time-of-day shift, substantial narrative progress)
+1. **AVOID REFERENCE REPETITION** (ABSOLUTE PRIORITY):
+   - DO NOT show the same pose, position, or framing as the reference
+   - DO NOT show the same background elements or location (unless time is very short)
+   - DO NOT replicate the same composition
+   - DO NOT keep subjects in the same state or activity
+   - SHOW PROGRESSION: what happens AFTER the reference moment
 
-2. **EXPONENTIAL TIME LOGIC**: Time jumps increase exponentially (×5 multiplier)
-   - Image 1: +1min later (almost immediate)
-   - Image 2: +5min later (few minutes)
-   - Image 3: +25min later (half hour)
-   - Image 4: +125min = +2h5m later (two hours)
-   - Image 8: +78,125min = ~54 days later
-   - Show believable progression appropriate to elapsed time
+2. **NARRATIVE CONTINUITY**: Each image continues the story, showing CHANGE over time:
+   - +1min: Immediate aftermath (subject moved/reacted, action started/completed, small environmental change)
+   - +5min: Short-term consequence (subject in different location/pose, new action begun, scene evolved)
+   - +25min: Medium-term shift (significant environmental change, subject in different context, mood shifted)
+   - +2h+: Long-term transformation (major scene change, possibly different location, time-of-day shift, substantial story progress)
+
+3. **EXPONENTIAL TIME LOGIC**: Time jumps increase exponentially (×5 multiplier)
+   - Image 1: +1min later (immediate aftermath - where did subject go? What happened next?)
+   - Image 2: +5min later (few minutes - subject doing something different, scene changed)
+   - Image 3: +25min later (half hour - significant story development, different moment)
+   - Image 4: +125min = +2h5m later (two hours - major transformation, possibly new location)
+   - Image 8: +78,125min = ~54 days later (completely different moment in time)
+   - Show VISIBLE, BELIEVABLE changes appropriate to elapsed time
 
 3. **VISUAL COHERENCE LOCK** (ABSOLUTE PRIORITY):
    Every generated image MUST match the reference's aesthetic with EXACT precision.
@@ -85,16 +105,24 @@ CRITICAL REQUIREMENTS:
    
    This sentence encodes all critical visual parameters and MUST be the first element of every prompt.
 
-5. **SUBJECT EVOLUTION**: Show natural progression of the reference subject
-   - Early images (+1min, +5min): Subject still present, subtle changes
-   - Medium images (+25min): Subject may have moved/changed, environment shifts
-   - Late images (+2h+): Major transformations allowed, but narrative connection clear
+5. **CONTENT TRANSFORMATION RULES**: Show dramatic change while maintaining story logic
+   - +1min: Different action/position/angle - subject reacted, moved, or environment shifted
+   - +5min: Different scene moment - subject engaged in new activity, different area of space
+   - +25min: Significant change - possibly different location, major action completed, environment transformed
+   - +2h+: Major narrative shift - different setting possible, time-of-day change, season change (if very long)
+   
+   EXAMPLES of proper change:
+   - Reference: Person standing in doorway → +1min: Person walking down street (moved forward in time/space)
+   - Reference: Coffee shop exterior at dusk → +5min: Inside coffee shop, different angle (story progressed inside)
+   - Reference: Character looking at horizon → +25min: Character at different location they were heading toward
+   - Reference: City street in daylight → +2h: Same city at night, different street (time and place progressed)
 
-6. **FORBIDDEN ELEMENTS**: 
-   - Do NOT introduce completely unrelated subjects
-   - Do NOT break visual coherence
-   - Do NOT ignore the time progression logic
-   - Do NOT create generic B-roll disconnected from the reference story
+6. **FORBIDDEN PATTERNS**: 
+   - NEVER copy the exact composition from reference
+   - NEVER show subject in same pose/position as reference
+   - NEVER keep the same background/environment without change
+   - NEVER create "slightly different version" - create "what happens NEXT"
+   - NEVER make it look like alternate takes of the same shot
 
 PROMPT STRUCTURE:
 Each storyline prompt must be structured as:
@@ -106,15 +134,17 @@ LENGTH REQUIREMENTS:
 - Must be complete and self-contained
 - Include all visual elements for exact style matching
 
-EXAMPLE PROMPTS:
+EXAMPLE PROMPTS (showing proper CONTENT change with STYLE preservation):
 
-Reference: Portrait of a detective in a noir office at night
+Reference: Portrait of a detective in a noir office at night, sitting at desk
 
-[+1min] "{styleLockPrompt}. One minute later: The detective leans back in his chair, cigarette smoke curling through the shaft of venetian blind light. Same teal-orange noir grading with crushed blacks, 85mm f/1.8 shallow DOF, hard side key with soft fill. Heavy 35mm Kodak grain, subtle vignette. Roger Deakins lighting, Denis Villeneuve mood."
+[+1min] "{styleLockPrompt}. One minute later: The detective walking down rain-soaked alley, coat collar up, heading away from camera toward distant neon sign. Same teal-orange noir grading with crushed blacks, 85mm f/1.8 shallow DOF, hard side key from street light with wet pavement reflections. Heavy 35mm Kodak grain, subtle vignette. Roger Deakins lighting, Denis Villeneuve mood. Different location and action - story moved forward."
 
-[+5min] "{styleLockPrompt}. Five minutes later: The detective stands by the rain-streaked window, city lights bokeh in background. Maintaining desaturated noir palette, same hard side key now catching raindrops, 85mm f/1.8. Heavy film grain, corner vignette. Deakins shadows, Villeneuve atmosphere."
+[+5min] "{styleLockPrompt}. Five minutes later: Detective entering dimly lit jazz bar, silhouetted against warm interior glow, mid-action shot pushing through beaded curtain. Maintaining desaturated noir palette, same hard dramatic lighting from interior sources, 85mm f/1.8. Heavy film grain, corner vignette. Deakins shadows, Villeneuve atmosphere. New environment - narrative progressed."
 
-[+25min] "{styleLockPrompt}. Twenty-five minutes later: Empty office chair, detective's hat on desk, window now fully dark with distant neon reflections. Identical teal-orange grading, same lighting setup without subject, 85mm wide aperture. Heavy grain texture, vignette present. Deakins style lighting, Villeneuve narrative."
+[+25min] "{styleLockPrompt}. Twenty-five minutes later: Detective confronting someone in warehouse, dramatic standoff composition, figures in shadows with single hanging bulb between them. Identical teal-orange grading, same hard side key creating deep shadows, 85mm wide aperture. Heavy grain texture, vignette present. Deakins style lighting, Villeneuve tension. Major story beat - conflict emerged."
+
+[+2h5m] "{styleLockPrompt}. Two hours later: Detective's empty car parked on foggy pier at dawn, driver door ajar, fedora visible on dashboard, mist rolling past headlights. Same noir color grading now with morning haze, identical lighting quality from low sunrise, 85mm f/1.8. Heavy film grain, vignette. Deakins atmospheric lighting, Villeneuve mystery. Time passed - implies consequence without showing everything."
 
 RESPONSE FORMAT:
 Respond ONLY with JSON matching this structure:

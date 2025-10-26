@@ -47,7 +47,10 @@ LIGHTING:
 VISUAL STYLE:
 - List aesthetic styles (e.g., cinematic, editorial, surreal, minimalist, dramatic)
 - Describe the compositional approach
-- Depth: choose ONLY ONE from these exact values: flat, layered, or deep-perspective (no additional text)
+- Depth: choose ONLY ONE from these exact values (no additional text):
+  * "flat" = minimal depth separation, compressed perspective, everything on similar plane (telephoto compression, flat lighting, 2D feel)
+  * "layered" = clear foreground/background separation with distinct planes (shallow DoF portraits, macro shots with bokeh, subject isolated from background)
+  * "deep-perspective" = strong depth with multiple visible planes, wide-angle depth, or deep focus (wide establishing shots, deep focus cinematography)
 - Film grain: Analyze grain characteristics with TECHNICAL PRECISION - specify stock type, ISO, and intensity (e.g., "35mm Kodak Vision3 5219 at ISO 800 with pronounced grain structure", "16mm Tri-X pushed 2 stops with heavy grain", "digital noise equivalent to ISO 3200", "Super 8 Ektachrome with fine grain at base ISO", "clean digital sensor at ISO 100 with minimal noise")
 - Post-processing effects: List ALL visible effects with MEASURABLE PARAMETERS (e.g., "corner vignette at -0.8 stops with 30% feather", "bloom on highlights above 90% luminance", "lateral chromatic aberration 2px at frame edges", "barrel lens distortion 3%", "halation glow 15px radius on bright sources", "light leaks in top-left corner at 40% opacity")
 - List textures present (e.g., rough, smooth, grainy, glossy)
