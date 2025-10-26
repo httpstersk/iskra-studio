@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 import { withBotId } from "botid/next/config";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const nextConfig = {
   devIndicators: false,
@@ -23,6 +28,18 @@ const nextConfig = {
     // Ignore canvas module which is required by Konva in Node environments
     config.resolve.alias.canvas = false;
     config.resolve.alias.encoding = false;
+
+    // Ensure single Jotai instance to prevent multiple instance warnings
+    config.resolve.alias["jotai"] = path.resolve(
+      __dirname,
+      "node_modules/jotai"
+    );
+
+    // Suppress large string serialization warnings (expected for AI prompts)
+    config.infrastructureLogging = {
+      ...config.infrastructureLogging,
+      level: "error",
+    };
 
     return config;
   },
