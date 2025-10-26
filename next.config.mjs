@@ -35,6 +35,17 @@ const nextConfig = {
       "node_modules/jotai"
     );
 
+    // Ensure single Konva instance to prevent multiple instance warnings
+    config.resolve.alias["konva"] = path.resolve(
+      __dirname,
+      "node_modules/konva"
+    );
+
+    config.resolve.alias["react-konva"] = path.resolve(
+      __dirname,
+      "node_modules/react-konva"
+    );
+
     // Suppress large string serialization warnings (expected for AI prompts)
     config.infrastructureLogging = {
       ...config.infrastructureLogging,
