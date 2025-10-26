@@ -34,34 +34,43 @@ CRITICAL SEPARATION: STYLE vs CONTENT
 - Cinematographer techniques, director aesthetic
 - Post-processing effects, mood, atmosphere
 
-**CONTENT (MUST CHANGE DRAMATICALLY):**
-- Subject position, actions, emotional state
-- Scene location, environment, background elements
-- Props, objects, people present
-- Time of day, weather, season (for longer time jumps)
+**CONTENT (MUST BE COMPLETELY DIFFERENT):**
+- Different subjects, people, characters (NOT the reference subject)
+- Different locations, environments, settings
+- Different objects, props, items
+- Different actions, moments, scenarios
+- Different time of day, weather (for longer time jumps)
+
+**ABSOLUTE RULE**: The reference image shows ONE moment. The storyline images show LATER moments in the same story WORLD, NOT the same subject/scene.
 
 CRITICAL REQUIREMENTS:
 
-1. **AVOID REFERENCE REPETITION** (ABSOLUTE PRIORITY):
-   - DO NOT show the same pose, position, or framing as the reference
-   - DO NOT show the same background elements or location (unless time is very short)
-   - DO NOT replicate the same composition
-   - DO NOT keep subjects in the same state or activity
-   - SHOW PROGRESSION: what happens AFTER the reference moment
+1. **EXCLUDE ALL REFERENCE ELEMENTS** (ABSOLUTE PRIORITY):
+   - DO NOT include ANY subjects, people, or characters from the reference image
+   - DO NOT show ANY objects, props, or items visible in the reference
+   - DO NOT use the same location, setting, or environment
+   - DO NOT replicate ANY part of the reference composition
+   - DO NOT show body parts, clothing, or accessories from reference
+   - THINK: "What ELSE is happening in this world?" NOT "What is this subject doing now?"
+   
+   **REFRAME YOUR THINKING:**
+   - Reference shows: Woman applying lipstick → Generate: Empty street where she's heading, or cafe she'll enter, or mirror reflection of someone else
+   - Reference shows: Detective at desk → Generate: The crime scene he's investigating, or suspect's hideout, or evidence photos
+   - Reference shows: Chef cooking → Generate: The restaurant dining room, or ingredients being delivered, or customer waiting
 
-2. **NARRATIVE CONTINUITY**: Each image continues the story, showing CHANGE over time:
-   - +1min: Immediate aftermath (subject moved/reacted, action started/completed, small environmental change)
-   - +5min: Short-term consequence (subject in different location/pose, new action begun, scene evolved)
-   - +25min: Medium-term shift (significant environmental change, subject in different context, mood shifted)
-   - +2h+: Long-term transformation (major scene change, possibly different location, time-of-day shift, substantial story progress)
+2. **NARRATIVE CONTINUITY**: Each image shows what ELSE is happening in the story world:
+   - +1min: Related consequence/context (a door closing, footsteps departing, result of the action)
+   - +5min: Connected location/event (where the story is heading, what's being affected, secondary characters)
+   - +25min: Story world expansion (related spaces, consequences unfolding, contextual elements)
+   - +2h+: Long-term effects (environments transformed, consequences visible, story world evolved)
 
 3. **EXPONENTIAL TIME LOGIC**: Time jumps increase exponentially (×5 multiplier)
-   - Image 1: +1min later (immediate aftermath - where did subject go? What happened next?)
-   - Image 2: +5min later (few minutes - subject doing something different, scene changed)
-   - Image 3: +25min later (half hour - significant story development, different moment)
-   - Image 4: +125min = +2h5m later (two hours - major transformation, possibly new location)
-   - Image 8: +78,125min = ~54 days later (completely different moment in time)
-   - Show VISIBLE, BELIEVABLE changes appropriate to elapsed time
+   - Image 1: +1min later (immediate ripple effect - what's happening elsewhere as a result?)
+   - Image 2: +5min later (few minutes - related location or consequence unfolding)
+   - Image 3: +25min later (half hour - story world expanded, different angle of narrative)
+   - Image 4: +125min = +2h5m later (two hours - major story world transformation visible)
+   - Image 8: +78,125min = ~54 days later (completely transformed world showing long-term effects)
+   - Show VISIBLE story world evolution, NOT subject tracking
 
 3. **VISUAL COHERENCE LOCK** (ABSOLUTE PRIORITY):
    Every generated image MUST match the reference's aesthetic with EXACT precision.
@@ -105,24 +114,34 @@ CRITICAL REQUIREMENTS:
    
    This sentence encodes all critical visual parameters and MUST be the first element of every prompt.
 
-5. **CONTENT TRANSFORMATION RULES**: Show dramatic change while maintaining story logic
-   - +1min: Different action/position/angle - subject reacted, moved, or environment shifted
-   - +5min: Different scene moment - subject engaged in new activity, different area of space
-   - +25min: Significant change - possibly different location, major action completed, environment transformed
-   - +2h+: Major narrative shift - different setting possible, time-of-day change, season change (if very long)
+5. **CONTENT TRANSFORMATION RULES**: Show completely different elements of the story world
+   - +1min: Different element/location (NOT the reference subject - show effects, consequences, or related spaces)
+   - +5min: Expanded story context (completely different scene that's narratively connected)
+   - +25min: Story world depth (show other characters, locations, or consequences)
+   - +2h+: World transformation (how the story world has changed, evolved, or been affected)
    
-   EXAMPLES of proper change:
-   - Reference: Person standing in doorway → +1min: Person walking down street (moved forward in time/space)
-   - Reference: Coffee shop exterior at dusk → +5min: Inside coffee shop, different angle (story progressed inside)
-   - Reference: Character looking at horizon → +25min: Character at different location they were heading toward
-   - Reference: City street in daylight → +2h: Same city at night, different street (time and place progressed)
+   EXAMPLES showing proper EXCLUSION:
+   - Reference: Woman applying lipstick in mirror → +1min: Empty lipstick tube on bathroom counter (she left)
+   - Reference: Woman applying lipstick in mirror → +5min: Taxi pulling up outside building (where she's going)
+   - Reference: Woman applying lipstick in mirror → +25min: Restaurant table set for two, empty chairs (destination awaiting)
+   - Reference: Woman applying lipstick in mirror → +2h: Same mirror, different person's reflection (time passed, others using space)
+   
+   - Reference: Detective at desk with papers → +1min: Case file photo of crime scene (what he was looking at)
+   - Reference: Detective at desk with papers → +5min: Dark warehouse exterior he's investigating (where story goes)
+   - Reference: Detective at desk with papers → +25min: Suspect's apartment, empty (investigation progressed)
+   - Reference: Detective at desk with papers → +2h: Police interrogation room, suspect in chair (case advanced)
 
-6. **FORBIDDEN PATTERNS**: 
-   - NEVER copy the exact composition from reference
-   - NEVER show subject in same pose/position as reference
-   - NEVER keep the same background/environment without change
-   - NEVER create "slightly different version" - create "what happens NEXT"
-   - NEVER make it look like alternate takes of the same shot
+6. **FORBIDDEN PATTERNS** (STRICTLY ENFORCE): 
+   - NEVER include the reference subject/person/character in ANY form
+   - NEVER show the same objects, items, or props from reference
+   - NEVER use the same location, room, or setting
+   - NEVER show the same body parts, hands, faces, or clothing
+   - NEVER replicate ANY visual element from the reference
+   - NEVER create "what the subject is doing now" - create "what ELSE is happening"
+   - NEVER follow the subject - expand the WORLD
+   - NEVER make variations - make PROGRESSION
+   
+   **KEY MINDSET**: You are NOT filming the same subject at different times. You are showing how the STORY WORLD evolves.
 
 PROMPT STRUCTURE:
 Each storyline prompt must be structured as:
@@ -134,17 +153,19 @@ LENGTH REQUIREMENTS:
 - Must be complete and self-contained
 - Include all visual elements for exact style matching
 
-EXAMPLE PROMPTS (showing proper CONTENT change with STYLE preservation):
+EXAMPLE PROMPTS (showing proper EXCLUSION with STYLE preservation):
 
-Reference: Portrait of a detective in a noir office at night, sitting at desk
+Reference: Portrait of a detective in a noir office at night, sitting at desk looking at case files
 
-[+1min] "{styleLockPrompt}. One minute later: The detective walking down rain-soaked alley, coat collar up, heading away from camera toward distant neon sign. Same teal-orange noir grading with crushed blacks, 85mm f/1.8 shallow DOF, hard side key from street light with wet pavement reflections. Heavy 35mm Kodak grain, subtle vignette. Roger Deakins lighting, Denis Villeneuve mood. Different location and action - story moved forward."
+[+1min] "{styleLockPrompt}. One minute later: Close-up of crime scene photograph lying on wet pavement, rain drops hitting the glossy surface, photo shows warehouse interior. Same teal-orange noir grading with crushed blacks, 85mm f/1.8 shallow DOF, hard side key from street lamp above with water reflections. Heavy 35mm Kodak grain, subtle vignette. Roger Deakins lighting, Denis Villeneuve mood. Detective left, now we see what he was investigating."
 
-[+5min] "{styleLockPrompt}. Five minutes later: Detective entering dimly lit jazz bar, silhouetted against warm interior glow, mid-action shot pushing through beaded curtain. Maintaining desaturated noir palette, same hard dramatic lighting from interior sources, 85mm f/1.8. Heavy film grain, corner vignette. Deakins shadows, Villeneuve atmosphere. New environment - narrative progressed."
+[+5min] "{styleLockPrompt}. Five minutes later: Dark warehouse exterior at night, loading dock door ajar, single yellow bulb visible inside casting shaft of light into foggy alley. Maintaining desaturated noir palette, same hard dramatic side lighting from industrial fixtures, 85mm f/1.8. Heavy film grain, corner vignette. Deakins shadows, Villeneuve atmosphere. Location from case file - where story is heading."
 
-[+25min] "{styleLockPrompt}. Twenty-five minutes later: Detective confronting someone in warehouse, dramatic standoff composition, figures in shadows with single hanging bulb between them. Identical teal-orange grading, same hard side key creating deep shadows, 85mm wide aperture. Heavy grain texture, vignette present. Deakins style lighting, Villeneuve tension. Major story beat - conflict emerged."
+[+25min] "{styleLockPrompt}. Twenty-five minutes later: Abandoned warehouse interior, overturned chair in spotlight from cracked skylight, evidence markers numbered on concrete floor, dust particles in light beam. Identical teal-orange grading, same hard side key from overhead source creating deep shadows, 85mm wide aperture. Heavy grain texture, vignette present. Deakins style lighting, Villeneuve tension. Crime scene discovered - investigation unfolding."
 
-[+2h5m] "{styleLockPrompt}. Two hours later: Detective's empty car parked on foggy pier at dawn, driver door ajar, fedora visible on dashboard, mist rolling past headlights. Same noir color grading now with morning haze, identical lighting quality from low sunrise, 85mm f/1.8. Heavy film grain, vignette. Deakins atmospheric lighting, Villeneuve mystery. Time passed - implies consequence without showing everything."
+[+2h5m] "{styleLockPrompt}. Two hours later: Police interrogation room, empty metal chair at table facing one-way mirror, coffee cup still steaming, tape recorder visible. Same noir color grading with institutional fluorescent modified to match tungsten warmth, identical hard lighting quality from above, 85mm f/1.8. Heavy film grain, vignette. Deakins atmospheric lighting, Villeneuve mystery. Case progressed - suspect brought in, detective's work paid off."
+
+NOTE: The detective NEVER appears. We see the story world affected by his investigation, but we expand the narrative universe rather than tracking him.
 
 RESPONSE FORMAT:
 Respond ONLY with JSON matching this structure:

@@ -74,18 +74,25 @@ function buildUserPrompt(
   return `
 Generate ${count} storyline image concepts showing narrative progression over exponential time intervals.
 
-CRITICAL: Each image must show WHAT HAPPENS NEXT in the story, NOT variations of the reference shot.
-- CHANGE the content dramatically (different actions, locations, moments)
-- MAINTAIN the visual style perfectly (same cinematography, lighting, color, grain)
+⚠️ CRITICAL EXCLUSION RULES ⚠️
+DO NOT include ANY of these from the reference:
+- The same subject, person, or character
+- The same objects, props, or items
+- The same location, room, or setting
+- The same body parts, clothing, or accessories
+- ANY visual element that appears in the reference
 
-Think: "What happened after this moment?" NOT "How else could I shoot this same moment?"
+THINK: "What ELSE is happening in this story world?" NOT "What is this subject doing next?"
 
-REFERENCE SUBJECT:
+REFERENCE (for narrative context only - DO NOT replicate ANY elements):
 - Type: ${subject.type}
 - Description: ${subject.description}
 - Context: ${subject.context}
 
-IMPORTANT: DO NOT recreate this scene. Show what happens AFTER this moment as time progresses.
+YOUR TASK: Show how the STORY WORLD evolves, NOT how the subject moves through it.
+- Show consequences, effects, related locations
+- Show other characters, spaces, or elements affected by this story
+- Expand the narrative universe, don't track the reference subject
 
 TIME PROGRESSION SEQUENCE:
 ${timeSequence}
@@ -125,19 +132,26 @@ ${userContext ? `USER CONTEXT:\n${userContext}\n` : ""}
 
 REQUIREMENTS:
 1. START EVERY PROMPT with the style lock sentence
-2. Show DRAMATIC CONTENT CHANGES appropriate to time elapsed (different actions/locations/moments)
-3. Maintain EXACT visual style (color, lighting, grain, cinematographer techniques)
-4. Create FORWARD narrative progression (what happens AFTER, not variations OF)
-5. Follow exponential time logic with VISIBLE story development
-6. NEVER replicate the reference composition/pose/location - show the NEXT moment
+2. EXCLUDE ALL reference elements (subject, objects, location, props, body parts)
+3. Show COMPLETELY DIFFERENT content (other locations, consequences, related spaces)
+4. Maintain EXACT visual style (color, lighting, grain, cinematographer techniques)
+5. Expand the story WORLD, don't follow the reference subject
+6. Think "parallel narrative threads" not "subject tracking"
 
-FORBIDDEN:
-- Do NOT create "slightly different version" of reference
-- Do NOT keep subject in same position/pose/location
-- Do NOT show the same scene from different angle
-- Do NOT make "alternate takes" - make "story progression"
+STRICTLY FORBIDDEN:
+- Including the reference subject/person in ANY form
+- Showing the same objects, items, or props
+- Using the same location or setting
+- Replicating ANY visual element from reference
+- Creating "what subject does next" - create "what ELSE happens"
+- Following characters - expand UNIVERSE
 
-REMEMBER: Style stays identical, content changes dramatically. Think "time-lapse of a story" not "multiple takes of same shot."
+EXAMPLES OF CORRECT APPROACH:
+- Reference: Woman with coffee → Generate: Empty coffee shop window, taxi outside, office desk awaiting her arrival
+- Reference: Chef in kitchen → Generate: Restaurant dining room, ingredient delivery truck, customer's anticipation
+- Reference: Person reading → Generate: Library after closing, bookshelf they selected from, story within the book
+
+REMEMBER: You're creating a story WORLD, not a subject documentary. The reference is ONE moment; show OTHER moments in that world.
 
 Generate ${count} storyline concepts now.
 `.trim();
