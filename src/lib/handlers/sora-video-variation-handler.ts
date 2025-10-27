@@ -17,6 +17,7 @@ import { snapPosition, snapVideosToGrid } from "@/utils/snap-utils";
 import { calculateBalancedPosition } from "./variation-handler";
 import {
   ensureImageInConvex,
+  toSignedUrl,
   validateSingleImageSelection,
 } from "./variation-utils";
 
@@ -89,10 +90,13 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
 
   if (!response.ok) {
     const error = await response.json().catch(() => null);
-    throw new Error(
-      error?.error ||
-        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`
-    );
+    
+    // Include validation details in the error message
+    const errorMsg = error?.details 
+      ? `${error.error}: ${JSON.stringify(error.details)}`
+      : error?.error || `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
+    
+    throw new Error(errorMsg);
   }
 
   const result = await response.json();
@@ -258,8 +262,11 @@ export const handleSoraVideoVariations = async (
     const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
     const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
 
+    // Convert proxy URL to signed URL for API
+    const signedImageUrl = toSignedUrl(imageUrl);
+
     // Stage 1: Analyze image style/mood
-    const imageAnalysis = await analyzeImage(imageUrl);
+    const imageAnalysis = await analyzeImage(signedImageUrl);
 
     // Stage 2: Generate storyline concepts using AI
     const duration = parseDuration(videoSettings.duration);
@@ -307,7 +314,7 @@ export const handleSoraVideoVariations = async (
 
         const config = createVideoGenerationConfig({
           duration,
-          imageUrl,
+          imageUrl: signedImageUrl,
           modelId,
           prompt: variationPrompt,
           sourceImageId: selectedIds[0],
