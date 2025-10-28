@@ -299,9 +299,29 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   setImages((prev) => [...prev, ...placeholderImages]);
 
   try {
-    // Ensure image is in Convex (reuses existing URL if already there)
+    // Stage 0: Uploading image to ensure it's in Convex
+    const uploadId = `variation-${timestamp}-upload`;
+    
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(uploadId, {
+        imageUrl: "",
+        prompt: "",
+        status: "uploading",
+        isVariation: true,
+      });
+      return newMap;
+    });
+
     const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
     const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
+    
+    // Remove upload placeholder
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(uploadId);
+      return newMap;
+    });
 
     // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
     // Convert proxy URL to signed URL for tRPC (imageUrl could be proxy or full Convex URL)
@@ -332,6 +352,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
           isVariation: true,
           imageSize: imageSizeDimensions,
           model: imageModel,
+          status: "generating",
         });
       });
 

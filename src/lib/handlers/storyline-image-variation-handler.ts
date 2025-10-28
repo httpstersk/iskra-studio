@@ -118,21 +118,76 @@ export const handleStorylineImageVariations = async (
     title: "Analyzing image...",
   });
 
+  const timestamp = Date.now();
+
   try {
-    // Ensure image is in Convex (reuses existing URL if already there)
+    // Stage 0: Uploading image to ensure it's in Convex
+    const placeholderId = `variation-${timestamp}-upload`;
+
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(placeholderId, {
+        imageUrl: "",
+        prompt: "",
+        status: "uploading",
+        isVariation: true,
+      });
+      return newMap;
+    });
+
     const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
     const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
+
+    // Remove upload placeholder
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(placeholderId);
+      return newMap;
+    });
 
     // Convert to signed URL for API calls (handles proxy URLs)
     const signedImageUrl = toSignedUrl(imageUrl);
 
     // Stage 1: Analyze image style/mood
+    const analyzeId = `variation-${timestamp}-analyze`;
+
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(analyzeId, {
+        imageUrl: signedImageUrl,
+        prompt: "",
+        status: "analyzing",
+        isVariation: true,
+      });
+      return newMap;
+    });
+
     const imageAnalysis = await analyzeImage(signedImageUrl);
+
+    // Remove analyze placeholder
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(analyzeId);
+      return newMap;
+    });
 
     // Stage 2: Generate storyline concepts with exponential time progression
     toast({
       description: "Creating narrative storyline with time progression",
       title: "Generating storyline...",
+    });
+
+    const storylineId = `variation-${timestamp}-storyline`;
+
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(storylineId, {
+        imageUrl: signedImageUrl,
+        prompt: "",
+        status: "creating-storyline",
+        isVariation: true,
+      });
+      return newMap;
     });
 
     const storylineConcepts = await generateStorylineImageConcepts({
@@ -141,14 +196,22 @@ export const handleStorylineImageVariations = async (
       userContext: variationPrompt,
     });
 
+    // Remove storyline placeholder
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(storylineId);
+      return newMap;
+    });
+
     // Stage 3: Extract prompts and metadata
     const formattedPrompts = storylineConcepts.concepts.map((c) => c.prompt);
     const timeLabels = storylineConcepts.concepts.map((c) => c.timeLabel);
-    const narrativeNotes = storylineConcepts.concepts.map((c) => c.narrativeNote);
+    const narrativeNotes = storylineConcepts.concepts.map(
+      (c) => c.narrativeNote
+    );
 
     // Snap source position for consistent alignment
     const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
-    const timestamp = Date.now();
 
     // Position indices based on variation count
     let positionIndices: number[];
@@ -223,6 +286,7 @@ export const handleStorylineImageVariations = async (
           isVariation: true,
           imageSize: imageSizeDimensions,
           model: imageModel,
+          status: "generating",
         });
       });
 

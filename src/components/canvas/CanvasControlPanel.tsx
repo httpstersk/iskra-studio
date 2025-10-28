@@ -14,7 +14,9 @@ import type { GenerationSettings, PlacedImage } from "@/types/canvas";
  * Props for the canvas control panel component.
  */
 interface CanvasControlPanelProps {
+  activeGenerations: Map<string, import("@/types/canvas").ActiveGeneration>;
   activeGenerationsSize: number;
+  activeVideoGenerations: Map<string, import("@/types/canvas").ActiveVideoGeneration>;
   activeVideoGenerationsSize: number;
   canRedo: boolean;
   canUndo: boolean;
@@ -53,7 +55,9 @@ interface CanvasControlPanelProps {
  * Control panel that surfaces primary generation controls and status indicators.
  */
 export function CanvasControlPanel({
+  activeGenerations,
   activeGenerationsSize,
+  activeVideoGenerations,
   activeVideoGenerationsSize,
   canRedo,
   canUndo,
@@ -94,7 +98,9 @@ export function CanvasControlPanel({
         <div className="flex flex-col gap-3 px-4 md:px-4 py-3 md:py-3 relative justify-between">
           {/* Active generations indicator */}
           <GenerationsIndicatorWrapper
+            activeGenerations={activeGenerations}
             activeGenerationsSize={activeGenerationsSize}
+            activeVideoGenerations={activeVideoGenerations}
             activeVideoGenerationsSize={activeVideoGenerationsSize}
             isGenerating={isGenerating}
             showSuccess={showSuccess}

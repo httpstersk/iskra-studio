@@ -58,12 +58,26 @@ export interface VideoGenerationSettings {
   styleId?: string;
 }
 
+export type GenerationStatus =
+  | "analyzing"
+  | "creating-storyline"
+  | "finalizing"
+  | "generating"
+  | "uploading";
+
 export interface ActiveGeneration {
-  imageSize?: "landscape_16_9" | "portrait_16_9" | "landscape_4_3" | "portrait_4_3" | "square" | { width: number; height: number };
+  imageSize?:
+    | "landscape_16_9"
+    | "portrait_16_9"
+    | "landscape_4_3"
+    | "portrait_4_3"
+    | "square"
+    | { width: number; height: number };
   imageUrl: string;
   isVariation?: boolean;
   model?: "seedream" | "reve";
   prompt: string;
+  status?: GenerationStatus;
 }
 
 export interface ActiveVideoGeneration {
@@ -79,6 +93,7 @@ export interface ActiveVideoGeneration {
   resolution?: "auto" | "480p" | "720p" | "1080p";
   seed?: number;
   sourceImageId?: string;
+  status?: GenerationStatus;
   styleId?: string;
   toastId?: string;
   videoUrl?: string;

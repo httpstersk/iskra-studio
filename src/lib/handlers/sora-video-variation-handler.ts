@@ -246,6 +246,8 @@ export const handleSoraVideoVariations = async (
 
   setIsGenerating(true);
 
+  const timestamp = Date.now();
+
   try {
     // Check if user is authenticated
     if (!userId) {
@@ -258,15 +260,61 @@ export const handleSoraVideoVariations = async (
       return;
     }
 
-    // Ensure image is in Convex (reuses existing URL if already there)
+    // Stage 0: Uploading image to ensure it's in Convex
+    const uploadId = `video-${timestamp}-upload`;
+    
+    setActiveVideoGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(uploadId, {
+        imageUrl: "",
+        prompt: "",
+        status: "uploading",
+        isVariation: true,
+        duration: parseDuration(videoSettings.duration),
+        modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
+        sourceImageId: selectedIds[0],
+      });
+      return newMap;
+    });
+
     const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
     const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
+    
+    // Remove upload placeholder
+    setActiveVideoGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(uploadId);
+      return newMap;
+    });
 
     // Convert proxy URL to signed URL for API
     const signedImageUrl = toSignedUrl(imageUrl);
 
     // Stage 1: Analyze image style/mood
+    const analyzeId = `video-${timestamp}-analyze`;
+    
+    setActiveVideoGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(analyzeId, {
+        imageUrl: signedImageUrl,
+        prompt: "",
+        status: "analyzing",
+        isVariation: true,
+        duration: parseDuration(videoSettings.duration),
+        modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
+        sourceImageId: selectedIds[0],
+      });
+      return newMap;
+    });
+
     const imageAnalysis = await analyzeImage(signedImageUrl);
+    
+    // Remove analyze placeholder
+    setActiveVideoGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(analyzeId);
+      return newMap;
+    });
 
     // Stage 2: Generate storyline concepts using AI
     const duration = parseDuration(videoSettings.duration);
@@ -284,7 +332,6 @@ export const handleSoraVideoVariations = async (
     );
 
     // Create video placeholders immediately for optimistic UI
-    const timestamp = Date.now();
     const videoPlaceholders = createVideoPlaceholders({
       duration,
       selectedImage,
@@ -321,7 +368,7 @@ export const handleSoraVideoVariations = async (
           videoSettings,
         });
 
-        newMap.set(videoId, config);
+        newMap.set(videoId, { ...config, status: "generating" as const });
       });
 
       return newMap;

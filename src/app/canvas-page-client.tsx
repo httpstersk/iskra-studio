@@ -362,7 +362,9 @@ export function CanvasPageClient() {
       </main>
 
       <CanvasControlPanel
+        activeGenerations={generationState.activeGenerations}
         activeGenerationsSize={generationState.activeGenerations.size}
+        activeVideoGenerations={generationState.activeVideoGenerations}
         activeVideoGenerationsSize={generationState.activeVideoGenerations.size}
         canRedo={historyState.canRedo}
         canUndo={historyState.canUndo}
