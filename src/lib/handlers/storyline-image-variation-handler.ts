@@ -112,12 +112,6 @@ export const handleStorylineImageVariations = async (
 
   setIsGenerating(true);
 
-  // Show analyzing toast
-  toast({
-    description: "Analyzing style and generating narrative storyline sequence",
-    title: "Analyzing image...",
-  });
-
   const timestamp = Date.now();
 
   try {
@@ -172,11 +166,6 @@ export const handleStorylineImageVariations = async (
     });
 
     // Stage 2: Generate storyline concepts with exponential time progression
-    toast({
-      description: "Creating narrative storyline with time progression",
-      title: "Generating storyline...",
-    });
-
     const storylineId = `variation-${timestamp}-storyline`;
 
     setActiveGenerations((prev) => {
@@ -293,26 +282,10 @@ export const handleStorylineImageVariations = async (
       return newMap;
     });
 
-    // Show generation started toast
-    toast({
-      description: `Creating ${variationCount} storyline images with time progression`,
-      title: "Generating storyline sequence",
-    });
-
     // Setup complete - StreamingImage components will handle generation
     setIsGenerating(false);
   } catch (error) {
     console.error("Error generating storyline image variations:", error);
-
-    toast({
-      description:
-        error instanceof Error
-          ? error.message
-          : ERROR_MESSAGES.STORYLINE_GENERATION_FAILED,
-      title: "Generation failed",
-      variant: "destructive",
-    });
-
     setIsGenerating(false);
   }
 };

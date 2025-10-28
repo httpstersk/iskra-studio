@@ -112,12 +112,6 @@ export const handleBrollImageVariations = async (
 
   setIsGenerating(true);
 
-  // Show analyzing toast
-  toast({
-    description: "Analyzing style and generating contextual B-roll concepts",
-    title: "Analyzing image...",
-  });
-
   const timestamp = Date.now();
 
   try {
@@ -172,11 +166,6 @@ export const handleBrollImageVariations = async (
     });
 
     // Stage 2: Generate B-roll concepts dynamically based on analysis
-    toast({
-      description: "Creating contextually relevant B-roll concepts",
-      title: "Generating concepts...",
-    });
-
     const brollConcepts = await generateBRollConcepts({
       count: variationCount,
       styleAnalysis: imageAnalysis,
@@ -261,12 +250,6 @@ export const handleBrollImageVariations = async (
       });
 
       return newMap;
-    });
-
-    // Show generation started toast
-    toast({
-      description: `Creating ${variationCount} contextually relevant B-roll images`,
-      title: "Generating B-roll variations",
     });
 
     // Setup complete - StreamingImage components will handle generation

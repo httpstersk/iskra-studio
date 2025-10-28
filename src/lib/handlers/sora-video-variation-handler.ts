@@ -344,13 +344,6 @@ export const handleSoraVideoVariations = async (
 
     // Determine model ID based on Pro setting
     const modelId = videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID;
-    const modelName = modelId === "sora-2-pro" ? "Sora 2 Pro" : "Sora 2";
-
-    // Show generation started toast
-    toast({
-      title: "Generating video variations",
-      description: `Creating 4 AI-analyzed cinematic videos with ${modelName} (${duration}s each)...`,
-    });
 
     // Set up active video generations
     setActiveVideoGenerations((prev) => {
