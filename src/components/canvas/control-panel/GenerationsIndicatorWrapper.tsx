@@ -1,29 +1,70 @@
+/**
+ * Generations Indicator Wrapper
+ *
+ * Wraps the GenerationsIndicator component with status resolution logic.
+ * Displays real-time feedback on image/video generation progress with animated transitions.
+ *
+ * Status priority:
+ * - Uploading: Image is being uploaded to storage
+ * - Analyzing: AI is analyzing the source image
+ * - Creating storyline: Generating narrative concepts
+ * - Generating: Creating final output
+ * - Success: Generation completed
+ */
+
 "use client";
 
 import { GenerationsIndicator } from "@/components/generations-indicator";
 import { cn } from "@/lib/utils";
 import type { ActiveGeneration, ActiveVideoGeneration } from "@/types/canvas";
 import { AnimatePresence, motion } from "motion/react";
+import { useMemo } from "react";
+import {
+  resolveGenerationStatusMessage,
+  resolveSuccessMessage,
+} from "./GenerationStatusResolver";
 
+/**
+ * Animation configuration for indicator transitions
+ */
+const ANIMATION_CONFIG = {
+  DURATION: 0.2,
+  EASING: "easeInOut",
+  EXIT_SCALE: 0.9,
+  EXIT_Y: -10,
+  INITIAL_SCALE: 0.9,
+  INITIAL_Y: -10,
+} as const;
+
+/**
+ * Props for the GenerationsIndicatorWrapper component
+ */
 interface GenerationsIndicatorWrapperProps {
+  /** Map of active image generation jobs */
   activeGenerations?: Map<string, ActiveGeneration>;
+  /** Total count of active image generations */
   activeGenerationsSize: number;
+  /** Map of active video generation jobs */
   activeVideoGenerations?: Map<string, ActiveVideoGeneration>;
+  /** Total count of active video generations */
   activeVideoGenerationsSize: number;
+  /** Whether any generation is currently in progress */
   isGenerating: boolean;
+  /** Whether to show success state */
   showSuccess: boolean;
+  /** Optional custom status message override */
   statusMessage?: string;
+  /** Optional custom success message override */
   successMessage?: string;
 }
 
-const STATUS_MESSAGES = {
-  analyzing: "Analyzing image",
-  "creating-storyline": "Creating storyline",
-  finalizing: "Finalizing",
-  generating: "Generating",
-  uploading: "Uploading image",
-} as const;
-
+/**
+ * Wrapper component that displays generation status with contextual messages.
+ * Automatically hides when no generations are active.
+ *
+ * @param props - Component props
+ * @returns Animated status indicator or null if no generations active
+ */
 export function GenerationsIndicatorWrapper({
   activeGenerations,
   activeGenerationsSize,
@@ -34,59 +75,43 @@ export function GenerationsIndicatorWrapper({
   statusMessage,
   successMessage,
 }: GenerationsIndicatorWrapperProps) {
+  // Determine if indicator should be visible
   const shouldShow =
     activeGenerationsSize > 0 ||
     activeVideoGenerationsSize > 0 ||
     isGenerating ||
     showSuccess;
 
-  if (!shouldShow) return null;
+  if (!shouldShow) {
+    return null;
+  }
 
+  // Derive output type from active generations
   const isVideoGeneration = activeVideoGenerationsSize > 0;
   const outputType = isVideoGeneration ? "video" : "image";
-  const totalActive = activeGenerationsSize + activeVideoGenerationsSize;
 
-  const derivedStatusMessage =
-    statusMessage ??
-    (() => {
-      const noun = isVideoGeneration ? "video" : "image";
-      const variations = totalActive === 1 ? "variation" : "variations";
+  // Resolve status message based on current generation state
+  const derivedStatusMessage = useMemo(
+    () =>
+      resolveGenerationStatusMessage({
+        activeGenerations,
+        activeGenerationsSize,
+        activeVideoGenerations,
+        activeVideoGenerationsSize,
+        isGenerating,
+        statusMessage,
+      }),
+    [
+      activeGenerations,
+      activeGenerationsSize,
+      activeVideoGenerations,
+      activeVideoGenerationsSize,
+      isGenerating,
+      statusMessage,
+    ]
+  );
 
-      // Check for specific generation status if we have active generations
-      const allGenerations = isVideoGeneration
-        ? Array.from(activeVideoGenerations?.values() || [])
-        : Array.from(activeGenerations?.values() || []);
-
-      // Find the most prominent status (prioritize earlier stages)
-      const statusPriority = [
-        "analyzing",
-        "creating-storyline",
-        "finalizing",
-        "generating",
-        "uploading",
-      ];
-
-      let currentStatus = null;
-
-      for (const status of statusPriority) {
-        if (allGenerations.some((gen) => gen.status === status)) {
-          currentStatus = status;
-          break;
-        }
-      }
-
-      // If we have a specific status, use it
-      if (currentStatus && currentStatus !== "generating") {
-        return STATUS_MESSAGES[currentStatus as keyof typeof STATUS_MESSAGES];
-      }
-
-      // Default to "Generating X variations"
-      const verb =
-        isGenerating || totalActive > 0 ? "Generating" : "Processing";
-      return `${verb} ${noun} ${variations}`;
-    })();
-
-  const resolvedSuccessMessage = successMessage ?? "Done";
+  const resolvedSuccessMessage = resolveSuccessMessage(successMessage);
 
   return (
     <AnimatePresence mode="wait">
@@ -96,10 +121,21 @@ export function GenerationsIndicatorWrapper({
           "pointer-events-none",
           "absolute inset-x-0 -top-16 z-50 flex justify-center"
         )}
-        exit={{ opacity: 0, scale: 0.9, y: -10 }}
-        initial={{ opacity: 0, scale: 0.9, y: -10 }}
+        exit={{
+          opacity: 0,
+          scale: ANIMATION_CONFIG.EXIT_SCALE,
+          y: ANIMATION_CONFIG.EXIT_Y,
+        }}
+        initial={{
+          opacity: 0,
+          scale: ANIMATION_CONFIG.INITIAL_SCALE,
+          y: ANIMATION_CONFIG.INITIAL_Y,
+        }}
         key={showSuccess ? "success" : "generating"}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
+        transition={{
+          duration: ANIMATION_CONFIG.DURATION,
+          ease: ANIMATION_CONFIG.EASING,
+        }}
       >
         <GenerationsIndicator
           isAnimating={!showSuccess}

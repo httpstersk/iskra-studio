@@ -58,6 +58,16 @@ export interface VideoGenerationSettings {
   styleId?: string;
 }
 
+/**
+ * Status stages for image and video generation processes.
+ *
+ * Tracks the progression from upload through analysis to final generation:
+ * - `analyzing`: AI analyzing source image for style/mood
+ * - `creating-storyline`: Generating narrative concepts for variations
+ * - `finalizing`: Post-processing and optimization
+ * - `generating`: Creating the final output
+ * - `uploading`: Uploading source image to storage
+ */
 export type GenerationStatus =
   | "analyzing"
   | "creating-storyline"
@@ -65,7 +75,14 @@ export type GenerationStatus =
   | "generating"
   | "uploading";
 
+/**
+ * Configuration for an active image generation job.
+ *
+ * Tracks all parameters needed for the generation process and its current status.
+ * Used by the streaming image generation system to manage multiple concurrent jobs.
+ */
 export interface ActiveGeneration {
+  /** Target dimensions for the generated image */
   imageSize?:
     | "landscape_16_9"
     | "portrait_16_9"
@@ -73,30 +90,57 @@ export interface ActiveGeneration {
     | "portrait_4_3"
     | "square"
     | { width: number; height: number };
+  /** Source image URL for image-to-image generation */
   imageUrl: string;
+  /** Whether this is a variation of an existing image */
   isVariation?: boolean;
+  /** AI model to use for generation (Seedream or Reve) */
   model?: "seedream" | "reve";
+  /** Generation prompt describing the desired output */
   prompt: string;
+  /** Current status of the generation process */
   status?: GenerationStatus;
 }
 
+/**
+ * Configuration for an active video generation job.
+ *
+ * Tracks all parameters needed for video generation and its current status.
+ * Used by the streaming video generation system to manage multiple concurrent jobs.
+ */
 export interface ActiveVideoGeneration {
+  /** Target aspect ratio for the generated video */
   aspectRatio?: "auto" | "9:16" | "16:9" | "1:1";
+  /** Whether camera movement should be fixed or dynamic */
   cameraFixed?: boolean;
+  /** Video duration in seconds */
   duration?: number | string;
+  /** Source image URL for image-to-video generation */
   imageUrl?: string;
-  [key: string]: unknown;
+  /** Model-specific configuration parameters */
   modelConfig?: any;
+  /** AI model identifier to use for generation */
   modelId?: string;
+  /** Motion settings for the video generation */
   motion?: string;
+  /** Generation prompt describing the desired video output */
   prompt: string;
+  /** Target resolution for the generated video */
   resolution?: "auto" | "480p" | "720p" | "1080p";
+  /** Random seed for reproducible generation */
   seed?: number;
+  /** ID of the source image used for generation */
   sourceImageId?: string;
+  /** Current status of the generation process */
   status?: GenerationStatus;
+  /** Style preset identifier */
   styleId?: string;
+  /** Toast notification ID for progress updates */
   toastId?: string;
+  /** Generated video URL once complete */
   videoUrl?: string;
+  /** Additional model-specific parameters */
+  [key: string]: unknown;
 }
 
 export interface SelectionBox {
