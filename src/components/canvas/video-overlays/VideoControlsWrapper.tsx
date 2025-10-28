@@ -6,7 +6,7 @@
 
 import {
   PLAY_INDICATOR_OFFSET,
-  VIDEO_CONTROLS_MIN_WIDTH,
+  VIDEO_CONTROLS_LAYOUT,
   VIDEO_CONTROLS_OFFSET,
   VIDEO_CONTROLS_TRANSITION,
   VIDEO_OVERLAY_Z_INDEX,
@@ -14,24 +14,39 @@ import {
 import { useVideoPositioning } from "@/hooks/useVideoPositioning";
 import type { PlacedVideo } from "@/types/canvas";
 import React, { useMemo } from "react";
-import { VideoControls } from "../VideoControls";
+import { VideoControls } from "../video-controls";
+
+/**
+ * Viewport configuration for positioning calculations
+ */
+interface Viewport {
+  /** Zoom scale factor */
+  scale: number;
+  /** Horizontal offset */
+  x: number;
+  /** Vertical offset */
+  y: number;
+}
 
 /**
  * Props for the VideoControlsWrapper component
  */
 interface VideoControlsWrapperProps {
+  /** Whether controls should be hidden */
   isHidden: boolean;
+  /** Callback when video properties change */
   onChange: (newAttrs: Partial<PlacedVideo>) => void;
+  /** Video data */
   video: PlacedVideo;
-  viewport: {
-    scale: number;
-    x: number;
-    y: number;
-  };
+  /** Current viewport state */
+  viewport: Viewport;
 }
 
 /**
- * VideoControlsWrapper component - positions controls below the video
+ * VideoControlsWrapper component - positions controls as overlay at bottom of video
+ *
+ * @param props - Component props
+ * @returns Wrapper element with positioned video controls
  */
 export const VideoControlsWrapper = React.memo<VideoControlsWrapperProps>(
   function VideoControlsWrapper({ isHidden, onChange, video, viewport }) {
@@ -46,18 +61,24 @@ export const VideoControlsWrapper = React.memo<VideoControlsWrapperProps>(
       () => ({
         left: position.left,
         opacity: isHidden ? 0 : 1,
+        padding: VIDEO_CONTROLS_LAYOUT.EDGE_PADDING,
+        pointerEvents: "none" as const,
         position: "absolute" as const,
-        top: position.controlsTop,
+        top: position.top + position.height - VIDEO_CONTROLS_LAYOUT.BOTTOM_OFFSET,
         transition: VIDEO_CONTROLS_TRANSITION,
-        width: Math.max(position.width, VIDEO_CONTROLS_MIN_WIDTH),
+        width: position.width,
         zIndex: VIDEO_OVERLAY_Z_INDEX,
       }),
-      [isHidden, position.controlsTop, position.left, position.width]
+      [isHidden, position.height, position.left, position.top, position.width]
     );
 
     return (
       <div style={wrapperStyle}>
-        <VideoControls className="mt-2" onChange={onChange} video={video} />
+        <VideoControls
+          className="pointer-events-auto"
+          onChange={onChange}
+          video={video}
+        />
       </div>
     );
   }
