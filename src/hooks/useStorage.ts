@@ -1,6 +1,6 @@
-import { showError, showErrorFromException } from "@/lib/toast";
 import { PLACEHOLDER_URLS, UI_CONSTANTS } from "@/lib/constants";
 import { canvasStorage } from "@/lib/storage";
+import { showError, showErrorFromException } from "@/lib/toast";
 import { currentProjectAtom } from "@/store/project-atoms";
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 import type { CanvasState } from "@/types/project";
@@ -48,7 +48,8 @@ export function useStorage(
         if (image.src.startsWith(PLACEHOLDER_URLS.TRANSPARENT_GIF)) continue;
 
         const existingImage = await canvasStorage.getImage(image.id);
-        if (!existingImage) {
+        // Save if new, or update if the src has changed (e.g., variation completed)
+        if (!existingImage || existingImage.originalDataUrl !== image.src) {
           await canvasStorage.saveImage(image.src, image.id);
         }
       }
@@ -57,7 +58,8 @@ export function useStorage(
         if (video.src.startsWith(PLACEHOLDER_URLS.TRANSPARENT_GIF)) continue;
 
         const existingVideo = await canvasStorage.getVideo(video.id);
-        if (!existingVideo) {
+        // Save if new, or update if the src has changed (e.g., video generation completed)
+        if (!existingVideo || existingVideo.originalDataUrl !== video.src) {
           await canvasStorage.saveVideo(video.src, video.duration, video.id);
         }
       }
@@ -104,10 +106,13 @@ export function useStorage(
       const loadedVideos: PlacedVideo[] = [];
 
       for (const element of canvasState.elements) {
-        if (element.type === "image" && element.assetId) {
-          const imageData = await canvasStorage.getImage(element.assetId);
+        if (element.type === "image") {
+          const imageData = await canvasStorage.getImage(element.id);
+
           if (imageData) {
             loadedImages.push({
+              assetId: element.assetId,
+              assetSyncedAt: element.assetSyncedAt,
               height: element.height || 300,
               id: element.id,
               rotation: element.transform.rotation,
@@ -117,10 +122,13 @@ export function useStorage(
               y: element.transform.y,
             });
           }
-        } else if (element.type === "video" && element.assetId) {
-          const videoData = await canvasStorage.getVideo(element.assetId);
+        } else if (element.type === "video") {
+          const videoData = await canvasStorage.getVideo(element.id);
+
           if (videoData) {
             loadedVideos.push({
+              assetId: element.assetId,
+              assetSyncedAt: element.assetSyncedAt,
               currentTime: element.currentTime || 0,
               duration: element.duration || videoData.duration,
               height: element.height || 300,
@@ -182,9 +190,9 @@ export function useStorage(
   ]);
 
   return {
-    isStorageLoaded,
     isSaving,
-    saveToStorage,
+    isStorageLoaded,
     loadFromStorage,
+    saveToStorage,
   };
 }

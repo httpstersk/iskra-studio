@@ -34,7 +34,9 @@ export interface Viewport {
  * ```
  */
 export const imageToCanvasElement = (image: PlacedImage): CanvasElement => ({
-  assetId: image.id,
+  assetId: image.assetId,
+  assetSyncedAt: image.assetSyncedAt,
+  assetType: "image",
   id: image.id,
   type: "image",
   transform: {
@@ -61,23 +63,25 @@ export const imageToCanvasElement = (image: PlacedImage): CanvasElement => ({
  * ```
  */
 export const videoToCanvasElement = (video: PlacedVideo): CanvasElement => ({
-  assetId: video.id,
+  assetId: video.assetId,
+  assetSyncedAt: video.assetSyncedAt,
+  assetType: "video",
+  currentTime: video.currentTime,
+  duration: video.duration,
+  height: video.height,
   id: video.id,
-  type: "video",
+  isPlaying: video.isPlaying,
+  muted: video.muted,
   transform: {
     x: video.x,
     y: video.y,
     scale: 1,
     rotation: video.rotation,
   },
-  zIndex: 0,
-  width: video.width,
-  height: video.height,
-  duration: video.duration,
-  currentTime: video.currentTime,
-  isPlaying: video.isPlaying,
+  type: "video",
   volume: video.volume,
-  muted: video.muted,
+  width: video.width,
+  zIndex: 0,
 });
 
 /**
@@ -98,7 +102,7 @@ export const videoToCanvasElement = (video: PlacedVideo): CanvasElement => ({
 export const canvasToScreen = (
   canvasX: number,
   canvasY: number,
-  viewport: Viewport,
+  viewport: Viewport
 ): { x: number; y: number } => {
   return {
     x: canvasX * viewport.scale + viewport.x,
@@ -122,7 +126,7 @@ export const canvasToScreen = (
  * ```
  */
 export const calculateBoundingBox = (
-  image: PlacedImage,
+  image: PlacedImage
 ): { x: number; y: number; width: number; height: number } => {
   const { x, y, width, height, rotation } = image;
 
