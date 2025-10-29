@@ -7,7 +7,6 @@
 
 "use client";
 
-import type { CanvasState } from "@/types/project";
 import {
   currentProjectAtom,
   isAutoSavingAtom,
@@ -15,7 +14,7 @@ import {
   projectListAtom,
   projectLoadingAtom,
 } from "@/store/project-atoms";
-import type { Project, ProjectMetadata } from "@/types/project";
+import type { CanvasState, Project, ProjectMetadata } from "@/types/project";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useMemo } from "react";
@@ -32,9 +31,6 @@ interface UseProjectsReturn {
 
   /** Current project (null if no project loaded) */
   currentProject: Project | null;
-
-  /** Deletes a project by ID */
-  deleteProject: (projectId: Id<"projects">) => Promise<void>;
 
   /** Whether a project is currently loading */
   isLoading: boolean;
@@ -118,7 +114,6 @@ export function useProjects(): UseProjectsReturn {
   // Convex mutations
   const createProjectMutation = useMutation(api.projects.createProject);
   const saveProjectMutation = useMutation(api.projects.saveProject);
-  const deleteProjectMutation = useMutation(api.projects.deleteProject);
   const renameProjectMutation = useMutation(api.projects.renameProject);
 
   // Convex queries - only run when authenticated
@@ -293,30 +288,6 @@ export function useProjects(): UseProjectsReturn {
   );
 
   /**
-   * Deletes a project.
-   */
-  const deleteProject = useCallback(
-    async (projectId: Id<"projects">): Promise<void> => {
-      try {
-        await deleteProjectMutation({ projectId });
-
-        // Clear current project if it was deleted
-        if (currentProject?._id === projectId) {
-          setCurrentProject(null);
-          setLastSavedAt(null);
-        }
-
-        // Project list will update automatically via query
-      } catch (error) {
-        throw new Error(
-          `Project deletion failed: ${error instanceof Error ? error.message : "Unknown error"}`
-        );
-      }
-    },
-    [deleteProjectMutation, currentProject, setCurrentProject, setLastSavedAt]
-  );
-
-  /**
    * Renames a project.
    */
   const renameProject = useCallback(
@@ -346,7 +317,6 @@ export function useProjects(): UseProjectsReturn {
   return {
     createProject,
     currentProject,
-    deleteProject,
     isLoading,
     isSaving,
     lastSavedAt,

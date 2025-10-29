@@ -243,7 +243,6 @@ Currently, the application stores generated AI images and videos using FAL.ai's 
 - `uploadAsset`: Handles file upload and metadata storage
 - `deleteAsset`: Removes asset and updates storage quota
 - `saveProject`: Upserts project canvas state
-- `deleteProject`: Removes project and associated assets
 - `updateUserStorageUsed`: Recalculates storage for a user
 
 **FR-9.2:** Create Convex queries:

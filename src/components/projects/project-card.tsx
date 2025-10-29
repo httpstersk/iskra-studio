@@ -1,6 +1,6 @@
 /**
  * Project card component for displaying project metadata in the project list.
- * 
+ *
  * Shows project thumbnail, name, last modified time, and element counts.
  * Provides actions for opening, renaming, and deleting projects.
  */
@@ -10,7 +10,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, Edit2, Trash2, Image as ImageIcon, Video } from "lucide-react";
+import {
+  MoreVertical,
+  Edit2,
+  Trash2,
+  Image as ImageIcon,
+  Video,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,23 +47,23 @@ import type { Id } from "../../../convex/_generated/dataModel";
 interface ProjectCardProps {
   /** Callback when project is clicked to open */
   onOpen?: (projectId: string) => void;
-  
+
   /** Project metadata to display */
   project: ProjectMetadata;
 }
 
 /**
  * Project card component.
- * 
+ *
  * Displays a project thumbnail with metadata and action menu.
  * Allows opening, renaming, and deleting projects.
- * 
+ *
  * @remarks
  * - Shows thumbnail or placeholder if no thumbnail exists
  * - Displays relative time since last save ("2 hours ago")
  * - Shows counts of images and videos in the project
  * - Rename and delete actions show confirmation dialogs
- * 
+ *
  * @example
  * ```tsx
  * <ProjectCard
@@ -67,7 +73,7 @@ interface ProjectCardProps {
  * ```
  */
 export function ProjectCard({ project, onOpen }: ProjectCardProps) {
-  const { renameProject, deleteProject } = useProjects();
+  const { renameProject } = useProjects();
 
   // State for rename dialog
   const [isRenaming, setIsRenaming] = useState(false);
@@ -97,31 +103,13 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
     try {
       await renameProject(project.id as Id<"projects">, newName.trim());
       setIsRenaming(false);
-      
+
       showSuccess("Project renamed", `Project renamed to "${newName.trim()}"`);
     } catch (error) {
       showErrorFromException(
         "Rename failed",
         error,
         "Failed to rename project"
-      );
-    }
-  };
-
-  /**
-   * Handles project deletion.
-   */
-  const handleDelete = async () => {
-    try {
-      await deleteProject(project.id as Id<"projects">);
-      setIsDeleting(false);
-      
-      showSuccess("Project deleted", `"${project.name}" has been deleted`);
-    } catch (error) {
-      showErrorFromException(
-        "Delete failed",
-        error,
-        "Failed to delete project"
       );
     }
   };
@@ -170,7 +158,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
               >
                 {project.name}
               </h3>
-              
+
               <p className="text-xs text-content-light mt-1">
                 {formatLastSaved()}
               </p>
@@ -236,7 +224,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
               Enter a new name for your project.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="project-name">Project Name</Label>
@@ -259,7 +247,9 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
             <Button variant="ghost" onClick={() => setIsRenaming(false)}>
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleRename}>Rename</Button>
+            <Button variant="primary" onClick={handleRename}>
+              Rename
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -270,16 +260,14 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
           <DialogHeader>
             <DialogTitle>Delete Project</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{project.name}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{project.name}&quot;? This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsDeleting(false)}>
               Cancel
-            </Button>
-            <Button variant="primary" onClick={handleDelete}>
-              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
