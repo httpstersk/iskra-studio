@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { showError } from "@/lib/toast";
 import {
   Tooltip,
   TooltipContent,
@@ -30,19 +31,13 @@ interface ControlActionsProps {
   isGenerating: boolean;
   selectedIds: string[];
   setIsSettingsDialogOpen: (open: boolean) => void;
-  toast: (props: {
-    description?: string;
-    title: string;
-    variant?: "default" | "destructive";
-  }) => void;
 }
 
 /**
  * Creates and configures a file input element for image upload
  */
 const createFileInput = (
-  handleFileUpload: (files: FileList | null) => void,
-  toast: ControlActionsProps["toast"]
+  handleFileUpload: (files: FileList | null) => void
 ): HTMLInputElement => {
   const input = document.createElement("input");
   input.type = FILE_INPUT_CONFIG.TYPE;
@@ -61,11 +56,10 @@ const createFileInput = (
       handleFileUpload((e.target as HTMLInputElement).files);
     } catch (error) {
       console.error("File upload error:", error);
-      toast({
-        description: CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC,
-        title: CONTROL_PANEL_STRINGS.UPLOAD_FAILED,
-        variant: "destructive",
-      });
+      showError(
+        CONTROL_PANEL_STRINGS.UPLOAD_FAILED,
+        CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC
+      );
     } finally {
       if (input.parentNode) {
         document.body.removeChild(input);
@@ -86,10 +80,7 @@ const createFileInput = (
 /**
  * Triggers the file input dialog
  */
-const triggerFileDialog = (
-  input: HTMLInputElement,
-  toast: ControlActionsProps["toast"]
-) => {
+const triggerFileDialog = (input: HTMLInputElement) => {
   document.body.appendChild(input);
 
   // Use requestAnimationFrame to ensure DOM operations are synchronized with browser's render cycle
@@ -98,11 +89,10 @@ const triggerFileDialog = (
       input.click();
     } catch (error) {
       console.error("Failed to trigger file dialog:", error);
-      toast({
-        description: CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC,
-        title: CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE,
-        variant: "destructive",
-      });
+      showError(
+        CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE,
+        CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC
+      );
 
       if (input.parentNode) {
         document.body.removeChild(input);
@@ -130,11 +120,10 @@ export function ControlActions({
   images,
   isGenerating,
   selectedIds,
-  toast,
 }: ControlActionsProps) {
   const handleUploadClick = () => {
-    const input = createFileInput(handleFileUpload, toast);
-    triggerFileDialog(input, toast);
+    const input = createFileInput(handleFileUpload);
+    triggerFileDialog(input);
   };
 
   const hasSelection = selectedIds.length > 0;
@@ -173,7 +162,6 @@ export function ControlActions({
         <DownloadAllButton
           images={images}
           selectedIds={selectedIds}
-          toast={toast}
         />
       )}
 

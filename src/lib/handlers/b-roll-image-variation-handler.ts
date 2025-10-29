@@ -5,6 +5,7 @@
  */
 
 import { generateBRollConcepts } from "@/lib/b-roll-concept-generator";
+import { showErrorFromException } from "@/lib/toast";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import type { PlacedImage } from "@/types/canvas";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
@@ -102,8 +103,7 @@ export const handleBrollImageVariations = async (
   // Validate selection early
   const selectedImage = validateSingleImageSelection(
     images,
-    selectedIds,
-    toast
+    selectedIds
   );
 
   if (!selectedImage) {
@@ -130,7 +130,7 @@ export const handleBrollImageVariations = async (
     });
 
     const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
-    const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
+    const imageUrl = await ensureImageInConvex(sourceImageUrl);
     
     // Remove upload placeholder
     setActiveGenerations((prev) => {
@@ -257,14 +257,11 @@ export const handleBrollImageVariations = async (
   } catch (error) {
     console.error("Error generating B-roll image variations:", error);
 
-    toast({
-      description:
-        error instanceof Error
-          ? error.message
-          : ERROR_MESSAGES.BROLL_GENERATION_FAILED,
-      title: "Generation failed",
-      variant: "destructive",
-    });
+    showErrorFromException(
+      "Generation failed",
+      error,
+      ERROR_MESSAGES.BROLL_GENERATION_FAILED
+    );
 
     setIsGenerating(false);
   }

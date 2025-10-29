@@ -21,7 +21,6 @@ import { ZoomControls } from "@/components/canvas/ZoomControls";
 import { CanvasHeader } from "@/components/layout/canvas-header";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { ARIA_LABELS } from "@/constants/canvas";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCanvasHandlers } from "@/hooks/useCanvasHandlers";
 import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
@@ -54,7 +53,6 @@ import { useCallback, useRef, useState } from "react";
  */
 export function CanvasPageClient() {
   const { setTheme, theme } = useTheme();
-  const { toast } = useToast();
   const falClient = useFalClient();
   const stageRef = useRef<Konva.Stage>(null);
   const trpc = useTRPC();
@@ -103,8 +101,7 @@ export function CanvasPageClient() {
     canvasState.setImages,
     canvasState.viewport,
     canvasState.canvasSize,
-    userId ?? undefined,
-    toast
+    userId ?? undefined
   );
 
   const { mutateAsync: generateTextToImage } = useMutation(
@@ -144,7 +141,6 @@ export function CanvasPageClient() {
     setImages: canvasState.setImages,
     setSelectedIds: canvasState.setSelectedIds,
     setVideos: canvasState.setVideos,
-    toast,
     videos: canvasState.videos,
   });
 
@@ -176,7 +172,6 @@ export function CanvasPageClient() {
     setSelectedImageForVideo: uiState.setSelectedImageForVideo,
     setShowSignInPrompt,
     setVideos: canvasState.setVideos,
-    toast,
     useSoraPro: generationState.useSoraPro,
     userId,
     variationMode: uiState.variationMode,
@@ -208,7 +203,6 @@ export function CanvasPageClient() {
     setSelectedIds: canvasState.setSelectedIds,
     setSelectedImageForVideo: uiState.setSelectedImageForVideo,
     setVideos: canvasState.setVideos,
-    toast,
     videos: canvasState.videos,
   });
 
@@ -387,7 +381,6 @@ export function CanvasPageClient() {
         setVideoDuration={generationState.setVideoDuration}
         setVideoResolution={generationState.setVideoResolution}
         showSuccess={generationState.showSuccess}
-        toast={toast}
         undo={handleUndo}
         useSoraPro={generationState.useSoraPro}
         variationMode={uiState.variationMode}

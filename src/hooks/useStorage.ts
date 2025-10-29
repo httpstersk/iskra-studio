@@ -1,4 +1,4 @@
-import { useToast } from "@/hooks/use-toast";
+import { showError, showErrorFromException } from "@/lib/toast";
 import { PLACEHOLDER_URLS, UI_CONSTANTS } from "@/lib/constants";
 import { canvasStorage } from "@/lib/storage";
 import { currentProjectAtom } from "@/store/project-atoms";
@@ -30,7 +30,6 @@ export function useStorage(
   const convexClient = useConvex();
   const saveProjectMutation = useMutation(api.projects.saveProject);
   const currentProject = useAtomValue(currentProjectAtom);
-  const { toast } = useToast();
 
 
   const saveToStorage = useCallback(async () => {
@@ -72,12 +71,11 @@ export function useStorage(
             canvasState,
           });
         } catch (err) {
-          toast({
-            title: "Save failed",
-            description:
-              err instanceof Error ? err.message : "Could not save to cloud",
-            variant: "destructive",
-          });
+          showErrorFromException(
+            "Save failed",
+            err,
+            "Could not save to cloud"
+          );
         }
       }
 
@@ -91,7 +89,7 @@ export function useStorage(
       console.error("Failed to save to storage:", error);
       setIsSaving(false);
     }
-  }, [currentProject?._id, images, toast, videos, viewport]);
+  }, [currentProject?._id, images, saveProjectMutation, videos, viewport]);
 
   const loadFromStorage = useCallback(async () => {
     try {
@@ -159,15 +157,11 @@ export function useStorage(
       if (canvasState.viewport) setViewport(canvasState.viewport);
     } catch (error) {
       console.error("Failed to load from storage:", error);
-      toast({
-        description: "Starting with a fresh canvas",
-        title: "Failed to restore canvas",
-        variant: "destructive",
-      });
+      showError("Failed to restore canvas", "Starting with a fresh canvas");
     } finally {
       setIsStorageLoaded(true);
     }
-  }, [convexClient, currentProject?._id, setImages, setVideos, setViewport, toast]);
+  }, [convexClient, currentProject?._id, setImages, setVideos, setViewport]);
 
   // Load from storage on mount
   useEffect(() => {

@@ -39,11 +39,6 @@ interface CanvasControlPanelProps {
   setVideoDuration: (value: "4" | "8" | "12") => void;
   setVideoResolution: (value: "auto" | "720p" | "1080p") => void;
   showSuccess: boolean;
-  toast: (props: {
-    description?: string;
-    title: string;
-    variant?: "default" | "destructive";
-  }) => void;
   undo: () => void;
   useSoraPro: boolean;
   variationMode?: "image" | "video";
@@ -79,7 +74,6 @@ export function CanvasControlPanel({
   setVideoDuration,
   setVideoResolution,
   showSuccess,
-  toast,
   undo,
   useSoraPro,
   variationMode = "image",
@@ -154,7 +148,6 @@ export function CanvasControlPanel({
               isGenerating={isGenerating}
               selectedIds={selectedIds}
               setIsSettingsDialogOpen={setIsSettingsDialogOpen}
-              toast={toast}
             />
           </div>
 

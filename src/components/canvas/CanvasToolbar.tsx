@@ -2,6 +2,7 @@
 
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { showInfo } from "@/lib/toast";
 import {
   Tooltip,
   TooltipContent,
@@ -33,11 +34,6 @@ interface CanvasToolbarProps {
   sendToBack: () => void;
   bringForward: () => void;
   sendBackward: () => void;
-  toast: (props: {
-    title: string;
-    description?: string;
-    variant?: "default" | "destructive";
-  }) => void;
   setImages: (images: PlacedImage[]) => void;
   setViewport: (viewport: Viewport) => void;
 }
@@ -60,7 +56,6 @@ export function CanvasToolbar({
   sendToBack,
   bringForward,
   sendBackward,
-  toast,
   setImages,
   setViewport,
 }: CanvasToolbarProps) {
@@ -160,10 +155,10 @@ export function CanvasToolbar({
                     await canvasStorage.clearAll();
                     setImages([]);
                     setViewport({ x: 0, y: 0, scale: 1 });
-                    toast({
-                      title: "Storage cleared",
-                      description: "All saved data has been removed",
-                    });
+                    showInfo(
+                      "Storage cleared",
+                      "All saved data has been removed"
+                    );
                   }
                 }}
                 className="bg-destructive/10 text-destructive hover:bg-destructive/20"

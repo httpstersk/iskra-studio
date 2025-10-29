@@ -6,6 +6,7 @@
 
 import { VIDEO_DEFAULTS } from "@/constants/canvas";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import { showError, showErrorFromException } from "@/lib/toast";
 import { expandStorylinesToPrompts } from "@/lib/sora-prompt-generator";
 import { generateStorylines } from "@/lib/storyline-generator";
 import type {
@@ -67,7 +68,6 @@ interface SoraVideoVariationHandlerDeps {
   >;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
-  toast: (props: ToastProps) => void;
   userId?: string;
   videoSettings?: Partial<VideoGenerationSettings>;
   viewport: { x: number; y: number; scale: number };
@@ -238,15 +238,13 @@ export const handleSoraVideoVariations = async (
     setActiveVideoGenerations,
     setIsGenerating,
     setVideos,
-    toast,
     userId,
     videoSettings = {},
   } = deps;
 
   const selectedImage = validateSingleImageSelection(
     images,
-    selectedIds,
-    toast
+    selectedIds
   );
   if (!selectedImage) {
     return;
@@ -259,11 +257,10 @@ export const handleSoraVideoVariations = async (
   try {
     // Check if user is authenticated
     if (!userId) {
-      toast({
-        description: "Please sign in to generate video variations",
-        title: "Authentication required",
-        variant: "destructive",
-      });
+      showError(
+        "Authentication required",
+        "Please sign in to generate video variations"
+      );
       setIsGenerating(false);
       return;
     }
@@ -292,7 +289,7 @@ export const handleSoraVideoVariations = async (
       throw new Error("Source image URL is missing or empty");
     }
 
-    const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
+    const imageUrl = await ensureImageInConvex(sourceImageUrl);
 
     // Remove upload placeholder
     setActiveVideoGenerations((prev) => {
@@ -395,14 +392,11 @@ export const handleSoraVideoVariations = async (
   } catch (error) {
     console.error("Error generating Sora video variations:", error);
 
-    toast({
-      description:
-        error instanceof Error
-          ? error.message
-          : "Failed to generate video variations",
-      title: "Generation failed",
-      variant: "destructive",
-    });
+    showErrorFromException(
+      "Generation failed",
+      error,
+      "Failed to generate video variations"
+    );
 
     setIsGenerating(false);
   }

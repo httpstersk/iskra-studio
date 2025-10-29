@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useToast } from "@/hooks/use-toast";
+import { showError, showErrorFromException, showInfo } from "@/lib/toast";
 import type { CanvasState } from "@/types/project";
 import {
   activeGenerationsAtom,
@@ -103,7 +103,6 @@ export function useAutoSave(
 
   // Hooks
   const { saveProject, isSaving, lastSavedAt, currentProject } = useProjects();
-  const { toast } = useToast();
 
   // Atoms
   const isDirty = useAtomValue(canvasDirtyAtom);
@@ -187,14 +186,9 @@ export function useAutoSave(
     } catch (error) {
       console.error("Auto-save failed:", error);
 
-      toast({
-        title: "Save failed",
-        description:
-          error instanceof Error ? error.message : "Failed to save project",
-        variant: "destructive",
-      });
+      showErrorFromException("Save failed", error, "Failed to save project");
     }
-  }, [currentProjectState, canvasState, generateThumbnail, saveProject, toast]);
+  }, [currentProjectState, canvasState, generateThumbnail, saveProject]);
 
   /**
    * Debounced save function with proper cleanup.
@@ -232,25 +226,20 @@ export function useAutoSave(
    */
   const triggerSave = useCallback(async () => {
     if (!currentProjectState || !canvasState) {
-      toast({
-        title: "Nothing to save",
-        description: "No project is currently loaded",
-        variant: "default",
-      });
+      showInfo("Nothing to save", "No project is currently loaded");
       return;
     }
 
     if (isSaving) {
-      toast({
-        title: "Save in progress",
-        description: "Please wait for current save to complete",
-        variant: "default",
-      });
+      showInfo(
+        "Save in progress",
+        "Please wait for current save to complete"
+      );
       return;
     }
 
     await performSave();
-  }, [currentProjectState, canvasState, isSaving, performSave, toast]);
+  }, [currentProjectState, canvasState, isSaving, performSave]);
 
   // Return properties in alphabetical order
   return {

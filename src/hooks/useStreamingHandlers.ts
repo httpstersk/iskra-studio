@@ -1,5 +1,11 @@
 import { ANIMATION, CANVAS_STRINGS } from "@/constants/canvas";
 import {
+  showError,
+  showErrorFromException,
+  showInfo,
+  showSuccess,
+} from "@/lib/toast";
+import {
   dismissToast,
   handleVideoCompletion,
 } from "@/lib/handlers/video-generation-handlers";
@@ -12,15 +18,6 @@ import type {
   PlacedVideo,
 } from "@/types/canvas";
 import { useCallback } from "react";
-
-/**
- * Toast function type
- */
-type ToastFn = (options: {
-  description?: string;
-  title?: string;
-  variant?: "default" | "destructive";
-}) => void;
 
 /**
  * Streaming handler dependencies
@@ -49,7 +46,6 @@ interface StreamingHandlerDeps {
   setSelectedIds: (ids: string[]) => void;
   setSelectedImageForVideo: (id: string | null) => void;
   setVideos: (updater: (prev: PlacedVideo[]) => PlacedVideo[]) => void;
-  toast: ToastFn;
   videos: PlacedVideo[];
 }
 
@@ -105,7 +101,6 @@ export function useStreamingHandlers(
     setSelectedIds,
     setSelectedImageForVideo,
     setVideos,
-    toast,
     videos,
   } = deps;
 
@@ -298,15 +293,14 @@ export function useStreamingHandlers(
       });
 
       const isVariation = id.startsWith("variation-");
-      toast({
-        description: isVariation ? "One variation failed to generate" : error,
-        title: isVariation
+      showError(
+        isVariation
           ? "Variation failed"
           : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
-        variant: "destructive",
-      });
+        isVariation ? "One variation failed to generate" : error
+      );
     },
-    [setActiveGenerations, setImages, setIsGenerating, toast]
+    [setActiveGenerations, setImages, setIsGenerating]
   );
 
   const handleStreamingImageUpdate = useCallback(
@@ -445,10 +439,10 @@ export function useStreamingHandlers(
 
           if (activeVideoGenerations.size === 1) {
             saveToHistory();
-            toast({
-              description: "All 4 cinematic videos have been generated",
-              title: "Video variations complete",
-            });
+            showSuccess(
+              "Video variations complete",
+              "All 4 cinematic videos have been generated"
+            );
           }
 
           setIsConvertingToVideo(false);
@@ -467,9 +461,7 @@ export function useStreamingHandlers(
         if (newVideo) {
           setVideos((prev) => [...prev, newVideo]);
           saveToHistory();
-          toast({
-            title: CANVAS_STRINGS.SUCCESS.VIDEO_CREATED,
-          });
+          showSuccess(CANVAS_STRINGS.SUCCESS.VIDEO_CREATED);
         }
 
         setActiveVideoGenerations((prev) => {
@@ -481,14 +473,11 @@ export function useStreamingHandlers(
         setSelectedImageForVideo(null);
       } catch (error) {
         console.error("Error completing video generation:", error);
-        toast({
-          description:
-            error instanceof Error
-              ? error.message
-              : CANVAS_STRINGS.ERRORS.VIDEO_FAILED,
-          title: CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
-          variant: "destructive",
-        });
+        showErrorFromException(
+          CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
+          error,
+          CANVAS_STRINGS.ERRORS.VIDEO_FAILED
+        );
       }
     },
     [
@@ -501,7 +490,6 @@ export function useStreamingHandlers(
       setIsConvertingToVideo,
       setSelectedImageForVideo,
       setVideos,
-      toast,
       videos,
     ]
   );
@@ -509,18 +497,14 @@ export function useStreamingHandlers(
   const handleVideoGenerationError = useCallback(
     (videoId: string, error: string) => {
       console.error("Video generation error:", error);
-      toast({
-        description: error,
-        title: CANVAS_STRINGS.ERRORS.VIDEO_GENERATION_FAILED,
-        variant: "destructive",
-      });
+      showError(CANVAS_STRINGS.ERRORS.VIDEO_GENERATION_FAILED, error);
       setActiveVideoGenerations((prev) => {
         const newMap = new Map(prev);
         newMap.delete(videoId);
         return newMap;
       });
     },
-    [setActiveVideoGenerations, toast]
+    [setActiveVideoGenerations]
   );
 
   const handleVideoGenerationProgress = useCallback(

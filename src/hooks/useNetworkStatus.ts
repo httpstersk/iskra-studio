@@ -10,7 +10,7 @@
 import { useEffect } from "react";
 import { useAtom } from "jotai";
 import { isOnlineAtom } from "@/store/ui-atoms";
-import { useToast } from "@/hooks/use-toast";
+import { showError, showInfo } from "@/lib/toast";
 
 /**
  * Options for the useNetworkStatus hook.
@@ -64,7 +64,6 @@ export function useNetworkStatus(options: UseNetworkStatusOptions = {}) {
   } = options;
 
   const [isOnline, setIsOnline] = useAtom(isOnlineAtom);
-  const { toast } = useToast();
 
   useEffect(() => {
     // Initialize with current status
@@ -78,10 +77,10 @@ export function useNetworkStatus(options: UseNetworkStatusOptions = {}) {
       setIsOnline(true);
 
       if (showNotifications) {
-        toast({
-          title: "Back online",
-          description: "Network connection restored. Syncing changes...",
-        });
+        showInfo(
+          "Back online",
+          "Network connection restored. Syncing changes..."
+        );
       }
 
       onOnline?.();
@@ -95,11 +94,7 @@ export function useNetworkStatus(options: UseNetworkStatusOptions = {}) {
       setIsOnline(false);
 
       if (showNotifications) {
-        toast({
-          title: "You're offline",
-          description: "Changes will sync when reconnected.",
-          variant: "destructive",
-        });
+        showError("You're offline", "Changes will sync when reconnected.");
       }
 
       onOffline?.();
@@ -114,7 +109,7 @@ export function useNetworkStatus(options: UseNetworkStatusOptions = {}) {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [setIsOnline, showNotifications, onOnline, onOffline, toast]);
+  }, [setIsOnline, showNotifications, onOnline, onOffline]);
 
   return {
     isOnline,

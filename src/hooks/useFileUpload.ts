@@ -1,5 +1,6 @@
 import { createStorageService } from "@/lib/storage";
 import { compressImage } from "@/lib/utils/compress-image";
+import { showError } from "@/lib/toast";
 import type { PlacedImage } from "@/types/canvas";
 import {
   cropImageToAspectRatio,
@@ -164,11 +165,10 @@ export function useFileUpload(
                     } catch (error) {
                       console.error("Failed to upload image to Convex:", error);
                       if (toast) {
-                        toast({
-                          title: "Upload failed",
-                          description: "Image will be stored locally only",
-                          variant: "destructive",
-                        });
+                        showError(
+                          "Upload failed",
+                          "Image will be stored locally only"
+                        );
                       }
                       // Keep using the data URL if upload fails
                     }

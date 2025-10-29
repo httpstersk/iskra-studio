@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { showErrorFromException, showSuccess } from "@/lib/toast";
 import { useProjects } from "@/hooks/useProjects";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -74,7 +74,6 @@ export function ProjectDialog({
   onProjectCreated,
 }: ProjectDialogProps) {
   const { createProject } = useProjects();
-  const { toast } = useToast();
 
   const [projectName, setProjectName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -92,10 +91,10 @@ export function ProjectDialog({
       );
 
       // Success toast
-      toast({
-        title: "Project created",
-        description: `"${projectName.trim() || "New project"}" has been created`,
-      });
+      showSuccess(
+        "Project created",
+        `"${projectName.trim() || "New project"}" has been created`
+      );
 
       // Reset form
       setProjectName("");
@@ -112,11 +111,11 @@ export function ProjectDialog({
     } catch (error) {
       console.error("Failed to create project:", error);
       
-      toast({
-        title: "Creation failed",
-        description: error instanceof Error ? error.message : "Failed to create project",
-        variant: "destructive",
-      });
+      showErrorFromException(
+        "Creation failed",
+        error,
+        "Failed to create project"
+      );
     } finally {
       setIsCreating(false);
     }

@@ -4,6 +4,7 @@ import {
   getRandomDirectorReference,
   getRandomRecompositionStyle,
 } from "@/lib/prompt-formatters/image-variation-prompt-formatter";
+import { showError, showErrorFromException } from "@/lib/toast";
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
@@ -31,11 +32,6 @@ interface VariationHandlerDeps {
   setActiveVideoGenerations?: React.Dispatch<
     React.SetStateAction<Map<string, any>>
   >;
-  toast: (props: {
-    title: string;
-    description?: string;
-    variant?: "default" | "destructive";
-  }) => void;
   userId?: string;
   variationPrompt?: string;
   variationMode?: "image" | "video";
@@ -154,7 +150,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     setImages,
     setIsGenerating,
     setVideos,
-    toast,
     userId,
     variationCount = 4,
     variationMode = "image",
@@ -171,11 +166,10 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // - Image mode with camera angles: Uses Seedream without AI analysis (continues below)
   if (variationMode === "video") {
     if (!setVideos || !setActiveVideoGenerations) {
-      toast({
-        title: "Configuration error",
-        description: "Video generation handlers not available",
-        variant: "destructive",
-      });
+      showError(
+        "Configuration error",
+        "Video generation handlers not available"
+      );
       return;
     }
 
@@ -190,7 +184,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       setActiveVideoGenerations,
       setIsGenerating,
       setVideos,
-      toast,
       userId,
       videoSettings,
       viewport,
@@ -209,7 +202,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       setActiveGenerations,
       setImages,
       setIsGenerating,
-      toast,
       imageModel,
       variationCount,
       variationPrompt,
@@ -220,11 +212,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // This path is taken when variationMode === "image"
 
   // Validate selection early
-  const selectedImage = validateSingleImageSelection(
-    images,
-    selectedIds,
-    toast
-  );
+  const selectedImage = validateSingleImageSelection(images, selectedIds);
   if (!selectedImage) {
     return;
   }
@@ -301,7 +289,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   try {
     // Stage 0: Uploading image to ensure it's in Convex
     const uploadId = `variation-${timestamp}-upload`;
-    
+
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.set(uploadId, {
@@ -314,8 +302,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     });
 
     const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
-    const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
-    
+    const imageUrl = await ensureImageInConvex(sourceImageUrl);
+
     // Remove upload placeholder
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
@@ -368,14 +356,11 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     const placeholderIds = placeholderImages.map((img) => img.id);
     setImages((prev) => prev.filter((img) => !placeholderIds.includes(img.id)));
 
-    toast({
-      title: "Generation failed",
-      description:
-        error instanceof Error
-          ? error.message
-          : "Failed to generate variations",
-      variant: "destructive",
-    });
+    showErrorFromException(
+      "Generation failed",
+      error,
+      "Failed to generate variations"
+    );
 
     setIsGenerating(false);
   }

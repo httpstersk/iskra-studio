@@ -12,7 +12,7 @@ import {
 import superjson from "superjson";
 import { makeQueryClient } from "@/lib/query-client";
 import { AppRouter } from "@/server/trpc/routers/_app";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@/providers/clerk-provider";
 import { ConvexProvider } from "@/providers/convex-provider";

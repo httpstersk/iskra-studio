@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { showError, showSuccess } from "@/lib/toast";
 import {
   Tooltip,
   TooltipContent,
@@ -30,11 +31,6 @@ const DOWNLOAD_BUTTON_CONSTANTS = {
 interface DownloadAllButtonProps {
   images: PlacedImage[];
   selectedIds: string[];
-  toast: (props: {
-    description?: string;
-    title: string;
-    variant?: "default" | "destructive";
-  }) => void;
 }
 
 /**
@@ -43,7 +39,6 @@ interface DownloadAllButtonProps {
 export function DownloadAllButton({
   images,
   selectedIds,
-  toast,
 }: DownloadAllButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -55,18 +50,17 @@ export function DownloadAllButton({
     try {
       await downloadImagesAsZip(images, selectedIds);
 
-      toast({
-        description: DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_DESC,
-        title: DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_TITLE,
-      });
+      showSuccess(
+        DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_TITLE,
+        DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_DESC
+      );
     } catch (error) {
       console.error("Download error:", error);
 
-      toast({
-        description: DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_DESC,
-        title: DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_TITLE,
-        variant: "destructive",
-      });
+      showError(
+        DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_TITLE,
+        DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_DESC
+      );
     } finally {
       setIsDownloading(false);
     }

@@ -43,7 +43,6 @@ interface StorylineImageVariationHandlerDeps {
   >;
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
-  toast: (props: ToastProps) => void;
   imageModel?: "seedream" | "reve";
   variationCount?: number;
   variationPrompt?: string;
@@ -93,7 +92,6 @@ export const handleStorylineImageVariations = async (
     setActiveGenerations,
     setImages,
     setIsGenerating,
-    toast,
     imageModel = "seedream",
     variationCount = 4,
     variationPrompt,
@@ -102,8 +100,7 @@ export const handleStorylineImageVariations = async (
   // Validate selection early
   const selectedImage = validateSingleImageSelection(
     images,
-    selectedIds,
-    toast
+    selectedIds
   );
 
   if (!selectedImage) {
@@ -130,7 +127,7 @@ export const handleStorylineImageVariations = async (
     });
 
     const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
-    const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
+    const imageUrl = await ensureImageInConvex(sourceImageUrl);
 
     // Remove upload placeholder
     setActiveGenerations((prev) => {

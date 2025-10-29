@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 import { CANVAS_STRINGS } from "@/constants/canvas";
+import { showErrorFromException } from "@/lib/toast";
 import {
   bringForward as bringForwardHandler,
   sendBackward as sendBackwardHandler,
@@ -14,15 +15,6 @@ import {
 } from "@/lib/handlers/image-handlers";
 
 /**
- * Toast function type
- */
-type ToastFn = (options: {
-  description?: string;
-  title?: string;
-  variant?: "default" | "destructive";
-}) => void;
-
-/**
  * Canvas handler dependencies
  */
 interface CanvasHandlerDeps {
@@ -32,7 +24,6 @@ interface CanvasHandlerDeps {
   setImages: (images: PlacedImage[] | ((prev: PlacedImage[]) => PlacedImage[])) => void;
   setSelectedIds: (ids: string[]) => void;
   setVideos: (videos: PlacedVideo[] | ((prev: PlacedVideo[]) => PlacedVideo[])) => void;
-  toast: ToastFn;
   videos: PlacedVideo[];
 }
 
@@ -66,7 +57,6 @@ export function useCanvasHandlers(deps: CanvasHandlerDeps): CanvasHandlers {
     setImages,
     setSelectedIds,
     setVideos,
-    toast,
     videos,
   } = deps;
 
@@ -89,16 +79,13 @@ export function useCanvasHandlers(deps: CanvasHandlerDeps): CanvasHandlers {
       setSelectedIds([combinedImage.id]);
     } catch (error) {
       console.error("Failed to combine images:", error);
-      toast({
-        description:
-          error instanceof Error
-            ? error.message
-            : CANVAS_STRINGS.ERRORS.UNKNOWN_ERROR,
-        title: CANVAS_STRINGS.ERRORS.COMBINE_FAILED,
-        variant: "destructive",
-      });
+      showErrorFromException(
+        CANVAS_STRINGS.ERRORS.COMBINE_FAILED,
+        error,
+        CANVAS_STRINGS.ERRORS.UNKNOWN_ERROR
+      );
     }
-  }, [images, saveToHistory, selectedIds, setImages, setSelectedIds, toast]);
+  }, [images, saveToHistory, selectedIds, setImages, setSelectedIds]);
 
   const handleDelete = useCallback(() => {
     saveToHistory();

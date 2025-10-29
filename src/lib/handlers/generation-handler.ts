@@ -4,6 +4,7 @@ import type {
   PlacedImage,
 } from "@/types/canvas";
 import type { FalClient } from "@fal-ai/client";
+import { showError, showErrorFromException } from "@/lib/toast";
 import { downloadAndReupload } from "./asset-download-handler";
 import { createStorageService } from "@/lib/storage";
 
@@ -20,11 +21,6 @@ interface GenerationHandlerDeps {
     React.SetStateAction<Map<string, ActiveGeneration>>
   >;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
-  toast: (props: {
-    title: string;
-    description?: string;
-    variant?: "default" | "destructive";
-  }) => void;
   generateTextToImage: (params: {
     prompt: string;
     seed?: number;
@@ -41,8 +37,7 @@ interface GenerationHandlerDeps {
 
 export const uploadImageDirect = async (
   dataUrl: string,
-  userId: string | undefined,
-  toast: GenerationHandlerDeps["toast"]
+  userId: string | undefined
 ) => {
   // Convert data URL to blob first
   const response = await fetch(dataUrl);
@@ -73,11 +68,11 @@ export const uploadImageDirect = async (
 
     return { url: uploadResult.url };
   } catch (error: unknown) {
-    toast({
-      title: "Failed to upload image",
-      description: error instanceof Error ? error.message : "Unknown error",
-      variant: "destructive",
-    });
+    showErrorFromException(
+      "Failed to upload image",
+      error,
+      "Unknown error"
+    );
 
     // Re-throw the error so calling code knows upload failed
     throw error;
@@ -131,18 +126,13 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
     setSelectedIds,
     setActiveGenerations,
     setIsGenerating,
-    toast,
     generateTextToImage,
     userId,
     useConvexStorage = false,
   } = deps;
 
   if (!generationSettings.prompt) {
-    toast({
-      title: "No Prompt",
-      description: "Please enter a prompt to generate an image",
-      variant: "destructive",
-    });
+    showError("No Prompt", "Please enter a prompt to generate an image");
     return;
   }
 
@@ -226,12 +216,11 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       setSelectedIds([id]);
     } catch (error) {
       console.error("Error generating image:", error);
-      toast({
-        title: "Generation failed",
-        description:
-          error instanceof Error ? error.message : "Failed to generate image",
-        variant: "destructive",
-      });
+      showErrorFromException(
+        "Generation failed",
+        error,
+        "Failed to generate image"
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -276,7 +265,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
 
       let uploadResult;
       try {
-        uploadResult = await uploadImageDirect(dataUrl, userId, toast);
+        uploadResult = await uploadImageDirect(dataUrl, userId);
       } catch (uploadError) {
         console.error("Failed to upload image:", uploadError);
         failureCount++;
@@ -319,12 +308,11 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
     } catch (error) {
       console.error("Error processing image:", error);
       failureCount++;
-      toast({
-        title: "Failed to process image",
-        description:
-          error instanceof Error ? error.message : "Failed to process image",
-        variant: "destructive",
-      });
+      showErrorFromException(
+        "Failed to process image",
+        error,
+        "Failed to process image"
+      );
     }
   }
 

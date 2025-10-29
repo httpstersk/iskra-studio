@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { showError, showErrorFromException, showSuccess } from "@/lib/toast";
 import type { ProjectMetadata } from "@/types/project";
 import { useProjects } from "@/hooks/useProjects";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -68,7 +68,6 @@ interface ProjectCardProps {
  */
 export function ProjectCard({ project, onOpen }: ProjectCardProps) {
   const { renameProject, deleteProject } = useProjects();
-  const { toast } = useToast();
 
   // State for rename dialog
   const [isRenaming, setIsRenaming] = useState(false);
@@ -91,11 +90,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
    */
   const handleRename = async () => {
     if (!newName.trim()) {
-      toast({
-        title: "Invalid name",
-        description: "Project name cannot be empty",
-        variant: "destructive",
-      });
+      showError("Invalid name", "Project name cannot be empty");
       return;
     }
 
@@ -103,16 +98,13 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
       await renameProject(project.id as Id<"projects">, newName.trim());
       setIsRenaming(false);
       
-      toast({
-        title: "Project renamed",
-        description: `Project renamed to "${newName.trim()}"`,
-      });
+      showSuccess("Project renamed", `Project renamed to "${newName.trim()}"`);
     } catch (error) {
-      toast({
-        title: "Rename failed",
-        description: error instanceof Error ? error.message : "Failed to rename project",
-        variant: "destructive",
-      });
+      showErrorFromException(
+        "Rename failed",
+        error,
+        "Failed to rename project"
+      );
     }
   };
 
@@ -124,16 +116,13 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
       await deleteProject(project.id as Id<"projects">);
       setIsDeleting(false);
       
-      toast({
-        title: "Project deleted",
-        description: `"${project.name}" has been deleted`,
-      });
+      showSuccess("Project deleted", `"${project.name}" has been deleted`);
     } catch (error) {
-      toast({
-        title: "Delete failed",
-        description: error instanceof Error ? error.message : "Failed to delete project",
-        variant: "destructive",
-      });
+      showErrorFromException(
+        "Delete failed",
+        error,
+        "Failed to delete project"
+      );
     }
   };
 

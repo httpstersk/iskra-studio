@@ -5,15 +5,6 @@ import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler
 import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
 
 /**
- * Toast function type
- */
-type ToastFn = (options: {
-  description?: string;
-  title?: string;
-  variant?: "default" | "destructive";
-}) => void;
-
-/**
  * Generation handler dependencies
  */
 interface GenerationHandlerDeps {
@@ -36,7 +27,6 @@ interface GenerationHandlerDeps {
   setSelectedImageForVideo: React.Dispatch<React.SetStateAction<string | null>>;
   setShowSignInPrompt: React.Dispatch<React.SetStateAction<boolean>>;
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
-  toast: ToastFn;
   useSoraPro: boolean;
   userId: string | null;
   variationMode: "image" | "video";
@@ -78,7 +68,6 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     setSelectedImageForVideo,
     setShowSignInPrompt,
     setVideos,
-    toast,
     useSoraPro,
     userId,
     variationMode,
@@ -129,7 +118,6 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
         setImages,
         setIsGenerating,
         setVideos,
-        toast,
         userId: userId ?? undefined,
         variationCount: generationCount,
         variationMode,
@@ -155,7 +143,6 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
         setImages,
         setIsGenerating,
         setSelectedIds,
-        toast,
         viewport,
       });
     }
@@ -177,7 +164,6 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     setSelectedIds,
     setShowSignInPrompt,
     setVideos,
-    toast,
     useSoraPro,
     userId,
     variationMode,

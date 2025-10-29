@@ -3,6 +3,7 @@
  */
 
 import type { PlacedImage } from "@/types/canvas";
+import { showError } from "@/lib/toast";
 
 interface ToastFunction {
   (props: {
@@ -125,8 +126,7 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
  * Uploads a blob to Convex storage
  */
 export async function uploadToConvex(
-  blob: Blob,
-  toast: ToastFunction
+  blob: Blob
 ): Promise<string> {
   try {
     const formData = new FormData();
@@ -154,17 +154,12 @@ export async function uploadToConvex(
       (error as { message?: string }).message?.includes("rate limit");
 
     if (isRateLimit) {
-      toast({
-        title: "Rate limit exceeded",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+      showError("Rate limit exceeded", "Please try again later.");
     } else {
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
+      showError(
+        "Upload failed",
+        error instanceof Error ? error.message : "Unknown error"
+      );
     }
     throw error;
   }
@@ -175,8 +170,7 @@ export async function uploadToConvex(
  * Returns a URL (either proxy or full, depending on input)
  */
 export async function ensureImageInConvex(
-  imageSrc: string,
-  toast: ToastFunction
+  imageSrc: string
 ): Promise<string> {
   // If already in Convex, return as-is (could be proxy or signed URL)
   if (isConvexStorageUrl(imageSrc)) {
@@ -185,7 +179,7 @@ export async function ensureImageInConvex(
 
   // Otherwise, convert and upload
   const blob = await imageToBlob(imageSrc);
-  return await uploadToConvex(blob, toast);
+  return await uploadToConvex(blob);
 }
 
 /**
@@ -247,25 +241,19 @@ export function toSignedUrl(imageUrl: string): string {
  */
 export function validateSingleImageSelection(
   images: PlacedImage[],
-  selectedIds: string[],
-  toast: ToastFunction
+  selectedIds: string[]
 ): PlacedImage | null {
   if (selectedIds.length !== 1) {
-    toast({
-      title: "Select one image",
-      description: "Please select exactly one image to generate variations",
-      variant: "destructive",
-    });
+    showError(
+      "Select one image",
+      "Please select exactly one image to generate variations"
+    );
     return null;
   }
 
   const selectedImage = images.find((img) => img.id === selectedIds[0]);
   if (!selectedImage) {
-    toast({
-      title: "Image not found",
-      description: "The selected image could not be found",
-      variant: "destructive",
-    });
+    showError("Image not found", "The selected image could not be found");
     return null;
   }
 
