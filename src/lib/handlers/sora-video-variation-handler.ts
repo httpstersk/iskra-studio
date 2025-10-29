@@ -80,6 +80,13 @@ interface SoraVideoVariationHandlerDeps {
  * @throws Error if analysis fails
  */
 async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
+  // Validate URL before sending to API
+  if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+    throw new Error(
+      `Invalid image URL for analysis: must be a full URL, got: ${imageUrl.substring(0, 100)}`
+    );
+  }
+
   const response = await fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
     body: JSON.stringify({ imageUrl }),
     headers: {
@@ -90,12 +97,13 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
 
   if (!response.ok) {
     const error = await response.json().catch(() => null);
-    
+
     // Include validation details in the error message
-    const errorMsg = error?.details 
-      ? `${error.error}: ${JSON.stringify(error.details)}`
-      : error?.error || `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
-    
+    const errorMsg = error?.details
+      ? `${error.error}: ${JSON.stringify(error.details)} (URL: ${imageUrl.substring(0, 100)})`
+      : error?.error ||
+        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
+
     throw new Error(errorMsg);
   }
 
@@ -151,7 +159,7 @@ function createVideoPlaceholders(
       selectedImage.width,
       selectedImage.height
     );
-    
+
     // Snap position to grid to align perfectly with ghost placeholders
     const snappedPosition = snapPosition(position.x, position.y);
 
@@ -262,7 +270,7 @@ export const handleSoraVideoVariations = async (
 
     // Stage 0: Uploading image to ensure it's in Convex
     const uploadId = `video-${timestamp}-upload`;
-    
+
     setActiveVideoGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.set(uploadId, {
@@ -278,8 +286,14 @@ export const handleSoraVideoVariations = async (
     });
 
     const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
+
+    // Validate source URL before processing
+    if (!sourceImageUrl || sourceImageUrl.length === 0) {
+      throw new Error("Source image URL is missing or empty");
+    }
+
     const imageUrl = await ensureImageInConvex(sourceImageUrl, toast);
-    
+
     // Remove upload placeholder
     setActiveVideoGenerations((prev) => {
       const newMap = new Map(prev);
@@ -290,9 +304,19 @@ export const handleSoraVideoVariations = async (
     // Convert proxy URL to signed URL for API
     const signedImageUrl = toSignedUrl(imageUrl);
 
+    // Validate the signed URL before making API calls
+    if (
+      !signedImageUrl.startsWith("http://") &&
+      !signedImageUrl.startsWith("https://")
+    ) {
+      throw new Error(
+        `Invalid signed URL format: Expected full URL but got: ${signedImageUrl.substring(0, 100)}`
+      );
+    }
+
     // Stage 1: Analyze image style/mood
     const analyzeId = `video-${timestamp}-analyze`;
-    
+
     setActiveVideoGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.set(analyzeId, {
@@ -308,7 +332,7 @@ export const handleSoraVideoVariations = async (
     });
 
     const imageAnalysis = await analyzeImage(signedImageUrl);
-    
+
     // Remove analyze placeholder
     setActiveVideoGenerations((prev) => {
       const newMap = new Map(prev);

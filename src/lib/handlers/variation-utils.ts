@@ -29,10 +29,47 @@ export function isConvexStorageUrl(url: string): boolean {
  */
 export function extractSignedUrlFromProxy(proxyUrl: string): string | null {
   try {
-    const urlObj = new URL(proxyUrl, typeof window !== "undefined" ? window.location.origin : "http://localhost");
-    const signedUrl = urlObj.searchParams.get("url");
-    return signedUrl ? decodeURIComponent(signedUrl) : null;
-  } catch {
+    // Validate input
+    if (!proxyUrl || typeof proxyUrl !== "string" || !proxyUrl.trim()) {
+      console.error("Invalid proxy URL: empty or non-string");
+      return null;
+    }
+
+    // Extract query string from the URL (works for both relative and absolute URLs)
+    const queryStart = proxyUrl.indexOf("?");
+    if (queryStart === -1) {
+      console.error("No query string found in proxy URL:", proxyUrl);
+      return null;
+    }
+
+    // URLSearchParams handles URL decoding automatically
+    const queryString = proxyUrl.substring(queryStart + 1);
+    const params = new URLSearchParams(queryString);
+    const signedUrl = params.get("url");
+
+    if (!signedUrl || !signedUrl.trim()) {
+      console.error("No 'url' parameter found in proxy URL:", proxyUrl);
+      return null;
+    }
+
+    // Validate that the extracted URL is actually a full URL
+    const trimmedUrl = signedUrl.trim();
+    if (
+      !trimmedUrl.startsWith("http://") &&
+      !trimmedUrl.startsWith("https://")
+    ) {
+      console.error("Extracted URL is not a valid full URL:", trimmedUrl);
+      return null;
+    }
+
+    return trimmedUrl;
+  } catch (error) {
+    console.error(
+      "Error extracting signed URL from proxy:",
+      error,
+      "Proxy URL:",
+      proxyUrl
+    );
     return null;
   }
 }
@@ -47,7 +84,15 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
 
   await new Promise<void>((resolve, reject) => {
     img.onload = () => resolve();
-    img.onerror = reject;
+    img.onerror = (error) => {
+      console.error(
+        "Failed to load image for blob conversion:",
+        error,
+        "Image src:",
+        imageSrc.substring(0, 100)
+      );
+      reject(new Error(`Failed to load image: ${imageSrc.substring(0, 100)}`));
+    };
   });
 
   const canvas = document.createElement("canvas");
@@ -67,7 +112,7 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
         if (blob) {
           resolve(blob);
         } else {
-          reject(new Error("Failed to create blob"));
+          reject(new Error("Failed to create blob from canvas"));
         }
       },
       "image/png",
@@ -148,16 +193,53 @@ export async function ensureImageInConvex(
  * Extracts signed URL from proxy URLs, returns full URLs as-is
  */
 export function toSignedUrl(imageUrl: string): string {
-  // If it's a proxy URL, extract the signed URL from the query parameter
-  if (imageUrl.includes("/api/storage/proxy")) {
-    const signedUrl = extractSignedUrlFromProxy(imageUrl);
-    if (signedUrl) {
-      return signedUrl;
+  // Validate input
+  if (!imageUrl || typeof imageUrl !== "string") {
+    throw new Error("Invalid image URL: empty or non-string");
+  }
+
+  const trimmedUrl = imageUrl.trim();
+  if (!trimmedUrl) {
+    throw new Error("Invalid image URL: empty after trimming");
+  }
+
+  // Check if it's a proxy URL (more robust check)
+  const isProxyUrl = trimmedUrl.includes("/api/storage/proxy?");
+
+  if (isProxyUrl) {
+    const signedUrl = extractSignedUrlFromProxy(trimmedUrl);
+
+    if (!signedUrl) {
+      throw new Error(
+        `Failed to extract signed URL from proxy URL: ${trimmedUrl.substring(0, 100)}`
+      );
     }
+    return signedUrl;
+  }
+
+  // Handle data URLs (valid but not suitable for server-side APIs)
+  if (trimmedUrl.startsWith("data:")) {
+    throw new Error(
+      "Data URLs are not supported for server-side processing. Please upload the image first."
+    );
+  }
+
+  // If it's a relative URL that's not a proxy, it's invalid
+  if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+    throw new Error(
+      `Invalid image URL format: must be a full URL or proxy URL, got: ${trimmedUrl.substring(0, 100)}`
+    );
+  }
+
+  // Validate URL structure
+  try {
+    new URL(trimmedUrl);
+  } catch {
+    throw new Error(`Malformed URL structure: ${trimmedUrl.substring(0, 100)}`);
   }
 
   // Otherwise return as-is (already a full URL)
-  return imageUrl;
+  return trimmedUrl;
 }
 
 /**
