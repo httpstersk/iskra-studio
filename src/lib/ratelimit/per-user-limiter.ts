@@ -146,9 +146,6 @@ export const videoUserRateLimiter = createUserRateLimiterSet(VIDEO_RATE_LIMITS);
  * @example
  * ```ts
  * const result = await checkUserRateLimit("user_123", "standard");
- * if (result.shouldLimitRequest) {
- *   console.log(`Rate limited for ${result.period}`);
- * }
  * ```
  */
 export async function checkUserRateLimit(
@@ -195,7 +192,6 @@ export async function checkUserRateLimit(
  * @example
  * ```ts
  * const config = getRateLimitConfig("video");
- * console.log(config.perMinute.tokens); // 2
  * ```
  */
 export function getRateLimitConfig(limitType: LimitType): RateLimitConfig {

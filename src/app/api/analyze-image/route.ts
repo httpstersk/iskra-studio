@@ -178,13 +178,6 @@ export async function POST(req: Request) {
       usage: result.usage,
     });
   } catch (error) {
-    console.error("Error analyzing image:", error);
-
-    // Log detailed error for debugging
-    if (error && typeof error === "object") {
-      console.error("Error details:", JSON.stringify(error, null, 2));
-    }
-
     return NextResponse.json(
       {
         error: "Failed to analyze image",

@@ -104,7 +104,6 @@ export async function generateThumbnail(
 
     return blob;
   } catch (error) {
-    console.error("Thumbnail generation failed:", error);
     return undefined;
   }
 }

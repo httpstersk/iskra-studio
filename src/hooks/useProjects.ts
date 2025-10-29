@@ -164,7 +164,6 @@ export function useProjects(): UseProjectsReturn {
         // Refresh project list (will happen automatically via query)
         return projectId;
       } catch (error) {
-        console.error("Failed to create project:", error);
         throw new Error(
           `Project creation failed: ${error instanceof Error ? error.message : "Unknown error"}`
         );
@@ -233,7 +232,6 @@ export function useProjects(): UseProjectsReturn {
           return updated.sort((a, b) => b.lastSavedAt - a.lastSavedAt);
         });
       } catch (error) {
-        console.error("Failed to load project:", error);
         throw new Error(
           `Project load failed: ${
             error instanceof Error ? error.message : "Unknown error"
@@ -278,7 +276,6 @@ export function useProjects(): UseProjectsReturn {
           });
         }
       } catch (error) {
-        console.error("Failed to save project:", error);
         throw new Error(
           `Project save failed: ${error instanceof Error ? error.message : "Unknown error"}`
         );
@@ -311,7 +308,6 @@ export function useProjects(): UseProjectsReturn {
 
         // Project list will update automatically via query
       } catch (error) {
-        console.error("Failed to delete project:", error);
         throw new Error(
           `Project deletion failed: ${error instanceof Error ? error.message : "Unknown error"}`
         );
@@ -339,7 +335,6 @@ export function useProjects(): UseProjectsReturn {
 
         // Project list will update automatically via query
       } catch (error) {
-        console.error("Failed to rename project:", error);
         throw new Error(
           `Project rename failed: ${error instanceof Error ? error.message : "Unknown error"}`
         );

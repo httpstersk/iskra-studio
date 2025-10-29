@@ -1,15 +1,15 @@
 /**
  * Offline indicator component for canvas.
- * 
+ *
  * Displays a banner when network connection is lost, informing users
  * that their changes will sync when connectivity is restored.
  */
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { CloudOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CloudOff } from "lucide-react";
+import { useEffect, useState } from "react";
 
 /**
  * Props for the OfflineIndicator component.
@@ -25,28 +25,28 @@ interface OfflineIndicatorProps {
 
 /**
  * Offline indicator component.
- * 
+ *
  * Shows a banner at the top of the canvas when the user is offline.
  * Automatically hides when network connection is restored.
- * 
+ *
  * @remarks
  * - Uses browser's `navigator.onLine` API for online/offline detection
  * - Listens to `online` and `offline` events for real-time updates
  * - Shows queued changes count when available
  * - Styled with warning colors (amber) for visibility
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage
  * <OfflineIndicator />
- * 
+ *
  * // With queue count
- * <OfflineIndicator 
- *   showQueueCount 
- *   queueCount={syncManager.getQueueLength()} 
+ * <OfflineIndicator
+ *   showQueueCount
+ *   queueCount={syncManager.getQueueLength()}
  * />
  * ```
- * 
+ *
  * @param props - Component props
  * @returns Offline indicator banner or null if online
  */
@@ -63,13 +63,11 @@ export function OfflineIndicator({
 
     // Handle online event
     const handleOnline = () => {
-      console.log("Network connection restored");
       setIsOnline(true);
     };
 
     // Handle offline event
     const handleOffline = () => {
-      console.log("Network connection lost");
       setIsOnline(false);
     };
 
@@ -100,8 +98,8 @@ export function OfflineIndicator({
         aria-hidden="true"
       />
       <AlertDescription className="ml-2">
-        <span className="font-medium">You&apos;re offline.</span>{" "}
-        Changes will sync when reconnected.
+        <span className="font-medium">You&apos;re offline.</span> Changes will
+        sync when reconnected.
         {showQueueCount && queueCount > 0 && (
           <span className="ml-1 text-sm opacity-80">
             ({queueCount} {queueCount === 1 ? "change" : "changes"} queued)

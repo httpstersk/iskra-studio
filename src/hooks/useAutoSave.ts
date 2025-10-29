@@ -184,8 +184,6 @@ export function useAutoSave(
       // Update last saved state ref
       lastSavedStateRef.current = JSON.stringify(canvasState);
     } catch (error) {
-      console.error("Auto-save failed:", error);
-
       showErrorFromException("Save failed", error, "Failed to save project");
     }
   }, [currentProjectState, canvasState, generateThumbnail, saveProject]);
@@ -231,10 +229,7 @@ export function useAutoSave(
     }
 
     if (isSaving) {
-      showInfo(
-        "Save in progress",
-        "Please wait for current save to complete"
-      );
+      showInfo("Save in progress", "Please wait for current save to complete");
       return;
     }
 

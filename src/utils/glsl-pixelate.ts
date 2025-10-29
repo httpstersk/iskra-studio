@@ -297,7 +297,6 @@ export const createPixelatedCloneCanvas = (
 
     return canvas;
   } catch (error) {
-    console.error("GLSL pixelate failed, using 2D fallback", error);
     return createFallbackPixelateCanvas(
       image,
       targetWidth,

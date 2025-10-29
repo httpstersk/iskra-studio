@@ -86,7 +86,6 @@ export async function getCurrentUser() {
     const user = await client.query(api.users.getCurrentUser);
     return user;
   } catch (error) {
-    console.error("[Server] Error fetching user:", error);
     return null;
   }
 }
@@ -103,7 +102,6 @@ export async function listProjects(limit = 10) {
     const projects = await client.query(api.projects.listProjects, { limit });
     return projects;
   } catch (error) {
-    console.error("[Server] Error fetching projects:", error);
     return [];
   }
 }

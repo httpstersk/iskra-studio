@@ -143,8 +143,6 @@ import { validateCanvasState } from '@/lib/sync/asset-synchronizer';
 
 const assetMap = new Map(assets.map(a => [a.id, a]));
 const result = validateCanvasState(canvasState, assetMap, userId);
-
-console.log(`${result.validElements}/${result.totalElements} valid`);
 ```
 
 ### Task: Convert Elements to/from Persistence Format
@@ -303,7 +301,6 @@ test('invalid element with missing asset', () => {
 ```typescript
 // Check validation result
 const validation = validateCanvasState(canvasState, assetMap, userId);
-console.log('Invalid elements:', validation.invalidElements);
 
 // Orphan them to remove the reference
 const fixed = element.map(el =>

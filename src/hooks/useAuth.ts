@@ -18,48 +18,48 @@ import { api } from "../../convex/_generated/api";
 interface UseAuthReturn {
   /** Convex user record with tier and storage information */
   convexUser: User | null;
-  
+
   /** Whether the user is authenticated */
   isAuthenticated: boolean;
-  
+
   /** Whether authentication data is still loading */
   isLoading: boolean;
-  
+
   /** Function to initiate sign-in flow */
   signIn: () => void;
-  
+
   /** Function to sign out the current user */
   signOut: () => Promise<void>;
-  
+
   /** User's subscription tier */
   tier: UserTier;
-  
+
   /** Clerk user ID (if authenticated) */
   userId: string | null;
 }
 
 /**
  * Custom hook for authentication with Clerk and Convex integration.
- * 
+ *
  * Combines Clerk's authentication with Convex user data to provide
  * a unified authentication interface. Automatically syncs user data
  * between Clerk and Convex on authentication state changes.
- * 
+ *
  * @remarks
  * - Returns null for user fields when not authenticated
  * - Automatically creates Convex user record on first sign-in (via backend)
  * - Updates Jotai atoms with current authentication state
  * - Provides sign-in and sign-out functions
- * 
+ *
  * @example
  * ```tsx
  * function MyComponent() {
  *   const { isAuthenticated, tier, signIn, signOut } = useAuth();
- *   
+ *
  *   if (!isAuthenticated) {
  *     return <button onClick={signIn}>Sign In</button>;
  *   }
- *   
+ *
  *   return (
  *     <div>
  *       <p>Tier: {tier}</p>
@@ -68,7 +68,7 @@ interface UseAuthReturn {
  *   );
  * }
  * ```
- * 
+ *
  * @returns Authentication state and functions
  */
 export function useAuth(): UseAuthReturn {
@@ -83,13 +83,13 @@ export function useAuth(): UseAuthReturn {
     api.users.getCurrentUser,
     isClerkLoaded && clerkUser ? {} : "skip"
   );
-  
+
   // Mutation to create user if doesn't exist
   const getOrCreateUser = useMutation(api.users.getOrCreateUser);
 
   /**
    * Syncs Clerk user data to Jotai atoms and ensures Convex user exists.
-   * 
+   *
    * @remarks
    * - Uses reactive queries for efficient data fetching
    * - Only calls mutation if user doesn't exist
@@ -115,8 +115,8 @@ export function useAuth(): UseAuthReturn {
               });
             }
           })
-          .catch((error) => {
-            console.error("Failed to create user in Convex:", error);
+          .catch(() => {
+            // Ignore errors - user will be prompted to sign in again
           });
       } else if (convexUser) {
         // Update atom with fetched Convex user data
@@ -143,7 +143,7 @@ export function useAuth(): UseAuthReturn {
 
   /**
    * Initiates the Clerk sign-in flow.
-   * 
+   *
    * @remarks
    * Opens the Clerk sign-in modal or redirects to sign-in page.
    */
@@ -153,7 +153,7 @@ export function useAuth(): UseAuthReturn {
 
   /**
    * Signs out the current user.
-   * 
+   *
    * @remarks
    * - Clears Clerk session
    * - Clears Jotai authentication atoms

@@ -32,14 +32,12 @@ export function extractSignedUrlFromProxy(proxyUrl: string): string | null {
   try {
     // Validate input
     if (!proxyUrl || typeof proxyUrl !== "string" || !proxyUrl.trim()) {
-      console.error("Invalid proxy URL: empty or non-string");
       return null;
     }
 
     // Extract query string from the URL (works for both relative and absolute URLs)
     const queryStart = proxyUrl.indexOf("?");
     if (queryStart === -1) {
-      console.error("No query string found in proxy URL:", proxyUrl);
       return null;
     }
 
@@ -49,7 +47,6 @@ export function extractSignedUrlFromProxy(proxyUrl: string): string | null {
     const signedUrl = params.get("url");
 
     if (!signedUrl || !signedUrl.trim()) {
-      console.error("No 'url' parameter found in proxy URL:", proxyUrl);
       return null;
     }
 
@@ -59,18 +56,11 @@ export function extractSignedUrlFromProxy(proxyUrl: string): string | null {
       !trimmedUrl.startsWith("http://") &&
       !trimmedUrl.startsWith("https://")
     ) {
-      console.error("Extracted URL is not a valid full URL:", trimmedUrl);
       return null;
     }
 
     return trimmedUrl;
   } catch (error) {
-    console.error(
-      "Error extracting signed URL from proxy:",
-      error,
-      "Proxy URL:",
-      proxyUrl
-    );
     return null;
   }
 }
@@ -86,12 +76,6 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
   await new Promise<void>((resolve, reject) => {
     img.onload = () => resolve();
     img.onerror = (error) => {
-      console.error(
-        "Failed to load image for blob conversion:",
-        error,
-        "Image src:",
-        imageSrc.substring(0, 100)
-      );
       reject(new Error(`Failed to load image: ${imageSrc.substring(0, 100)}`));
     };
   });
@@ -125,9 +109,7 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
 /**
  * Uploads a blob to Convex storage
  */
-export async function uploadToConvex(
-  blob: Blob
-): Promise<string> {
+export async function uploadToConvex(blob: Blob): Promise<string> {
   try {
     const formData = new FormData();
     formData.append("file", blob, "image.png");
@@ -169,9 +151,7 @@ export async function uploadToConvex(
  * Ensures an image is stored in Convex, uploading if necessary
  * Returns a URL (either proxy or full, depending on input)
  */
-export async function ensureImageInConvex(
-  imageSrc: string
-): Promise<string> {
+export async function ensureImageInConvex(imageSrc: string): Promise<string> {
   // If already in Convex, return as-is (could be proxy or signed URL)
   if (isConvexStorageUrl(imageSrc)) {
     return imageSrc;

@@ -55,8 +55,6 @@ export function DownloadAllButton({
         DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_DESC
       );
     } catch (error) {
-      console.error("Download error:", error);
-
       showError(
         DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_TITLE,
         DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_DESC

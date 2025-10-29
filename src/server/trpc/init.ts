@@ -34,7 +34,6 @@ const trpcLimiter: RateLimiter = {
 const rateLimitMiddleware = t.middleware(async ({ ctx, next }) => {
   const req = ctx.req;
   if (!req) {
-    console.log("[DEBUG] No request object in context, skipping rate limit");
     return next();
   }
 
@@ -44,20 +43,15 @@ const rateLimitMiddleware = t.middleware(async ({ ctx, next }) => {
     req.headers.get?.("x-real-ip") ||
     "unknown";
 
-  console.log(`[DEBUG] tRPC rate limit check for IP: ${ip}`);
-
   const limiterResult = await shouldLimitRequest(trpcLimiter, ip);
-  console.log(`[DEBUG] tRPC rate limit result:`, limiterResult);
 
   if (limiterResult.shouldLimitRequest) {
-    console.log(`[DEBUG] tRPC request blocked - rate limit exceeded`);
     throw new TRPCError({
       code: "TOO_MANY_REQUESTS",
       message: `Rate limit exceeded per ${limiterResult.period}`,
     });
   }
 
-  console.log(`[DEBUG] tRPC request allowed`);
   return next();
 });
 

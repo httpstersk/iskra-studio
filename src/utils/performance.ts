@@ -20,19 +20,10 @@
  * @param delay - Delay in milliseconds to wait before executing
  * @returns Debounced version of the function
  *
- * @example
- * ```typescript
- * const saveData = debounce((data: string) => {
- *   console.log('Saving:', data);
- * }, 500);
- *
- * saveData('Hello');
- * saveData('Hello World'); // Only this will execute after 500ms
- * ```
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  delay: number,
+  delay: number
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout | null = null;
 
@@ -61,19 +52,10 @@ export function debounce<T extends (...args: any[]) => any>(
  * @param limit - Minimum time in milliseconds between executions
  * @returns Throttled version of the function
  *
- * @example
- * ```typescript
- * const handleScroll = throttle(() => {
- *   console.log('Scroll position:', window.scrollY);
- * }, 100);
- *
- * window.addEventListener('scroll', handleScroll);
- * // Will execute at most once every 100ms
- * ```
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  limit: number,
+  limit: number
 ): (...args: Parameters<T>) => void {
   let lastCall = 0;
   let timeoutId: NodeJS.Timeout | null = null;
@@ -125,7 +107,7 @@ export function throttle<T extends (...args: any[]) => any>(
  * ```
  */
 export function throttleRAF<T extends (...args: any[]) => any>(
-  func: T,
+  func: T
 ): (...args: Parameters<T>) => void {
   let rafId: number | null = null;
   let lastArgs: Parameters<T> | null = null;

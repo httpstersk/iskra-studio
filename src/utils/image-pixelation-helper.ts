@@ -67,7 +67,6 @@ export async function generatePixelatedOverlay(
 
     return { dataUrl, image: preloadedImg };
   } catch (error) {
-    console.error("Failed to generate pixelated overlay:", error);
     return undefined;
   }
 }
@@ -86,25 +85,17 @@ export async function generateAndCachePixelatedOverlay(
   selectedImage: ImageDimensions,
   pixelSize: number = DEFAULT_PIXEL_SIZE
 ): Promise<string | undefined> {
-  try {
-    const result = await generatePixelatedOverlay(
-      selectedImage.src,
-      selectedImage.width,
-      selectedImage.height,
-      pixelSize
-    );
+  const result = await generatePixelatedOverlay(
+    selectedImage.src,
+    selectedImage.width,
+    selectedImage.height,
+    pixelSize
+  );
 
-    if (result) {
-      cachePixelatedImage(result.dataUrl, result.image);
-      return result.dataUrl;
-    }
-
-    return undefined;
-  } catch (error) {
-    console.error(
-      "Failed to generate pixelated overlay for placeholders:",
-      error
-    );
-    return undefined;
+  if (result) {
+    cachePixelatedImage(result.dataUrl, result.image);
+    return result.dataUrl;
   }
+
+  return undefined;
 }

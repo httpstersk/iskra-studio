@@ -53,7 +53,6 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
   };
 
   const onErrorHandler = (error: { message?: string }) => {
-    console.error("Subscription error:", error);
     onError(imageId, error.message || "Generation failed");
   };
 

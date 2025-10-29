@@ -60,7 +60,7 @@ interface BlurResources {
 const compileShader = (
   gl: WebGLRenderingContext,
   type: number,
-  source: string,
+  source: string
 ): WebGLShader => {
   const shader = gl.createShader(type);
   if (!shader) {
@@ -80,12 +80,12 @@ const createProgram = (gl: WebGLRenderingContext): BlurResources => {
   const vertexShader = compileShader(
     gl,
     gl.VERTEX_SHADER,
-    VERTEX_SHADER_SOURCE,
+    VERTEX_SHADER_SOURCE
   );
   const fragmentShader = compileShader(
     gl,
     gl.FRAGMENT_SHADER,
-    FRAGMENT_SHADER_SOURCE,
+    FRAGMENT_SHADER_SOURCE
   );
 
   const program = gl.createProgram();
@@ -114,14 +114,14 @@ const createProgram = (gl: WebGLRenderingContext): BlurResources => {
   gl.bufferData(
     gl.ARRAY_BUFFER,
     new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
-    gl.STATIC_DRAW,
+    gl.STATIC_DRAW
   );
 
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
   gl.bufferData(
     gl.ARRAY_BUFFER,
     new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
-    gl.STATIC_DRAW,
+    gl.STATIC_DRAW
   );
 
   const attributeLocations = {
@@ -157,7 +157,7 @@ const configureTexture = (
   texture: WebGLTexture | null,
   width: number,
   height: number,
-  source?: TexImageSource,
+  source?: TexImageSource
 ) => {
   if (!texture) {
     throw new Error("Failed to create texture");
@@ -181,14 +181,14 @@ const configureTexture = (
       0,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
-      null,
+      null
     );
   }
 };
 
 const createFramebuffer = (
   gl: WebGLRenderingContext,
-  texture: WebGLTexture | null,
+  texture: WebGLTexture | null
 ): WebGLFramebuffer => {
   const framebuffer = gl.createFramebuffer();
   if (!framebuffer || !texture) {
@@ -200,14 +200,14 @@ const createFramebuffer = (
     gl.COLOR_ATTACHMENT0,
     gl.TEXTURE_2D,
     texture,
-    0,
+    0
   );
   return framebuffer;
 };
 
 const drawFullscreenQuad = (
   gl: WebGLRenderingContext,
-  resources: BlurResources,
+  resources: BlurResources
 ) => {
   gl.bindBuffer(gl.ARRAY_BUFFER, resources.positionBuffer);
   gl.enableVertexAttribArray(resources.attributeLocations.position);
@@ -217,7 +217,7 @@ const drawFullscreenQuad = (
     gl.FLOAT,
     false,
     0,
-    0,
+    0
   );
 
   gl.bindBuffer(gl.ARRAY_BUFFER, resources.texCoordBuffer);
@@ -228,7 +228,7 @@ const drawFullscreenQuad = (
     gl.FLOAT,
     false,
     0,
-    0,
+    0
   );
 
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -241,7 +241,7 @@ const runBlurPass = (
   targetFramebuffer: WebGLFramebuffer | null,
   direction: [number, number],
   resolution: number,
-  sigma: number,
+  sigma: number
 ) => {
   gl.bindFramebuffer(gl.FRAMEBUFFER, targetFramebuffer);
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
@@ -257,7 +257,7 @@ const runBlurPass = (
     gl.uniform2f(
       resources.uniformLocations.direction,
       direction[0],
-      direction[1],
+      direction[1]
     );
   }
 
@@ -276,7 +276,7 @@ const createFallbackBlurCanvas = (
   image: HTMLImageElement,
   width: number,
   height: number,
-  sigma: number,
+  sigma: number
 ): HTMLCanvasElement => {
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -297,7 +297,7 @@ export const createBlurredCloneCanvas = (
   image: HTMLImageElement,
   width: number,
   height: number,
-  sigma = DEFAULT_SIGMA,
+  sigma = DEFAULT_SIGMA
 ): HTMLCanvasElement => {
   const targetWidth = Math.max(1, Math.round(width));
   const targetHeight = Math.max(1, Math.round(height));
@@ -344,7 +344,7 @@ export const createBlurredCloneCanvas = (
       originalTexture,
       blurWidth,
       blurHeight,
-      downsampleCanvas,
+      downsampleCanvas
     );
 
     const horizontalTexture = gl.createTexture();
@@ -366,7 +366,7 @@ export const createBlurredCloneCanvas = (
       firstPassFbo,
       [1, 0],
       blurWidth,
-      effectiveSigma,
+      effectiveSigma
     );
     runBlurPass(
       gl,
@@ -375,7 +375,7 @@ export const createBlurredCloneCanvas = (
       secondPassFbo,
       [0, 1],
       blurHeight,
-      effectiveSigma,
+      effectiveSigma
     );
 
     // Render final blurred result to full-resolution canvas with bilinear upscaling
@@ -396,7 +396,6 @@ export const createBlurredCloneCanvas = (
 
     return canvas;
   } catch (error) {
-    console.error("GLSL blur failed, using 2D fallback", error);
     return createFallbackBlurCanvas(image, targetWidth, targetHeight, sigma);
   }
 };

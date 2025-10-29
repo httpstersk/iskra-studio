@@ -77,7 +77,6 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
     loop: video.isLooping,
     muted: video.muted,
     onPlaybackError: (error) => {
-      console.error("Error playing video:", error);
       onChange({ isPlaying: false });
     },
     volume: video.volume,

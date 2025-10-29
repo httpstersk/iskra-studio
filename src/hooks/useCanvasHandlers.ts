@@ -1,18 +1,18 @@
-import { useCallback } from "react";
-import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 import { CANVAS_STRINGS } from "@/constants/canvas";
-import { showErrorFromException } from "@/lib/toast";
+import {
+  combineImages,
+  deleteElements,
+  duplicateElements,
+} from "@/lib/handlers/image-handlers";
 import {
   bringForward as bringForwardHandler,
   sendBackward as sendBackwardHandler,
   sendToBack as sendToBackHandler,
   sendToFront as sendToFrontHandler,
 } from "@/lib/handlers/layer-handlers";
-import {
-  combineImages,
-  deleteElements,
-  duplicateElements,
-} from "@/lib/handlers/image-handlers";
+import { showErrorFromException } from "@/lib/toast";
+import type { PlacedImage, PlacedVideo } from "@/types/canvas";
+import { useCallback } from "react";
 
 /**
  * Canvas handler dependencies
@@ -21,9 +21,13 @@ interface CanvasHandlerDeps {
   images: PlacedImage[];
   saveToHistory: () => void;
   selectedIds: string[];
-  setImages: (images: PlacedImage[] | ((prev: PlacedImage[]) => PlacedImage[])) => void;
+  setImages: (
+    images: PlacedImage[] | ((prev: PlacedImage[]) => PlacedImage[])
+  ) => void;
   setSelectedIds: (ids: string[]) => void;
-  setVideos: (videos: PlacedVideo[] | ((prev: PlacedVideo[]) => PlacedVideo[])) => void;
+  setVideos: (
+    videos: PlacedVideo[] | ((prev: PlacedVideo[]) => PlacedVideo[])
+  ) => void;
   videos: PlacedVideo[];
 }
 
@@ -78,7 +82,6 @@ export function useCanvasHandlers(deps: CanvasHandlerDeps): CanvasHandlers {
       ]);
       setSelectedIds([combinedImage.id]);
     } catch (error) {
-      console.error("Failed to combine images:", error);
       showErrorFromException(
         CANVAS_STRINGS.ERRORS.COMBINE_FAILED,
         error,
@@ -89,22 +92,46 @@ export function useCanvasHandlers(deps: CanvasHandlerDeps): CanvasHandlers {
 
   const handleDelete = useCallback(() => {
     saveToHistory();
-    const { newImages, newVideos } = deleteElements(images, videos, selectedIds);
+    const { newImages, newVideos } = deleteElements(
+      images,
+      videos,
+      selectedIds
+    );
     setImages(newImages);
     setSelectedIds([]);
     setVideos(newVideos);
-  }, [images, saveToHistory, selectedIds, setImages, setSelectedIds, setVideos, videos]);
+  }, [
+    images,
+    saveToHistory,
+    selectedIds,
+    setImages,
+    setSelectedIds,
+    setVideos,
+    videos,
+  ]);
 
   const handleDuplicate = useCallback(() => {
     saveToHistory();
-    const { newImages, newVideos } = duplicateElements(images, videos, selectedIds);
+    const { newImages, newVideos } = duplicateElements(
+      images,
+      videos,
+      selectedIds
+    );
     setImages((prev) => [...prev, ...newImages]);
     setVideos((prev) => [...prev, ...newVideos]);
     setSelectedIds([
       ...newImages.map((img) => img.id),
       ...newVideos.map((vid) => vid.id),
     ]);
-  }, [images, saveToHistory, selectedIds, setImages, setSelectedIds, setVideos, videos]);
+  }, [
+    images,
+    saveToHistory,
+    selectedIds,
+    setImages,
+    setSelectedIds,
+    setVideos,
+    videos,
+  ]);
 
   const handleSendBackward = useCallback(() => {
     if (selectedIds.length === 0) return;

@@ -350,8 +350,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     // Setup complete - StreamingImage components will handle generation
     setIsGenerating(false);
   } catch (error) {
-    console.error("Error in variation generation:", error);
-
     // Clean up placeholders on error
     const placeholderIds = placeholderImages.map((img) => img.id);
     setImages((prev) => prev.filter((img) => !placeholderIds.includes(img.id)));

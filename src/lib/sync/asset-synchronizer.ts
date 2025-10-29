@@ -1,6 +1,6 @@
 /**
  * Asset synchronization and validation for project elements.
- * 
+ *
  * Ensures that element references to assets remain valid and synchronized,
  * detecting orphaned references and stale asset metadata.
  */
@@ -56,30 +56,22 @@ export interface CanvasStateValidationResult {
 
 /**
  * Validates whether an element has a valid asset reference.
- * 
+ *
  * Checks:
  * - Asset exists in database
  * - User owns the asset
  * - Asset type matches element type (if both specified)
  * - Metadata is current (optional)
- * 
+ *
  * @param element - Canvas element to validate
  * @param assetMap - Map of asset ID to asset record (from Convex)
  * @param userId - User ID for ownership verification
  * @returns Validation result with asset data if found
- * 
+ *
  * @example
  * ```ts
  * const element = canvasState.elements[0];
  * const result = validateElementAsset(element, assetsMap, userId);
- * 
- * if (!result.hasValidAsset) {
- *   console.warn(`Element ${element.id} has orphaned asset reference`);
- * }
- * 
- * if (result.metadataDiffers) {
- *   console.log("Asset metadata updated since element was created");
- * }
  * ```
  */
 export function validateElementAsset(
@@ -120,12 +112,11 @@ export function validateElementAsset(
   }
 
   // Check if metadata differs significantly
-  const metadataDiffers =
-    !!(
-      (element.width && asset.width && element.width !== asset.width) ||
-      (element.height && asset.height && element.height !== asset.height) ||
-      (element.duration && asset.duration && element.duration !== asset.duration)
-    );
+  const metadataDiffers = !!(
+    (element.width && asset.width && element.width !== asset.width) ||
+    (element.height && asset.height && element.height !== asset.height) ||
+    (element.duration && asset.duration && element.duration !== asset.duration)
+  );
 
   result.asset = asset;
   result.hasValidAsset = true;
@@ -136,24 +127,22 @@ export function validateElementAsset(
 
 /**
  * Validates all elements in a canvas state.
- * 
+ *
  * Performs batch validation of all elements against available assets,
  * collecting validation results for invalid and stale metadata elements.
- * 
+ *
  * @param canvasState - Complete canvas state
  * @param assetMap - Map of asset ID to asset record
  * @param userId - User ID for validation
  * @returns Comprehensive validation result with statistics
- * 
+ *
  * @example
  * ```ts
  * const assets = await loadUserAssets(userId);
  * const assetMap = new Map(assets.map(a => [a.id, a]));
- * 
+ *
  * const result = validateCanvasState(project.canvasState, assetMap, userId);
- * 
- * console.log(`Valid: ${result.validElements}/${result.totalElements}`);
- * 
+ *
  * if (result.invalidElements.length > 0) {
  *   console.warn("Orphaned assets found:", result.invalidElements);
  * }
@@ -192,15 +181,15 @@ export function validateCanvasState(
 
 /**
  * Updates element to synchronize with current asset metadata.
- * 
+ *
  * Refreshes cached asset metadata in the element (dimensions, duration)
  * to match the current asset state. Element dimensions can differ
  * from asset if the user has resized it.
- * 
+ *
  * @param element - Element to update
  * @param asset - Asset with current metadata
  * @returns Updated element
- * 
+ *
  * @example
  * ```ts
  * const updated = syncElementWithAsset(element, latestAsset);
@@ -226,13 +215,13 @@ export function syncElementWithAsset(
 
 /**
  * Removes asset references from orphaned elements.
- * 
+ *
  * Clears assetId for elements that no longer have valid assets,
  * allowing them to be treated as local-only elements or deleted.
- * 
+ *
  * @param element - Element to orphan
  * @returns Element without asset reference
- * 
+ *
  * @example
  * ```ts
  * if (result.invalidElements.length > 0) {
@@ -251,23 +240,15 @@ export function orphanElement(element: CanvasElement): CanvasElement {
 
 /**
  * Generates a migration plan to fix invalid elements.
- * 
+ *
  * Analyzes validation results and suggests actions:
  * - Delete elements with orphaned assets
  * - Update elements with stale metadata
  * - Flag elements that need user attention
- * 
+ *
  * @param validation - Validation result from validateCanvasState
  * @returns Migration plan with actions
- * 
- * @example
- * ```ts
- * const plan = generateMigrationPlan(validation);
- * 
- * for (const orphaned of plan.elementsToDelete) {
- *   console.log(`Will delete element ${orphaned} - asset not found`);
- * }
- * ```
+ *
  */
 /**
  * Migration plan to fix invalid elements.

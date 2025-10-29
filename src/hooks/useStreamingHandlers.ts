@@ -1,14 +1,10 @@
 import { ANIMATION, CANVAS_STRINGS } from "@/constants/canvas";
 import {
-  showError,
-  showErrorFromException,
-  showInfo,
-  showSuccess,
-} from "@/lib/toast";
-import {
   dismissToast,
   handleVideoCompletion,
 } from "@/lib/handlers/video-generation-handlers";
+import { createLogger } from "@/lib/logger";
+import { showError, showErrorFromException, showSuccess } from "@/lib/toast";
 import { generateThumbnail } from "@/lib/utils/generate-thumbnail";
 import { blobToDataUrl } from "@/lib/utils/image-utils";
 import type {
@@ -18,6 +14,8 @@ import type {
   PlacedVideo,
 } from "@/types/canvas";
 import { useCallback } from "react";
+
+const log = createLogger("StreamingHandler");
 
 /**
  * Streaming handler dependencies
@@ -121,23 +119,22 @@ export function useStreamingHandlers(
       // Crop the generated/variation image to 16:9 aspect ratio
       let croppedUrl = finalUrl;
       let croppedThumbnailUrl = serverThumbnailUrl;
-      
+
       try {
         const { cropImageUrlToAspectRatio } = await import(
           "@/utils/image-crop-utils"
         );
         const croppedResult = await cropImageUrlToAspectRatio(finalUrl);
         croppedUrl = croppedResult.croppedSrc;
-        
+
         // Also crop the thumbnail if provided
         if (serverThumbnailUrl) {
-          const croppedThumbResult = await cropImageUrlToAspectRatio(
-            serverThumbnailUrl
-          );
+          const croppedThumbResult =
+            await cropImageUrlToAspectRatio(serverThumbnailUrl);
           croppedThumbnailUrl = croppedThumbResult.croppedSrc;
         }
       } catch (error) {
-        console.warn("Failed to crop generated image:", error);
+        log.warn("Failed to crop generated image", { data: error });
         // Continue with original URLs if cropping fails
       }
 
@@ -182,7 +179,7 @@ export function useStreamingHandlers(
           naturalWidth = img.naturalWidth;
           naturalHeight = img.naturalHeight;
         } catch (error) {
-          console.warn("Failed to extract dimensions from image:", error);
+          log.warn("Failed to extract dimensions from image", { data: error });
         }
       }
 
@@ -208,10 +205,7 @@ export function useStreamingHandlers(
           convexUrl = uploadResult.url;
           thumbnailUrl = uploadResult.thumbnailUrl || croppedThumbnailUrl;
         } catch (error) {
-          console.error(
-            `[Image Generation] Failed to upload to Convex:`,
-            error
-          );
+          log.error("Failed to upload image to Convex", { data: error });
         }
       }
 
@@ -277,7 +271,7 @@ export function useStreamingHandlers(
 
   const handleStreamingImageError = useCallback(
     (id: string, error: string) => {
-      console.error(`Generation error for ${id}:`, error);
+      log.error("Image generation error", { data: { id, error } });
 
       setImages((prev) => prev.filter((img) => img.id !== id));
 
@@ -311,7 +305,7 @@ export function useStreamingHandlers(
           "@/utils/image-crop-utils"
         );
         const croppedResult = await cropImageUrlToAspectRatio(url);
-        
+
         // Download and generate thumbnail for streaming update
         const response = await fetch(croppedResult.croppedSrc);
         const blob = await response.blob();
@@ -345,7 +339,9 @@ export function useStreamingHandlers(
           );
         }
       } catch (error) {
-        console.warn("Failed to crop/generate streaming thumbnail:", error);
+        log.warn("Failed to crop/generate streaming thumbnail", {
+          data: error,
+        });
         // Fallback to original behavior
         setImages((prev) =>
           prev.map((img) =>
@@ -386,7 +382,7 @@ export function useStreamingHandlers(
           naturalWidth = videoElement.videoWidth;
           naturalHeight = videoElement.videoHeight;
         } catch (error) {
-          console.warn("Failed to extract dimensions from video:", error);
+          log.warn("Failed to extract dimensions from video", { data: error });
         }
 
         let convexUrl = videoUrl;
@@ -410,10 +406,7 @@ export function useStreamingHandlers(
 
             convexUrl = uploadResult.url;
           } catch (error) {
-            console.error(
-              `[Video Generation] Failed to upload to Convex:`,
-              error
-            );
+            log.error("Failed to upload video to Convex", { data: error });
           }
         }
 
@@ -472,7 +465,7 @@ export function useStreamingHandlers(
         setIsConvertingToVideo(false);
         setSelectedImageForVideo(null);
       } catch (error) {
-        console.error("Error completing video generation:", error);
+        log.error("Error completing video generation", { data: error });
         showErrorFromException(
           CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
           error,
@@ -496,7 +489,7 @@ export function useStreamingHandlers(
 
   const handleVideoGenerationError = useCallback(
     (videoId: string, error: string) => {
-      console.error("Video generation error:", error);
+      log.error("Video generation error", { data: { videoId, error } });
       showError(CANVAS_STRINGS.ERRORS.VIDEO_GENERATION_FAILED, error);
       setActiveVideoGenerations((prev) => {
         const newMap = new Map(prev);
@@ -509,7 +502,9 @@ export function useStreamingHandlers(
 
   const handleVideoGenerationProgress = useCallback(
     (videoId: string, progress: number, status: string) => {
-      console.log(`Video generation progress: ${progress}% - ${status}`);
+      log.debug("Video generation progress", {
+        data: { videoId, progress, status },
+      });
     },
     []
   );

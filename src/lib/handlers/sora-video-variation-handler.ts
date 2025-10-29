@@ -242,10 +242,7 @@ export const handleSoraVideoVariations = async (
     videoSettings = {},
   } = deps;
 
-  const selectedImage = validateSingleImageSelection(
-    images,
-    selectedIds
-  );
+  const selectedImage = validateSingleImageSelection(images, selectedIds);
   if (!selectedImage) {
     return;
   }
@@ -390,8 +387,6 @@ export const handleSoraVideoVariations = async (
 
     setIsGenerating(false);
   } catch (error) {
-    console.error("Error generating Sora video variations:", error);
-
     showErrorFromException(
       "Generation failed",
       error,

@@ -1,6 +1,6 @@
 /**
  * Convex storage service implementation.
- * 
+ *
  * Implements the StorageService interface using Convex backend for file storage.
  * Handles uploads via HTTP actions, quota validation, and retry logic.
  */
@@ -15,28 +15,26 @@ import { generateThumbnail } from "@/lib/utils/generate-thumbnail";
 
 /**
  * Convex storage service implementation.
- * 
+ *
  * Uses Convex HTTP actions for file uploads and Convex mutations for
  * asset management. Includes automatic retry logic and quota validation.
- * 
+ *
  * @remarks
  * - Uploads files via POST to Convex HTTP endpoint
  * - Creates asset records via Convex mutations
  * - Validates storage quotas before upload
  * - Retries failed operations up to 3 times
- * 
+ *
  * @example
  * ```ts
  * const storage = new ConvexStorageService();
- * 
+ *
  * const result = await storage.upload(imageBlob, {
  *   userId: "user_123",
  *   type: "image",
  *   mimeType: "image/png",
  *   metadata: { prompt: "Beautiful sunset" },
  * });
- * 
- * console.log(result.url); // https://...convex.cloud/api/storage/...
  * ```
  */
 export class ConvexStorageService implements StorageService {
@@ -52,10 +50,10 @@ export class ConvexStorageService implements StorageService {
 
   /**
    * Deletes a file from Convex storage.
-   * 
+   *
    * Calls the Convex deleteAsset mutation which removes both the
    * file and the database record, then updates the user's quota.
-   * 
+   *
    * @param storageId - Convex storage ID of the file
    * @param userId - User ID for authorization
    * @throws Error if deletion fails or user is not authorized
@@ -68,10 +66,10 @@ export class ConvexStorageService implements StorageService {
 
   /**
    * Downloads a file from a URL with retry logic.
-   * 
+   *
    * Fetches a file from the provided URL and returns it as a Blob.
    * Automatically retries on failure with exponential backoff.
-   * 
+   *
    * @param url - URL of the file to download
    * @param options - Download options (timeout, retries)
    * @returns Blob containing the downloaded file
@@ -102,7 +100,7 @@ export class ConvexStorageService implements StorageService {
         const isLastAttempt = attempt === maxRetries;
         if (isLastAttempt) {
           throw new Error(
-            `Failed to download file after ${maxRetries + 1} attempts: ${error}`,
+            `Failed to download file after ${maxRetries + 1} attempts: ${error}`
           );
         }
 
@@ -118,10 +116,10 @@ export class ConvexStorageService implements StorageService {
 
   /**
    * Gets the public URL for a file stored in Convex.
-   * 
+   *
    * Returns a proxy URL to ensure CORS headers are included for browser image loading.
    * Convex storage URLs don't include CORS headers by default.
-   * 
+   *
    * @param storageId - Convex storage ID
    * @returns Public proxy URL for accessing the file with CORS support
    */
@@ -132,15 +130,15 @@ export class ConvexStorageService implements StorageService {
 
   /**
    * Uploads a file to Convex storage.
-   * 
+   *
    * Performs upload with optional thumbnail generation for images:
    * 1. Generates thumbnail on client-side for images (Canvas API)
    * 2. Uploads file + optional thumbnail via API route
    * 3. Creates asset record in database
-   * 
+   *
    * Includes automatic retry logic for failed uploads.
    * Thumbnail generation failures don't block the upload.
-   * 
+   *
    * @param file - File blob to upload
    * @param options - Upload options (userId, type, metadata)
    * @returns Upload result with storageId, URL, assetId, and optional thumbnailStorageId
@@ -149,7 +147,7 @@ export class ConvexStorageService implements StorageService {
   async upload(file: Blob, options: UploadOptions): Promise<AssetUploadResult> {
     // SECURITY: userId should NOT be sent from client - it's derived from auth on backend
     // Remove userId from the formData - backend will get it from authenticated session
-    
+
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         const formData = new FormData();
@@ -166,7 +164,7 @@ export class ConvexStorageService implements StorageService {
         // Send metadata including dimensions if available
         if (options.metadata) {
           formData.append("metadata", JSON.stringify(options.metadata));
-          
+
           // Extract dimensions for form fields (required by backend)
           if (options.metadata.width) {
             formData.append("width", options.metadata.width.toString());
@@ -179,7 +177,7 @@ export class ConvexStorageService implements StorageService {
           }
         }
 
-        const response = await fetch('/api/convex/upload', {
+        const response = await fetch("/api/convex/upload", {
           body: formData,
           method: "POST",
         });
@@ -195,7 +193,7 @@ export class ConvexStorageService implements StorageService {
         const isLastAttempt = attempt === this.maxRetries;
         if (isLastAttempt) {
           throw new Error(
-            `Failed to upload file after ${this.maxRetries + 1} attempts: ${error}`,
+            `Failed to upload file after ${this.maxRetries + 1} attempts: ${error}`
           );
         }
 

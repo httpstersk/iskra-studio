@@ -111,8 +111,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: uploadResult.url });
   } catch (error) {
-    console.error("Upload error:", error);
-
     // Check for rate limit error
     const isRateLimit =
       (error as { status?: number; message?: string }).status === 429 ||

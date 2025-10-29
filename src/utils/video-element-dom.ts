@@ -50,14 +50,10 @@ export async function toggleVideoPlayback(
   const videoEl = getVideoElement(videoId);
   if (!videoEl) return;
 
-  try {
-    if (shouldPlay) {
-      await videoEl.play();
-    } else {
-      videoEl.pause();
-    }
-  } catch (error) {
-    console.error("Error toggling video playback:", error);
+  if (shouldPlay) {
+    await videoEl.play();
+  } else {
+    videoEl.pause();
   }
 }
 

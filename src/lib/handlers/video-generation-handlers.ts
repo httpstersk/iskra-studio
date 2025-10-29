@@ -21,14 +21,14 @@ export function createGenerationId(prefix: string): string {
 
 /**
  * Uploads media if it's a data URL or blob URL
- * 
+ *
  * @param url - URL of the media to upload
  * @param userId - User ID for Convex storage
  * @returns URL of the uploaded media
  */
 export async function uploadMediaIfNeeded(
   url: string,
-  userId?: string,
+  userId?: string
 ): Promise<string> {
   if (url.startsWith("data:") || url.startsWith("blob:")) {
     if (!userId) {
@@ -38,14 +38,14 @@ export async function uploadMediaIfNeeded(
     const blob = await (await fetch(url)).blob();
     const mimeType = blob.type || "image/png";
     const type = mimeType.startsWith("video/") ? "video" : "image";
-    
+
     const result = await downloadAndReupload(url, {
       userId,
       type,
       mimeType,
       metadata: {},
     });
-    
+
     return result.url;
   }
   return url;
@@ -57,7 +57,7 @@ export async function uploadMediaIfNeeded(
 export function createImageToVideoConfig(
   imageUrl: string,
   settings: VideoGenerationSettings,
-  sourceImageId: string,
+  sourceImageId: string
 ) {
   const config = {
     aspectRatio: settings.aspectRatio || "auto",
@@ -71,11 +71,6 @@ export function createImageToVideoConfig(
     sourceImageId,
   };
 
-  console.log("createImageToVideoConfig - Creating config:", {
-    inputSettings: settings,
-    outputConfig: config,
-  });
-
   return config;
 }
 
@@ -88,7 +83,7 @@ export function handleVideoCompletion(
   duration: number,
   generation: { sourceImageId?: string } | null,
   images: PlacedImage[],
-  selectedImageForVideo: string | null,
+  selectedImageForVideo: string | null
 ): { newVideo: PlacedVideo | null; sourceType: "image" | null } {
   const sourceImageId = generation?.sourceImageId || selectedImageForVideo;
 

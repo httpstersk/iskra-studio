@@ -98,10 +98,7 @@ export const handleStorylineImageVariations = async (
   } = deps;
 
   // Validate selection early
-  const selectedImage = validateSingleImageSelection(
-    images,
-    selectedIds
-  );
+  const selectedImage = validateSingleImageSelection(images, selectedIds);
 
   if (!selectedImage) {
     return;
@@ -282,7 +279,6 @@ export const handleStorylineImageVariations = async (
     // Setup complete - StreamingImage components will handle generation
     setIsGenerating(false);
   } catch (error) {
-    console.error("Error generating storyline image variations:", error);
     setIsGenerating(false);
   }
 };

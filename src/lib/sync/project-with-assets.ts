@@ -1,6 +1,6 @@
 /**
  * Project loading and saving with asset synchronization.
- * 
+ *
  * High-level operations that integrate asset validation with project I/O.
  */
 
@@ -12,10 +12,7 @@ import {
   orphanElement,
   generateMigrationPlan,
 } from "./asset-synchronizer";
-import {
-  mergeToElements,
-  separateElements,
-} from "./element-converter";
+import { mergeToElements, separateElements } from "./element-converter";
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 
 /**
@@ -68,28 +65,28 @@ export interface LoadProjectResult {
 
 /**
  * Loads a project with full asset validation and synchronization.
- * 
+ *
  * High-level operation that:
  * 1. Validates all asset references
  * 2. Detects orphaned/stale elements
  * 3. Auto-fixes issues if requested
  * 4. Loads assets and URLs
  * 5. Converts to runtime format
- * 
+ *
  * @param canvasState - Raw canvas state from database
  * @param assets - User's asset records
  * @param assetUrls - Map of asset ID to public URL
  * @param userId - User ID for validation
  * @param options - Load options
  * @returns Loaded project with issues and warnings
- * 
+ *
  * @example
  * ```ts
  * // Load project from database
  * const project = await getProject(projectId);
  * const assets = await listAssets();
  * const assetUrls = await generateAssetUrls(assets);
- * 
+ *
  * const result = await loadProjectWithAssets(
  *   project.canvasState,
  *   assets,
@@ -97,11 +94,11 @@ export interface LoadProjectResult {
  *   userId,
  *   { autoFix: true, deleteOrphaned: false }
  * );
- * 
+ *
  * if (result.issues.orphanedElements.length > 0) {
  *   toast.warning(`${result.issues.orphanedElements.length} elements have missing assets`);
  * }
- * 
+ *
  * setCanvasState(result.canvasState);
  * setImages(result.images);
  * setVideos(result.videos);
@@ -148,7 +145,9 @@ export async function loadProjectWithAssets(
 
       // Orphan invalid elements
       for (const invalid of validation.invalidElements) {
-        const index = fixedElements.findIndex((e) => e.id === invalid.elementId);
+        const index = fixedElements.findIndex(
+          (e) => e.id === invalid.elementId
+        );
         if (index >= 0) {
           if (options.deleteOrphaned) {
             fixedElements.splice(index, 1);
@@ -183,10 +182,7 @@ export async function loadProjectWithAssets(
   }
 
   // 2. Convert to runtime format
-  const { images, videos } = separateElements(
-    canvasState.elements,
-    assetUrls
-  );
+  const { images, videos } = separateElements(canvasState.elements, assetUrls);
 
   return {
     canvasState,
@@ -202,12 +198,12 @@ export async function loadProjectWithAssets(
 
 /**
  * Saves a project with asset validation and conversion.
- * 
+ *
  * High-level operation that:
  * 1. Converts runtime format to persistence format
  * 2. Validates asset references
  * 3. Saves to database
- * 
+ *
  * @param images - PlacedImage array
  * @param videos - PlacedVideo array
  * @param canvasState - Additional canvas state (viewport, etc.)
@@ -215,7 +211,7 @@ export async function loadProjectWithAssets(
  * @param userId - User ID for validation
  * @param options - Save options
  * @returns Validation status
- * 
+ *
  * @example
  * ```ts
  * const saveResult = await saveProjectWithAssets(
@@ -226,9 +222,8 @@ export async function loadProjectWithAssets(
  *   userId,
  *   { validate: true }
  * );
- * 
+ *
  * if (!saveResult.isValid) {
- *   console.error("Cannot save: asset validation failed");
  *   return;
  * }
  * ```
@@ -282,11 +277,11 @@ export function prepareProjectForSave(
 
 /**
  * Detects which elements would become orphaned if an asset is deleted.
- * 
+ *
  * @param canvasState - Canvas state
  * @param assetId - Asset ID to check
  * @returns Count of elements that would be orphaned
- * 
+ *
  * @example
  * ```ts
  * const count = countElementsUsingAsset(project.canvasState, assetToDelete);

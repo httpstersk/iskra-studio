@@ -73,7 +73,6 @@ export async function uploadGeneratedAssetToConvex(
       url: result.url,
     };
   } catch (error) {
-    console.error("Failed to upload generated asset to Convex:", error);
     throw error;
   }
 }

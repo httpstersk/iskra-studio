@@ -1,6 +1,6 @@
 /**
  * Conflict resolution for canvas state synchronization.
- * 
+ *
  * Handles cases where local and remote canvas states diverge,
  * using "last write wins" strategy based on timestamps.
  */
@@ -26,16 +26,16 @@ interface ConflictResolution {
 
 /**
  * Resolves conflicts between local and remote canvas states.
- * 
+ *
  * Uses "last write wins" strategy based on lastModified timestamps.
  * In the future, this could be extended to support manual conflict
  * resolution with a merge dialog.
- * 
+ *
  * @param localState - Local canvas state from IndexedDB
  * @param remoteState - Remote canvas state from Convex
  * @param strategy - Conflict resolution strategy (default: "last-write-wins")
  * @returns Resolved canvas state
- * 
+ *
  * @remarks
  * Current implementation uses simple timestamp comparison.
  * Future enhancements could include:
@@ -43,17 +43,7 @@ interface ConflictResolution {
  * - Three-way merge using common ancestor
  * - User-facing merge dialog for manual resolution
  * - Automatic merging of non-conflicting changes
- * 
- * @example
- * ```ts
- * const resolved = resolveConflict(localState, remoteState);
- * 
- * if (resolved.hadConflict) {
- *   console.log(`Conflict resolved: ${resolved.winner} state chosen`);
- * }
- * 
- * canvasStorage.saveCanvasState(resolved.state);
- * ```
+ *
  */
 export function resolveConflict(
   localState: CanvasState,
@@ -75,17 +65,19 @@ export function resolveConflict(
   }
 
   // Default to remote state if strategy not recognized
-  console.warn(`Unknown conflict strategy: ${strategy}, defaulting to remote state`);
+  console.warn(
+    `Unknown conflict strategy: ${strategy}, defaulting to remote state`
+  );
   return remoteState;
 }
 
 /**
  * Resolves conflict using "last write wins" strategy.
- * 
+ *
  * @param localState - Local canvas state
  * @param remoteState - Remote canvas state
  * @returns Resolved state with the most recent lastModified timestamp
- * 
+ *
  * @private
  */
 function resolveLastWriteWins(
@@ -96,31 +88,27 @@ function resolveLastWriteWins(
   const remoteModified = remoteState.lastModified || 0;
 
   if (localModified > remoteModified) {
-    // Local state is newer, keep it but mark as needing sync
-    console.log("Conflict resolved: local state is newer");
     return localState;
   } else {
-    // Remote state is newer, use it
-    console.log("Conflict resolved: remote state is newer");
     return remoteState;
   }
 }
 
 /**
  * Resolves conflicts with detailed result information.
- * 
+ *
  * Extended version of resolveConflict that returns additional metadata
  * about the conflict resolution process.
- * 
+ *
  * @param localState - Local canvas state
  * @param remoteState - Remote canvas state
  * @param strategy - Conflict resolution strategy
  * @returns Conflict resolution result with metadata
- * 
+ *
  * @example
  * ```ts
  * const result = resolveConflictWithMetadata(localState, remoteState);
- * 
+ *
  * if (result.hadConflict) {
  *   toast.info(`Conflict resolved: ${result.winner} changes applied`);
  * }
@@ -171,11 +159,11 @@ export function resolveConflictWithMetadata(
 
 /**
  * Checks if two canvas states have conflicting changes.
- * 
+ *
  * @param localState - Local canvas state
  * @param remoteState - Remote canvas state
  * @returns True if states conflict, false otherwise
- * 
+ *
  * @example
  * ```ts
  * if (hasConflict(localState, remoteState)) {
@@ -195,18 +183,17 @@ export function hasConflict(
 
 /**
  * Detects which elements have changed between two canvas states.
- * 
+ *
  * Useful for implementing more sophisticated merge strategies
  * in the future.
- * 
+ *
  * @param oldState - Original canvas state
  * @param newState - Updated canvas state
  * @returns Array of changed element IDs
- * 
+ *
  * @example
  * ```ts
  * const changedIds = detectChangedElements(oldState, newState);
- * console.log(`${changedIds.length} elements changed`);
  * ```
  */
 export function detectChangedElements(
@@ -216,17 +203,13 @@ export function detectChangedElements(
   const changedIds: string[] = [];
 
   // Create maps for quick lookup
-  const oldElements = new Map(
-    oldState.elements.map((el) => [el.id, el])
-  );
-  const newElements = new Map(
-    newState.elements.map((el) => [el.id, el])
-  );
+  const oldElements = new Map(oldState.elements.map((el) => [el.id, el]));
+  const newElements = new Map(newState.elements.map((el) => [el.id, el]));
 
   // Check for modified or removed elements
   for (const [id, oldEl] of oldElements) {
     const newEl = newElements.get(id);
-    
+
     if (!newEl) {
       // Element was removed
       changedIds.push(id);

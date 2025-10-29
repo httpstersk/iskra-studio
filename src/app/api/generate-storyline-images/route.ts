@@ -1,6 +1,6 @@
 /**
  * Storyline Image Generation API Route
- * 
+ *
  * Generates narrative-driven image sequences with exponential time progression.
  * Each image shows how the subject/scene evolves: +1min, +5min, +25min, +2h5m, etc.
  */
@@ -202,12 +202,6 @@ export async function POST(req: Request) {
       usage: result.usage,
     });
   } catch (error) {
-    console.error("Error generating storyline images:", error);
-
-    if (error && typeof error === "object") {
-      console.error("Error details:", JSON.stringify(error, null, 2));
-    }
-
     return NextResponse.json(
       {
         error: "Failed to generate storyline images",

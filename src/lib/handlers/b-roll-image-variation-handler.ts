@@ -101,10 +101,7 @@ export const handleBrollImageVariations = async (
   } = deps;
 
   // Validate selection early
-  const selectedImage = validateSingleImageSelection(
-    images,
-    selectedIds
-  );
+  const selectedImage = validateSingleImageSelection(images, selectedIds);
 
   if (!selectedImage) {
     return;
@@ -117,7 +114,7 @@ export const handleBrollImageVariations = async (
   try {
     // Stage 0: Uploading image to ensure it's in Convex
     const uploadId = `variation-${timestamp}-upload`;
-    
+
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.set(uploadId, {
@@ -131,7 +128,7 @@ export const handleBrollImageVariations = async (
 
     const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
     const imageUrl = await ensureImageInConvex(sourceImageUrl);
-    
+
     // Remove upload placeholder
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
@@ -144,7 +141,7 @@ export const handleBrollImageVariations = async (
 
     // Stage 1: Analyze image style/mood
     const analyzeId = `variation-${timestamp}-analyze`;
-    
+
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.set(analyzeId, {
@@ -157,7 +154,7 @@ export const handleBrollImageVariations = async (
     });
 
     const imageAnalysis = await analyzeImage(signedImageUrl);
-    
+
     // Remove analyze placeholder
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
@@ -255,8 +252,6 @@ export const handleBrollImageVariations = async (
     // Setup complete - StreamingImage components will handle generation
     setIsGenerating(false);
   } catch (error) {
-    console.error("Error generating B-roll image variations:", error);
-
     showErrorFromException(
       "Generation failed",
       error,

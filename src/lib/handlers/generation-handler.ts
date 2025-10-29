@@ -44,15 +44,6 @@ export const uploadImageDirect = async (
   const blob = await response.blob();
 
   try {
-    // Check size before attempting upload
-    if (blob.size > 10 * 1024 * 1024) {
-      // 10MB warning
-      console.warn(
-        "Large image detected:",
-        (blob.size / 1024 / 1024).toFixed(2) + "MB"
-      );
-    }
-
     // Upload to Convex storage
     if (!userId) {
       throw new Error("User ID required for upload");
@@ -68,11 +59,7 @@ export const uploadImageDirect = async (
 
     return { url: uploadResult.url };
   } catch (error: unknown) {
-    showErrorFromException(
-      "Failed to upload image",
-      error,
-      "Unknown error"
-    );
+    showErrorFromException("Failed to upload image", error, "Unknown error");
 
     // Re-throw the error so calling code knows upload failed
     throw error;
@@ -172,7 +159,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
           );
           finalUrl = migrationResult.url;
         } catch (error) {
-          console.error("Failed to migrate to Convex storage:", error);
           // Continue with cropped data URL if migration fails
         }
       }
@@ -215,7 +201,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       // Select the new image
       setSelectedIds([id]);
     } catch (error) {
-      console.error("Error generating image:", error);
       showErrorFromException(
         "Generation failed",
         error,
@@ -267,7 +252,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       try {
         uploadResult = await uploadImageDirect(dataUrl, userId);
       } catch (uploadError) {
-        console.error("Failed to upload image:", uploadError);
         failureCount++;
         // Skip this image if upload fails
         continue;
@@ -275,7 +259,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
 
       // Only proceed with generation if upload succeeded
       if (!uploadResult?.url) {
-        console.error("Upload succeeded but no URL returned");
         failureCount++;
         continue;
       }
@@ -306,7 +289,6 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       );
       successCount++;
     } catch (error) {
-      console.error("Error processing image:", error);
       failureCount++;
       showErrorFromException(
         "Failed to process image",

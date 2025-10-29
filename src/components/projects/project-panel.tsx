@@ -103,17 +103,12 @@ export function ProjectPanel({
    * Handles creating a new project with auto-generated name.
    */
   const handleNewProject = async () => {
-    try {
-      const projectNumber = String(projects.length + 1).padStart(2, "0");
-      const projectName = `Project ${projectNumber}`;
+    const projectNumber = String(projects.length + 1).padStart(2, "0");
+    const projectName = `Project ${projectNumber}`;
+    const projectId = await createProject(projectName);
 
-      const projectId = await createProject(projectName);
-
-      if (onOpenProject) {
-        onOpenProject(projectId);
-      }
-    } catch (error) {
-      console.error("Failed to create project:", error);
+    if (onOpenProject) {
+      onOpenProject(projectId);
     }
   };
 

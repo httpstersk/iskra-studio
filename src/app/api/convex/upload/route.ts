@@ -46,7 +46,6 @@ export const config = {
  * });
  *
  * const result = await response.json();
- * console.log(result.url); // Proxy URL with CORS support
  * ```
  */
 export async function POST(req: NextRequest) {
@@ -93,8 +92,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Upload error:", error);
-
     return NextResponse.json(
       {
         error: "Upload failed",

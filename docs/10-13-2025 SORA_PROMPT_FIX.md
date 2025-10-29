@@ -160,7 +160,6 @@ AFTER:  Dream dancer floats through fractured dimension as reality bends around 
 To test prompt length:
 ```typescript
 const prompt = expandStorylineToPrompt(options);
-console.log(`Prompt length: ${prompt.length} characters`);
 // Should be < 400
 ```
 

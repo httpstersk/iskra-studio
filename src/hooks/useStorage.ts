@@ -31,7 +31,6 @@ export function useStorage(
   const saveProjectMutation = useMutation(api.projects.saveProject);
   const currentProject = useAtomValue(currentProjectAtom);
 
-
   const saveToStorage = useCallback(async () => {
     try {
       setIsSaving(true);
@@ -71,11 +70,7 @@ export function useStorage(
             canvasState,
           });
         } catch (err) {
-          showErrorFromException(
-            "Save failed",
-            err,
-            "Could not save to cloud"
-          );
+          showErrorFromException("Save failed", err, "Could not save to cloud");
         }
       }
 
@@ -86,7 +81,6 @@ export function useStorage(
         UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS
       );
     } catch (error) {
-      console.error("Failed to save to storage:", error);
       setIsSaving(false);
     }
   }, [currentProject?._id, images, saveProjectMutation, videos, viewport]);
@@ -156,7 +150,6 @@ export function useStorage(
 
       if (canvasState.viewport) setViewport(canvasState.viewport);
     } catch (error) {
-      console.error("Failed to load from storage:", error);
       showError("Failed to restore canvas", "Starting with a fresh canvas");
     } finally {
       setIsStorageLoaded(true);

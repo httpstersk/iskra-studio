@@ -83,9 +83,7 @@ export function useDefaultImages(
           };
 
           reader.readAsDataURL(blob);
-        } catch (error) {
-          console.error(`Failed to load default image ${path}:`, error);
-        }
+        } catch (error) {}
       }
     };
 

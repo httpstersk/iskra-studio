@@ -1,16 +1,19 @@
 /**
  * Custom hook for monitoring network status.
- * 
+ *
  * Provides real-time online/offline status and handles sync operations
  * when network connectivity changes.
  */
 
 "use client";
 
-import { useEffect } from "react";
-import { useAtom } from "jotai";
-import { isOnlineAtom } from "@/store/ui-atoms";
+import { createLogger } from "@/lib/logger";
 import { showError, showInfo } from "@/lib/toast";
+import { isOnlineAtom } from "@/store/ui-atoms";
+import { useAtom } from "jotai";
+import { useEffect } from "react";
+
+const log = createLogger("NetworkStatus");
 
 /**
  * Options for the useNetworkStatus hook.
@@ -26,17 +29,17 @@ interface UseNetworkStatusOptions {
 
 /**
  * Custom hook for network status monitoring.
- * 
+ *
  * Monitors browser's online/offline status using the Network Information API
  * and updates global state. Optionally shows toast notifications and triggers
  * callbacks when status changes.
- * 
+ *
  * @remarks
  * - Uses `navigator.onLine` for current status
  * - Listens to `online` and `offline` events for real-time updates
  * - Updates Jotai atom for global state management
  * - Can trigger sync operations when coming back online
- * 
+ *
  * @example
  * ```tsx
  * function App() {
@@ -44,7 +47,7 @@ interface UseNetworkStatusOptions {
  *     showNotifications: true,
  *     onOnline: () => syncManager.flushQueue(),
  *   });
- *   
+ *
  *   return (
  *     <div>
  *       Status: {isOnline ? "Online" : "Offline"}
@@ -52,16 +55,12 @@ interface UseNetworkStatusOptions {
  *   );
  * }
  * ```
- * 
+ *
  * @param options - Configuration options
  * @returns Object with isOnline status
  */
 export function useNetworkStatus(options: UseNetworkStatusOptions = {}) {
-  const {
-    showNotifications = false,
-    onOnline,
-    onOffline,
-  } = options;
+  const { showNotifications = false, onOnline, onOffline } = options;
 
   const [isOnline, setIsOnline] = useAtom(isOnlineAtom);
 
@@ -73,7 +72,7 @@ export function useNetworkStatus(options: UseNetworkStatusOptions = {}) {
      * Handles online event.
      */
     const handleOnline = () => {
-      console.log("Network connection restored");
+      log.success("Network connection restored");
       setIsOnline(true);
 
       if (showNotifications) {
@@ -90,7 +89,7 @@ export function useNetworkStatus(options: UseNetworkStatusOptions = {}) {
      * Handles offline event.
      */
     const handleOffline = () => {
-      console.log("Network connection lost");
+      log.warn("Network connection lost");
       setIsOnline(false);
 
       if (showNotifications) {

@@ -41,7 +41,6 @@ export async function GET(req: NextRequest) {
     if (providedUrl) {
       // Use the provided signed URL directly
       storageUrl = providedUrl;
-      console.log("[Storage Proxy] Using provided signed URL");
     } else if (storageId) {
       // Legacy support: construct URL from storageId (less reliable)
       const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -57,46 +56,44 @@ export async function GET(req: NextRequest) {
       const convexSiteUrl = convexUrl.replace(".convex.cloud", ".convex.site");
       const storageUrlCloud = `${convexUrl}/api/storage/${storageId}`;
       const storageUrlSite = `${convexSiteUrl}/api/storage/${storageId}`;
-      
-      console.log("[Storage Proxy] StorageId:", storageId);
-      console.log("[Storage Proxy] Primary URL:", storageUrlCloud, "| Fallback URL:", storageUrlSite);
 
       // Try primary URL first, then fallback
       let foundUrl: string | null = null;
       let lastError: Error | null = null;
-      
+
       for (const url of [storageUrlCloud, storageUrlSite]) {
         try {
-          console.log("[Storage Proxy] Testing URL:", url);
           const testResponse = await fetch(url, {
             headers: {
-              "Accept": "image/*, video/*, */*",
+              Accept: "image/*, video/*, */*",
               "User-Agent": "Spark-Videos-Proxy/1.0",
             },
             signal: AbortSignal.timeout(30000),
           });
-          
-          console.log("[Storage Proxy] URL test status:", testResponse.status);
-          
+
           if (testResponse.ok) {
             foundUrl = url;
             break;
           }
         } catch (fetchError) {
-          console.error("[Storage Proxy] URL test failed for", url);
-          lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+          lastError =
+            fetchError instanceof Error
+              ? fetchError
+              : new Error(String(fetchError));
           continue;
         }
       }
-      
+
       if (!foundUrl) {
-        console.error("[Storage Proxy] No working URL found. Last error:", lastError?.message);
         return NextResponse.json(
-          { error: "Failed to fetch from storage", details: lastError?.message || "Unknown error" },
+          {
+            error: "Failed to fetch from storage",
+            details: lastError?.message || "Unknown error",
+          },
           { status: 502 }
         );
       }
-      
+
       storageUrl = foundUrl;
     } else {
       // Should never happen due to earlier check, but satisfy TypeScript
@@ -109,54 +106,53 @@ export async function GET(req: NextRequest) {
     // Fetch the file from the storage URL (signed or constructed)
     let response;
     try {
-      console.log("[Storage Proxy] Fetching from:", storageUrl);
       response = await fetch(storageUrl, {
         headers: {
-          "Accept": "image/*, video/*, */*",
+          Accept: "image/*, video/*, */*",
           "User-Agent": "Spark-Videos-Proxy/1.0",
         },
         signal: AbortSignal.timeout(30000),
       });
-      
-      console.log("[Storage Proxy] Response status:", response.status, response.statusText);
     } catch (fetchError) {
-      console.error("[Storage Proxy] Fetch failed:", fetchError);
       return NextResponse.json(
         { error: "Failed to fetch from storage", details: String(fetchError) },
         { status: 502 }
       );
     }
-    
+
     if (!response) {
       return NextResponse.json(
         { error: "Failed to fetch from storage" },
         { status: 502 }
       );
     }
-    
+
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "Unable to read error");
-      console.error("[Storage Proxy] Storage error:", response.status, errorText);
+      const errorText = await response
+        .text()
+        .catch(() => "Unable to read error");
+
       return NextResponse.json(
-        { error: `Failed to fetch from storage: ${response.status}`, details: errorText },
+        {
+          error: `Failed to fetch from storage: ${response.status}`,
+          details: errorText,
+        },
         { status: response.status }
       );
     }
 
     // Get the content type from the original response
-    const contentType = response.headers.get("content-type") || "application/octet-stream";
-    console.log("[Storage Proxy] Content-Type:", contentType);
-    
+    const contentType =
+      response.headers.get("content-type") || "application/octet-stream";
+
     let buffer;
     try {
       buffer = await response.arrayBuffer();
-      console.log("[Storage Proxy] Buffer size:", buffer.byteLength, "bytes");
-      
+
       if (buffer.byteLength === 0) {
         throw new Error("Received empty buffer from Convex storage");
       }
     } catch (bufferError) {
-      console.error("[Storage Proxy] Buffer error:", bufferError);
       return NextResponse.json(
         { error: "Failed to process file", details: String(bufferError) },
         { status: 500 }
@@ -168,21 +164,19 @@ export async function GET(req: NextRequest) {
       // Debug mode: return as data URL in JSON (for testing)
       const base64 = Buffer.from(buffer).toString("base64");
       const dataUrl = `data:${contentType};base64,${base64}`;
-      console.log("[Storage Proxy] Returning data URL, length:", dataUrl.length);
+
       return NextResponse.json({ url: dataUrl, contentType });
     }
 
-    // Default: Return with CORS headers to allow browser image loading
-    console.log("[Storage Proxy] Returning image data with CORS headers");
-    
     const responseHeaders = new Headers({
-      "Content-Type": contentType,
-      "Content-Length": buffer.byteLength.toString(),
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Range",
-      "Access-Control-Expose-Headers": "Content-Length, Content-Range, Content-Type",
+      "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Expose-Headers":
+        "Content-Length, Content-Range, Content-Type",
       "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Length": buffer.byteLength.toString(),
+      "Content-Type": contentType,
       "Cross-Origin-Resource-Policy": "cross-origin",
     });
 
@@ -191,7 +185,6 @@ export async function GET(req: NextRequest) {
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error("[Storage Proxy] Unexpected error:", error);
     return NextResponse.json(
       {
         error: "Storage proxy failed",

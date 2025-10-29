@@ -142,7 +142,6 @@ Create storylines that match this style but with completely different subjects a
       usage: result.usage,
     });
   } catch (error) {
-    console.error("Error generating storylines:", error);
     return NextResponse.json(
       {
         error: "Failed to generate storylines",

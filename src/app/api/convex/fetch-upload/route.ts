@@ -44,7 +44,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(uploadResult);
   } catch (error) {
-    console.error("[Convex Fetch Upload] Error:", error);
     return NextResponse.json(
       {
         error: "Upload failed",

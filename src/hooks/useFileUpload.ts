@@ -103,26 +103,14 @@ export function useFileUpload(
 
                 // Upload to Convex storage in the background if userId is provided
                 if (userId) {
-                  console.log(
-                    "[Upload] Starting background upload for image:",
-                    id
-                  );
                   (async () => {
                     try {
                       // Convert cropped image data URL to blob
                       const response = await fetch(croppedImageSrc);
                       const blob = await response.blob();
 
-                      console.log("[Upload] Blob created, size:", blob.size);
-
                       // Compress image to JPEG with max 1920x1080 resolution
                       const compressedBlob = await compressImage(blob);
-                      console.log(
-                        "[Upload] Image compressed, original size:",
-                        blob.size,
-                        "compressed size:",
-                        compressedBlob.size
-                      );
 
                       // Upload to Convex storage
                       const storage = createStorageService();
@@ -141,13 +129,6 @@ export function useFileUpload(
                         }
                       );
 
-                      console.log(
-                        "[Upload] Upload successful:",
-                        uploadResult.url,
-                        "assetId:",
-                        uploadResult.assetId
-                      );
-
                       // Update the image with the proxy URL, asset reference, and thumbnail
                       setImages((prev) =>
                         prev.map((img) =>
@@ -163,7 +144,6 @@ export function useFileUpload(
                         )
                       );
                     } catch (error) {
-                      console.error("Failed to upload image to Convex:", error);
                       if (toast) {
                         showError(
                           "Upload failed",
@@ -173,8 +153,6 @@ export function useFileUpload(
                       // Keep using the data URL if upload fails
                     }
                   })();
-                } else {
-                  console.log("[Upload] Skipping upload - no userId provided");
                 }
               };
               croppedImg.src = croppedImageSrc;

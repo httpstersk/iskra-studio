@@ -55,7 +55,6 @@ const createFileInput = (
     try {
       handleFileUpload((e.target as HTMLInputElement).files);
     } catch (error) {
-      console.error("File upload error:", error);
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_FAILED,
         CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC
@@ -68,7 +67,6 @@ const createFileInput = (
   };
 
   input.onerror = () => {
-    console.error("File input error");
     if (input.parentNode) {
       document.body.removeChild(input);
     }
@@ -88,7 +86,6 @@ const triggerFileDialog = (input: HTMLInputElement) => {
     try {
       input.click();
     } catch (error) {
-      console.error("Failed to trigger file dialog:", error);
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE,
         CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC
@@ -159,10 +156,7 @@ export function ControlActions({
       </TooltipProvider>
 
       {hasSelectedImages && (
-        <DownloadAllButton
-          images={images}
-          selectedIds={selectedIds}
-        />
+        <DownloadAllButton images={images} selectedIds={selectedIds} />
       )}
 
       <TooltipProvider>

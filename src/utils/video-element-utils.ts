@@ -60,7 +60,7 @@ export interface VideoElementHandlers {
  * ```
  */
 export function createVideoElement(
-  config: VideoElementConfig,
+  config: VideoElementConfig
 ): HTMLVideoElement {
   const {
     src,
@@ -93,21 +93,10 @@ export function createVideoElement(
  * @param handlers - Object containing event handler callbacks
  * @returns Cleanup function that removes all event listeners
  *
- * @example
- * ```typescript
- * const cleanup = attachVideoHandlers(videoElement, {
- *   onLoadedMetadata: (video) => console.log('Duration:', video.duration),
- *   onTimeUpdate: (time) => console.log('Current time:', time),
- *   onEnded: () => console.log('Video ended')
- * });
- *
- * // Later, when component unmounts:
- * cleanup();
- * ```
  */
 export function attachVideoHandlers(
   video: HTMLVideoElement,
-  handlers: VideoElementHandlers,
+  handlers: VideoElementHandlers
 ): () => void {
   const listeners: Array<{ event: string; handler: EventListener }> = [];
 
@@ -178,17 +167,11 @@ export function cleanupVideoElement(video: HTMLVideoElement): void {
  * @param onError - Optional error handler
  * @returns Promise that resolves when playback state changes
  *
- * @example
- * ```typescript
- * await setVideoPlayback(videoElement, true, (error) => {
- *   console.error('Playback failed:', error);
- * });
- * ```
  */
 export async function setVideoPlayback(
   video: HTMLVideoElement,
   shouldPlay: boolean,
-  onError?: (error: Error) => void,
+  onError?: (error: Error) => void
 ): Promise<void> {
   try {
     if (shouldPlay) {
@@ -199,8 +182,6 @@ export async function setVideoPlayback(
   } catch (error) {
     if (onError) {
       onError(error as Error);
-    } else {
-      console.error("Video playback error:", error);
     }
   }
 }
@@ -220,7 +201,7 @@ export async function setVideoPlayback(
 export function setVideoVolume(
   video: HTMLVideoElement,
   volume: number,
-  muted: boolean,
+  muted: boolean
 ): void {
   video.volume = Math.max(0, Math.min(1, volume));
   video.muted = muted;
@@ -244,7 +225,7 @@ export function setVideoVolume(
 export function seekVideo(
   video: HTMLVideoElement,
   targetTime: number,
-  threshold = 2,
+  threshold = 2
 ): boolean {
   if (Math.abs(video.currentTime - targetTime) > threshold) {
     video.currentTime = targetTime;
@@ -261,26 +242,10 @@ export function seekVideo(
  * @param handlers - Event handlers for the video
  * @returns Object containing the video element and cleanup function
  *
- * @example
- * ```typescript
- * const { video, cleanup } = createVideoWithHandlers(
- *   { src: 'video.mp4', muted: true },
- *   {
- *     onLoadedMetadata: (v) => console.log('Duration:', v.duration),
- *     onEnded: () => console.log('Video ended')
- *   }
- * );
- *
- * video.play();
- *
- * // Later:
- * cleanup();
- * cleanupVideoElement(video);
- * ```
  */
 export function createVideoWithHandlers(
   config: VideoElementConfig,
-  handlers: VideoElementHandlers,
+  handlers: VideoElementHandlers
 ): { video: HTMLVideoElement; cleanup: () => void } {
   const video = createVideoElement(config);
   const cleanup = attachVideoHandlers(video, handlers);

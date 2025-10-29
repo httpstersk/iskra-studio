@@ -69,7 +69,8 @@ const getFilenameFromUrl = (url: string, index: number): string => {
     }
 
     // Generate filename based on URL or index
-    const extension = url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)?.[0] || ".jpg";
+    const extension =
+      url.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)?.[0] || ".jpg";
     return `image-${Date.now()}-${index + 1}${extension}`;
   } catch {
     // If URL parsing fails, use index-based naming
@@ -112,10 +113,6 @@ export const downloadImagesAsZip = async (
         const filename = getFilenameFromUrl(downloadUrl, index);
         folder.file(filename, blob);
       } catch (error) {
-        console.error(
-          `${DOWNLOAD_ERROR_MESSAGES.FAILED_TO_FETCH}: ${image.fullSizeSrc || image.src}`,
-          error
-        );
         // Continue with other images even if one fails
       }
     });
@@ -139,7 +136,6 @@ export const downloadImagesAsZip = async (
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error(DOWNLOAD_ERROR_MESSAGES.FAILED_TO_CREATE_ZIP, error);
     throw error;
   }
 };

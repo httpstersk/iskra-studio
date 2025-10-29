@@ -1,8 +1,8 @@
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { type NextRequest } from "next/server";
 import { createContext } from "@/server/trpc/context";
 import { appRouter } from "@/server/trpc/routers/_app";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { checkBotId } from "botid/server";
+import { type NextRequest } from "next/server";
 
 const handler = (req: NextRequest) =>
   fetchRequestHandler({
@@ -10,14 +10,6 @@ const handler = (req: NextRequest) =>
     req,
     router: appRouter,
     createContext: () => createContext(req),
-    onError:
-      process.env.NODE_ENV === "development"
-        ? ({ path, error }) => {
-            console.error(
-              `❌ tRPC failed on ${path ?? "<no-path>"}: ${error.message}`
-            );
-          }
-        : undefined,
   });
 
 const protectedHandler = async (req: NextRequest) => {

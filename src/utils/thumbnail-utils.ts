@@ -65,7 +65,6 @@ export async function generateThumbnail(
 
     return dataUrl;
   } catch (error) {
-    console.error("Failed to generate thumbnail:", error);
     throw new Error(
       `Thumbnail generation failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );
@@ -119,7 +118,6 @@ export async function uploadThumbnail(
       url: result.url,
     };
   } catch (error) {
-    console.error("Failed to upload thumbnail:", error);
     throw new Error(
       `Thumbnail upload failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );

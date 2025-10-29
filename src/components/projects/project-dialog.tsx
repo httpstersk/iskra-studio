@@ -1,6 +1,6 @@
 /**
  * Project dialog component for creating new projects.
- * 
+ *
  * Modal dialog with form for entering project name.
  * Validates input and creates project via useProjects hook.
  */
@@ -29,35 +29,35 @@ import type { Id } from "../../../convex/_generated/dataModel";
 interface ProjectDialogProps {
   /** Callback when project is successfully created */
   onProjectCreated?: (projectId: Id<"projects">) => void;
-  
+
   /** Callback when dialog is closed */
   onClose?: () => void;
-  
+
   /** Whether the dialog is open */
   open: boolean;
 }
 
 /**
  * Project creation dialog component.
- * 
+ *
  * Modal for creating new projects with name input and validation.
  * Automatically generates default names if left empty.
- * 
+ *
  * @remarks
  * - Empty names will use default "Iskra Project XX" naming
  * - Validates name is not just whitespace
  * - Shows loading state during creation
  * - Displays error toast on failure
  * - Calls onProjectCreated callback on success
- * 
+ *
  * @example
  * ```tsx
  * const [isOpen, setIsOpen] = useState(false);
- * 
+ *
  * <Button onClick={() => setIsOpen(true)}>
  *   New Project
  * </Button>
- * 
+ *
  * <ProjectDialog
  *   open={isOpen}
  *   onClose={() => setIsOpen(false)}
@@ -86,9 +86,7 @@ export function ProjectDialog({
       setIsCreating(true);
 
       // Create project (empty name will use default naming)
-      const projectId = await createProject(
-        projectName.trim() || undefined
-      );
+      const projectId = await createProject(projectName.trim() || undefined);
 
       // Success toast
       showSuccess(
@@ -109,8 +107,6 @@ export function ProjectDialog({
         onClose();
       }
     } catch (error) {
-      console.error("Failed to create project:", error);
-      
       showErrorFromException(
         "Creation failed",
         error,
@@ -126,10 +122,10 @@ export function ProjectDialog({
    */
   const handleClose = () => {
     if (isCreating) return; // Prevent close during creation
-    
+
     // Reset form
     setProjectName("");
-    
+
     if (onClose) {
       onClose();
     }
@@ -150,7 +146,8 @@ export function ProjectDialog({
         <DialogHeader>
           <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
-            Enter a name for your new project. Leave empty to use default naming.
+            Enter a name for your new project. Leave empty to use default
+            naming.
           </DialogDescription>
         </DialogHeader>
 
@@ -176,11 +173,7 @@ export function ProjectDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={handleClose}
-            disabled={isCreating}
-          >
+          <Button variant="ghost" onClick={handleClose} disabled={isCreating}>
             Cancel
           </Button>
           <Button

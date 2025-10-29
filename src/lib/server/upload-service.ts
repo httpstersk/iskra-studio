@@ -95,7 +95,9 @@ function validateFile(file: File | Blob): void {
   const isVideo = mimeType.startsWith("video/");
 
   if (!isImage && !isVideo) {
-    throw new Error("Unsupported file type. Only images and videos are allowed.");
+    throw new Error(
+      "Unsupported file type. Only images and videos are allowed."
+    );
   }
 }
 
@@ -226,9 +228,6 @@ function wrapWithProxy(url: string): string {
  *   metadata: { width: 1024, height: 768 },
  *   thumbnail: thumbnailBlob,
  * });
- *
- * console.log(result.assetId); // "k17abc123def"
- * console.log(result.url); // "/api/storage/proxy?url=..."
  * ```
  */
 export async function uploadFileToConvex(
@@ -254,7 +253,9 @@ export async function uploadFileToConvex(
 
   // Wrap URLs with CORS proxy
   const proxyUrl = wrapWithProxy(url);
-  const thumbnailProxyUrl = thumbnailUrl ? wrapWithProxy(thumbnailUrl) : undefined;
+  const thumbnailProxyUrl = thumbnailUrl
+    ? wrapWithProxy(thumbnailUrl)
+    : undefined;
 
   return {
     assetId,

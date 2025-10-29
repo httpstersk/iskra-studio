@@ -199,8 +199,6 @@ Include film grain and all post-processing effects explicitly in every prompt.
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("B-roll concept generation error:", error);
-
     return NextResponse.json(
       {
         error: "B-roll concept generation failed",

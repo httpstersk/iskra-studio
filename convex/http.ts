@@ -59,13 +59,10 @@ http.route({
       const file = formData.get("file");
 
       if (!(file instanceof Blob)) {
-        return new Response(
-          JSON.stringify({ error: "No file provided" }),
-          {
-            status: 400,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+        return new Response(JSON.stringify({ error: "No file provided" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
       }
 
       // Validate file size (25MB limit)
@@ -83,10 +80,12 @@ http.route({
       const contentType = file.type;
       const isImage = contentType?.startsWith("image/");
       const isVideo = contentType?.startsWith("video/");
-      
+
       if (contentType && !isImage && !isVideo) {
         return new Response(
-          JSON.stringify({ error: "Unsupported file type. Only images and videos are allowed." }),
+          JSON.stringify({
+            error: "Unsupported file type. Only images and videos are allowed.",
+          }),
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
@@ -126,7 +125,6 @@ http.route({
           }
         }
       } catch (thumbError) {
-        console.error("Thumbnail storage failed:", thumbError);
         // Continue without thumbnail - not critical
       }
 
@@ -145,7 +143,6 @@ http.route({
         }
       );
     } catch (error) {
-      console.error("Upload error:", error);
       return new Response(
         JSON.stringify({
           error: "Upload failed",

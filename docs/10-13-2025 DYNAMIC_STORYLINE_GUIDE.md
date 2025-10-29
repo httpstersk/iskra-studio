@@ -158,18 +158,6 @@ const storylines = await generateStorylines({
   styleAnalysis: mockAnalysis,
   duration: 4,
 });
-
-console.log(storylines.storylines.map(s => s.title));
-```
-
-## Debugging
-
-Enable detailed logging in `src/lib/handlers/sora-video-variation-handler.ts`:
-
-```typescript
-console.log("[Sora Variations] Stage 1: Image analysis:", analysis);
-console.log("[Sora Variations] Stage 2: Generated storylines:", storylineSet);
-console.log("[Sora Variations] Stage 3: Expanded prompts:", prompts);
 ```
 
 ## Best Practices

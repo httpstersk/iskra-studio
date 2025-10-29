@@ -1,28 +1,27 @@
 /**
  * Network status initializer component.
- * 
+ *
  * Sets up network status monitoring and syncing when the app loads.
  * Should be included once in the app's root providers.
  */
 
 "use client";
 
-import { useEffect } from "react";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 
 /**
  * Network status initializer component.
- * 
+ *
  * Initializes network monitoring and handles online/offline events
  * at the application level. This component doesn't render anything
  * but sets up necessary event listeners.
- * 
+ *
  * @remarks
  * - Should be included once in the app's provider tree
  * - Monitors network status using navigator.onLine
  * - Updates global isOnlineAtom when status changes
  * - Logs status changes to console for debugging
- * 
+ *
  * @example
  * ```tsx
  * // In app/core-providers.tsx or app/layout.tsx
@@ -35,26 +34,15 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
  *   );
  * }
  * ```
- * 
+ *
  * @returns null (no UI rendered)
  */
 export function NetworkStatusInitializer() {
   const { isOnline } = useNetworkStatus({
     showNotifications: false, // Don't show notifications at app level
-    onOnline: () => {
-      // Log for debugging
-      console.log("[NetworkStatus] Application is online");
-    },
-    onOffline: () => {
-      // Log for debugging
-      console.log("[NetworkStatus] Application is offline");
-    },
+    onOnline: () => {},
+    onOffline: () => {},
   });
-
-  // Log initial status
-  useEffect(() => {
-    console.log("[NetworkStatus] Initial status:", isOnline ? "online" : "offline");
-  }, []);
 
   // This component doesn't render anything
   return null;
