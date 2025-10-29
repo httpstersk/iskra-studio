@@ -27,7 +27,7 @@ export async function uploadRemoteAsset({
   const resolvedUrl = resolveSourceUrl(payload.sourceUrl, origin);
   const downloaded = await downloadRemoteAsset(resolvedUrl, payload.assetType);
 
-  const fileBlob = new Blob([downloaded.buffer], {
+  const fileBlob = new Blob([new Uint8Array(downloaded.buffer)], {
     type: downloaded.contentType,
   });
 
@@ -96,7 +96,7 @@ async function generateThumbnailBlob(buffer: Buffer): Promise<Blob | undefined> 
       .webp({ quality: 75 })
       .toBuffer();
 
-    return new Blob([thumbnailBuffer], { type: "image/webp" });
+    return new Blob([new Uint8Array(thumbnailBuffer)], { type: "image/webp" });
   } catch (error) {
     console.warn("[Remote Asset Upload] Thumbnail generation failed:", error);
     return undefined;
