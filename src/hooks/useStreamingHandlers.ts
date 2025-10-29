@@ -271,8 +271,7 @@ export function useStreamingHandlers(
 
   const handleStreamingImageError = useCallback(
     (id: string, error: string) => {
-      log.error("Image generation error", { data: { id, error } });
-
+      const errorMessage = error?.trim() || "Unknown error";
       setImages((prev) => prev.filter((img) => img.id !== id));
 
       setActiveGenerations((prev) => {
@@ -287,11 +286,12 @@ export function useStreamingHandlers(
       });
 
       const isVariation = id.startsWith("variation-");
+
       showError(
         isVariation
           ? "Variation failed"
           : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
-        isVariation ? "One variation failed to generate" : error
+        isVariation ? "One variation failed to generate" : errorMessage
       );
     },
     [setActiveGenerations, setImages, setIsGenerating]

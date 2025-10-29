@@ -70,7 +70,7 @@ function log(level: LogLevel, message: string, options?: LogOptions): void {
         : console.log;
 
   if (options?.data !== undefined) {
-    consoleMethod(formatted, ...styles, "\n", options.data);
+    consoleMethod(formatted, ...styles, options.data);
   } else {
     consoleMethod(formatted, ...styles);
   }

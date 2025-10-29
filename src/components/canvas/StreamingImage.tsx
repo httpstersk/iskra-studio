@@ -24,6 +24,11 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
 }) => {
   const trpc = useTRPC();
 
+  const onErrorHandler = (error: { message?: string }) => {
+    const errorMessage = error.message?.trim() || "Generation failed";
+    onError(imageId, errorMessage);
+  };
+
   const onData = (data: { data: unknown }) => {
     const eventData = data.data as {
       data?: {
@@ -47,13 +52,9 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
       if (eventData.imageUrl) {
         onComplete(imageId, eventData.imageUrl, eventData.thumbnailUrl);
       }
-    } else if (eventData.type === "error" && eventData.error) {
-      onError(imageId, eventData.error);
+    } else if (eventData.type === "error") {
+      onErrorHandler({ message: eventData.error });
     }
-  };
-
-  const onErrorHandler = (error: { message?: string }) => {
-    onError(imageId, error.message || "Generation failed");
   };
 
   // Use variation endpoint for variations, regular endpoint for normal generation
