@@ -54,6 +54,9 @@ const AUTO_GUIDANCE_DO_NOT_MIX =
 /** Instruction bullet: apply directive prefix. */
 const INSTRUCTION_APPLY_DIRECTIVE_PREFIX =
   "Apply this cinematography directive:";
+/** Instruction bullet: output heavily influenced by reference image style. */
+const INSTRUCTION_OUTPUT_IMPORTANT =
+  "IMPORTANT: Edit the referenced image according to the user's instructions, while maintaining the colours, mood and cinematic style of the original.";
 /** Instruction bullet: recompose according to chosen style. */
 const INSTRUCTION_RECOMPOSE_CHOSEN_STYLE =
   "Recompose the scene according to the chosen style.";
@@ -231,8 +234,8 @@ function buildInstructionsSection(
 ): string {
   return [
     SECTION_INSTRUCTIONS,
-    `- ${INSTRUCTION_APPLY_DIRECTIVE_PREFIX} ${directive}.`,
-    `- ${INSTRUCTION_RECOMPOSE_CHOSEN_STYLE}`,
+    `- ${INSTRUCTION_APPLY_DIRECTIVE_PREFIX} ${directive}`,
+    `- ${INSTRUCTION_OUTPUT_IMPORTANT}`,
     styleGuidance,
   ].join("\n");
 }
