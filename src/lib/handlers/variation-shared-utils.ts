@@ -1,0 +1,265 @@
+/**
+ * Shared utilities for image variation handlers
+ * Provides common functionality for Camera Angles, Storyline, and B-roll variation modes
+ *
+ * @module lib/handlers/variation-shared-utils
+ */
+
+import type { PlacedImage } from "@/types/canvas";
+import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
+import { generateAndCachePixelatedOverlay } from "@/utils/image-pixelation-helper";
+import { snapPosition } from "@/utils/snap-utils";
+
+/**
+ * Constants for variation generation
+ */
+export const VARIATION_CONSTANTS = {
+  /** Positions for 4 variations (cardinal directions) */
+  FOUR_VARIATION_POSITIONS: [0, 2, 4, 6] as number[],
+  /** Positions for 8 variations (all 8 positions) */
+  EIGHT_VARIATION_POSITIONS: [0, 1, 2, 3, 4, 5, 6, 7] as number[],
+  /** Positions for 12 variations (inner ring + outer cardinal) */
+  TWELVE_VARIATION_POSITIONS: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as number[],
+};
+
+/**
+ * Status messages for variation generation stages
+ */
+export const VARIATION_STATUS = {
+  ANALYZING: "analyzing",
+  CREATING_STORYLINE: "creating-storyline",
+  GENERATING: "generating",
+  UPLOADING: "uploading",
+} as const;
+
+/**
+ * Configuration for placeholder image creation
+ */
+export interface PlaceholderConfig {
+  /** Optional metadata to attach to placeholder */
+  metadata?: Record<string, unknown>;
+  /** Natural height of the final image */
+  naturalHeight: number;
+  /** Natural width of the final image */
+  naturalWidth: number;
+  /** Pixelated overlay source URL */
+  pixelatedSrc?: string;
+  /** Position index for placement calculation */
+  positionIndex: number;
+  /** Height of the selected source image */
+  sourceHeight: number;
+  /** Width of the selected source image */
+  sourceWidth: number;
+  /** X coordinate of the selected source image (snapped) */
+  sourceX: number;
+  /** Y coordinate of the selected source image (snapped) */
+  sourceY: number;
+  /** Source image URL */
+  src: string;
+  /** Timestamp for unique ID generation */
+  timestamp: number;
+  /** Index of the variation */
+  variationIndex: number;
+}
+
+/**
+ * Result of early preparation phase before async operations
+ */
+export interface EarlyPrepResult {
+  /** Optimal dimensions for generated images */
+  imageSizeDimensions: {
+    height: number;
+    width: number;
+  };
+  /** Pixelated overlay data URL (undefined if generation failed) */
+  pixelatedSrc: string | undefined;
+  /** Position indices based on variation count */
+  positionIndices: number[];
+  /** Snapped position for consistent alignment */
+  snappedSource: {
+    x: number;
+    y: number;
+  };
+}
+
+/**
+ * Calculates position for a variation image around the source image.
+ * Positions are arranged clockwise starting from top center.
+ *
+ * Position layout:
+ * - For 4 variations: top, right, bottom, left (indices 0, 2, 4, 6)
+ * - For 8 variations: all 8 positions around source (indices 0-7)
+ * - For 12 variations: inner ring (0-7) + outer cardinal directions (8-11)
+ *
+ * @param sourceX - X coordinate of the source image
+ * @param sourceY - Y coordinate of the source image
+ * @param angleIndex - Index of the variation (0-11)
+ * @param sourceWidth - Width of the source image
+ * @param sourceHeight - Height of the source image
+ * @param variationWidth - Width of the variation image
+ * @param variationHeight - Height of the variation image
+ * @returns Position object with x and y coordinates
+ */
+export function calculateBalancedPosition(
+  sourceX: number,
+  sourceY: number,
+  angleIndex: number,
+  sourceWidth: number,
+  sourceHeight: number,
+  variationWidth: number,
+  variationHeight: number
+): { x: number; y: number } {
+  switch (angleIndex) {
+    case 0: // Top - aligned with source left edge
+      return {
+        x: sourceX,
+        y: sourceY - variationHeight,
+      };
+    case 1: // Top-right corner
+      return {
+        x: sourceX + sourceWidth,
+        y: sourceY - variationHeight,
+      };
+    case 2: // Right - aligned with source top edge
+      return {
+        x: sourceX + sourceWidth,
+        y: sourceY,
+      };
+    case 3: // Bottom-right corner
+      return {
+        x: sourceX + sourceWidth,
+        y: sourceY + sourceHeight,
+      };
+    case 4: // Bottom - aligned with source left edge
+      return {
+        x: sourceX,
+        y: sourceY + sourceHeight,
+      };
+    case 5: // Bottom-left corner
+      return {
+        x: sourceX - variationWidth,
+        y: sourceY + sourceHeight,
+      };
+    case 6: // Left - aligned with source top edge
+      return {
+        x: sourceX - variationWidth,
+        y: sourceY,
+      };
+    case 7: // Top-left corner
+      return {
+        x: sourceX - variationWidth,
+        y: sourceY - variationHeight,
+      };
+    case 8: // Top middle (outer) - centered horizontally, one image further out
+      return {
+        x: sourceX + sourceWidth / 2 - variationWidth / 2,
+        y: sourceY - variationHeight * 2,
+      };
+    case 9: // Right middle (outer) - centered vertically, one image further out
+      return {
+        x: sourceX + sourceWidth * 2,
+        y: sourceY + sourceHeight / 2 - variationHeight / 2,
+      };
+    case 10: // Bottom middle (outer) - centered horizontally, one image further out
+      return {
+        x: sourceX + sourceWidth / 2 - variationWidth / 2,
+        y: sourceY + sourceHeight * 2,
+      };
+    case 11: // Left middle (outer) - centered vertically, one image further out
+      return {
+        x: sourceX - variationWidth * 2,
+        y: sourceY + sourceHeight / 2 - variationHeight / 2,
+      };
+    default:
+      return { x: sourceX, y: sourceY };
+  }
+}
+
+/**
+ * Creates a placeholder image for optimistic UI during generation.
+ * Placeholders show immediately with pixelated overlay while actual generation happens.
+ *
+ * @param config - Configuration for placeholder creation
+ * @returns Placeholder image object with loading state
+ */
+export function createPlaceholder(config: PlaceholderConfig): PlacedImage {
+  const position = calculateBalancedPosition(
+    config.sourceX,
+    config.sourceY,
+    config.positionIndex,
+    config.sourceWidth,
+    config.sourceHeight,
+    config.sourceWidth,
+    config.sourceHeight
+  );
+
+  return {
+    displayAsThumbnail: true,
+    height: config.sourceHeight,
+    id: `variation-${config.timestamp}-${config.variationIndex}`,
+    isGenerated: true,
+    isLoading: true,
+    ...(config.metadata && { metadata: config.metadata }),
+    naturalHeight: config.naturalHeight,
+    naturalWidth: config.naturalWidth,
+    pixelatedSrc: config.pixelatedSrc,
+    rotation: 0,
+    src: config.src,
+    width: config.sourceWidth,
+    x: position.x,
+    y: position.y,
+  };
+}
+
+/**
+ * Determines position indices array based on variation count.
+ *
+ * @param variationCount - Number of variations to generate (4, 8, or 12)
+ * @returns Array of position indices for balanced placement
+ */
+export function getPositionIndices(variationCount: number): number[] {
+  if (variationCount === 4) {
+    return VARIATION_CONSTANTS.FOUR_VARIATION_POSITIONS;
+  } else if (variationCount === 8) {
+    return VARIATION_CONSTANTS.EIGHT_VARIATION_POSITIONS;
+  }
+  return VARIATION_CONSTANTS.TWELVE_VARIATION_POSITIONS;
+}
+
+/**
+ * Performs early preparation phase before async operations.
+ * Generates pixelated overlay and calculates positioning for immediate UI feedback.
+ *
+ * This should be called EARLY, before any async API operations (upload, analysis, etc.)
+ * to ensure users see loading placeholders immediately.
+ *
+ * @param selectedImage - The source image selected for variation
+ * @param variationCount - Number of variations to generate (4, 8, or 12)
+ * @returns Promise resolving to preparation results
+ */
+export async function performEarlyPreparation(
+  selectedImage: PlacedImage,
+  variationCount: number
+): Promise<EarlyPrepResult> {
+  // Snap source position for consistent alignment
+  const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
+
+  // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
+  const imageSizeDimensions = getOptimalImageDimensions(
+    selectedImage.width,
+    selectedImage.height
+  );
+
+  // Generate pixelated overlay EARLY for immediate visual feedback
+  const pixelatedSrc = await generateAndCachePixelatedOverlay(selectedImage);
+
+  // Position indices based on variation count
+  const positionIndices = getPositionIndices(variationCount);
+
+  return {
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    snappedSource,
+  };
+}

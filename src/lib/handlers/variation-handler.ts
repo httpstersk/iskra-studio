@@ -1,3 +1,10 @@
+/**
+ * Camera Angles Image Variation Handler
+ * Generates image variations with different camera angles and perspectives
+ *
+ * @module lib/handlers/variation-handler
+ */
+
 import {
   formatImageVariationPrompt,
   getRandomCinematographerReference,
@@ -7,131 +14,64 @@ import {
 import { showError, showErrorFromException } from "@/lib/toast";
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
-import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
-import { generateAndCachePixelatedOverlay } from "@/utils/image-pixelation-helper";
-import { snapPosition } from "@/utils/snap-utils";
 import type { FalClient } from "@fal-ai/client";
+import {
+  createPlaceholder,
+  performEarlyPreparation,
+  VARIATION_STATUS,
+} from "./variation-shared-utils";
 import {
   ensureImageInConvex,
   toSignedUrl,
   validateSingleImageSelection,
 } from "./variation-utils";
 
+/**
+ * Dependencies for variation generation handler
+ */
 interface VariationHandlerDeps {
+  /** Fal AI client instance */
   falClient: FalClient;
+  /** Model to use for image generation */
+  imageModel?: "seedream" | "reve";
+  /** Type of image variation (camera-angles or storyline) */
+  imageVariationType?: "camera-angles" | "storyline";
+  /** Array of all placed images */
   images: PlacedImage[];
+  /** IDs of selected images */
   selectedIds: string[];
-  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
-  setVideos?: React.Dispatch<
-    React.SetStateAction<import("@/types/canvas").PlacedVideo[]>
-  >;
-  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
+  /** Setter for active generation states */
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
   >;
+  /** Setter for active video generation states */
   setActiveVideoGenerations?: React.Dispatch<
     React.SetStateAction<Map<string, any>>
   >;
+  /** Setter for images state */
+  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
+  /** Setter for global generating flag */
+  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
+  /** Setter for videos state */
+  setVideos?: React.Dispatch<
+    React.SetStateAction<import("@/types/canvas").PlacedVideo[]>
+  >;
+  /** User ID for convex operations */
   userId?: string;
-  variationPrompt?: string;
-  variationMode?: "image" | "video";
-  imageVariationType?: "camera-angles" | "storyline";
-  imageModel?: "seedream" | "reve";
+  /** Number of variations to generate (4, 8, or 12) */
   variationCount?: number;
+  /** Mode of variation (image or video) */
+  variationMode?: "image" | "video";
+  /** Optional user prompt for variation */
+  variationPrompt?: string;
+  /** Video generation settings */
   videoSettings?: import("@/types/canvas").VideoGenerationSettings;
+  /** Current viewport state */
   viewport: { x: number; y: number; scale: number };
 }
 
-/**
- * Calculate position for a variation image around the source
- * Positions are arranged clockwise starting from top center
- * For 8 variations: top, top-right corner, right, bottom-right corner, bottom, bottom-left corner, left, top-left corner
- * For 4 variations: uses indices 0, 2, 4, 6 (top, right, bottom, left)
- * For 12 variations: positions 0-7 are the inner ring, positions 8-11 are outer cardinal directions
- * @param sourceX - X coordinate of the source image
- * @param sourceY - Y coordinate of the source image
- * @param angleIndex - Index of the variation (0-11)
- * @param sourceWidth - Width of the source image
- * @param sourceHeight - Height of the source image
- * @param variationWidth - Width of the variation image
- * @param variationHeight - Height of the variation image
- */
-export function calculateBalancedPosition(
-  sourceX: number,
-  sourceY: number,
-  angleIndex: number,
-  sourceWidth: number,
-  sourceHeight: number,
-  variationWidth: number,
-  variationHeight: number
-) {
-  // Clockwise positions starting from top center
-  switch (angleIndex) {
-    case 0: // Top - aligned with source left edge
-      return {
-        x: sourceX,
-        y: sourceY - variationHeight,
-      };
-    case 1: // Top-right corner
-      return {
-        x: sourceX + sourceWidth,
-        y: sourceY - variationHeight,
-      };
-    case 2: // Right - aligned with source top edge
-      return {
-        x: sourceX + sourceWidth,
-        y: sourceY,
-      };
-    case 3: // Bottom-right corner
-      return {
-        x: sourceX + sourceWidth,
-        y: sourceY + sourceHeight,
-      };
-    case 4: // Bottom - aligned with source left edge
-      return {
-        x: sourceX,
-        y: sourceY + sourceHeight,
-      };
-    case 5: // Bottom-left corner
-      return {
-        x: sourceX - variationWidth,
-        y: sourceY + sourceHeight,
-      };
-    case 6: // Left - aligned with source top edge
-      return {
-        x: sourceX - variationWidth,
-        y: sourceY,
-      };
-    case 7: // Top-left corner
-      return {
-        x: sourceX - variationWidth,
-        y: sourceY - variationHeight,
-      };
-    // Outer ring positions (8-11) for 12 variations - placed at cardinal directions outside the inner ring
-    case 8: // Top middle (outer) - centered horizontally, one image further out
-      return {
-        x: sourceX + sourceWidth / 2 - variationWidth / 2,
-        y: sourceY - variationHeight * 2,
-      };
-    case 9: // Right middle (outer) - centered vertically, one image further out
-      return {
-        x: sourceX + sourceWidth * 2,
-        y: sourceY + sourceHeight / 2 - variationHeight / 2,
-      };
-    case 10: // Bottom middle (outer) - centered horizontally, one image further out
-      return {
-        x: sourceX + sourceWidth / 2 - variationWidth / 2,
-        y: sourceY + sourceHeight * 2,
-      };
-    case 11: // Left middle (outer) - centered vertically, one image further out
-      return {
-        x: sourceX - variationWidth * 2,
-        y: sourceY + sourceHeight / 2 - variationHeight / 2,
-      };
-    default:
-      return { x: sourceX, y: sourceY };
-  }
-}
+// Re-export calculateBalancedPosition from shared utilities for backwards compatibility
+export { calculateBalancedPosition } from "./variation-shared-utils";
 
 /**
  * Handle variation generation for a selected image
@@ -219,9 +159,12 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
   setIsGenerating(true);
 
-  // Snap source position for consistent alignment
-  const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
   const timestamp = Date.now();
+
+  // OPTIMIZATION: Perform early preparation BEFORE async operations
+  // This generates pixelated overlay immediately for instant visual feedback
+  const { imageSizeDimensions, pixelatedSrc, positionIndices, snappedSource } =
+    await performEarlyPreparation(selectedImage, variationCount);
 
   // Randomly select camera variations from the expanded set
   // Position indices are assigned sequentially based on variation count:
@@ -229,57 +172,24 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // 8 variations: all 8 positions (0-7)
   // 12 variations: inner ring (0-7) + outer cardinal directions (8-11)
   const variationsToGenerate = selectRandomCameraVariations(variationCount);
-  let positionIndices: number[];
 
-  if (variationCount === 4) {
-    positionIndices = [0, 2, 4, 6];
-  } else if (variationCount === 8) {
-    positionIndices = [0, 1, 2, 3, 4, 5, 6, 7];
-  } else {
-    positionIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-  }
-
-  // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
-  // Calculate this early so we can add natural dimensions to placeholders
-  const imageSizeDimensions = getOptimalImageDimensions(
-    selectedImage.width,
-    selectedImage.height
-  );
-
-  // Generate pixelated overlay from source image for immediate visual feedback
-  const pixelatedSrc = await generateAndCachePixelatedOverlay(selectedImage);
-
-  // OPTIMIZATION 1: Create placeholders IMMEDIATELY (optimistic UI)
+  // Create placeholders IMMEDIATELY (optimistic UI)
   // Users see instant feedback before any async operations
-
   const placeholderImages: PlacedImage[] = variationsToGenerate.map(
     (_, index) => {
-      const positionIndex = positionIndices[index];
-      const position = calculateBalancedPosition(
-        snappedSource.x,
-        snappedSource.y,
-        positionIndex,
-        selectedImage.width,
-        selectedImage.height,
-        selectedImage.width,
-        selectedImage.height
-      );
-
-      return {
-        displayAsThumbnail: true,
-        height: selectedImage.height,
-        id: `variation-${timestamp}-${index}`,
-        isGenerated: true,
-        isLoading: true,
-        rotation: 0,
-        src: selectedImage.src,
-        pixelatedSrc,
-        width: selectedImage.width,
-        x: position.x,
-        y: position.y,
-        naturalWidth: imageSizeDimensions.width,
+      return createPlaceholder({
         naturalHeight: imageSizeDimensions.height,
-      };
+        naturalWidth: imageSizeDimensions.width,
+        pixelatedSrc,
+        positionIndex: positionIndices[index],
+        sourceHeight: selectedImage.height,
+        sourceWidth: selectedImage.width,
+        sourceX: snappedSource.x,
+        sourceY: snappedSource.y,
+        src: selectedImage.src,
+        timestamp,
+        variationIndex: index,
+      });
     }
   );
 
@@ -294,9 +204,9 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       const newMap = new Map(prev);
       newMap.set(uploadId, {
         imageUrl: "",
-        prompt: "",
-        status: "uploading",
         isVariation: true,
+        prompt: "",
+        status: VARIATION_STATUS.UPLOADING,
       });
       return newMap;
     });
@@ -335,12 +245,12 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         );
 
         newMap.set(placeholderId, {
-          imageUrl: signedImageUrl,
-          prompt: formattedPrompt,
-          isVariation: true,
           imageSize: imageSizeDimensions,
+          imageUrl: signedImageUrl,
+          isVariation: true,
           model: imageModel,
-          status: "generating",
+          prompt: formattedPrompt,
+          status: VARIATION_STATUS.GENERATING,
         });
       });
 

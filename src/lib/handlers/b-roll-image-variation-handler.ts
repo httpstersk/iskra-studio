@@ -2,26 +2,35 @@
  * B-roll Image Variation Handler
  * Generates B-roll image variations from a reference image
  * Uses OpenAI vision analysis to match the reference style
+ *
+ * @module lib/handlers/b-roll-image-variation-handler
  */
 
 import { generateBRollConcepts } from "@/lib/b-roll-concept-generator";
 import { showErrorFromException } from "@/lib/toast";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import type { PlacedImage } from "@/types/canvas";
-import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
-import { generateAndCachePixelatedOverlay } from "@/utils/image-pixelation-helper";
-import { snapPosition } from "@/utils/snap-utils";
-import { calculateBalancedPosition } from "./variation-handler";
+import {
+  createPlaceholder,
+  performEarlyPreparation,
+  VARIATION_STATUS,
+} from "./variation-shared-utils";
 import {
   ensureImageInConvex,
   toSignedUrl,
   validateSingleImageSelection,
 } from "./variation-utils";
 
+/**
+ * API endpoints for B-roll generation
+ */
 const API_ENDPOINTS = {
   ANALYZE_IMAGE: "/api/analyze-image",
 } as const;
 
+/**
+ * Error messages for B-roll generation
+ */
 const ERROR_MESSAGES = {
   BROLL_GENERATION_FAILED: "B-roll concept generation failed",
   IMAGE_ANALYSIS_FAILED: "Image analysis failed",
@@ -30,33 +39,51 @@ const ERROR_MESSAGES = {
     "Please select exactly one image to generate B-roll variations",
 } as const;
 
+/**
+ * Toast notification properties
+ */
 interface ToastProps {
   description?: string;
   title: string;
   variant?: "default" | "destructive";
 }
 
+/**
+ * Dependencies for B-roll image variation handler
+ */
 interface BrollImageVariationHandlerDeps {
+  /** Model to use for image generation */
+  imageModel?: "seedream" | "reve";
+  /** Array of all placed images */
   images: PlacedImage[];
+  /** IDs of selected images */
   selectedIds: string[];
+  /** Setter for active generation states */
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
   >;
+  /** Setter for images state */
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
+  /** Setter for global generating flag */
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
+  /** Toast notification function */
   toast: (props: ToastProps) => void;
-  imageModel?: "seedream" | "reve";
+  /** Number of variations to generate (4, 8, or 12) */
   variationCount?: number;
+  /** Optional user context/prompt for B-roll */
   variationPrompt?: string;
 }
 
 /**
- * Analyzes an image using OpenAI's vision model with structured output
+ * Analyzes an image using OpenAI's vision model with structured output.
+ *
  * @param imageUrl - URL of the image to analyze
  * @returns Promise resolving to image style and mood analysis
  * @throws Error if analysis fails
  */
-async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
+async function analyzeImageStyle(
+  imageUrl: string
+): Promise<ImageStyleMoodAnalysis> {
   const response = await fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
     body: JSON.stringify({ imageUrl }),
     headers: {
@@ -80,22 +107,27 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
 /**
  * Generates B-roll image variations from a reference image.
  *
- * Uses OpenAI to:
- * 1. Analyze the reference image's style, mood, and context
- * 2. Generate contextually relevant B-roll concepts dynamically
- * 3. Create variations that complement the reference while featuring different content
+ * Process flow:
+ * 1. Perform early preparation (pixelated overlay, positioning) for immediate UI feedback
+ * 2. Upload/ensure image is in Convex storage
+ * 3. Analyze the reference image's style, mood, and context
+ * 4. Generate contextually relevant B-roll concepts dynamically
+ * 5. Create variations that complement the reference while featuring different content
+ *
+ * @param deps - Handler dependencies including images, state setters, and configuration
+ * @returns Promise that resolves when generation is set up
  */
 export const handleBrollImageVariations = async (
   deps: BrollImageVariationHandlerDeps
-) => {
+): Promise<void> => {
   const {
+    imageModel = "seedream",
     images,
     selectedIds,
     setActiveGenerations,
     setImages,
     setIsGenerating,
     toast,
-    imageModel = "seedream",
     variationCount = 4,
     variationPrompt,
   } = deps;
@@ -112,16 +144,21 @@ export const handleBrollImageVariations = async (
   const timestamp = Date.now();
 
   try {
-    // Stage 0: Uploading image to ensure it's in Convex
+    // OPTIMIZATION: Perform early preparation BEFORE async operations
+    // This generates pixelated overlay immediately for instant visual feedback
+    const { imageSizeDimensions, pixelatedSrc, positionIndices, snappedSource } =
+      await performEarlyPreparation(selectedImage, variationCount);
+
+    // Stage 0: Upload image to ensure it's in Convex
     const uploadId = `variation-${timestamp}-upload`;
 
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.set(uploadId, {
         imageUrl: "",
-        prompt: "",
-        status: "uploading",
         isVariation: true,
+        prompt: "",
+        status: VARIATION_STATUS.UPLOADING,
       });
       return newMap;
     });
@@ -146,14 +183,14 @@ export const handleBrollImageVariations = async (
       const newMap = new Map(prev);
       newMap.set(analyzeId, {
         imageUrl: signedImageUrl,
-        prompt: "",
-        status: "analyzing",
         isVariation: true,
+        prompt: "",
+        status: VARIATION_STATUS.ANALYZING,
       });
       return newMap;
     });
 
-    const imageAnalysis = await analyzeImage(signedImageUrl);
+    const imageAnalysis = await analyzeImageStyle(signedImageUrl);
 
     // Remove analyze placeholder
     setActiveGenerations((prev) => {
@@ -172,58 +209,22 @@ export const handleBrollImageVariations = async (
     // Stage 3: Use generated prompts directly (they're already formatted)
     const formattedPrompts = brollConcepts.concepts;
 
-    // Snap source position for consistent alignment
-    const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
-
-    // Position indices based on variation count
-    let positionIndices: number[];
-
-    if (variationCount === 4) {
-      positionIndices = [0, 2, 4, 6];
-    } else if (variationCount === 8) {
-      positionIndices = [0, 1, 2, 3, 4, 5, 6, 7];
-    } else {
-      positionIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-    }
-
-    // Get optimal dimensions for variations
-    const imageSizeDimensions = getOptimalImageDimensions(
-      selectedImage.width,
-      selectedImage.height
-    );
-
-    // Generate pixelated overlay from source image for immediate visual feedback
-    const pixelatedSrc = await generateAndCachePixelatedOverlay(selectedImage);
-
     // Create placeholders IMMEDIATELY (optimistic UI)
     const placeholderImages: PlacedImage[] = formattedPrompts.map(
       (_, index) => {
-        const positionIndex = positionIndices[index];
-        const position = calculateBalancedPosition(
-          snappedSource.x,
-          snappedSource.y,
-          positionIndex,
-          selectedImage.width,
-          selectedImage.height,
-          selectedImage.width,
-          selectedImage.height
-        );
-
-        return {
-          displayAsThumbnail: true,
-          height: selectedImage.height,
-          id: `variation-${timestamp}-${index}`,
-          isGenerated: true,
-          isLoading: true,
+        return createPlaceholder({
           naturalHeight: imageSizeDimensions.height,
           naturalWidth: imageSizeDimensions.width,
-          rotation: 0,
-          src: selectedImage.src,
           pixelatedSrc,
-          width: selectedImage.width,
-          x: position.x,
-          y: position.y,
-        };
+          positionIndex: positionIndices[index],
+          sourceHeight: selectedImage.height,
+          sourceWidth: selectedImage.width,
+          sourceX: snappedSource.x,
+          sourceY: snappedSource.y,
+          src: selectedImage.src,
+          timestamp,
+          variationIndex: index,
+        });
       }
     );
 
@@ -237,12 +238,12 @@ export const handleBrollImageVariations = async (
         const placeholderId = `variation-${timestamp}-${index}`;
 
         newMap.set(placeholderId, {
-          imageUrl: signedImageUrl,
-          prompt: formattedPrompt,
-          isVariation: true,
           imageSize: imageSizeDimensions,
+          imageUrl: signedImageUrl,
+          isVariation: true,
           model: imageModel,
-          status: "generating",
+          prompt: formattedPrompt,
+          status: VARIATION_STATUS.GENERATING,
         });
       });
 
