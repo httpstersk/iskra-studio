@@ -137,6 +137,12 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
         generationSettings.variationPrompt
       );
 
+      // Normalize video settings based on model
+      // VEO models don't support "auto" - use defaults if "auto" is selected
+      const isVeoModel = videoModel.startsWith("veo");
+      const normalizedAspectRatio = isVeoModel ? "16:9" : "auto";
+      const normalizedResolution = isVeoModel && videoResolution === "auto" ? "720p" : videoResolution;
+
       await handleVariationGeneration({
         falClient,
         imageModel,
@@ -153,11 +159,11 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
         variationMode,
         variationPrompt: sanitizedPrompt,
         videoSettings: {
-          aspectRatio: "auto",
+          aspectRatio: normalizedAspectRatio,
           duration: videoDuration,
           modelId: videoModel,
           prompt: sanitizedPrompt || "", // Empty string will trigger AI generation on server
-          resolution: videoResolution,
+          resolution: normalizedResolution,
         },
         viewport,
       });
