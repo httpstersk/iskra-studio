@@ -47,7 +47,9 @@ export function useVideoElement(
     };
 
     const handleTimeUpdate = throttleRAF(() => {
-      onTime(el.currentTime);
+      if (!el.paused) {
+        onTime(el.currentTime);
+      }
     });
 
     el.addEventListener("loadedmetadata", onLoadedMetadata);
