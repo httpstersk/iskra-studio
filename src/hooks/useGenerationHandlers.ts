@@ -126,6 +126,7 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
 
     if (isVariationMode) {
       // Sanitize prompt to ensure we don't pass empty strings to the API
+      // For video mode, server will generate a prompt if none provided
       const sanitizedPrompt = sanitizePrompt(generationSettings.variationPrompt);
       
       await handleVariationGeneration({
@@ -147,7 +148,7 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
           aspectRatio: "auto",
           duration: videoDuration,
           modelId: useSoraPro ? "sora-2-pro" : "sora-2",
-          prompt: sanitizedPrompt,
+          prompt: sanitizedPrompt || "", // Empty string will trigger AI generation on server
           resolution: videoResolution,
         },
         viewport,

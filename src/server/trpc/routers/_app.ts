@@ -11,6 +11,7 @@ import {
 } from "@/lib/image-models";
 import { sanitizePrompt } from "@/lib/prompt-utils";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
+import { generateVideoPrompt } from "@/lib/video-prompt-generator";
 import { tracked } from "@trpc/server";
 import sharp from "sharp";
 import { z } from "zod";
@@ -173,7 +174,7 @@ async function generateThumbnailDataUrl(
   maxSize: number = 400
 ): Promise<string> {
   const imageBuffer = await downloadImage(imageUrl);
-  
+
   const thumbnailBuffer = await sharp(imageBuffer)
     .resize(maxSize, maxSize, {
       fit: "inside",
@@ -181,7 +182,7 @@ async function generateThumbnailDataUrl(
     })
     .webp({ quality: 75 })
     .toBuffer();
-  
+
   const base64 = thumbnailBuffer.toString("base64");
   return `data:image/webp;base64,${base64}`;
 }
@@ -252,9 +253,56 @@ export const appRouter = router({
           return parsedDuration;
         })();
 
-        // Sanitize prompt and omit if empty to let FAL use its defaults
-        const sanitizedPrompt = sanitizePrompt(input.prompt);
-        
+        // Sanitize user-provided prompt
+        let finalPrompt = sanitizePrompt(input.prompt);
+
+        // If no valid prompt provided, generate one using AI
+        if (!finalPrompt) {
+          yield tracked(`${generationId}_analyze`, {
+            progress: 20,
+            status: "Analyzing image to generate prompt...",
+            type: "progress",
+          });
+
+          try {
+            finalPrompt = await generateVideoPrompt(
+              input.imageUrl,
+              resolvedDuration
+            );
+
+            // Validate the generated prompt
+            if (!finalPrompt || finalPrompt.trim().length === 0) {
+              throw new Error("Generated prompt is empty");
+            }
+
+            yield tracked(`${generationId}_prompt_ready`, {
+              progress: 40,
+              status: "Prompt generated, starting video generation...",
+              type: "progress",
+            });
+          } catch (promptError) {
+            const errorMessage =
+              promptError instanceof Error
+                ? promptError.message
+                : "Failed to generate video prompt";
+
+            yield tracked(`${generationId}_error`, {
+              error: `Prompt generation failed: ${errorMessage}`,
+              type: "error",
+            });
+            return;
+          }
+        }
+
+        // Final validation before sending to FAL
+        if (!finalPrompt || finalPrompt.trim().length === 0) {
+          yield tracked(`${generationId}_error`, {
+            error: "Invalid prompt: prompt cannot be empty",
+            type: "error",
+          });
+          return;
+        }
+
         const soraInput: Record<string, unknown> = {
           aspect_ratio:
             (input as { aspectRatio?: string }).aspectRatio ||
@@ -262,14 +310,10 @@ export const appRouter = router({
             "auto",
           duration: resolvedDuration,
           image_url: input.imageUrl,
+          prompt: finalPrompt,
           resolution:
             input.resolution || (model.defaults.resolution as string) || "auto",
         };
-        
-        // Only include prompt if it's valid (non-empty after trimming)
-        if (sanitizedPrompt) {
-          soraInput.prompt = sanitizedPrompt;
-        }
 
         const result = (await falClient.subscribe(model.endpoint, {
           input: soraInput,

@@ -51,7 +51,7 @@ export interface VideoGenerationSettings {
   [key: string]: unknown;
   modelId?: string;
   motion?: string;
-  prompt?: string;
+  prompt: string;
   resolution?: "auto" | "480p" | "720p" | "1080p";
   seed?: number;
   sourceUrl?: string;

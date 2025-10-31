@@ -489,8 +489,11 @@ export function useStreamingHandlers(
 
   const handleVideoGenerationError = useCallback(
     (videoId: string, error: string) => {
-      log.error("Video generation error", { data: { videoId, error } });
-      showError(CANVAS_STRINGS.ERRORS.VIDEO_GENERATION_FAILED, error);
+      const errorMessage =
+        error || "Unknown error occurred during video generation";
+
+      showError(CANVAS_STRINGS.ERRORS.VIDEO_GENERATION_FAILED, errorMessage);
+
       setActiveVideoGenerations((prev) => {
         const newMap = new Map(prev);
         newMap.delete(videoId);
