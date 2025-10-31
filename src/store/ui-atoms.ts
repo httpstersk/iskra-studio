@@ -23,11 +23,9 @@ export const showChatAtom = atom(false);
 export const showGridAtom = atom(true);
 export const showMinimapAtom = atom(true);
 
-
 /**
  * Visibility control atoms
  */
-export const hiddenVideoControlsIdsAtom = atom<Set<string>>(new Set<string>());
 export const visibleIndicatorsAtom = atom<Set<string>>(new Set<string>());
 
 /**

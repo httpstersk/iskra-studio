@@ -38,7 +38,6 @@ interface CanvasStageRendererProps {
   canvasSize: { height: number; width: number };
   generationCount?: number;
   generationSettings: GenerationSettings;
-  hiddenVideoControlsIds: Set<string>;
   images: PlacedImage[];
   interactions: {
     dragStartPositions: Map<string, { x: number; y: number }>;
@@ -63,7 +62,6 @@ interface CanvasStageRendererProps {
   onImageDoubleClick?: (imageId: string) => void;
   saveToHistory: () => void;
   selectedIds: string[];
-  setHiddenVideoControlsIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   setSelectedIds: (ids: string[]) => void;
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
@@ -149,7 +147,6 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
   onImageDoubleClick,
   saveToHistory,
   selectedIds,
-  setHiddenVideoControlsIds,
   setImages,
   setSelectedIds,
   setVideos,
@@ -281,25 +278,20 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
 
   /**
    * Handles end of video drag operation
-   * Saves canvas state and restores video controls
+   * Saves canvas state
    */
   const handleVideoDragEnd = React.useCallback(
     (videoId: string) => {
       interactions.setIsDraggingImage(false);
-      setHiddenVideoControlsIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(videoId);
-        return newSet;
-      });
       saveToHistory();
       interactions.setDragStartPositions(new Map());
     },
-    [interactions, saveToHistory, setHiddenVideoControlsIds]
+    [interactions, saveToHistory]
   );
 
   /**
    * Handles start of video drag operation
-   * Ensures dragged video is selected and hides controls during drag
+   * Ensures dragged video is selected
    */
   const handleVideoDragStart = React.useCallback(
     (videoId: string) => {
@@ -309,7 +301,6 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
         setSelectedIds(currentSelectedIds);
       }
       interactions.setIsDraggingImage(true);
-      setHiddenVideoControlsIds((prev) => new Set([...prev, videoId]));
       const positions = new Map<string, { x: number; y: number }>();
       currentSelectedIds.forEach((id) => {
         const vid = videos.find((v) => v.id === id);
@@ -321,37 +312,12 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
       interactions,
       selectedIds,
       selectedIdsSet,
-      setHiddenVideoControlsIds,
       setSelectedIds,
       videos,
     ]
   );
 
-  /**
-   * Creates handler for video resize end event
-   * Restores video controls after resize operation
-   */
-  const handleVideoResizeEnd = useCallback(
-    (videoId: string) => () => {
-      setHiddenVideoControlsIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(videoId);
-        return newSet;
-      });
-    },
-    [setHiddenVideoControlsIds]
-  );
 
-  /**
-   * Creates handler for video resize start event
-   * Hides video controls during resize for cleaner UX
-   */
-  const handleVideoResizeStart = useCallback(
-    (videoId: string) => () => {
-      setHiddenVideoControlsIds((prev) => new Set([...prev, videoId]));
-    },
-    [setHiddenVideoControlsIds]
-  );
 
   const isVariationMode = useMemo(
     () =>
@@ -460,7 +426,6 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
               selectedIds={selectedIds}
               setVideos={setVideos}
               video={video}
-              videos={videos}
             />
           ))}
         </Layer>

@@ -6,7 +6,8 @@ import { useVideoPlayback } from "@/hooks/useVideoPlayback";
 import type { PlacedVideo } from "@/types/canvas";
 import Konva from "konva";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Image as KonvaImage } from "react-konva";
+import { Group, Image as KonvaImage } from "react-konva";
+import { KonvaVideoControls } from "./KonvaVideoControls";
 
 /**
  * Canvas video element rendered on the Konva stage.
@@ -185,31 +186,37 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   useSharedVideoAnimation(shapeRef, video.isPlaying, video.src);
 
   return (
-    <KonvaImage
+    <Group
+      x={video.x}
+      y={video.y}
+      rotation={video.rotation}
       draggable={isDraggable}
-      height={video.height}
-      image={videoElement || undefined}
-      onClick={handleClick}
       onDragEnd={handleDragEnd}
       onDragMove={onDragMove}
       onDragStart={handleDragStart}
-      onMouseDown={handleMouseDown}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onMouseUp={handleMouseUp}
-      onTap={onSelect}
-      opacity={video.isGenerating ? 0.9 : 1}
-      perfectDrawEnabled={false}
-      ref={shapeRef}
-      rotation={video.rotation}
-      shadowForStrokeEnabled={false}
-      stroke={isSelected ? "#0ea5e9" : isHovered ? "#0ea5e9" : "transparent"}
-      strokeScaleEnabled={false}
-      strokeWidth={isSelected || isHovered ? 2 : 0}
-      width={video.width}
-      x={video.x}
-      y={video.y}
-    />
+    >
+      <KonvaImage
+        height={video.height}
+        image={videoElement || undefined}
+        onClick={handleClick}
+        onMouseDown={handleMouseDown}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onTap={onSelect}
+        opacity={video.isGenerating ? 0.9 : 1}
+        perfectDrawEnabled={false}
+        ref={shapeRef}
+        shadowForStrokeEnabled={false}
+        stroke={isSelected ? "#0ea5e9" : isHovered ? "#0ea5e9" : "transparent"}
+        strokeScaleEnabled={false}
+        strokeWidth={isSelected || isHovered ? 2 : 0}
+        width={video.width}
+        x={0}
+        y={0}
+      />
+      <KonvaVideoControls video={video} onChange={onChange} isSelected={isSelected} />
+    </Group>
   );
 };
 

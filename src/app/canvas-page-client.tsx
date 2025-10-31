@@ -16,7 +16,6 @@ import { DimensionDisplayWrapper } from "@/components/canvas/DimensionDisplayWra
 import { MiniMap } from "@/components/canvas/MiniMap";
 import { ProjectPanelWrapper } from "@/components/canvas/ProjectPanelWrapper";
 import { StreamingGenerations } from "@/components/canvas/StreamingGenerations";
-import { VideoOverlays } from "@/components/canvas/VideoOverlays";
 import { ZoomControls } from "@/components/canvas/ZoomControls";
 import { CanvasHeader } from "@/components/layout/canvas-header";
 import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
@@ -286,7 +285,6 @@ export function CanvasPageClient() {
                   canvasSize={canvasState.canvasSize}
                   generationCount={uiState.generationCount}
                   generationSettings={generationState.generationSettings}
-                  hiddenVideoControlsIds={uiState.hiddenVideoControlsIds}
                   images={canvasState.images}
                   interactions={interactions}
                   isCanvasReady={canvasState.isCanvasReady}
@@ -294,7 +292,6 @@ export function CanvasPageClient() {
                   onImageDoubleClick={handleImageDoubleClick}
                   saveToHistory={historyState.saveToHistory}
                   selectedIds={canvasState.selectedIds}
-                  setHiddenVideoControlsIds={uiState.setHiddenVideoControlsIds}
                   setImages={canvasState.setImages}
                   setSelectedIds={canvasState.setSelectedIds}
                   setVideos={canvasState.setVideos}
@@ -401,14 +398,6 @@ export function CanvasPageClient() {
         showGrid={uiState.showGrid}
         showMinimap={uiState.showMinimap}
         theme={theme}
-      />
-
-      <VideoOverlays
-        hiddenVideoControlsIds={uiState.hiddenVideoControlsIds}
-        selectedIds={canvasState.selectedIds}
-        setVideos={canvasState.setVideos}
-        videos={canvasState.videos}
-        viewport={canvasState.viewport}
       />
     </div>
   );

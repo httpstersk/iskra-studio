@@ -174,7 +174,7 @@ function getCoordinator(): VideoAnimationCoordinator {
  * ```
  */
 export function useSharedVideoAnimation(
-  shapeRef: React.RefObject<Konva.Image>,
+  shapeRef: React.RefObject<Konva.Image | null>,
   isPlaying: boolean,
   videoSrc: string
 ) {

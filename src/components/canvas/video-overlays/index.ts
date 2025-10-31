@@ -6,5 +6,3 @@
 
 export { SingleVideoOverlay } from "./SingleVideoOverlay";
 export { VideoControlsWrapper } from "./VideoControlsWrapper";
-export { VideoElement } from "./VideoElement";
-export { VideoPlayIndicator } from "./VideoPlayIndicator";
