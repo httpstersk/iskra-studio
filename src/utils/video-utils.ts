@@ -215,13 +215,16 @@ export const convertImageToVideo = (
     : `video-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
   // Create the placed video object, preserving position and dimensions of the original image
-  return createPlacedVideo(
-    id,
-    videoUrl,
-    image.x,
-    image.y,
-    image.width,
-    image.height,
-    duration
-  );
+  return {
+    ...createPlacedVideo(
+      id,
+      videoUrl,
+      image.x,
+      image.y,
+      image.width,
+      image.height,
+      duration
+    ),
+    sourceImageId: image.id,
+  };
 };

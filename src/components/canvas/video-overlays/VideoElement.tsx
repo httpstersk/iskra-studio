@@ -64,19 +64,20 @@ export const VideoElement = React.memo<VideoElementProps>(function VideoElement(
     const pointerEvents = isSelected ? ("auto" as const) : ("none" as const);
 
     return {
-      border: isSelected
-        ? `${VIDEO_SELECTED_BORDER_WIDTH} solid ${VIDEO_SELECTED_BORDER_COLOR}`
-        : "none",
       boxShadow: isSelected ? VIDEO_SELECTED_SHADOW : "none",
       height: position.height,
       left: position.left,
       objectFit: "cover" as const,
+      outline: isSelected
+        ? `${VIDEO_SELECTED_BORDER_WIDTH} solid ${VIDEO_SELECTED_BORDER_COLOR}`
+        : "none",
+      outlineOffset: "0px",
       pointerEvents,
       position: "absolute" as const,
       top: position.top,
       transform: `rotate(${video.rotation || 0}deg)`,
       transformOrigin: "center",
-      transition: "box-shadow 0.2s ease-out, border-color 0.2s ease-out",
+      transition: "box-shadow 0.2s ease-out, outline-color 0.2s ease-out",
       width: position.width,
       zIndex: VIDEO_OVERLAY_Z_INDEX,
     };

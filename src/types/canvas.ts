@@ -29,6 +29,7 @@ export interface PlacedVideo extends Omit<PlacedImage, "isGenerated"> {
   isPlaying: boolean;
   isVideo: true;
   muted: boolean;
+  sourceImageId?: string;
   volume: number;
 }
 

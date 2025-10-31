@@ -375,10 +375,15 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
     [images, isVariationMode, selectedIds]
   );
 
-  const visibleImages = useMemo(
-    () => getVisibleItems(images, roundedViewport, canvasSize),
-    [canvasSize, images, roundedViewport]
-  );
+  const visibleImages = useMemo(() => {
+    const videoSourceImageIds = new Set(
+      videos.map((v) => v.sourceImageId).filter(Boolean)
+    );
+    const imagesToRender = images.filter(
+      (img) => !videoSourceImageIds.has(img.id)
+    );
+    return getVisibleItems(imagesToRender, roundedViewport, canvasSize);
+  }, [canvasSize, images, roundedViewport, videos]);
 
   const visibleVideos = useMemo(
     () => getVisibleItems(videos, roundedViewport, canvasSize),

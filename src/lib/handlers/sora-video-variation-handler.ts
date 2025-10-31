@@ -173,6 +173,7 @@ function createVideoPlaceholders(
       isPlaying: VIDEO_DEFAULTS.IS_PLAYING,
       isVideo: true as const,
       muted: VIDEO_DEFAULTS.MUTED,
+      sourceImageId: selectedImage.id,
       rotation: 0,
       src: "", // Will be filled when generation completes
       volume: VIDEO_DEFAULTS.VOLUME,
