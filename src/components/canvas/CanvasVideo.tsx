@@ -1,13 +1,37 @@
+import { useAnimationCoordinator } from "@/hooks/useAnimationCoordinator";
 import { useSharedVideoAnimation } from "@/hooks/useSharedVideoAnimation";
 import { useVideoDragWithSnap } from "@/hooks/useVideoDragWithSnap";
 import { useVideoElement } from "@/hooks/useVideoElement";
 import { useVideoKeyboardShortcuts } from "@/hooks/useVideoKeyboardShortcuts";
 import { useVideoPlayback } from "@/hooks/useVideoPlayback";
 import type { PlacedVideo } from "@/types/canvas";
+import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Group, Image as KonvaImage } from "react-konva";
+import useImage from "use-image";
 import { KonvaVideoControls } from "./KonvaVideoControls";
+
+/**
+ * Custom hook to load pixelated overlay image if available.
+ *
+ * @param pixelatedSrc - Optional pixelated overlay source URL
+ * @returns Loaded pixelated image element or undefined
+ */
+const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
+  const cachedImage = pixelatedSrc
+    ? getCachedPixelatedImage(pixelatedSrc)
+    : undefined;
+
+  const [loadedImg] = useImage(
+    pixelatedSrc && !cachedImage ? pixelatedSrc : "",
+    "anonymous"
+  );
+
+  if (!pixelatedSrc) return undefined;
+
+  return cachedImage || loadedImg;
+};
 
 /**
  * Canvas video element rendered on the Konva stage.
@@ -49,6 +73,9 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
 
+  // Get pixelated overlay if available
+  const pixelatedImg = usePixelatedOverlay(video.pixelatedSrc);
+
   // Create HTMLVideoElement and wire events
   const videoElement = useVideoElement(
     video.src,
@@ -70,6 +97,22 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
       onChange({ currentTime });
     }
   );
+
+  // Animation coordinator for pixelated overlay transition
+  const {
+    displayOpacity,
+    isTransitionComplete,
+    pixelatedOpacity: animatedPixelatedOpacity,
+  } = useAnimationCoordinator({
+    hasImage: !!videoElement,
+    hasPixelated: !!pixelatedImg,
+    isGenerated: Boolean(!video.isLoading && video.src),
+    isLoading: Boolean(video.isLoading),
+  });
+
+  // Calculate opacities for layers
+  const videoOpacity = video.isGenerating ? 0.9 : 1;
+  const overlayOpacity = displayOpacity * animatedPixelatedOpacity;
 
   // Sync playback props to element
   useVideoPlayback(videoElement, {
@@ -178,6 +221,15 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
     }
   }, [videoElement]);
 
+  // Clear pixelatedSrc after transition completes to free memory
+  useEffect(() => {
+    if (isTransitionComplete && video.pixelatedSrc && !video.isLoading) {
+      onChange({
+        pixelatedSrc: undefined,
+      });
+    }
+  }, [isTransitionComplete, video.pixelatedSrc, video.isLoading, onChange]);
+
   // Use shared video animation coordinator for playing videos
   // All videos share a single optimized animation loop with:
   // - Batched layer redraws (one per layer, not per video)
@@ -185,6 +237,114 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   // - Adaptive FPS based on device performance
   useSharedVideoAnimation(shapeRef, video.isPlaying, video.src);
 
+  // Render both video and pixelated overlay during transition
+  if (pixelatedImg && !isTransitionComplete && videoElement) {
+    return (
+      <Group
+        x={video.x}
+        y={video.y}
+        rotation={video.rotation}
+        draggable={isDraggable}
+        onDragEnd={handleDragEnd}
+        onDragMove={onDragMove}
+        onDragStart={handleDragStart}
+      >
+        {/* Video frame - fades from low to full opacity during transition */}
+        <KonvaImage
+          height={video.height}
+          image={videoElement}
+          listening={false}
+          opacity={displayOpacity * videoOpacity}
+          perfectDrawEnabled={false}
+          shadowForStrokeEnabled={false}
+          width={video.width}
+          x={0}
+          y={0}
+        />
+        {/* Pixelated overlay - fades from full to zero opacity during transition */}
+        <KonvaImage
+          height={video.height}
+          image={pixelatedImg}
+          listening={false}
+          opacity={overlayOpacity}
+          perfectDrawEnabled={false}
+          shadowForStrokeEnabled={false}
+          width={video.width}
+          x={0}
+          y={0}
+        />
+        {/* Interactive layer for clicks/hover */}
+        <KonvaImage
+          height={video.height}
+          image={videoElement}
+          onClick={handleClick}
+          onMouseDown={handleMouseDown}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onTap={onSelect}
+          opacity={0}
+          perfectDrawEnabled={false}
+          ref={shapeRef}
+          shadowForStrokeEnabled={false}
+          stroke={isSelected ? "#0ea5e9" : isHovered ? "#0ea5e9" : "transparent"}
+          strokeScaleEnabled={false}
+          strokeWidth={isSelected || isHovered ? 2 : 0}
+          width={video.width}
+          x={0}
+          y={0}
+        />
+        <KonvaVideoControls
+          video={video}
+          onChange={onChange}
+          isSelected={isSelected}
+        />
+      </Group>
+    );
+  }
+
+  // Render only pixelated overlay if video hasn't loaded yet
+  if (pixelatedImg && !videoElement) {
+    return (
+      <Group
+        x={video.x}
+        y={video.y}
+        rotation={video.rotation}
+        draggable={isDraggable}
+        onDragEnd={handleDragEnd}
+        onDragMove={onDragMove}
+        onDragStart={handleDragStart}
+      >
+        <KonvaImage
+          height={video.height}
+          image={pixelatedImg}
+          onClick={handleClick}
+          onMouseDown={handleMouseDown}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onTap={onSelect}
+          opacity={displayOpacity}
+          perfectDrawEnabled={false}
+          ref={shapeRef}
+          shadowForStrokeEnabled={false}
+          stroke={isSelected ? "#0ea5e9" : isHovered ? "#0ea5e9" : "transparent"}
+          strokeScaleEnabled={false}
+          strokeWidth={isSelected || isHovered ? 2 : 0}
+          width={video.width}
+          x={0}
+          y={0}
+        />
+        <KonvaVideoControls
+          video={video}
+          onChange={onChange}
+          isSelected={isSelected}
+        />
+      </Group>
+    );
+  }
+
+  // Default rendering without pixelated overlay
   return (
     <Group
       x={video.x}
@@ -204,7 +364,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}
         onTap={onSelect}
-        opacity={video.isGenerating ? 0.9 : 1}
+        opacity={videoOpacity * displayOpacity}
         perfectDrawEnabled={false}
         ref={shapeRef}
         shadowForStrokeEnabled={false}
@@ -215,7 +375,11 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
         x={0}
         y={0}
       />
-      <KonvaVideoControls video={video} onChange={onChange} isSelected={isSelected} />
+      <KonvaVideoControls
+        video={video}
+        onChange={onChange}
+        isSelected={isSelected}
+      />
     </Group>
   );
 };

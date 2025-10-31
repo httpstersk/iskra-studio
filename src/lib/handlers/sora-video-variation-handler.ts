@@ -14,8 +14,11 @@ import type {
   PlacedVideo,
   VideoGenerationSettings,
 } from "@/types/canvas";
-import { snapPosition, snapVideosToGrid } from "@/utils/snap-utils";
-import { calculateBalancedPosition } from "./variation-handler";
+import {
+  createVideoPlaceholder,
+  performEarlyPreparation,
+  VARIATION_STATUS,
+} from "./variation-shared-utils";
 import {
   ensureImageInConvex,
   toSignedUrl,
@@ -126,63 +129,7 @@ function parseDuration(duration: string | number | undefined): number {
   return 8;
 }
 
-interface CreateVideoPlaceholdersParams {
-  duration: number;
-  selectedImage: PlacedImage;
-  timestamp: number;
-  videoPrompts: string[];
-}
 
-/**
- * Creates video placeholder objects for optimistic UI
- * @param params - Placeholder creation parameters
- * @param params.videoPrompts - Array of video prompts
- * @param params.selectedImage - Source image for positioning
- * @param params.duration - Video duration
- * @param params.timestamp - Timestamp for unique IDs
- * @returns Array of video placeholders
- */
-function createVideoPlaceholders(
-  params: CreateVideoPlaceholdersParams
-): PlacedVideo[] {
-  const { duration, selectedImage, timestamp, videoPrompts } = params;
-  const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
-
-  return videoPrompts.map((promptText, index) => {
-    const positionIndex = POSITION_INDICES[index];
-    const position = calculateBalancedPosition(
-      snappedSource.x,
-      snappedSource.y,
-      positionIndex,
-      selectedImage.width,
-      selectedImage.height,
-      selectedImage.width,
-      selectedImage.height
-    );
-
-    // Snap position to grid to align perfectly with ghost placeholders
-    const snappedPosition = snapPosition(position.x, position.y);
-
-    return {
-      currentTime: VIDEO_DEFAULTS.CURRENT_TIME,
-      duration,
-      height: selectedImage.height,
-      id: `sora-video-${timestamp}-${index}`,
-      isLoading: true,
-      isLooping: VIDEO_DEFAULTS.IS_LOOPING,
-      isPlaying: VIDEO_DEFAULTS.IS_PLAYING,
-      isVideo: true as const,
-      muted: VIDEO_DEFAULTS.MUTED,
-      sourceImageId: selectedImage.id,
-      rotation: 0,
-      src: "", // Will be filled when generation completes
-      volume: VIDEO_DEFAULTS.VOLUME,
-      width: selectedImage.width,
-      x: snappedPosition.x,
-      y: snappedPosition.y,
-    };
-  });
-}
 
 interface CreateVideoGenerationConfigParams {
   duration: number;
@@ -263,6 +210,11 @@ export const handleSoraVideoVariations = async (
       return;
     }
 
+    // OPTIMIZATION: Perform early preparation BEFORE async operations
+    // This generates pixelated overlay immediately for instant visual feedback
+    const { pixelatedSrc, snappedSource, positionIndices } =
+      await performEarlyPreparation(selectedImage, VARIATION_COUNT);
+
     // Stage 0: Uploading image to ensure it's in Convex
     const uploadId = `video-${timestamp}-upload`;
 
@@ -271,7 +223,7 @@ export const handleSoraVideoVariations = async (
       newMap.set(uploadId, {
         imageUrl: "",
         prompt: "",
-        status: "uploading",
+        status: VARIATION_STATUS.UPLOADING,
         isVariation: true,
         duration: parseDuration(videoSettings.duration),
         modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
@@ -317,7 +269,7 @@ export const handleSoraVideoVariations = async (
       newMap.set(analyzeId, {
         imageUrl: signedImageUrl,
         prompt: "",
-        status: "analyzing",
+        status: VARIATION_STATUS.ANALYZING,
         isVariation: true,
         duration: parseDuration(videoSettings.duration),
         modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
@@ -351,12 +303,20 @@ export const handleSoraVideoVariations = async (
     );
 
     // Create video placeholders immediately for optimistic UI
-    const videoPlaceholders = createVideoPlaceholders({
-      duration,
-      selectedImage,
-      timestamp,
-      videoPrompts,
-    });
+    const videoPlaceholders = videoPrompts.map((_, index) =>
+      createVideoPlaceholder({
+        duration,
+        pixelatedSrc,
+        positionIndex: positionIndices[index],
+        sourceHeight: selectedImage.height,
+        sourceImageId: selectedIds[0],
+        sourceWidth: selectedImage.width,
+        sourceX: snappedSource.x,
+        sourceY: snappedSource.y,
+        timestamp,
+        variationIndex: index,
+      })
+    );
 
     // Add placeholders to canvas
     setVideos((prev) => [...prev, ...videoPlaceholders]);
@@ -380,7 +340,10 @@ export const handleSoraVideoVariations = async (
           videoSettings,
         });
 
-        newMap.set(videoId, { ...config, status: "generating" as const });
+        newMap.set(videoId, {
+          ...config,
+          status: VARIATION_STATUS.GENERATING,
+        });
       });
 
       return newMap;

@@ -5,7 +5,8 @@
  * @module lib/handlers/variation-shared-utils
  */
 
-import type { PlacedImage } from "@/types/canvas";
+import type { PlacedImage, PlacedVideo } from "@/types/canvas";
+import { VIDEO_DEFAULTS } from "@/constants/canvas";
 import { getOptimalImageDimensions } from "@/utils/image-crop-utils";
 import { generateAndCachePixelatedOverlay } from "@/utils/image-pixelation-helper";
 import { snapPosition } from "@/utils/snap-utils";
@@ -56,6 +57,34 @@ export interface PlaceholderConfig {
   sourceY: number;
   /** Source image URL */
   src: string;
+  /** Timestamp for unique ID generation */
+  timestamp: number;
+  /** Index of the variation */
+  variationIndex: number;
+}
+
+/**
+ * Configuration for placeholder video creation
+ */
+export interface VideoPlaceholderConfig {
+  /** Video duration in seconds */
+  duration: number;
+  /** Optional metadata to attach to placeholder */
+  metadata?: Record<string, unknown>;
+  /** Pixelated overlay source URL */
+  pixelatedSrc?: string;
+  /** Position index for placement calculation */
+  positionIndex: number;
+  /** Source image ID that the video is generated from */
+  sourceImageId: string;
+  /** Height of the selected source image */
+  sourceHeight: number;
+  /** Width of the selected source image */
+  sourceWidth: number;
+  /** X coordinate of the selected source image (snapped) */
+  sourceX: number;
+  /** Y coordinate of the selected source image (snapped) */
+  sourceY: number;
   /** Timestamp for unique ID generation */
   timestamp: number;
   /** Index of the variation */
@@ -208,6 +237,51 @@ export function createPlaceholder(config: PlaceholderConfig): PlacedImage {
     width: config.sourceWidth,
     x: position.x,
     y: position.y,
+  };
+}
+
+/**
+ * Creates a placeholder video for optimistic UI during generation.
+ * Placeholders show immediately with pixelated overlay while actual video generation happens.
+ *
+ * @param config - Configuration for video placeholder creation
+ * @returns Placeholder video object with loading state
+ */
+export function createVideoPlaceholder(
+  config: VideoPlaceholderConfig
+): PlacedVideo {
+  const position = calculateBalancedPosition(
+    config.sourceX,
+    config.sourceY,
+    config.positionIndex,
+    config.sourceWidth,
+    config.sourceHeight,
+    config.sourceWidth,
+    config.sourceHeight
+  );
+
+  // Snap position to grid to align perfectly with ghost placeholders
+  const snappedPosition = snapPosition(position.x, position.y);
+
+  return {
+    currentTime: VIDEO_DEFAULTS.CURRENT_TIME,
+    duration: config.duration,
+    height: config.sourceHeight,
+    id: `sora-video-${config.timestamp}-${config.variationIndex}`,
+    isLoading: true,
+    isLooping: VIDEO_DEFAULTS.IS_LOOPING,
+    isPlaying: VIDEO_DEFAULTS.IS_PLAYING,
+    isVideo: true as const,
+    ...(config.metadata && { metadata: config.metadata }),
+    muted: VIDEO_DEFAULTS.MUTED,
+    pixelatedSrc: config.pixelatedSrc,
+    rotation: 0,
+    sourceImageId: config.sourceImageId,
+    src: "",
+    volume: VIDEO_DEFAULTS.VOLUME,
+    width: config.sourceWidth,
+    x: snappedPosition.x,
+    y: snappedPosition.y,
   };
 }
 
