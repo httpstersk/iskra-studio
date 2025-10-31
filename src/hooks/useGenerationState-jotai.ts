@@ -14,7 +14,7 @@ import {
   previousGenerationCountAtom,
   previousStyleIdAtom,
   showSuccessAtom,
-  useSoraProAtom,
+  videoModelAtom,
   videoDurationAtom,
   videoResolutionAtom,
 } from "@/store/generation-atoms";
@@ -42,7 +42,7 @@ export function useGenerationState() {
   );
   const [previousStyleId, setPreviousStyleId] = useAtom(previousStyleIdAtom);
   const [showSuccess, setShowSuccess] = useAtom(showSuccessAtom);
-  const [useSoraPro, setUseSoraPro] = useAtom(useSoraProAtom);
+  const [videoModel, setVideoModel] = useAtom(videoModelAtom);
   const [videoDuration, setVideoDuration] = useAtom(videoDurationAtom);
   const [videoResolution, setVideoResolution] = useAtom(videoResolutionAtom);
 
@@ -97,12 +97,12 @@ export function useGenerationState() {
     setIsConvertingToVideo,
     setIsGenerating,
     setPreviousStyleId,
-    setUseSoraPro,
     setVideoDuration,
+    setVideoModel,
     setVideoResolution,
     showSuccess,
-    useSoraPro,
     videoDuration,
+    videoModel,
     videoResolution,
   };
 }

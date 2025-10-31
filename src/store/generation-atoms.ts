@@ -58,9 +58,9 @@ export const previousGenerationCountAtom = atom(0);
 export const showSuccessAtom = atom(false);
 
 /**
- * Atom to track whether Sora Pro is enabled (for video generation)
+ * Atom to track selected video model
  */
-export const useSoraProAtom = atom(false);
+export const videoModelAtom = atom<"sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro">("sora-2");
 
 /**
  * Atom to track selected video duration (4, 8, or 12 seconds)

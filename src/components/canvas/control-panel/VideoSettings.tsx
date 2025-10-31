@@ -6,34 +6,43 @@ import { SegmentedControl } from "@radix-ui/themes";
  * Props for the VideoSettings component
  */
 interface VideoSettingsProps {
-  setUseSoraPro: (value: boolean) => void;
   setVideoDuration: (value: "4" | "8" | "12") => void;
-  useSoraPro: boolean;
+  setVideoModel: (
+    value: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro"
+  ) => void;
   videoDuration: "4" | "8" | "12";
+  videoModel: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro";
 }
 
 /**
- * Video-specific settings controls (Pro toggle and Duration selector)
+ * Video-specific settings controls (Model selector and Duration selector)
  */
 export function VideoSettings({
-  setUseSoraPro,
   setVideoDuration,
-  useSoraPro,
+  setVideoModel,
   videoDuration,
+  videoModel,
 }: VideoSettingsProps) {
   return (
     <>
-      {/* Sora Pro toggle */}
+      {/* Model selector */}
       <SegmentedControl.Root
         size="1"
-        value={useSoraPro ? "pro" : "off"}
-        onValueChange={(value) => setUseSoraPro(value === "pro")}
+        value={videoModel}
+        onValueChange={(value) =>
+          setVideoModel(
+            value as "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro"
+          )
+        }
       >
-        <SegmentedControl.Item value="off">
-          <span className="text-xs">Normal</span>
+        <SegmentedControl.Item value="sora-2">
+          <span className="text-xs">SORA2</span>
         </SegmentedControl.Item>
-        <SegmentedControl.Item value="pro">
-          <span className="text-xs">Pro</span>
+        <SegmentedControl.Item value="veo-3.1">
+          <span className="text-xs">VEO Fast</span>
+        </SegmentedControl.Item>
+        <SegmentedControl.Item value="veo-3.1-pro">
+          <span className="text-xs">VEO Pro</span>
         </SegmentedControl.Item>
       </SegmentedControl.Root>
 

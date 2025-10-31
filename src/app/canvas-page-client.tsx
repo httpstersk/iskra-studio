@@ -171,10 +171,10 @@ export function CanvasPageClient() {
     setSelectedImageForVideo: uiState.setSelectedImageForVideo,
     setShowSignInPrompt,
     setVideos: canvasState.setVideos,
-    useSoraPro: generationState.useSoraPro,
     userId,
     variationMode: uiState.variationMode,
     videoDuration: generationState.videoDuration,
+    videoModel: generationState.videoModel,
     videoResolution: generationState.videoResolution,
     viewport: canvasState.viewport,
   });
@@ -374,14 +374,14 @@ export function CanvasPageClient() {
         setImageModel={uiState.setImageModel}
         setImageVariationType={uiState.setImageVariationType}
         setIsSettingsDialogOpen={uiState.setIsSettingsDialogOpen}
-        setUseSoraPro={generationState.setUseSoraPro}
         setVideoDuration={generationState.setVideoDuration}
+        setVideoModel={generationState.setVideoModel}
         setVideoResolution={generationState.setVideoResolution}
         showSuccess={generationState.showSuccess}
         undo={handleUndo}
-        useSoraPro={generationState.useSoraPro}
         variationMode={uiState.variationMode}
         videoDuration={generationState.videoDuration}
+        videoModel={generationState.videoModel}
         videoResolution={generationState.videoResolution}
       />
 

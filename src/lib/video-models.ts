@@ -3,17 +3,23 @@
  */
 export const SORA_2_MODEL_ID = "sora-2" as const;
 export const SORA_2_PRO_MODEL_ID = "sora-2-pro" as const;
+export const VEO_3_1_MODEL_ID = "veo-3.1" as const;
+export const VEO_3_1_PRO_MODEL_ID = "veo-3.1-pro" as const;
 
 /**
  * Model-specific configuration
  */
 const SORA_2_ENDPOINT = "fal-ai/sora-2/image-to-video";
 const SORA_2_NAME = "Sora 2";
-const SORA_2_COST = 0.4;
 
 const SORA_2_PRO_ENDPOINT = "fal-ai/sora-2/image-to-video/pro";
 const SORA_2_PRO_NAME = "Sora 2 Pro";
-const SORA_2_PRO_COST = 0.6;
+
+const VEO_3_1_ENDPOINT = "fal-ai/veo3.1/fast/image-to-video";
+const VEO_3_1_NAME = "VEO 3.1 Fast";
+
+const VEO_3_1_PRO_ENDPOINT = "fal-ai/veo3.1/image-to-video";
+const VEO_3_1_PRO_NAME = "VEO 3.1";
 
 /**
  * Shared UI copy and configuration
@@ -88,7 +94,6 @@ export interface ModelConstraints {
  * Pricing metadata for a model configuration.
  */
 export interface VideoModelPricing {
-  costPerVideo: number;
   currency: string;
   unit: string;
 }
@@ -104,7 +109,6 @@ export interface VideoModelConfig {
   isDefault?: boolean;
   name: string;
   options: Record<string, VideoModelOption>;
-  pricing: VideoModelPricing;
 }
 
 /**
@@ -168,11 +172,6 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
         type: "select",
       },
     },
-    pricing: {
-      costPerVideo: SORA_2_COST,
-      currency: "USD",
-      unit: PRICING_UNIT,
-    },
   },
   [SORA_2_PRO_MODEL_ID]: {
     category: MODEL_CATEGORY,
@@ -231,10 +230,121 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
         type: "select",
       },
     },
-    pricing: {
-      costPerVideo: SORA_2_PRO_COST,
-      currency: "USD",
-      unit: PRICING_UNIT,
+  },
+  [VEO_3_1_MODEL_ID]: {
+    category: MODEL_CATEGORY,
+    defaults: {
+      aspectRatio: "auto",
+      duration: "8",
+      prompt: "",
+      resolution: "auto",
+    },
+    endpoint: VEO_3_1_ENDPOINT,
+    id: VEO_3_1_MODEL_ID,
+    isDefault: false,
+    name: VEO_3_1_NAME,
+    options: {
+      aspectRatio: {
+        description: FIELD_DESCRIPTIONS.ASPECT_RATIO,
+        label: FIELD_LABELS.ASPECT_RATIO,
+        name: "aspectRatio",
+        options: [
+          ASPECT_RATIO_OPTIONS.AUTO,
+          ASPECT_RATIO_OPTIONS.PORTRAIT,
+          ASPECT_RATIO_OPTIONS.LANDSCAPE,
+        ],
+        type: "select",
+      },
+      duration: {
+        default: "8",
+        description: FIELD_DESCRIPTIONS.DURATION,
+        label: FIELD_LABELS.DURATION,
+        name: "duration",
+        options: [
+          DURATION_OPTIONS.FOUR,
+          DURATION_OPTIONS.EIGHT,
+          DURATION_OPTIONS.TWELVE,
+        ],
+        type: "select",
+      },
+      prompt: {
+        description: FIELD_DESCRIPTIONS.PROMPT,
+        label: FIELD_LABELS.PROMPT,
+        name: "prompt",
+        placeholder: PROMPT_PLACEHOLDER,
+        required: true,
+        type: "text",
+      },
+      resolution: {
+        default: "auto",
+        description: FIELD_DESCRIPTIONS.RESOLUTION,
+        label: FIELD_LABELS.RESOLUTION,
+        name: "resolution",
+        options: [
+          RESOLUTION_OPTIONS.AUTO,
+          RESOLUTION_OPTIONS.P720,
+          RESOLUTION_OPTIONS.P1080,
+        ],
+        type: "select",
+      },
+    },
+  },
+  [VEO_3_1_PRO_MODEL_ID]: {
+    category: MODEL_CATEGORY,
+    defaults: {
+      aspectRatio: "auto",
+      duration: "8",
+      prompt: "",
+      resolution: "auto",
+    },
+    endpoint: VEO_3_1_PRO_ENDPOINT,
+    id: VEO_3_1_PRO_MODEL_ID,
+    isDefault: false,
+    name: VEO_3_1_PRO_NAME,
+    options: {
+      aspectRatio: {
+        description: FIELD_DESCRIPTIONS.ASPECT_RATIO,
+        label: FIELD_LABELS.ASPECT_RATIO,
+        name: "aspectRatio",
+        options: [
+          ASPECT_RATIO_OPTIONS.AUTO,
+          ASPECT_RATIO_OPTIONS.PORTRAIT,
+          ASPECT_RATIO_OPTIONS.LANDSCAPE,
+        ],
+        type: "select",
+      },
+      duration: {
+        default: "8",
+        description: FIELD_DESCRIPTIONS.DURATION,
+        label: FIELD_LABELS.DURATION,
+        name: "duration",
+        options: [
+          DURATION_OPTIONS.FOUR,
+          DURATION_OPTIONS.EIGHT,
+          DURATION_OPTIONS.TWELVE,
+        ],
+        type: "select",
+      },
+      prompt: {
+        description: FIELD_DESCRIPTIONS.PROMPT,
+        label: FIELD_LABELS.PROMPT,
+        name: "prompt",
+        placeholder: PROMPT_PLACEHOLDER,
+        required: true,
+        type: "text",
+      },
+      resolution: {
+        default: "auto",
+        description: FIELD_DESCRIPTIONS.RESOLUTION,
+        label: FIELD_LABELS.RESOLUTION,
+        name: "resolution",
+        options: [
+          RESOLUTION_OPTIONS.AUTO,
+          RESOLUTION_OPTIONS.P720,
+          RESOLUTION_OPTIONS.P1080,
+        ],
+        type: "select",
+      },
     },
   },
 };
@@ -250,10 +360,10 @@ export function getVideoModelById(id: string): VideoModelConfig | undefined {
  * Returns all models for the configured category.
  */
 export function getVideoModelsByCategory(
-  category: VideoModelConfig["category"],
+  category: VideoModelConfig["category"]
 ): VideoModelConfig[] {
   return Object.values(VIDEO_MODELS).filter(
-    (model) => model.category === category,
+    (model) => model.category === category
   );
 }
 
@@ -261,9 +371,8 @@ export function getVideoModelsByCategory(
  * Retrieves the default model for a category.
  */
 export function getDefaultVideoModel(
-  category: VideoModelConfig["category"],
+  category: VideoModelConfig["category"]
 ): VideoModelConfig | undefined {
   const models = getVideoModelsByCategory(category);
   return models.find((model) => model.isDefault) || models[0];
 }
-

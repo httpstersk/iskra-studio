@@ -35,14 +35,14 @@ interface CanvasControlPanelProps {
   setImageModel: (value: "seedream" | "nano-banana") => void;
   setImageVariationType?: (type: "camera-angles" | "storyline") => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
-  setUseSoraPro: (value: boolean) => void;
   setVideoDuration: (value: "4" | "8" | "12") => void;
+  setVideoModel: (value: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro") => void;
   setVideoResolution: (value: "auto" | "720p" | "1080p") => void;
   showSuccess: boolean;
   undo: () => void;
-  useSoraPro: boolean;
   variationMode?: "image" | "video";
   videoDuration: "4" | "8" | "12";
+  videoModel: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro";
   videoResolution: "auto" | "720p" | "1080p";
 }
 
@@ -70,14 +70,14 @@ export function CanvasControlPanel({
   setImageModel,
   setImageVariationType,
   setIsSettingsDialogOpen,
-  setUseSoraPro,
   setVideoDuration,
+  setVideoModel,
   setVideoResolution,
   showSuccess,
   undo,
-  useSoraPro,
   variationMode = "image",
   videoDuration,
+  videoModel,
   videoResolution,
 }: CanvasControlPanelProps) {
   const hasSelection = selectedIds.length > 0;
@@ -130,10 +130,10 @@ export function CanvasControlPanel({
               {/* Video settings - only show when in video mode */}
               {hasSelection && variationMode === "video" && (
                 <VideoSettings
-                  setUseSoraPro={setUseSoraPro}
                   setVideoDuration={setVideoDuration}
-                  useSoraPro={useSoraPro}
+                  setVideoModel={setVideoModel}
                   videoDuration={videoDuration}
+                  videoModel={videoModel}
                 />
               )}
             </div>

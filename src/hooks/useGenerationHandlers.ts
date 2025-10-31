@@ -39,9 +39,9 @@ interface GenerationHandlerDeps {
   setSelectedImageForVideo: React.Dispatch<React.SetStateAction<string | null>>;
   setShowSignInPrompt: React.Dispatch<React.SetStateAction<boolean>>;
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
-  useSoraPro: boolean;
   userId: string | null;
   variationMode: "image" | "video";
+  videoModel: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro";
   videoDuration: number | string;
   videoResolution: "auto" | "480p" | "720p" | "1080p";
   viewport: Viewport;
@@ -80,10 +80,10 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     setSelectedImageForVideo,
     setShowSignInPrompt,
     setVideos,
-    useSoraPro,
     userId,
     variationMode,
     videoDuration,
+    videoModel,
     videoResolution,
     viewport,
   } = deps;
@@ -155,7 +155,7 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
         videoSettings: {
           aspectRatio: "auto",
           duration: videoDuration,
-          modelId: useSoraPro ? "sora-2-pro" : "sora-2",
+          modelId: videoModel,
           prompt: sanitizedPrompt || "", // Empty string will trigger AI generation on server
           resolution: videoResolution,
         },
@@ -195,10 +195,10 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     setSelectedIds,
     setShowSignInPrompt,
     setVideos,
-    useSoraPro,
     userId,
     variationMode,
     videoDuration,
+    videoModel,
     videoResolution,
     viewport,
   ]);
