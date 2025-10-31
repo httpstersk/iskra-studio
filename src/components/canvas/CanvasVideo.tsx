@@ -5,7 +5,7 @@ import { useVideoKeyboardShortcuts } from "@/hooks/useVideoKeyboardShortcuts";
 import { useVideoPlayback } from "@/hooks/useVideoPlayback";
 import type { PlacedVideo } from "@/types/canvas";
 import Konva from "konva";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Image as KonvaImage } from "react-konva";
 
 /**
@@ -169,7 +169,16 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
     setIsHovered(false);
   }, []);
 
-  // Use shared video animation coordinator
+  // Initial draw when video element loads or changes
+  // This ensures paused videos are visible with their first frame
+  useEffect(() => {
+    if (videoElement && shapeRef.current) {
+      const layer = shapeRef.current.getLayer();
+      if (layer) layer.batchDraw();
+    }
+  }, [videoElement]);
+
+  // Use shared video animation coordinator for playing videos
   // All videos share a single optimized animation loop with:
   // - Batched layer redraws (one per layer, not per video)
   // - Page Visibility API (pauses when tab hidden)

@@ -37,7 +37,7 @@ export const VIDEO_CONTROLS_TRANSITION = "opacity 0.05s ease-in-out";
 /**
  * Offset for video controls below the video element
  */
-export const VIDEO_CONTROLS_OFFSET = 10;
+export const VIDEO_CONTROLS_OFFSET = 0;
 
 /**
  * Offset for play indicator from video top-left corner

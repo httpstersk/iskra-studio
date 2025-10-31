@@ -43,6 +43,16 @@ interface VideoControlsWrapperProps {
 }
 
 /**
+ * Minimum scale factor to prevent divide-by-zero in control scaling
+ */
+const MINIMUM_SCALE = 0.1;
+
+/**
+ * CSS transform origin used when scaling controls
+ */
+const SCALE_TRANSFORM_ORIGIN = "center bottom";
+
+/**
  * VideoControlsWrapper component - positions controls as overlay at bottom of video
  *
  * @param props - Component props
@@ -62,6 +72,7 @@ export const VideoControlsWrapper = React.memo<VideoControlsWrapperProps>(
         alignItems: "flex-end",
         display: "flex",
         height: position.height,
+        justifyContent: "center",
         left: position.left,
         opacity: isHidden ? 0 : 1,
         padding: 0,
@@ -75,13 +86,25 @@ export const VideoControlsWrapper = React.memo<VideoControlsWrapperProps>(
       [isHidden, position.height, position.left, position.top, position.width]
     );
 
+    const normalizedScale = Math.max(viewport.scale, MINIMUM_SCALE);
+    const controlsBaseWidth = position.width / normalizedScale;
+
     return (
       <div style={wrapperStyle}>
-        <VideoControls
-          className="pointer-events-auto"
-          onChange={onChange}
-          video={video}
-        />
+        <div
+          className="pointer-events-auto flex w-full justify-center"
+          style={{
+            transform: `scale(${normalizedScale})`,
+            transformOrigin: SCALE_TRANSFORM_ORIGIN,
+            width: controlsBaseWidth,
+          }}
+        >
+          <VideoControls
+            className="w-full"
+            onChange={onChange}
+            video={video}
+          />
+        </div>
       </div>
     );
   }

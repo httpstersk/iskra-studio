@@ -5,15 +5,13 @@
  */
 
 import {
-  PLAY_INDICATOR_FONT_SIZE,
-  PLAY_INDICATOR_OFFSET,
   VIDEO_CONTROLS_OFFSET,
-  VIDEO_CONTROLS_TRANSITION,
   VIDEO_OVERLAY_Z_INDEX,
 } from "@/constants/video-overlays";
 import { useVideoPositioning } from "@/hooks/useVideoPositioning";
 import type { PlacedVideo } from "@/types/canvas";
-import React, { useMemo } from "react";
+import { Play } from "lucide-react";
+import React from "react";
 
 /**
  * Props for the VideoPlayIndicator component
@@ -29,12 +27,87 @@ interface VideoPlayIndicatorProps {
 }
 
 /**
- * Calculates font size for play indicator based on viewport scale
- * Uses non-linear scaling with min/max bounds for better visibility
+ * Maximum padding applied to the play indicator wrapper
  */
-function calculatePlayIndicatorFontSize(scale: number): number {
-  const { MAX, MIN, SCALE_FACTOR } = PLAY_INDICATOR_FONT_SIZE;
-  return Math.max(MIN, Math.min(MAX, SCALE_FACTOR * Math.sqrt(scale)));
+const ICON_MAX_PADDING = 24;
+
+/**
+ * Maximum icon size in pixels
+ */
+const ICON_MAX_SIZE = 96;
+
+/**
+ * Minimum padding applied to the play indicator wrapper
+ */
+const ICON_MIN_PADDING = 6;
+
+/**
+ * Minimum icon size in pixels
+ */
+const ICON_MIN_SIZE = 24;
+
+/**
+ * Ratio of min(video dimension) used to calculate wrapper padding
+ */
+const ICON_PADDING_RATIO = 0.12;
+
+/**
+ * Ratio of min(video dimension) used to calculate icon size
+ */
+const ICON_SIZE_RATIO = 0.36;
+
+/**
+ * Tailwind classes applied to the play indicator container
+ */
+const INDICATOR_CONTAINER_CLASSNAME =
+  "absolute flex items-center justify-center pointer-events-none transition-opacity duration-200";
+
+/**
+ * Tailwind classes applied to the play icon wrapper
+ */
+const INDICATOR_WRAPPER_CLASSNAME =
+  "flex items-center justify-center rounded-full bg-black/50";
+
+/**
+ * Tailwind classes applied to the play icon element
+ */
+const PLAY_ICON_CLASSNAME = "fill-white text-white";
+
+/**
+ * Stroke width applied to the play icon
+ */
+const PLAY_ICON_STROKE_WIDTH = 1.5;
+
+/**
+ * Hidden visibility state value
+ */
+const VISIBILITY_HIDDEN = "hidden" as const;
+
+/**
+ * Visible visibility state value
+ */
+const VISIBILITY_VISIBLE = "visible" as const;
+
+/**
+ * Calculates icon size for play indicator based on scaled video dimension
+ * Uses proportional sizing with min/max bounds for consistent visibility
+ */
+function calculatePlayIndicatorIconSize(minDimension: number): number {
+  return Math.max(
+    ICON_MIN_SIZE,
+    Math.min(ICON_MAX_SIZE, minDimension * ICON_SIZE_RATIO)
+  );
+}
+
+/**
+ * Calculates padding for play indicator wrapper based on scaled video dimension
+ * Ensures proportional spacing around the icon within min/max bounds
+ */
+function calculatePlayIndicatorPadding(minDimension: number): number {
+  return Math.max(
+    ICON_MIN_PADDING,
+    Math.min(ICON_MAX_PADDING, minDimension * ICON_PADDING_RATIO)
+  );
 }
 
 /**
@@ -45,46 +118,43 @@ export const VideoPlayIndicator = React.memo<VideoPlayIndicatorProps>(
     const position = useVideoPositioning(
       video,
       viewport,
-      VIDEO_CONTROLS_OFFSET,
-      PLAY_INDICATOR_OFFSET
+      VIDEO_CONTROLS_OFFSET
     );
-
-    const indicatorStyle = useMemo(() => {
-      const visibility = video.isLoaded
-        ? ("visible" as const)
-        : ("hidden" as const);
-      const display = video.isLoaded ? "block" : "none";
-
-      return {
-        display,
-        fontSize: `${calculatePlayIndicatorFontSize(viewport.scale)}px`,
-        left: position.playIndicatorLeft,
-        opacity: isHidden ? 0 : 1,
-        pointerEvents: "none" as const,
-        position: "absolute" as const,
-        top: position.playIndicatorTop,
-        transition: VIDEO_CONTROLS_TRANSITION,
-        visibility,
-        zIndex: VIDEO_OVERLAY_Z_INDEX,
-      };
-    }, [
-      isHidden,
-      position.playIndicatorLeft,
-      position.playIndicatorTop,
-      video.isLoaded,
-      viewport.scale,
-    ]);
 
     if (video.isPlaying || !video.isLoaded) {
       return null;
     }
 
+    const scaledMinDimension = Math.min(position.width, position.height);
+    const iconSize = calculatePlayIndicatorIconSize(scaledMinDimension);
+    const wrapperPadding = calculatePlayIndicatorPadding(scaledMinDimension);
+    const visibility = video.isLoaded ? VISIBILITY_VISIBLE : VISIBILITY_HIDDEN;
+
     return (
       <div
-        className="absolute bg-none text-white px-1 py-0.5"
-        style={indicatorStyle}
+        className={INDICATOR_CONTAINER_CLASSNAME}
+        style={{
+          height: position.height,
+          left: position.left,
+          opacity: isHidden ? 0 : 1,
+          top: position.top,
+          transform: `rotate(${video.rotation || 0}deg)`,
+          transformOrigin: "center",
+          visibility,
+          width: position.width,
+          zIndex: VIDEO_OVERLAY_Z_INDEX,
+        }}
       >
-        ▶
+        <div
+          className={INDICATOR_WRAPPER_CLASSNAME}
+          style={{ padding: wrapperPadding }}
+        >
+          <Play
+            className={PLAY_ICON_CLASSNAME}
+            size={iconSize}
+            strokeWidth={PLAY_ICON_STROKE_WIDTH}
+          />
+        </div>
       </div>
     );
   }
