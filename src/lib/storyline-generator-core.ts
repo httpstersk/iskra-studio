@@ -102,10 +102,15 @@ export async function generateStorylinesCore(
 
   // Build user message with optional creative direction
   const userDirectionSection = userPrompt
-    ? `\n\nUSER CREATIVE DIRECTION:
+    ? `\n\n⚠️ CRITICAL USER CREATIVE DIRECTION (MUST FOLLOW):
 "${userPrompt}"
 
-Use this as guidance for the narrative themes, subject matter, and story direction. Create storylines that align with this creative vision while maintaining the visual style from the reference analysis.`
+YOU MUST create storylines that directly incorporate the specific subjects, actions, and scenarios described above. This is NOT optional guidance - the storylines MUST feature:
+- The exact subjects/characters mentioned (e.g., spaceman, Tesla, specific objects)
+- The exact actions/events described (e.g., on fire, flying towards Mars)
+- The exact setting/context provided (e.g., red convertible, planet Mars)
+
+While you MUST follow the user's creative direction for subject and narrative, you should still apply the visual style from the reference analysis (lighting, color grading, cinematography).`
     : "\n\nCreate storylines that match this style but with completely different subjects and narratives. Make each one visually explosive and emotionally compelling.";
 
   const result = await generateObject({
