@@ -1,11 +1,11 @@
-import { DEFAULT_VIDEO_FPS_INTERVAL } from "@/constants/video-performance";
+import { useSharedVideoAnimation } from "@/hooks/useSharedVideoAnimation";
 import { useVideoDragWithSnap } from "@/hooks/useVideoDragWithSnap";
 import { useVideoElement } from "@/hooks/useVideoElement";
 import { useVideoKeyboardShortcuts } from "@/hooks/useVideoKeyboardShortcuts";
 import { useVideoPlayback } from "@/hooks/useVideoPlayback";
 import type { PlacedVideo } from "@/types/canvas";
 import Konva from "konva";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Image as KonvaImage } from "react-konva";
 
 /**
@@ -169,21 +169,12 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
     setIsHovered(false);
   }, []);
 
-  // FPS-controlled animation for video canvas rendering
-  // Only redraws the layer when video is playing, at optimal 30 FPS
-  // This prevents unnecessary CPU usage and improves battery life
-  useEffect(() => {
-    if (!video.isPlaying || !shapeRef.current) return;
-
-    const layer = shapeRef.current.getLayer();
-    if (!layer) return;
-
-    const animationTimer = setInterval(() => {
-      layer.batchDraw();
-    }, DEFAULT_VIDEO_FPS_INTERVAL);
-
-    return () => clearInterval(animationTimer);
-  }, [video.isPlaying, video.src]);
+  // Use shared video animation coordinator
+  // All videos share a single optimized animation loop with:
+  // - Batched layer redraws (one per layer, not per video)
+  // - Page Visibility API (pauses when tab hidden)
+  // - Adaptive FPS based on device performance
+  useSharedVideoAnimation(shapeRef, video.isPlaying, video.src);
 
   return (
     <KonvaImage
