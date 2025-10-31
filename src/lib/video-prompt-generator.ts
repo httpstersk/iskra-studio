@@ -6,7 +6,7 @@
 
 import { analyzeImageCore } from "@/lib/image-analyzer";
 import { expandStorylineToPrompt } from "@/lib/sora-prompt-generator";
-import { generateStorylines } from "@/lib/storyline-generator";
+import { generateStorylinesCore } from "@/lib/storyline-generator-core";
 
 /**
  * Generates a Sora 2 video prompt from an image URL
@@ -14,12 +14,14 @@ import { generateStorylines } from "@/lib/storyline-generator";
  *
  * @param imageUrl - Full URL of the image
  * @param duration - Video duration in seconds
+ * @param userPrompt - Optional user-provided creative direction to influence the generated prompt
  * @returns Promise resolving to generated prompt
  * @throws Error if prompt generation fails or produces empty result
  */
 export async function generateVideoPrompt(
   imageUrl: string,
-  duration: number
+  duration: number,
+  userPrompt?: string
 ): Promise<string> {
   // Validate inputs
   if (!imageUrl || !imageUrl.trim()) {
@@ -38,9 +40,10 @@ export async function generateVideoPrompt(
   }
 
   // Step 2: Generate storylines (we'll use the first one)
-  const storylineSet = await generateStorylines({
+  const storylineSet = await generateStorylinesCore({
     styleAnalysis,
     duration,
+    userPrompt,
   });
 
   if (!storylineSet.storylines || storylineSet.storylines.length === 0) {

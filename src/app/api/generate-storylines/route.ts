@@ -16,8 +16,9 @@ import { STORYLINE_GENERATION_SYSTEM_PROMPT } from "@/lib/storyline-generator";
 export const maxDuration = 30;
 
 const generateStorylinesRequestSchema = z.object({
-  styleAnalysis: imageStyleMoodAnalysisSchema,
   duration: z.number().int().min(1).max(60).optional(),
+  styleAnalysis: imageStyleMoodAnalysisSchema,
+  userPrompt: z.string().optional(),
 });
 
 /**
@@ -93,6 +94,7 @@ export async function POST(req: Request) {
           : typeof rawBody.duration === "string"
             ? Number.parseInt(rawBody.duration, 10)
             : rawBody.duration,
+      userPrompt: rawBody?.userPrompt,
     } satisfies Partial<Record<string, unknown>>;
 
     const parseResult =
@@ -105,7 +107,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { styleAnalysis, duration } = parseResult.data;
+    const { styleAnalysis, duration, userPrompt } = parseResult.data;
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -116,6 +118,14 @@ export async function POST(req: Request) {
     }
 
     const styleContext = buildStyleContext(styleAnalysis, duration ?? 4);
+
+    // Build user message with optional creative direction
+    const userDirectionSection = userPrompt
+      ? `\n\nUSER CREATIVE DIRECTION:
+"${userPrompt}"
+
+Use this as guidance for the narrative themes, subject matter, and story direction. Create storylines that align with this creative vision while maintaining the visual style from the reference analysis.`
+      : "\n\nCreate storylines that match this style but with completely different subjects and narratives. Make each one visually explosive and emotionally compelling.";
 
     const result = await generateObject({
       model: openai("gpt-5-mini"),
@@ -130,9 +140,7 @@ export async function POST(req: Request) {
           content: `Generate 4 unique storyline concepts for a ${duration ?? 4}-second rapid-cut video sequence.
 
 STYLE/MOOD ANALYSIS:
-${styleContext}
-
-Create storylines that match this style but with completely different subjects and narratives. Make each one visually explosive and emotionally compelling.`,
+${styleContext}${userDirectionSection}`,
         },
       ],
     });

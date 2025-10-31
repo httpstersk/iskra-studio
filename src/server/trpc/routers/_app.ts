@@ -253,45 +253,47 @@ export const appRouter = router({
           return parsedDuration;
         })();
 
-        // Sanitize user-provided prompt
-        let finalPrompt = sanitizePrompt(input.prompt);
+        // Sanitize user-provided prompt for guidance
+        const userGuidance = sanitizePrompt(input.prompt);
 
-        // If no valid prompt provided, generate one using AI
-        if (!finalPrompt) {
-          yield tracked(`${generationId}_analyze`, {
-            progress: 20,
-            status: "Analyzing image to generate prompt...",
+        // Generate prompt using AI analysis (optionally guided by user input)
+        yield tracked(`${generationId}_analyze`, {
+          progress: 20,
+          status: userGuidance
+            ? "Analyzing image with your creative direction..."
+            : "Analyzing image to generate prompt...",
+          type: "progress",
+        });
+
+        let finalPrompt: string;
+        try {
+          finalPrompt = await generateVideoPrompt(
+            input.imageUrl,
+            resolvedDuration,
+            userGuidance
+          );
+
+          // Validate the generated prompt
+          if (!finalPrompt || finalPrompt.trim().length === 0) {
+            throw new Error("Generated prompt is empty");
+          }
+
+          yield tracked(`${generationId}_prompt_ready`, {
+            progress: 40,
+            status: "Prompt generated, starting video generation...",
             type: "progress",
           });
+        } catch (promptError) {
+          const errorMessage =
+            promptError instanceof Error
+              ? promptError.message
+              : "Failed to generate video prompt";
 
-          try {
-            finalPrompt = await generateVideoPrompt(
-              input.imageUrl,
-              resolvedDuration
-            );
-
-            // Validate the generated prompt
-            if (!finalPrompt || finalPrompt.trim().length === 0) {
-              throw new Error("Generated prompt is empty");
-            }
-
-            yield tracked(`${generationId}_prompt_ready`, {
-              progress: 40,
-              status: "Prompt generated, starting video generation...",
-              type: "progress",
-            });
-          } catch (promptError) {
-            const errorMessage =
-              promptError instanceof Error
-                ? promptError.message
-                : "Failed to generate video prompt";
-
-            yield tracked(`${generationId}_error`, {
-              error: `Prompt generation failed: ${errorMessage}`,
-              type: "error",
-            });
-            return;
-          }
+          yield tracked(`${generationId}_error`, {
+            error: `Prompt generation failed: ${errorMessage}`,
+            type: "error",
+          });
+          return;
         }
 
         // Final validation before sending to FAL

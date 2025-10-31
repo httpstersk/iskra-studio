@@ -129,8 +129,6 @@ function parseDuration(duration: string | number | undefined): number {
   return 8;
 }
 
-
-
 interface CreateVideoGenerationConfigParams {
   duration: number;
   imageUrl: string;
@@ -291,8 +289,9 @@ export const handleSoraVideoVariations = async (
     const duration = parseDuration(videoSettings.duration);
 
     const storylineSet = await generateStorylines({
-      styleAnalysis: imageAnalysis,
       duration,
+      styleAnalysis: imageAnalysis,
+      userPrompt: deps.basePrompt,
     });
 
     // Stage 3: Expand storylines into full Sora prompts

@@ -13,6 +13,23 @@ You will be given:
 - A style/mood analysis of a reference image
 - The subject of that reference
 - The target duration for a video sequence
+- Optionally, a user-provided creative direction
+
+OPTIONAL USER DIRECTION:
+When a user provides a creative direction or prompt, use it to guide the narrative themes, subject matter, and story direction while ALWAYS preserving the visual style from the reference analysis. The user direction influences:
+- Subject and setting choices (what the story is about)
+- Narrative themes and story beats (how the story unfolds)
+- Overall creative direction (the conceptual approach)
+
+However, ALWAYS maintain from the reference analysis:
+- Visual style (color grading, lighting quality, atmospheric details)
+- Cinematographer and director aesthetic signatures
+- Technical specifications and production values
+- Pacing structure and beat timing
+
+Think of it as: "Tell THIS story (user direction) using THAT style (reference analysis)"
+
+If no user direction is provided, generate creative storylines freely based on the reference analysis.
 
 Your mission: craft FOUR distinct yet thematically connected cinematic sequences structured as five narrative beats (OPEN/HOOK, TRANSITION/BUILD, RUN/DEVELOPMENT, IMPACT/REVEAL, OUTRO/BUTTON), each with detailed shot descriptions, camera work, and transitions.
 
@@ -110,16 +127,21 @@ Respond ONLY with JSON that satisfies the storyline set schema: an object contai
 interface GenerateStorylinesOptions {
   styleAnalysis: ImageStyleMoodAnalysis;
   duration: number;
+  userPrompt?: string;
 }
 
 /**
  * Generates 4 unique storyline concepts based on style/mood analysis
  * Calls the API route which has access to OpenAI API key
+ *
+ * @param options.styleAnalysis - Image style and mood analysis
+ * @param options.duration - Target video duration in seconds
+ * @param options.userPrompt - Optional user-provided creative direction to influence storylines
  */
 export async function generateStorylines(
   options: GenerateStorylinesOptions
 ): Promise<StorylineSet> {
-  const { styleAnalysis, duration } = options;
+  const { styleAnalysis, duration, userPrompt } = options;
 
   const response = await fetch("/api/generate-storylines", {
     method: "POST",
@@ -129,6 +151,7 @@ export async function generateStorylines(
     body: JSON.stringify({
       styleAnalysis,
       duration,
+      userPrompt,
     }),
   });
 
