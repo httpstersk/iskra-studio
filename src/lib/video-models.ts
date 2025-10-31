@@ -25,7 +25,6 @@ const VEO_3_1_PRO_NAME = "VEO 3.1";
  * Shared UI copy and configuration
  */
 const MODEL_CATEGORY = "image-to-video";
-const PRICING_UNIT = "video (4s)";
 
 const ASPECT_RATIO_OPTIONS = {
   AUTO: { label: "Auto (from image)", value: "auto" },
@@ -88,14 +87,6 @@ export interface ModelConstraints {
     when: { field: string; value: string | number | boolean };
   }>;
   resolutionsByModel?: Record<string, string[]>;
-}
-
-/**
- * Pricing metadata for a model configuration.
- */
-export interface VideoModelPricing {
-  currency: string;
-  unit: string;
 }
 
 /**
@@ -234,10 +225,10 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
   [VEO_3_1_MODEL_ID]: {
     category: MODEL_CATEGORY,
     defaults: {
-      aspectRatio: "auto",
+      aspectRatio: "16:9",
       duration: "8",
       prompt: "",
-      resolution: "auto",
+      resolution: "1080p",
     },
     endpoint: VEO_3_1_ENDPOINT,
     id: VEO_3_1_MODEL_ID,
@@ -249,7 +240,6 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
         label: FIELD_LABELS.ASPECT_RATIO,
         name: "aspectRatio",
         options: [
-          ASPECT_RATIO_OPTIONS.AUTO,
           ASPECT_RATIO_OPTIONS.PORTRAIT,
           ASPECT_RATIO_OPTIONS.LANDSCAPE,
         ],
@@ -276,15 +266,11 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
         type: "text",
       },
       resolution: {
-        default: "auto",
+        default: "720p",
         description: FIELD_DESCRIPTIONS.RESOLUTION,
         label: FIELD_LABELS.RESOLUTION,
         name: "resolution",
-        options: [
-          RESOLUTION_OPTIONS.AUTO,
-          RESOLUTION_OPTIONS.P720,
-          RESOLUTION_OPTIONS.P1080,
-        ],
+        options: [RESOLUTION_OPTIONS.P720, RESOLUTION_OPTIONS.P1080],
         type: "select",
       },
     },
@@ -292,10 +278,10 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
   [VEO_3_1_PRO_MODEL_ID]: {
     category: MODEL_CATEGORY,
     defaults: {
-      aspectRatio: "auto",
+      aspectRatio: "16:9",
       duration: "8",
       prompt: "",
-      resolution: "auto",
+      resolution: "720p",
     },
     endpoint: VEO_3_1_PRO_ENDPOINT,
     id: VEO_3_1_PRO_MODEL_ID,
@@ -307,7 +293,6 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
         label: FIELD_LABELS.ASPECT_RATIO,
         name: "aspectRatio",
         options: [
-          ASPECT_RATIO_OPTIONS.AUTO,
           ASPECT_RATIO_OPTIONS.PORTRAIT,
           ASPECT_RATIO_OPTIONS.LANDSCAPE,
         ],
@@ -334,15 +319,11 @@ export const VIDEO_MODELS: Record<string, VideoModelConfig> = {
         type: "text",
       },
       resolution: {
-        default: "auto",
+        default: "720p",
         description: FIELD_DESCRIPTIONS.RESOLUTION,
         label: FIELD_LABELS.RESOLUTION,
         name: "resolution",
-        options: [
-          RESOLUTION_OPTIONS.AUTO,
-          RESOLUTION_OPTIONS.P720,
-          RESOLUTION_OPTIONS.P1080,
-        ],
+        options: [RESOLUTION_OPTIONS.P720, RESOLUTION_OPTIONS.P1080],
         type: "select",
       },
     },
