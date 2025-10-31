@@ -59,12 +59,15 @@ export const VideoControlsWrapper = React.memo<VideoControlsWrapperProps>(
 
     const wrapperStyle = useMemo(
       () => ({
+        alignItems: "flex-end",
+        display: "flex",
+        height: position.height,
         left: position.left,
         opacity: isHidden ? 0 : 1,
-        padding: VIDEO_CONTROLS_LAYOUT.EDGE_PADDING,
+        padding: 0,
         pointerEvents: "none" as const,
         position: "absolute" as const,
-        top: position.top + position.height - VIDEO_CONTROLS_LAYOUT.BOTTOM_OFFSET,
+        top: position.top,
         transition: VIDEO_CONTROLS_TRANSITION,
         width: position.width,
         zIndex: VIDEO_OVERLAY_Z_INDEX,

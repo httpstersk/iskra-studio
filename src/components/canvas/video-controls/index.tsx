@@ -59,12 +59,14 @@ export const VideoControls = React.memo<VideoControlsProps>(
     const containerClassName = [
       "flex",
       "items-center",
+      "w-full",
       VIDEO_CONTROLS_STYLES.GAP,
       VIDEO_CONTROLS_STYLES.BACKGROUND,
-      VIDEO_CONTROLS_STYLES.BLUR,
+      VIDEO_CONTROLS_STYLES.BORDER,
       VIDEO_CONTROLS_STYLES.BORDER_RADIUS,
       VIDEO_CONTROLS_STYLES.PADDING_X,
       VIDEO_CONTROLS_STYLES.PADDING_Y,
+      VIDEO_CONTROLS_STYLES.SHADOW,
       `z-[${VIDEO_OVERLAY_Z_INDEX}]`,
       className,
     ]

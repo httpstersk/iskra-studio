@@ -57,40 +57,42 @@ export const PLAY_INDICATOR_FONT_SIZE = {
  * Video controls styling constants
  */
 export const VIDEO_CONTROLS_STYLES = {
-  BACKGROUND: "bg-black/50",
-  BLUR: "backdrop-blur-sm",
+  BACKGROUND: "bg-card/95",
+  BORDER: "border border-border/50",
   BORDER_RADIUS: "rounded-lg",
-  GAP: "gap-2",
-  PADDING_X: "px-3",
+  GAP: "gap-3",
+  PADDING_X: "px-2",
   PADDING_Y: "py-2",
+  SHADOW: "shadow-lg",
 } as const;
 
 /**
  * Play button styling constants
  */
 export const PLAY_BUTTON_STYLES = {
-  BACKGROUND: "bg-white/90",
-  BACKGROUND_HOVER: "hover:bg-white",
-  BORDER_RADIUS: "rounded-full",
+  BACKGROUND: "bg-secondary",
+  BACKGROUND_HOVER: "hover:bg-accent",
+  BORDER: "border border-border",
+  BORDER_RADIUS: "rounded-md",
   FLEX_SHRINK: "flex-shrink-0",
-  HEIGHT: "h-7",
-  ICON_SIZE: "h-3.5 w-3.5",
+  HEIGHT: "h-6",
+  ICON_SIZE: "size-4",
   PADDING: "p-0",
-  TEXT_COLOR: "text-black",
-  WIDTH: "w-7",
+  TEXT_COLOR: "text-foreground",
+  WIDTH: "w-6",
 } as const;
 
 /**
  * Timeline styling constants
  */
 export const TIMELINE_STYLES = {
-  BACKGROUND: "bg-white/30",
-  BACKGROUND_PROGRESS: "bg-white",
+  BACKGROUND: "bg-muted",
+  BACKGROUND_PROGRESS: "bg-foreground",
   BORDER_RADIUS: "rounded-full",
   CURSOR: "cursor-pointer",
   FLEX: "flex-1",
-  HEIGHT: "h-1",
-  HEIGHT_HOVER: "hover:h-1.5",
+  HEIGHT: "h-1.5",
+  HEIGHT_HOVER: "hover:h-2",
   POSITION: "relative",
   TRANSITION: "transition-all",
 } as const;
@@ -99,19 +101,19 @@ export const TIMELINE_STYLES = {
  * Time display styling constants
  */
 export const TIME_DISPLAY_STYLES = {
-  FONT_SIZE: "text-[9px]",
+  FONT_SIZE: "text-xs",
   GAP: "gap-0.5",
   JUSTIFY: "justify-between",
   PADDING_X: "px-0.5",
-  TEXT_COLOR: "text-white/80",
+  TEXT_COLOR: "text-muted-foreground",
 } as const;
 
 /**
  * Video controls layout constants
  */
 export const VIDEO_CONTROLS_LAYOUT = {
-  BOTTOM_OFFSET: 50,
-  EDGE_PADDING: "0 12px 12px 12px",
+  BOTTOM_PADDING: "12px",
+  SIDE_PADDING: "12px",
 } as const;
 
 /**

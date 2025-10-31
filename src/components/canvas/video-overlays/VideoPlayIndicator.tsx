@@ -50,7 +50,9 @@ export const VideoPlayIndicator = React.memo<VideoPlayIndicatorProps>(
     );
 
     const indicatorStyle = useMemo(() => {
-      const visibility = video.isLoaded ? ("visible" as const) : ("hidden" as const);
+      const visibility = video.isLoaded
+        ? ("visible" as const)
+        : ("hidden" as const);
       const display = video.isLoaded ? "block" : "none";
 
       return {
