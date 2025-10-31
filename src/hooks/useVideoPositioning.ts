@@ -45,17 +45,17 @@ export function useVideoPositioning(
   playIndicatorOffset: number = 5
 ): VideoPosition {
   return useMemo(() => {
-    const scaledX = video.x * viewport.scale + viewport.x;
-    const scaledY = video.y * viewport.scale + viewport.y;
-    const scaledWidth = video.width * viewport.scale;
-    const scaledHeight = video.height * viewport.scale;
+    const scaledX = Math.round(video.x * viewport.scale + viewport.x);
+    const scaledY = Math.round(video.y * viewport.scale + viewport.y);
+    const scaledWidth = Math.round(video.width * viewport.scale);
+    const scaledHeight = Math.round(video.height * viewport.scale);
 
     return {
-      controlsTop: (video.y + video.height) * viewport.scale + viewport.y + controlsOffset,
+      controlsTop: Math.round((video.y + video.height) * viewport.scale + viewport.y + controlsOffset),
       height: scaledHeight,
       left: scaledX,
-      playIndicatorLeft: scaledX + playIndicatorOffset * viewport.scale,
-      playIndicatorTop: scaledY + playIndicatorOffset * viewport.scale,
+      playIndicatorLeft: Math.round(scaledX + playIndicatorOffset * viewport.scale),
+      playIndicatorTop: Math.round(scaledY + playIndicatorOffset * viewport.scale),
       top: scaledY,
       width: scaledWidth,
     };
