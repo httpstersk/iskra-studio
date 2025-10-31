@@ -45,10 +45,20 @@ export function useVideoPositioning(
   playIndicatorOffset: number = 5
 ): VideoPosition {
   return useMemo(() => {
-    const scaledX = video.x * viewport.scale + viewport.x;
-    const scaledY = video.y * viewport.scale + viewport.y;
     const scaledWidth = video.width * viewport.scale;
     const scaledHeight = video.height * viewport.scale;
+    
+    // Calculate center point in canvas coordinates
+    const centerX = video.x + video.width / 2;
+    const centerY = video.y + video.height / 2;
+    
+    // Transform center to screen coordinates
+    const screenCenterX = centerX * viewport.scale + viewport.x;
+    const screenCenterY = centerY * viewport.scale + viewport.y;
+    
+    // Calculate top-left position for CSS (element rotates around its center)
+    const scaledX = screenCenterX - scaledWidth / 2;
+    const scaledY = screenCenterY - scaledHeight / 2;
 
     return {
       controlsTop: (video.y + video.height) * viewport.scale + viewport.y + controlsOffset,
