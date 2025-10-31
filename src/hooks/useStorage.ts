@@ -16,6 +16,12 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { Viewport } from "./useCanvasState";
 
+const DEFAULT_VIEWPORT: Viewport = {
+  scale: 1,
+  x: 0,
+  y: 0,
+};
+
 export function useStorage(
   images: PlacedImage[],
   videos: PlacedVideo[],
@@ -98,6 +104,9 @@ export function useStorage(
       }
 
       if (!canvasState) {
+        setImages([]);
+        setVideos([]);
+        setViewport(DEFAULT_VIEWPORT);
         setIsStorageLoaded(true);
         return;
       }
@@ -148,15 +157,10 @@ export function useStorage(
         }
       }
 
-      if (loadedImages.length > 0) {
-        setImages(snapImagesToGrid(loadedImages));
-      }
+      setImages(snapImagesToGrid(loadedImages));
+      setVideos(loadedVideos);
 
-      if (loadedVideos.length > 0) {
-        setVideos(loadedVideos);
-      }
-
-      if (canvasState.viewport) setViewport(canvasState.viewport);
+      setViewport(canvasState.viewport ?? DEFAULT_VIEWPORT);
     } catch (error) {
       showError("Failed to restore canvas", "Starting with a fresh canvas");
     } finally {
