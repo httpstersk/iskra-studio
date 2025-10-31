@@ -1,6 +1,6 @@
 import { createStorageService } from "@/lib/storage";
-import { compressImage } from "@/lib/utils/compress-image";
 import { showError } from "@/lib/toast";
+import { compressImage } from "@/lib/utils/compress-image";
 import type { PlacedImage } from "@/types/canvas";
 import {
   cropImageToAspectRatio,
@@ -8,6 +8,7 @@ import {
 } from "@/utils/image-crop-utils";
 import { useCallback } from "react";
 import type { Viewport } from "./useCanvasState";
+import { useProjectGuard } from "./useProjectGuard";
 
 export function useFileUpload(
   setImages: (fn: (prev: PlacedImage[]) => PlacedImage[]) => void,
@@ -20,9 +21,16 @@ export function useFileUpload(
     variant?: "default" | "destructive";
   }) => void
 ) {
+  const { ensureProject } = useProjectGuard();
+
   const handleFileUpload = useCallback(
-    (files: FileList | null, position?: { x: number; y: number }) => {
+    async (files: FileList | null, position?: { x: number; y: number }) => {
       if (!files) return;
+
+      // Auto-create project if authenticated user has no active project
+      if (userId) {
+        await ensureProject();
+      }
 
       Array.from(files).forEach(async (file, index) => {
         if (file.type.startsWith("image/")) {
@@ -46,6 +54,7 @@ export function useFileUpload(
 
               // Create a new image element to get the cropped dimensions
               const croppedImg = new window.Image();
+
               croppedImg.onload = async () => {
                 // Use naturalWidth/naturalHeight to avoid detached element issues
                 const naturalWidth =
@@ -164,7 +173,7 @@ export function useFileUpload(
         }
       });
     },
-    [setImages, viewport, canvasSize, userId, toast]
+    [setImages, viewport, canvasSize, userId, toast, ensureProject]
   );
 
   const handleDrop = useCallback(

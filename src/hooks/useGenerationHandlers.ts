@@ -1,4 +1,7 @@
-import { useCallback } from "react";
+import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
+import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
+import { sanitizePrompt } from "@/lib/prompt-utils";
+import type { Viewport } from "@/store/canvas-atoms";
 import type {
   ActiveGeneration,
   ActiveVideoGeneration,
@@ -6,10 +9,8 @@ import type {
   PlacedImage,
   PlacedVideo,
 } from "@/types/canvas";
-import type { Viewport } from "@/store/canvas-atoms";
-import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
-import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
-import { sanitizePrompt } from "@/lib/prompt-utils";
+import { useCallback } from "react";
+import { useProjectGuard } from "./useProjectGuard";
 
 /**
  * Generation handler dependencies
@@ -87,6 +88,8 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     viewport,
   } = deps;
 
+  const { ensureProject } = useProjectGuard();
+
   /**
    * Handles image-to-video conversion
    */
@@ -120,6 +123,9 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
       return;
     }
 
+    // Auto-create project if user has no active project
+    await ensureProject();
+
     const isVariationMode =
       selectedIds.length === 1 &&
       (variationMode === "image" || variationMode === "video");
@@ -127,8 +133,10 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     if (isVariationMode) {
       // Sanitize prompt to ensure we don't pass empty strings to the API
       // For video mode, server will generate a prompt if none provided
-      const sanitizedPrompt = sanitizePrompt(generationSettings.variationPrompt);
-      
+      const sanitizedPrompt = sanitizePrompt(
+        generationSettings.variationPrompt
+      );
+
       await handleVariationGeneration({
         falClient,
         imageModel,
@@ -170,6 +178,7 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     }
   }, [
     canvasSize,
+    ensureProject,
     falClient,
     generateTextToImage,
     generationCount,
