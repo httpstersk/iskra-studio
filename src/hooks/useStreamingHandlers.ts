@@ -56,7 +56,7 @@ interface StreamingHandlers {
     finalUrl: string,
     thumbnailUrl?: string
   ) => Promise<void>;
-  handleStreamingImageError: (id: string, error: string) => void;
+  handleStreamingImageError: (id: string, error: string, isContentError?: boolean) => void;
   handleStreamingImageUpdate: (id: string, url: string) => Promise<void>;
   handleVideoGenerationComplete: (
     videoId: string,
@@ -270,31 +270,96 @@ export function useStreamingHandlers(
   );
 
   const handleStreamingImageError = useCallback(
-    (id: string, error: string) => {
+    async (id: string, error: string, isContentError?: boolean) => {
       const errorMessage = error?.trim() || "Unknown error";
-      setImages((prev) => prev.filter((img) => img.id !== id));
 
-      setActiveGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.delete(id);
+      // If it's a content validation error, show error overlay instead of removing image
+      if (isContentError) {
+        const image = images.find((img) => img.id === id);
+        
+        if (image) {
+          try {
+            // Generate error overlay from pixelated source or original source
+            const { createErrorOverlayFromUrl } = await import(
+              "@/utils/image-error-overlay"
+            );
+            
+            const sourceUrl = image.pixelatedSrc || image.src;
+            const errorOverlayUrl = await createErrorOverlayFromUrl(
+              sourceUrl,
+              image.width,
+              image.height
+            );
 
-        if (newMap.size === 0) {
-          setIsGenerating(false);
+            if (errorOverlayUrl) {
+              // Update image with error overlay
+              setImages((prev) =>
+                prev.map((img) =>
+                  img.id === id
+                    ? {
+                        ...img,
+                        hasContentError: true,
+                        isLoading: false,
+                        opacity: 1.0,
+                        pixelatedSrc: undefined,
+                        src: errorOverlayUrl,
+                      }
+                    : img
+                )
+              );
+            } else {
+              // Fallback: remove image if overlay generation fails
+              setImages((prev) => prev.filter((img) => img.id !== id));
+            }
+          } catch (overlayError) {
+            log.warn("Failed to create error overlay", { data: overlayError });
+            // Fallback: remove image
+            setImages((prev) => prev.filter((img) => img.id !== id));
+          }
         }
 
-        return newMap;
-      });
+        setActiveGenerations((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(id);
 
-      const isVariation = id.startsWith("variation-");
+          if (newMap.size === 0) {
+            setIsGenerating(false);
+          }
 
-      showError(
-        isVariation
-          ? "Variation failed"
-          : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
-        isVariation ? "One variation failed to generate" : errorMessage
-      );
+          return newMap;
+        });
+
+        // Show error message for content validation
+        showError(
+          "Content validation failed",
+          "The generated content was flagged by content moderation and cannot be displayed."
+        );
+      } else {
+        // Regular error handling: remove the image
+        setImages((prev) => prev.filter((img) => img.id !== id));
+
+        setActiveGenerations((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(id);
+
+          if (newMap.size === 0) {
+            setIsGenerating(false);
+          }
+
+          return newMap;
+        });
+
+        const isVariation = id.startsWith("variation-");
+
+        showError(
+          isVariation
+            ? "Variation failed"
+            : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
+          isVariation ? "One variation failed to generate" : errorMessage
+        );
+      }
     },
-    [setActiveGenerations, setImages, setIsGenerating]
+    [images, setActiveGenerations, setImages, setIsGenerating]
   );
 
   const handleStreamingImageUpdate = useCallback(

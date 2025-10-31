@@ -3,6 +3,7 @@ export interface PlacedImage {
   assetSyncedAt?: number;
   displayAsThumbnail?: boolean;
   fullSizeSrc?: string;
+  hasContentError?: boolean;
   height: number;
   id: string;
   isGenerated?: boolean;

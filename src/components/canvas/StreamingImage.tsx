@@ -1,5 +1,6 @@
 import { useTRPC } from "@/trpc/client";
 import type { ActiveGeneration } from "@/types/canvas";
+import { isContentValidationError } from "@/utils/image-error-overlay";
 import { useSubscription } from "@trpc/tanstack-react-query";
 import React from "react";
 
@@ -11,7 +12,7 @@ interface StreamingImageProps {
     finalUrl: string,
     thumbnailUrl?: string
   ) => void;
-  onError: (imageId: string, error: string) => void;
+  onError: (imageId: string, error: string, isContentError?: boolean) => void;
   onStreamingUpdate: (imageId: string, url: string) => void;
 }
 
@@ -26,7 +27,8 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
 
   const onErrorHandler = (error: { message?: string }) => {
     const errorMessage = error.message?.trim() || "Generation failed";
-    onError(imageId, errorMessage);
+    const isContentError = isContentValidationError(errorMessage);
+    onError(imageId, errorMessage, isContentError);
   };
 
   const onData = (data: { data: unknown }) => {

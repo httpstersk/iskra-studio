@@ -21,7 +21,7 @@ interface StreamingGenerationsProps {
   activeGenerations: Map<string, ActiveGeneration>;
   activeVideoGenerations: Map<string, ActiveVideoGeneration>;
   onImageComplete: (imageId: string, finalUrl: string, thumbnailUrl?: string) => void;
-  onImageError: (imageId: string, error: string) => void;
+  onImageError: (imageId: string, error: string, isContentError?: boolean) => void;
   onImageUpdate: (imageId: string, url: string) => void;
   onVideoComplete: (videoId: string, videoUrl: string, duration: number) => void;
   onVideoError: (videoId: string, error: string) => void;
