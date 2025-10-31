@@ -1,8 +1,15 @@
 import { useCallback } from "react";
-import type { ActiveGeneration, ActiveVideoGeneration, GenerationSettings, PlacedImage, PlacedVideo } from "@/types/canvas";
+import type {
+  ActiveGeneration,
+  ActiveVideoGeneration,
+  GenerationSettings,
+  PlacedImage,
+  PlacedVideo,
+} from "@/types/canvas";
 import type { Viewport } from "@/store/canvas-atoms";
 import { handleRun as handleRunHandler } from "@/lib/handlers/generation-handler";
 import { handleVariationGeneration } from "@/lib/handlers/variation-handler";
+import { sanitizePrompt } from "@/lib/prompt-utils";
 
 /**
  * Generation handler dependencies
@@ -18,8 +25,12 @@ interface GenerationHandlerDeps {
   images: PlacedImage[];
   isAuthenticated: boolean;
   selectedIds: string[];
-  setActiveGenerations: React.Dispatch<React.SetStateAction<Map<string, ActiveGeneration>>>;
-  setActiveVideoGenerations: React.Dispatch<React.SetStateAction<Map<string, ActiveVideoGeneration>>>;
+  setActiveGenerations: React.Dispatch<
+    React.SetStateAction<Map<string, ActiveGeneration>>
+  >;
+  setActiveVideoGenerations: React.Dispatch<
+    React.SetStateAction<Map<string, ActiveVideoGeneration>>
+  >;
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   setIsImageToVideoDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -91,7 +102,13 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
       setIsImageToVideoDialogOpen(true);
       setSelectedImageForVideo(imageId);
     },
-    [images, isAuthenticated, setIsImageToVideoDialogOpen, setSelectedImageForVideo, setShowSignInPrompt]
+    [
+      images,
+      isAuthenticated,
+      setIsImageToVideoDialogOpen,
+      setSelectedImageForVideo,
+      setShowSignInPrompt,
+    ]
   );
 
   /**
@@ -104,9 +121,13 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     }
 
     const isVariationMode =
-      selectedIds.length === 1 && (variationMode === "image" || variationMode === "video");
+      selectedIds.length === 1 &&
+      (variationMode === "image" || variationMode === "video");
 
     if (isVariationMode) {
+      // Sanitize prompt to ensure we don't pass empty strings to the API
+      const sanitizedPrompt = sanitizePrompt(generationSettings.variationPrompt);
+      
       await handleVariationGeneration({
         falClient,
         imageModel,
@@ -121,12 +142,12 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
         userId: userId ?? undefined,
         variationCount: generationCount,
         variationMode,
-        variationPrompt: generationSettings.variationPrompt,
+        variationPrompt: sanitizedPrompt,
         videoSettings: {
           aspectRatio: "auto",
           duration: videoDuration,
           modelId: useSoraPro ? "sora-2-pro" : "sora-2",
-          prompt: generationSettings.variationPrompt || "",
+          prompt: sanitizedPrompt,
           resolution: videoResolution,
         },
         viewport,

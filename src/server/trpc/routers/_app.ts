@@ -9,6 +9,7 @@ import {
   resolveImageSize,
   TEXT_TO_IMAGE_ENDPOINT,
 } from "@/lib/image-models";
+import { sanitizePrompt } from "@/lib/prompt-utils";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { tracked } from "@trpc/server";
 import sharp from "sharp";
@@ -251,6 +252,9 @@ export const appRouter = router({
           return parsedDuration;
         })();
 
+        // Sanitize prompt and omit if empty to let FAL use its defaults
+        const sanitizedPrompt = sanitizePrompt(input.prompt);
+        
         const soraInput: Record<string, unknown> = {
           aspect_ratio:
             (input as { aspectRatio?: string }).aspectRatio ||
@@ -258,10 +262,14 @@ export const appRouter = router({
             "auto",
           duration: resolvedDuration,
           image_url: input.imageUrl,
-          prompt: input.prompt || "",
           resolution:
             input.resolution || (model.defaults.resolution as string) || "auto",
         };
+        
+        // Only include prompt if it's valid (non-empty after trimming)
+        if (sanitizedPrompt) {
+          soraInput.prompt = sanitizedPrompt;
+        }
 
         const result = (await falClient.subscribe(model.endpoint, {
           input: soraInput,

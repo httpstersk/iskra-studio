@@ -9,6 +9,7 @@ import type {
   PlacedVideo,
   VideoGenerationSettings,
 } from "@/types/canvas";
+import { sanitizePrompt } from "@/lib/prompt-utils";
 import { convertImageToVideo } from "@/utils/video-utils";
 import { downloadAndReupload } from "./asset-download-handler";
 
@@ -59,17 +60,24 @@ export function createImageToVideoConfig(
   settings: VideoGenerationSettings,
   sourceImageId: string
 ) {
-  const config = {
+  // Sanitize prompt to ensure we don't pass empty strings to the API
+  const sanitizedPrompt = sanitizePrompt(settings.prompt);
+  
+  const config: Record<string, unknown> = {
     aspectRatio: settings.aspectRatio || "auto",
     cameraFixed: settings.cameraFixed,
     duration: settings.duration || VIDEO_DEFAULTS.DURATION,
     imageUrl,
     modelId: settings.modelId || VIDEO_DEFAULTS.MODEL_ID,
-    prompt: settings.prompt || "",
     resolution: settings.resolution || VIDEO_DEFAULTS.RESOLUTION,
     seed: settings.seed,
     sourceImageId,
   };
+  
+  // Only include prompt if it's valid (non-empty after trimming)
+  if (sanitizedPrompt) {
+    config.prompt = sanitizedPrompt;
+  }
 
   return config;
 }
