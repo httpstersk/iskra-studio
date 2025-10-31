@@ -136,3 +136,16 @@ export const VIDEO_CONTROLS_ARIA = {
   SEEK_BAR: "Video progress",
   TIMELINE_CONTAINER: "Video timeline",
 } as const;
+
+/**
+ * Video element configuration constants
+ */
+export const VIDEO_ELEMENT_CONFIG = {
+  CORS_ORIGIN: "anonymous",
+  OBJECT_FIT: "fill",
+  POINTER_EVENTS: "none",
+  POSITION: "absolute",
+  PRELOAD: "auto",
+  TRANSFORM_ORIGIN: "center",
+  VISIBILITY: "hidden",
+} as const;

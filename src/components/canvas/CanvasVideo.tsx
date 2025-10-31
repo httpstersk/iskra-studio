@@ -26,7 +26,6 @@ interface CanvasVideoProps {
   selectedIds: string[];
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
   video: PlacedVideo;
-  videos: PlacedVideo[]; // Not used directly; kept for prop parity
 }
 
 /**
@@ -35,15 +34,15 @@ interface CanvasVideoProps {
  * Renders a video frame on Konva and wires up drag, playback, and shortcuts.
  */
 const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
-  video,
+  dragStartPositions,
   isSelected,
-  onSelect,
   onChange,
-  onDragStart,
   onDragEnd,
+  onDragStart,
+  onSelect,
   selectedIds,
   setVideos,
-  dragStartPositions,
+  video,
 }) => {
   const shapeRef = useRef<Konva.Image>(null);
   const [isHovered, setIsHovered] = useState(false);
