@@ -14,8 +14,11 @@ interface VideoSettingsProps {
   videoModel: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro";
 }
 
+type ModelFamily = "sora" | "veo";
+type ModelQuality = "normal" | "pro" | "fast";
+
 /**
- * Video-specific settings controls (Model selector and Duration selector)
+ * Video-specific settings controls (Model family, Quality, and Duration selectors)
  */
 export function VideoSettings({
   setVideoDuration,
@@ -23,26 +26,73 @@ export function VideoSettings({
   videoDuration,
   videoModel,
 }: VideoSettingsProps) {
+  // Derive current model family and quality from full model ID
+  const modelFamily: ModelFamily = videoModel.startsWith("sora")
+    ? "sora"
+    : "veo";
+  const modelQuality: ModelQuality = videoModel.includes("pro")
+    ? "pro"
+    : videoModel === "veo-3.1"
+      ? "fast"
+      : "normal";
+
+  // Handle model family change
+  const handleModelFamilyChange = (family: ModelFamily) => {
+    if (family === "sora") {
+      // Keep quality if possible, default to normal
+      setVideoModel(modelQuality === "pro" ? "sora-2-pro" : "sora-2");
+    } else {
+      // VEO: map normal -> fast, keep pro
+      setVideoModel(modelQuality === "pro" ? "veo-3.1-pro" : "veo-3.1");
+    }
+  };
+
+  // Handle quality change
+  const handleQualityChange = (quality: ModelQuality) => {
+    if (modelFamily === "sora") {
+      setVideoModel(quality === "pro" ? "sora-2-pro" : "sora-2");
+    } else {
+      setVideoModel(quality === "pro" ? "veo-3.1-pro" : "veo-3.1");
+    }
+  };
+
   return (
     <>
-      {/* Model selector */}
+      {/* Model family selector */}
       <SegmentedControl.Root
         size="1"
-        value={videoModel}
+        value={modelFamily}
+        onValueChange={(value) => handleModelFamilyChange(value as ModelFamily)}
+      >
+        <SegmentedControl.Item value="sora">
+          <span className="text-xs">Sora</span>
+        </SegmentedControl.Item>
+        <SegmentedControl.Item value="veo">
+          <span className="text-xs">Veo</span>
+        </SegmentedControl.Item>
+      </SegmentedControl.Root>
+
+      {/* Quality selector - labels change based on model family */}
+      <SegmentedControl.Root
+        size="1"
+        value={
+          modelQuality === "normal" || modelQuality === "fast"
+            ? "standard"
+            : "pro"
+        }
         onValueChange={(value) =>
-          setVideoModel(
-            value as "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro"
+          handleQualityChange(
+            value === "pro" ? "pro" : modelFamily === "veo" ? "fast" : "normal"
           )
         }
       >
-        <SegmentedControl.Item value="sora-2">
-          <span className="text-xs">SORA2</span>
+        <SegmentedControl.Item value="standard">
+          <span className="text-xs">
+            {modelFamily === "sora" ? "Normal" : "Fast"}
+          </span>
         </SegmentedControl.Item>
-        <SegmentedControl.Item value="veo-3.1">
-          <span className="text-xs">VEO Fast</span>
-        </SegmentedControl.Item>
-        <SegmentedControl.Item value="veo-3.1-pro">
-          <span className="text-xs">VEO Pro</span>
+        <SegmentedControl.Item value="pro">
+          <span className="text-xs">Pro</span>
         </SegmentedControl.Item>
       </SegmentedControl.Root>
 
