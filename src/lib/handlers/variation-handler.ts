@@ -33,7 +33,7 @@ interface VariationHandlerDeps {
   /** Fal AI client instance */
   falClient: FalClient;
   /** Model to use for image generation */
-  imageModel?: "seedream" | "reve";
+  imageModel?: "seedream" | "nano-banana";
   /** Type of image variation (camera-angles or storyline) */
   imageVariationType?: "camera-angles" | "storyline";
   /** Array of all placed images */

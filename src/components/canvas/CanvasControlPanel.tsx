@@ -25,14 +25,14 @@ interface CanvasControlPanelProps {
   handleFileUpload: (files: FileList | null) => void;
   handleRun: () => void;
   handleVariationModeChange: (mode: "image" | "video") => void;
-  imageModel: "seedream" | "reve";
+  imageModel: "seedream" | "nano-banana";
   imageVariationType?: "camera-angles" | "storyline";
   images: PlacedImage[];
   isGenerating: boolean;
   redo: () => void;
   selectedIds: string[];
   setGenerationSettings: (settings: GenerationSettings) => void;
-  setImageModel: (value: "seedream" | "reve") => void;
+  setImageModel: (value: "seedream" | "nano-banana") => void;
   setImageVariationType?: (type: "camera-angles" | "storyline") => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   setUseSoraPro: (value: boolean) => void;

@@ -50,9 +50,9 @@ export const imageVariationTypeAtom = atom<"camera-angles" | "storyline">("camer
 /**
  * Image model atom - controls which model to use for image variations
  * "seedream": Seedream v4 Edit (default)
- * "reve": Reve Edit
+ * "nano-banana": Nano Banana Edit
  */
-export const imageModelAtom = atom<"seedream" | "reve">("seedream");
+export const imageModelAtom = atom<"seedream" | "nano-banana">("seedream");
 
 /**
  * Network status atom - tracks online/offline state

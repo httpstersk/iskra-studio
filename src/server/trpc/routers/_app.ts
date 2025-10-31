@@ -512,19 +512,19 @@ export const appRouter = router({
     }),
 
   /**
-   * Generates image variations using Seedream v4 Edit or Reve Edit.
+   * Generates image variations using Seedream v4 Edit or Nano Banana Edit.
    *
    * @remarks
    * Non-streaming: subscribes until completion and emits a single completion
    * event with the resulting image. Supports preset sizes or explicit width
-   * and height. Model can be switched between "seedream" and "reve".
+   * and height. Model can be switched between "seedream" and "nano-banana".
    */
   generateImageVariation: publicProcedure
     .input(
       z.object({
         imageUrl: z.string().url(),
         prompt: z.string(),
-        model: z.enum(["seedream", "reve"]).default("seedream"),
+        model: z.enum(["seedream", "nano-banana"]).default("seedream"),
         imageSize: z
           .union([
             z.enum([
@@ -558,12 +558,12 @@ export const appRouter = router({
         // Get the endpoint based on the selected model
         const endpoint = getImageModelEndpoint(input.model);
 
-        // Build input based on model - Reve and Seedream have different schemas
+        // Build input based on model - Nano Banana and Seedream have different schemas
         const falInput =
-          input.model === "reve"
+          input.model === "nano-banana"
             ? {
-                // Reve Edit API schema
-                image_url: input.imageUrl,
+                // Nano Banana Edit API schema
+                image_urls: [input.imageUrl],
                 prompt: compactPrompt,
                 num_images: 1,
                 output_format: "png" as const,

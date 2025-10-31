@@ -53,7 +53,7 @@ interface ToastProps {
  */
 interface BrollImageVariationHandlerDeps {
   /** Model to use for image generation */
-  imageModel?: "seedream" | "reve";
+  imageModel?: "seedream" | "nano-banana";
   /** Array of all placed images */
   images: PlacedImage[];
   /** IDs of selected images */

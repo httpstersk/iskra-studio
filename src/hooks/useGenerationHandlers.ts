@@ -21,7 +21,7 @@ interface GenerationHandlerDeps {
   generateTextToImage: any;
   generationCount: number;
   generationSettings: GenerationSettings;
-  imageModel: "seedream" | "reve";
+  imageModel: "seedream" | "nano-banana";
   imageVariationType: "camera-angles" | "storyline";
   images: PlacedImage[];
   isAuthenticated: boolean;

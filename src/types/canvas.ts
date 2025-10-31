@@ -95,8 +95,8 @@ export interface ActiveGeneration {
   imageUrl: string;
   /** Whether this is a variation of an existing image */
   isVariation?: boolean;
-  /** AI model to use for generation (Seedream or Reve) */
-  model?: "seedream" | "reve";
+  /** AI model to use for generation (Seedream or Nano Banana) */
+  model?: "seedream" | "nano-banana";
   /** Generation prompt describing the desired output */
   prompt: string;
   /** Current status of the generation process */
