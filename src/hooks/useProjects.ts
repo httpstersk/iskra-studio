@@ -18,7 +18,7 @@ import {
 import type { CanvasState, Project, ProjectMetadata } from "@/types/project";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "./useAuth";
@@ -113,6 +113,10 @@ export function useProjects(): UseProjectsReturn {
   const { isAuthenticated } = useAuth();
   const convex = useConvex();
 
+  // Use a ref to track the latest load request sequence number
+  // This prevents race conditions when rapidly switching projects
+  const loadSequenceRef = useRef(0);
+
   // Convex mutations
   const createProjectMutation = useMutation(api.projects.createProject);
   const saveProjectMutation = useMutation(api.projects.saveProject);
@@ -171,9 +175,15 @@ export function useProjects(): UseProjectsReturn {
 
   /**
    * Loads a project by ID.
+   * 
+   * Uses request sequencing to prevent race conditions when rapidly switching projects.
+   * Only the most recent load request will update the state.
    */
   const loadProject = useCallback(
     async (projectId: Id<"projects">): Promise<void> => {
+      // Increment sequence counter for this load request
+      const currentSequence = ++loadSequenceRef.current;
+
       try {
         setIsLoading(true);
 
@@ -186,6 +196,12 @@ export function useProjects(): UseProjectsReturn {
         });
 
         const project = await projectPromise;
+
+        // Check if this is still the latest request
+        // If not, ignore this response (a newer request is in progress)
+        if (currentSequence !== loadSequenceRef.current) {
+          return;
+        }
 
         if (!project) {
           throw new Error("Project not found");
@@ -232,18 +248,23 @@ export function useProjects(): UseProjectsReturn {
           return updated.sort((a, b) => b.lastSavedAt - a.lastSavedAt);
         });
       } catch (error) {
-        // Clear optimistic state on error
-        setOptimisticProjectId(null);
+        // Only clear optimistic state if this is still the latest request
+        if (currentSequence === loadSequenceRef.current) {
+          setOptimisticProjectId(null);
+        }
         throw new Error(
           `Project load failed: ${
             error instanceof Error ? error.message : "Unknown error"
           }`
         );
       } finally {
-        setIsLoading(false);
+        // Only clear loading state if this is still the latest request
+        if (currentSequence === loadSequenceRef.current) {
+          setIsLoading(false);
+        }
       }
     },
-    [convex, setCurrentProject, setIsLoading, setLastSavedAt, setProjectList]
+    [convex, setCurrentProject, setIsLoading, setLastSavedAt, setProjectList, setOptimisticProjectId]
   );
 
   /**
