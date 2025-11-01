@@ -11,6 +11,7 @@ import {
   currentProjectAtom,
   isAutoSavingAtom,
   lastSavedAtAtom,
+  optimisticProjectIdAtom,
   projectListAtom,
   projectLoadingAtom,
 } from "@/store/project-atoms";
@@ -106,6 +107,7 @@ export function useProjects(): UseProjectsReturn {
   const [isLoading, setIsLoading] = useAtom(projectLoadingAtom);
   const [isSaving, setIsSaving] = useAtom(isAutoSavingAtom);
   const [lastSavedAt, setLastSavedAt] = useAtom(lastSavedAtAtom);
+  const [, setOptimisticProjectId] = useAtom(optimisticProjectIdAtom);
 
   // Auth check
   const { isAuthenticated } = useAuth();
@@ -198,6 +200,9 @@ export function useProjects(): UseProjectsReturn {
         setCurrentProject(normalizedProject);
         setLastSavedAt(normalizedProject.lastSavedAt ?? null);
 
+        // Clear optimistic state now that real project is loaded
+        setOptimisticProjectId(null);
+
         // Update project list with loaded project data
         setProjectList((prev) => {
           const metadata: ProjectMetadata = {
@@ -227,6 +232,8 @@ export function useProjects(): UseProjectsReturn {
           return updated.sort((a, b) => b.lastSavedAt - a.lastSavedAt);
         });
       } catch (error) {
+        // Clear optimistic state on error
+        setOptimisticProjectId(null);
         throw new Error(
           `Project load failed: ${
             error instanceof Error ? error.message : "Unknown error"

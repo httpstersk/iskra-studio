@@ -9,6 +9,8 @@
 "use client";
 
 import { ProjectPanel } from "@/components/projects/project-panel";
+import { optimisticProjectIdAtom } from "@/store/project-atoms";
+import { useSetAtom } from "jotai";
 import React, { useCallback } from "react";
 
 /**
@@ -35,15 +37,22 @@ export const ProjectPanelWrapper = React.memo<ProjectPanelWrapperProps>(
     onToggle,
     restoreLastGoodState,
   }) {
+    const setOptimisticProjectId = useSetAtom(optimisticProjectIdAtom);
+
     const handleOpenProject = useCallback(
       async (projectId: string) => {
+        // Set optimistic ID immediately for instant UI feedback
+        setOptimisticProjectId(projectId);
+
         try {
           await loadProject(projectId);
         } catch (error) {
+          // Clear optimistic state on error
+          setOptimisticProjectId(null);
           restoreLastGoodState();
         }
       },
-      [loadProject, restoreLastGoodState]
+      [loadProject, restoreLastGoodState, setOptimisticProjectId]
     );
 
     return (

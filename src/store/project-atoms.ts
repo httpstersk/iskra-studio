@@ -132,6 +132,53 @@ export const currentProjectIdAtom = atom<string | null>(
 );
 
 /**
+ * Optimistic project ID base atom (private).
+ * 
+ * Stores the project ID immediately when switching starts, before async load completes.
+ * This provides instant UI feedback without waiting for Convex queries.
+ * 
+ * @private
+ */
+const optimisticProjectIdBaseAtom = atom<string | null>(null);
+
+/**
+ * Optimistic project ID atom for immediate UI updates.
+ * 
+ * Returns the optimistic project ID if set (during switching),
+ * otherwise falls back to the real current project ID.
+ * 
+ * This enables instant sidebar indicator updates when switching projects,
+ * eliminating the lag caused by waiting for async project loads.
+ * 
+ * @remarks
+ * - Write to this atom when starting a project switch (synchronous)
+ * - Automatically cleared when real project loads
+ * - Falls back to real ID when no optimistic update is pending
+ * 
+ * @example
+ * ```tsx
+ * // Set optimistic ID immediately on click
+ * setOptimisticProjectId(newProjectId);
+ * 
+ * // Load project asynchronously
+ * await loadProject(newProjectId);
+ * 
+ * // Clear optimistic state after load completes
+ * setOptimisticProjectId(null);
+ * ```
+ */
+export const optimisticProjectIdAtom = atom(
+  (get) => {
+    const optimistic = get(optimisticProjectIdBaseAtom);
+    if (optimistic) return optimistic;
+    return get(currentProjectIdAtom);
+  },
+  (_get, set, newId: string | null) => {
+    set(optimisticProjectIdBaseAtom, newId);
+  }
+);
+
+/**
  * Derived atom for current project name.
  * 
  * Returns the name of the current project, or "Untitled Project" if no project is loaded.

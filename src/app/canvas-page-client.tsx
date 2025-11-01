@@ -38,8 +38,10 @@ import { useStorage } from "@/hooks/useStorage";
 import { useStreamingHandlers } from "@/hooks/useStreamingHandlers";
 import { useUIHandlers } from "@/hooks/useUIHandlers";
 import { useUIState } from "@/hooks/useUIState-jotai";
+import { optimisticProjectIdAtom } from "@/store/project-atoms";
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
 import Konva from "konva";
 import { useTheme } from "next-themes";
 import { useCallback, useRef, useState } from "react";
@@ -71,6 +73,7 @@ export function CanvasPageClient() {
   const projects = useProjects();
   const { restoreLastGoodState } = useProjectSync();
   const [isProjectsPanelOpen, setIsProjectsPanelOpen] = useState(true);
+  const currentProjectId = useAtomValue(optimisticProjectIdAtom);
 
   const handleToggleProjectsPanel = useCallback(() => {
     setIsProjectsPanelOpen((prev) => !prev);
@@ -240,7 +243,7 @@ export function CanvasPageClient() {
 
       {isAuthenticated && (
         <ProjectPanelWrapper
-          currentProjectId={projects.currentProject?._id}
+          currentProjectId={currentProjectId ?? undefined}
           isOpen={isProjectsPanelOpen}
           loadProject={projects.loadProject}
           onToggle={handleToggleProjectsPanel}
