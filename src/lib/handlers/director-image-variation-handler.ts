@@ -164,17 +164,18 @@ export const handleDirectorImageVariations = async (
       timestamp,
     });
 
-    // Stage 1: Analyzing + refining placeholder
+    // Stage 1: Apply pixelated overlay to reference image during analysis
     const processId = `variation-${timestamp}-process`;
-    const processingPlaceholder = makePlaceholder(
-      {
-        isAnalyzing: true,
-        statusMessage: "Analyzing image and applying director styles...",
-      },
-      0
+    
+    // Update the reference image to show pixelated overlay
+    setImages((prev) =>
+      prev.map((img) =>
+        img.id === selectedImage.id
+          ? { ...img, pixelatedSrc }
+          : img
+      )
     );
-
-    setImages((prev) => [...prev, processingPlaceholder]);
+    
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.set(processId, {
@@ -198,10 +199,7 @@ export const handleDirectorImageVariations = async (
       variationPrompt
     );
 
-    // Remove processing placeholder
-    setImages((prev) =>
-      prev.filter((img) => img.id !== processingPlaceholder.id)
-    );
+    // Remove analyzing status and clear pixelated overlay from reference image
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.delete(processId);
