@@ -59,31 +59,43 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
     }
   };
 
-  // Use variation endpoint for variations, regular endpoint for normal generation
-  const variationSubscription = useSubscription(
+  /**
+   * Conditionally subscribe to variation or regular image generation.
+   * Only the enabled subscription will make tRPC calls.
+   *
+   * Note: Both hooks must be called unconditionally (Rules of Hooks),
+   * but the `enabled` flag ensures only one is active at a time.
+   */
+  useSubscription(
     trpc.generateImageVariation.subscriptionOptions(
       {
-        imageUrl: generation.imageUrl,
-        prompt: generation.prompt,
+        imageUrl: generation.imageUrl || "",
+        prompt: generation.prompt || "",
         ...(generation.model ? { model: generation.model } : {}),
         ...(generation.imageSize ? { imageSize: generation.imageSize } : {}),
       },
       {
-        enabled: !!generation.isVariation,
+        enabled:
+          !!generation.isVariation &&
+          !!generation.imageUrl &&
+          !!generation.prompt,
         onData,
         onError: onErrorHandler,
       }
     )
   );
 
-  const regularSubscription = useSubscription(
+  useSubscription(
     trpc.generateImageStream.subscriptionOptions(
       {
-        imageUrl: generation.imageUrl,
-        prompt: generation.prompt,
+        imageUrl: generation.imageUrl || "",
+        prompt: generation.prompt || "",
       },
       {
-        enabled: !generation.isVariation,
+        enabled:
+          !generation.isVariation &&
+          !!generation.imageUrl &&
+          !!generation.prompt,
         onData,
         onError: onErrorHandler,
       }
