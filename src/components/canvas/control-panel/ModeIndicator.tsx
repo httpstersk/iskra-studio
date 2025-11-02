@@ -6,7 +6,14 @@ import {
   CONTROL_PANEL_STYLES,
 } from "@/constants/control-panel";
 import { cn } from "@/lib/utils";
-import { ImagesIcon, PlayIcon } from "lucide-react";
+import {
+  Camera,
+  ImagesIcon,
+  Palette,
+  PlayIcon,
+  CctvIcon,
+  PaintBucketIcon,
+} from "lucide-react";
 
 /**
  * Props for the ModeIndicator component
@@ -84,10 +91,16 @@ export function ModeIndicator({
           }
         >
           <SegmentedControl.Item value="camera-angles">
-            <span className="text-xs whitespace-nowrap">Angles</span>
+            <div className="flex flex-row items-center gap-1.5">
+              <CctvIcon className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Angles</span>
+            </div>
           </SegmentedControl.Item>
           <SegmentedControl.Item value="director">
-            <span className="text-xs whitespace-nowrap">Styles</span>
+            <div className="flex flex-row items-center gap-1.5">
+              <PaintBucketIcon className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Styles</span>
+            </div>
           </SegmentedControl.Item>
         </SegmentedControl.Root>
       )}
