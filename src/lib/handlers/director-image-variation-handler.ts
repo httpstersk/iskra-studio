@@ -5,26 +5,26 @@
  * @module lib/handlers/director-image-variation-handler
  */
 
-import type { PlacedImage } from "@/types/canvas";
-import { logger } from "@/shared/logging/logger";
-import { handleError } from "@/shared/errors";
+import { selectRandomDirectors } from "@/constants/directors";
+import {
+  ensureImageInConvex,
+  toSignedUrl,
+} from "@/features/generation/app-services/image-storage.service";
+import { fiboStructuredToText } from "@/lib/utils/fibo-to-text";
 import {
   config,
   type ImageModel,
   type VariationCount,
 } from "@/shared/config/runtime";
-import {
-  ensureImageInConvex,
-  toSignedUrl,
-} from "@/features/generation/app-services/image-storage.service";
+import { handleError } from "@/shared/errors";
+import { logger } from "@/shared/logging/logger";
+import type { PlacedImage } from "@/types/canvas";
 import {
   createPlaceholderFactory,
   performEarlyPreparation,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
 import { validateSingleImageSelection } from "./variation-utils";
-import { selectRandomDirectors } from "@/constants/directors";
-import { fiboStructuredToText } from "@/lib/utils/fibo-to-text";
 
 const handlerLogger = logger.child({ handler: "director-image-variation" });
 
@@ -121,11 +121,6 @@ export const handleDirectorImageVariations = async (
   const timestamp = Date.now();
 
   try {
-    handlerLogger.info("Starting director image variations", {
-      variationCount,
-      hasPrompt: !!variationPrompt,
-    });
-
     // OPTIMIZATION: Perform early preparation BEFORE async operations
     const {
       imageSizeDimensions,

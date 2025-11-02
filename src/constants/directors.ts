@@ -49,7 +49,6 @@ export const DIRECTORS = [
   "Todd Haynes",
   "Wes Anderson",
   "Wong Kar-wai",
-  "Woody Allen",
   "Yorgos Lanthimos",
 ] as const;
 
