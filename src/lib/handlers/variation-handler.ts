@@ -143,7 +143,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       setImages,
       setIsGenerating,
       imageModel,
-      variationCount,
+      variationCount: variationCount as 4 | 8 | 12,
       variationPrompt,
     });
   }
