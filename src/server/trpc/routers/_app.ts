@@ -626,6 +626,88 @@ export const appRouter = router({
         });
       }
     }),
+
+  /**
+   * Generates image variations using FIBO with structured prompts and director refinement.
+   * Accepts FIBO structured JSON + text prompt for director style.
+   * FIBO handles the refinement internally.
+   */
+  generateFiboImageVariation: publicProcedure
+    .input(
+      z.object({
+        imageUrl: z.string().url(),
+        structuredPrompt: z.any(), // FIBO structured JSON
+        directorPrompt: z.string().optional(), // Text prompt for director style
+        aspectRatio: z
+          .enum(["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9"])
+          .optional()
+          .default("1:1"),
+        seed: z.number().optional().default(5555),
+        stepsNum: z.number().optional().default(50),
+        guidanceScale: z.number().optional().default(5),
+        lastEventId: z.string().optional(),
+      })
+    )
+    .subscription(async function* ({ input, signal, ctx }) {
+      try {
+        const falClient = await getFalClient(ctx);
+
+        const generationId = `fibo_gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+        // Subscribe to FIBO generate endpoint with both structured prompt and text prompt
+        const result = await falClient.subscribe("bria/fibo/generate", {
+          input: {
+            structured_prompt: input.structuredPrompt,
+            prompt: input.directorPrompt || "", // Text prompt for refinement
+            image_url: input.imageUrl,
+            seed: input.seed,
+            steps_num: input.stepsNum,
+            aspect_ratio: input.aspectRatio,
+            guidance_scale: input.guidanceScale,
+          },
+          pollInterval: 1000,
+          logs: true,
+        });
+
+        if (signal?.aborted) {
+          return;
+        }
+
+        // Extract result data
+        const resultData = extractResultData<FalImageResult>(result) ?? {
+          images: [],
+        };
+        const images = resultData.images ?? [];
+
+        if (!images?.[0]?.url) {
+          yield tracked(`${generationId}_error`, {
+            type: "error",
+            error: "No image generated from FIBO",
+          });
+          return;
+        }
+
+        // Generate thumbnail for immediate display
+        const fullSizeUrl = images[0].url;
+        const thumbnailDataUrl = await generateThumbnailDataUrl(fullSizeUrl);
+
+        // Send the final image with thumbnail
+        yield tracked(`${generationId}_complete`, {
+          type: "complete",
+          imageUrl: fullSizeUrl,
+          thumbnailUrl: thumbnailDataUrl,
+          seed: input.seed ?? 5555,
+        });
+      } catch (error) {
+        yield tracked(`error_${Date.now()}`, {
+          type: "error",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to generate FIBO image variation",
+        });
+      }
+    }),
 });
 
 export type AppRouter = typeof appRouter;

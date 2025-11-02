@@ -8,7 +8,11 @@
 import type { PlacedImage } from "@/types/canvas";
 import { logger } from "@/shared/logging/logger";
 import { handleError } from "@/shared/errors";
-import { config, type ImageModel, type VariationCount } from "@/shared/config/runtime";
+import {
+  config,
+  type ImageModel,
+  type VariationCount,
+} from "@/shared/config/runtime";
 import {
   ensureImageInConvex,
   toSignedUrl,
@@ -43,9 +47,10 @@ export interface DirectorImageVariationHandlerDeps {
  * Response from director variations API
  */
 interface DirectorVariationsResponse {
-  refinedPrompts: Array<{
+  directorPrompts: Array<{
     director: string;
-    refinedPrompt: string;
+    directorPrompt: string; // Text prompt: "Make it look as if it were shot by {director}"
+    structuredPrompt: any; // Original FIBO structured JSON
   }>;
   fiboAnalysis: any;
 }
@@ -56,7 +61,7 @@ interface DirectorVariationsResponse {
 async function generateDirectorVariations(
   imageUrl: string,
   directors: string[],
-  userContext?: string,
+  userContext?: string
 ): Promise<DirectorVariationsResponse> {
   const response = await fetch("/api/generate-director-variations", {
     method: "POST",
@@ -74,7 +79,7 @@ async function generateDirectorVariations(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `Director variations generation failed with status ${response.status}`,
+        `Director variations generation failed with status ${response.status}`
     );
   }
 
@@ -94,7 +99,7 @@ async function generateDirectorVariations(
  * 7. Generate images using Seedream/Nano Banana with refined prompts
  */
 export const handleDirectorImageVariations = async (
-  deps: DirectorImageVariationHandlerDeps,
+  deps: DirectorImageVariationHandlerDeps
 ): Promise<void> => {
   const {
     imageModel = config.imageGeneration.defaultModel,
@@ -103,7 +108,8 @@ export const handleDirectorImageVariations = async (
     setActiveGenerations,
     setImages,
     setIsGenerating,
-    variationCount = config.imageGeneration.defaultVariationCount as VariationCount,
+    variationCount = config.imageGeneration
+      .defaultVariationCount as VariationCount,
     variationPrompt,
   } = deps;
 
@@ -169,7 +175,7 @@ export const handleDirectorImageVariations = async (
         isAnalyzing: true,
         statusMessage: "Analyzing image and applying director styles...",
       },
-      0,
+      0
     );
 
     setImages((prev) => [...prev, processingPlaceholder]);
@@ -188,17 +194,17 @@ export const handleDirectorImageVariations = async (
     const selectedDirectors = selectRandomDirectors(variationCount);
     handlerLogger.info("Selected directors", { directors: selectedDirectors });
 
-    // Stage 3: Call combined API (FIBO analysis + director refinement)
+    // Stage 3: Call API to get FIBO analysis + director prompts
     handlerLogger.info("Calling director variations API");
-    const { refinedPrompts } = await generateDirectorVariations(
+    const { directorPrompts } = await generateDirectorVariations(
       signedImageUrl,
       selectedDirectors,
-      variationPrompt,
+      variationPrompt
     );
 
     // Remove processing placeholder
     setImages((prev) =>
-      prev.filter((img) => img.id !== processingPlaceholder.id),
+      prev.filter((img) => img.id !== processingPlaceholder.id)
     );
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
@@ -207,38 +213,47 @@ export const handleDirectorImageVariations = async (
     });
 
     // Stage 4: Create generation placeholders with director metadata
-    const placeholderImages: PlacedImage[] = refinedPrompts.map((item, index) =>
+    const placeholderImages: PlacedImage[] = directorPrompts.map((item, index) =>
       makePlaceholder(
         {
           isDirector: true,
           directorName: item.director,
         },
-        index,
-      ),
+        index
+      )
     );
 
     setImages((prev) => [...prev, ...placeholderImages]);
 
-    // Stage 5: Set up active generations for image generation
+    // Stage 5: Set up active generations for FIBO image generation
+    // FIBO will handle refinement internally with director prompt + structured prompt
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
-      refinedPrompts.forEach((item, index) => {
+      directorPrompts.forEach((item, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
+
+        // Store both director prompt and structured prompt for FIBO
+        const fiboParams = {
+          directorPrompt: item.directorPrompt,
+          structuredPrompt: item.structuredPrompt,
+        };
 
         newMap.set(placeholderId, {
           imageSize: imageSizeDimensions,
           imageUrl: signedImageUrl,
           isVariation: true,
-          model: imageModel,
-          prompt: item.refinedPrompt,
+          model: imageModel, // Not used for FIBO, but kept for consistency
+          prompt: JSON.stringify(fiboParams), // Stored as JSON for transport
           status: VARIATION_STATUS.GENERATING,
+          useFibo: true, // Use FIBO generation endpoint
+          fiboAspectRatio: "1:1", // Default aspect ratio, could be made dynamic
         });
       });
       return newMap;
     });
 
     handlerLogger.info("Director variations setup complete", {
-      directorCount: refinedPrompts.length,
+      directorCount: directorPrompts.length,
     });
 
     setIsGenerating(false);
