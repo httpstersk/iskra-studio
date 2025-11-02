@@ -35,7 +35,6 @@ export const DIRECTORS = [
   "Martin Scorsese",
   "Matt Reeves",
   "Nicolas Winding Refn",
-  "Noah Baumbach",
   "Oliver Stone",
   "Oz Perkins",
   "Park Chan-wook",

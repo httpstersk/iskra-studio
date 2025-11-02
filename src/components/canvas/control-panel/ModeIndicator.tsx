@@ -87,7 +87,7 @@ export function ModeIndicator({
             <span className="text-xs whitespace-nowrap">Angles</span>
           </SegmentedControl.Item>
           <SegmentedControl.Item value="director">
-            <span className="text-xs">Director</span>
+            <span className="text-xs whitespace-nowrap">Styles</span>
           </SegmentedControl.Item>
         </SegmentedControl.Root>
       )}
