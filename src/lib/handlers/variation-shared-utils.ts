@@ -20,7 +20,9 @@ export const VARIATION_CONSTANTS = {
   /** Positions for 8 variations (all 8 positions) */
   EIGHT_VARIATION_POSITIONS: [0, 1, 2, 3, 4, 5, 6, 7] as number[],
   /** Positions for 12 variations (inner ring + outer cardinal) */
-  TWELVE_VARIATION_POSITIONS: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as number[],
+  TWELVE_VARIATION_POSITIONS: [
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+  ] as number[],
 };
 
 /**
@@ -61,6 +63,25 @@ export interface PlaceholderConfig {
   timestamp: number;
   /** Index of the variation */
   variationIndex: number;
+}
+
+/**
+ * Base configuration shared across variation generation handlers.
+ * Use with createPlaceholderFactory to reduce duplication.
+ */
+export interface VariationBaseConfig {
+  /** Optimal dimensions for generated images */
+  imageSizeDimensions: { height: number; width: number };
+  /** Pixelated overlay data URL */
+  pixelatedSrc: string | undefined;
+  /** Position indices based on variation count */
+  positionIndices: number[];
+  /** Selected source image */
+  selectedImage: PlacedImage;
+  /** Snapped position for consistent alignment */
+  snappedSource: { x: number; y: number };
+  /** Timestamp for unique ID generation */
+  timestamp: number;
 }
 
 /**
@@ -136,7 +157,7 @@ export function calculateBalancedPosition(
   sourceWidth: number,
   sourceHeight: number,
   variationWidth: number,
-  variationHeight: number
+  variationHeight: number,
 ): { x: number; y: number } {
   switch (angleIndex) {
     case 0: // Top - aligned with source left edge
@@ -219,7 +240,7 @@ export function createPlaceholder(config: PlaceholderConfig): PlacedImage {
     config.sourceWidth,
     config.sourceHeight,
     config.sourceWidth,
-    config.sourceHeight
+    config.sourceHeight,
   );
 
   return {
@@ -241,6 +262,60 @@ export function createPlaceholder(config: PlaceholderConfig): PlacedImage {
 }
 
 /**
+ * Creates a placeholder factory function with shared configuration.
+ * Reduces duplication across variation handlers by centralizing common parameters.
+ *
+ * @param baseConfig - Base configuration shared across all placeholders
+ * @returns Factory function that creates placeholders with only metadata and index
+ *
+ * @example
+ * ```typescript
+ * const factory = createPlaceholderFactory({
+ *   imageSizeDimensions,
+ *   pixelatedSrc,
+ *   positionIndices,
+ *   selectedImage,
+ *   snappedSource,
+ *   timestamp,
+ * });
+ *
+ * // Create placeholders with minimal code
+ * const analyzing = factory({ isAnalyzing: true }, 0);
+ * const storyline = factory({ isStoryline: true, timeLabel: "+1min" }, 1);
+ * ```
+ */
+export function createPlaceholderFactory(baseConfig: VariationBaseConfig) {
+  return (
+    metadata: Record<string, unknown>,
+    variationIndex: number,
+  ): PlacedImage => {
+    const {
+      imageSizeDimensions,
+      pixelatedSrc,
+      positionIndices,
+      selectedImage,
+      snappedSource,
+      timestamp,
+    } = baseConfig;
+
+    return createPlaceholder({
+      metadata,
+      naturalHeight: imageSizeDimensions.height,
+      naturalWidth: imageSizeDimensions.width,
+      pixelatedSrc,
+      positionIndex: positionIndices[variationIndex],
+      sourceHeight: selectedImage.height,
+      sourceWidth: selectedImage.width,
+      sourceX: snappedSource.x,
+      sourceY: snappedSource.y,
+      src: selectedImage.src,
+      timestamp,
+      variationIndex,
+    });
+  };
+}
+
+/**
  * Creates a placeholder video for optimistic UI during generation.
  * Placeholders show immediately with pixelated overlay while actual video generation happens.
  *
@@ -248,7 +323,7 @@ export function createPlaceholder(config: PlaceholderConfig): PlacedImage {
  * @returns Placeholder video object with loading state
  */
 export function createVideoPlaceholder(
-  config: VideoPlaceholderConfig
+  config: VideoPlaceholderConfig,
 ): PlacedVideo {
   const position = calculateBalancedPosition(
     config.sourceX,
@@ -257,7 +332,7 @@ export function createVideoPlaceholder(
     config.sourceWidth,
     config.sourceHeight,
     config.sourceWidth,
-    config.sourceHeight
+    config.sourceHeight,
   );
 
   // Snap position to grid to align perfectly with ghost placeholders
@@ -313,7 +388,7 @@ export function getPositionIndices(variationCount: number): number[] {
  */
 export async function performEarlyPreparation(
   selectedImage: PlacedImage,
-  variationCount: number
+  variationCount: number,
 ): Promise<EarlyPrepResult> {
   // Snap source position for consistent alignment
   const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
@@ -321,7 +396,7 @@ export async function performEarlyPreparation(
   // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
   const imageSizeDimensions = getOptimalImageDimensions(
     selectedImage.width,
-    selectedImage.height
+    selectedImage.height,
   );
 
   // Generate pixelated overlay EARLY for immediate visual feedback

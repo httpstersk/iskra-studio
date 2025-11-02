@@ -11,7 +11,7 @@ import { showErrorFromException } from "@/lib/toast";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import type { PlacedImage } from "@/types/canvas";
 import {
-  createPlaceholder,
+  createPlaceholderFactory,
   performEarlyPreparation,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
@@ -82,7 +82,7 @@ interface BrollImageVariationHandlerDeps {
  * @throws Error if analysis fails
  */
 async function analyzeImageStyle(
-  imageUrl: string
+  imageUrl: string,
 ): Promise<ImageStyleMoodAnalysis> {
   const response = await fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
     body: JSON.stringify({ imageUrl }),
@@ -96,7 +96,7 @@ async function analyzeImageStyle(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`
+        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`,
     );
   }
 
@@ -118,7 +118,7 @@ async function analyzeImageStyle(
  * @returns Promise that resolves when generation is set up
  */
 export const handleBrollImageVariations = async (
-  deps: BrollImageVariationHandlerDeps
+  deps: BrollImageVariationHandlerDeps,
 ): Promise<void> => {
   const {
     imageModel = "seedream",
@@ -146,8 +146,22 @@ export const handleBrollImageVariations = async (
   try {
     // OPTIMIZATION: Perform early preparation BEFORE async operations
     // This generates pixelated overlay immediately for instant visual feedback
-    const { imageSizeDimensions, pixelatedSrc, positionIndices, snappedSource } =
-      await performEarlyPreparation(selectedImage, variationCount);
+    const {
+      imageSizeDimensions,
+      pixelatedSrc,
+      positionIndices,
+      snappedSource,
+    } = await performEarlyPreparation(selectedImage, variationCount);
+
+    // Create factory function with shared configuration for all placeholders
+    const makePlaceholder = createPlaceholderFactory({
+      imageSizeDimensions,
+      pixelatedSrc,
+      positionIndices,
+      selectedImage,
+      snappedSource,
+      timestamp,
+    });
 
     // Stage 0: Upload image to ensure it's in Convex
     const uploadId = `variation-${timestamp}-upload`;
@@ -210,22 +224,8 @@ export const handleBrollImageVariations = async (
     const formattedPrompts = brollConcepts.concepts;
 
     // Create placeholders IMMEDIATELY (optimistic UI)
-    const placeholderImages: PlacedImage[] = formattedPrompts.map(
-      (_, index) => {
-        return createPlaceholder({
-          naturalHeight: imageSizeDimensions.height,
-          naturalWidth: imageSizeDimensions.width,
-          pixelatedSrc,
-          positionIndex: positionIndices[index],
-          sourceHeight: selectedImage.height,
-          sourceWidth: selectedImage.width,
-          sourceX: snappedSource.x,
-          sourceY: snappedSource.y,
-          src: selectedImage.src,
-          timestamp,
-          variationIndex: index,
-        });
-      }
+    const placeholderImages: PlacedImage[] = formattedPrompts.map((_, index) =>
+      makePlaceholder({}, index),
     );
 
     // Add placeholders immediately
@@ -256,7 +256,7 @@ export const handleBrollImageVariations = async (
     showErrorFromException(
       "Generation failed",
       error,
-      ERROR_MESSAGES.BROLL_GENERATION_FAILED
+      ERROR_MESSAGES.BROLL_GENERATION_FAILED,
     );
 
     setIsGenerating(false);

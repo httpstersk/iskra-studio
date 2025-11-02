@@ -10,7 +10,7 @@ import { generateStorylineImageConcepts } from "@/lib/storyline-image-generator"
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import type { PlacedImage } from "@/types/canvas";
 import {
-  createPlaceholder,
+  createPlaceholderFactory,
   performEarlyPreparation,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
@@ -79,7 +79,7 @@ interface StorylineImageVariationHandlerDeps {
  * @throws Error if analysis fails
  */
 async function analyzeImageStyle(
-  imageUrl: string
+  imageUrl: string,
 ): Promise<ImageStyleMoodAnalysis> {
   const response = await fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
     body: JSON.stringify({ imageUrl }),
@@ -93,7 +93,7 @@ async function analyzeImageStyle(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`
+        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`,
     );
   }
 
@@ -115,7 +115,7 @@ async function analyzeImageStyle(
  * @returns Promise that resolves when generation is set up
  */
 export const handleStorylineImageVariations = async (
-  deps: StorylineImageVariationHandlerDeps
+  deps: StorylineImageVariationHandlerDeps,
 ): Promise<void> => {
   const {
     imageModel = "seedream",
@@ -142,8 +142,12 @@ export const handleStorylineImageVariations = async (
   try {
     // OPTIMIZATION: Perform early preparation BEFORE async operations
     // This generates pixelated overlay immediately for instant visual feedback
-    const { imageSizeDimensions, pixelatedSrc, positionIndices, snappedSource } =
-      await performEarlyPreparation(selectedImage, variationCount);
+    const {
+      imageSizeDimensions,
+      pixelatedSrc,
+      positionIndices,
+      snappedSource,
+    } = await performEarlyPreparation(selectedImage, variationCount);
 
     // Stage 0: Upload image to ensure it's in Convex
     const uploadId = `variation-${timestamp}-upload`;
@@ -172,8 +176,29 @@ export const handleStorylineImageVariations = async (
     // Convert to signed URL for API calls (handles proxy URLs)
     const signedImageUrl = toSignedUrl(imageUrl);
 
+    // Create factory function with shared configuration for all placeholders
+    const makePlaceholder = createPlaceholderFactory({
+      imageSizeDimensions,
+      pixelatedSrc,
+      positionIndices,
+      selectedImage,
+      snappedSource,
+      timestamp,
+    });
+
     // Stage 1: Analyze image style/mood
+    // Create visual placeholder for analyzing phase
     const analyzeId = `variation-${timestamp}-analyze`;
+    const analyzingPlaceholder = makePlaceholder(
+      {
+        isAnalyzing: true,
+        statusMessage: "Analyzing image...",
+      },
+      0,
+    );
+
+    // Add analyzing placeholder to canvas
+    setImages((prev) => [...prev, analyzingPlaceholder]);
 
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
@@ -188,7 +213,10 @@ export const handleStorylineImageVariations = async (
 
     const imageAnalysis = await analyzeImageStyle(signedImageUrl);
 
-    // Remove analyze placeholder
+    // Remove analyzing placeholder
+    setImages((prev) =>
+      prev.filter((img) => img.id !== analyzingPlaceholder.id),
+    );
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.delete(analyzeId);
@@ -196,7 +224,18 @@ export const handleStorylineImageVariations = async (
     });
 
     // Stage 2: Generate storyline concepts with exponential time progression
+    // Create visual placeholder for storyline creation phase
     const storylineId = `variation-${timestamp}-storyline`;
+    const storylinePlaceholder = makePlaceholder(
+      {
+        isCreatingStoryline: true,
+        statusMessage: "Creating storyline...",
+      },
+      0,
+    );
+
+    // Add storyline placeholder to canvas
+    setImages((prev) => [...prev, storylinePlaceholder]);
 
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
@@ -216,6 +255,9 @@ export const handleStorylineImageVariations = async (
     });
 
     // Remove storyline placeholder
+    setImages((prev) =>
+      prev.filter((img) => img.id !== storylinePlaceholder.id),
+    );
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.delete(storylineId);
@@ -225,32 +267,20 @@ export const handleStorylineImageVariations = async (
     // Stage 3: Extract prompts and metadata
     const formattedPrompts = storylineConcepts.concepts.map((c) => c.prompt);
     const narrativeNotes = storylineConcepts.concepts.map(
-      (c) => c.narrativeNote
+      (c) => c.narrativeNote,
     );
     const timeLabels = storylineConcepts.concepts.map((c) => c.timeLabel);
 
     // Create placeholders IMMEDIATELY (optimistic UI)
-    const placeholderImages: PlacedImage[] = formattedPrompts.map(
-      (_, index) => {
-        return createPlaceholder({
-          metadata: {
-            isStoryline: true,
-            narrativeNote: narrativeNotes[index],
-            timeLabel: timeLabels[index],
-          },
-          naturalHeight: imageSizeDimensions.height,
-          naturalWidth: imageSizeDimensions.width,
-          pixelatedSrc,
-          positionIndex: positionIndices[index],
-          sourceHeight: selectedImage.height,
-          sourceWidth: selectedImage.width,
-          sourceX: snappedSource.x,
-          sourceY: snappedSource.y,
-          src: selectedImage.src,
-          timestamp,
-          variationIndex: index,
-        });
-      }
+    const placeholderImages: PlacedImage[] = formattedPrompts.map((_, index) =>
+      makePlaceholder(
+        {
+          isStoryline: true,
+          narrativeNote: narrativeNotes[index],
+          timeLabel: timeLabels[index],
+        },
+        index,
+      ),
     );
 
     // Add placeholders immediately

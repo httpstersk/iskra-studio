@@ -16,7 +16,7 @@ import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
 import type { FalClient } from "@fal-ai/client";
 import {
-  createPlaceholder,
+  createPlaceholderFactory,
   performEarlyPreparation,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
@@ -108,7 +108,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     if (!setVideos || !setActiveVideoGenerations) {
       showError(
         "Configuration error",
-        "Video generation handlers not available"
+        "Video generation handlers not available",
       );
       return;
     }
@@ -173,24 +173,19 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // 12 variations: inner ring (0-7) + outer cardinal directions (8-11)
   const variationsToGenerate = selectRandomCameraVariations(variationCount);
 
+  // Create factory function with shared configuration for all placeholders
+  const makePlaceholder = createPlaceholderFactory({
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    selectedImage,
+    snappedSource,
+    timestamp,
+  });
+
   // Create placeholders IMMEDIATELY (optimistic UI)
-  // Users see instant feedback before any async operations
   const placeholderImages: PlacedImage[] = variationsToGenerate.map(
-    (_, index) => {
-      return createPlaceholder({
-        naturalHeight: imageSizeDimensions.height,
-        naturalWidth: imageSizeDimensions.width,
-        pixelatedSrc,
-        positionIndex: positionIndices[index],
-        sourceHeight: selectedImage.height,
-        sourceWidth: selectedImage.width,
-        sourceX: snappedSource.x,
-        sourceY: snappedSource.y,
-        src: selectedImage.src,
-        timestamp,
-        variationIndex: index,
-      });
-    }
+    (_, index) => makePlaceholder({}, index),
   );
 
   // Add placeholders immediately - single state update
@@ -241,7 +236,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
             directorReference,
             outputFormat: "singleline",
             recompositionStyle,
-          }
+          },
         );
 
         newMap.set(placeholderId, {
@@ -267,7 +262,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     showErrorFromException(
       "Generation failed",
       error,
-      "Failed to generate variations"
+      "Failed to generate variations",
     );
 
     setIsGenerating(false);
