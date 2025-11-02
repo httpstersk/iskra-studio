@@ -48,10 +48,9 @@ export interface DirectorImageVariationHandlerDeps {
  * Response from director variations API
  */
 interface DirectorVariationsResponse {
-  directorPrompts: Array<{
+  refinedPrompts: Array<{
     director: string;
-    directorPrompt: string; // Text prompt: "Make it look as if it were shot by {director}"
-    structuredPrompt: any; // Original FIBO structured JSON
+    refinedStructuredPrompt: any; // FIBO JSON refined with director's style
   }>;
   fiboAnalysis: any;
 }
@@ -196,9 +195,9 @@ export const handleDirectorImageVariations = async (
     const selectedDirectors = selectRandomDirectors(variationCount);
     handlerLogger.info("Selected directors", { directors: selectedDirectors });
 
-    // Stage 3: Call API to get FIBO analysis + director prompts
+    // Stage 3: Call API to get FIBO analysis + refined director prompts
     handlerLogger.info("Calling director variations API");
-    const { directorPrompts } = await generateDirectorVariations(
+    const { refinedPrompts } = await generateDirectorVariations(
       signedImageUrl,
       selectedDirectors,
       variationPrompt
@@ -215,7 +214,7 @@ export const handleDirectorImageVariations = async (
     });
 
     // Stage 4: Create generation placeholders with director metadata
-    const placeholderImages: PlacedImage[] = directorPrompts.map((item, index) =>
+    const placeholderImages: PlacedImage[] = refinedPrompts.map((item, index) =>
       makePlaceholder(
         {
           isDirector: true,
@@ -228,24 +227,21 @@ export const handleDirectorImageVariations = async (
     setImages((prev) => [...prev, ...placeholderImages]);
 
     // Stage 5: Set up active generations for Seedream/Nano Banana
-    // Convert FIBO structured prompt to text and combine with director instruction
+    // Convert refined FIBO structured JSON to concise text prompts
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
-      directorPrompts.forEach((item, index) => {
+      refinedPrompts.forEach((item, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
 
-        // Convert FIBO structured prompt to text description
-        const fiboTextDescription = fiboStructuredToText(item.structuredPrompt);
-        
-        // Combine FIBO text with director instruction
-        const finalPrompt = `${fiboTextDescription}. ${item.directorPrompt}`;
+        // Convert refined FIBO JSON (with director's style) to text prompt
+        const finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
 
         newMap.set(placeholderId, {
           imageSize: imageSizeDimensions,
           imageUrl: signedImageUrl,
           isVariation: true,
           model: imageModel, // Use selected model (Seedream or Nano Banana)
-          prompt: finalPrompt, // Combined text prompt
+          prompt: finalPrompt, // Refined prompt converted to text
           status: VARIATION_STATUS.GENERATING,
         });
       });
@@ -253,7 +249,7 @@ export const handleDirectorImageVariations = async (
     });
 
     handlerLogger.info("Director variations setup complete", {
-      directorCount: directorPrompts.length,
+      directorCount: refinedPrompts.length,
     });
 
     setIsGenerating(false);

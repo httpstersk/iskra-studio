@@ -1,9 +1,10 @@
 /**
  * Director Variations Generation API Route
- * Uses FIBO to analyze images and returns director prompt instructions
- * FIBO will handle the actual refinement during generation
+ * Uses FIBO to analyze images, then uses FIBO generate to refine with director's style
+ * Returns refined structured JSON prompts
  */
 
+import { createFalClient } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { analyzeFiboImageWithRetry } from "@/lib/services/fibo-image-analyzer";
@@ -27,6 +28,17 @@ function buildDirectorPrompt(director: string, userContext?: string): string {
   }
   
   return prompt;
+}
+
+/**
+ * Gets FAL API key from environment
+ */
+function getFalKey(): string {
+  const falKey = process.env.FAL_KEY;
+  if (!falKey || !falKey.trim()) {
+    throw new Error("FAL_KEY environment variable is not configured");
+  }
+  return falKey;
 }
 
 export async function POST(req: Request) {
@@ -59,16 +71,52 @@ export async function POST(req: Request) {
 
     console.log("[Director Variations] FIBO analysis complete");
 
-    // Build director prompts for FIBO refinement
-    const directorPrompts = directors.map((director) => ({
-      director,
-      directorPrompt: buildDirectorPrompt(director, userContext),
-      structuredPrompt: fiboAnalysis,
-    }));
+    console.log(`[Director Variations] Refining with ${directors.length} directors using FIBO...`);
 
-    console.log(`[Director Variations] Created ${directorPrompts.length} director prompts`);
+    // Get FAL client
+    const falKey = getFalKey();
+    const falClient = createFalClient({
+      credentials: () => falKey,
+    });
 
-    return NextResponse.json({ directorPrompts, fiboAnalysis });
+    // Use FIBO generate to refine the structured prompt for each director
+    const refinementPromises = directors.map(async (director) => {
+      const directorPrompt = buildDirectorPrompt(director, userContext);
+
+      console.log(`[Director Variations] Refining with ${director}...`);
+
+      // Call FIBO generate with original structured_prompt + director text prompt
+      const result = await falClient.subscribe("bria/fibo/generate", {
+        input: {
+          structured_prompt: fiboAnalysis,
+          prompt: directorPrompt, // "Make it look as if it were shot by {director}"
+          image_url: imageUrl,
+          seed: 5555,
+          steps_num: 50,
+          aspect_ratio: "16:9",
+          guidance_scale: 5,
+          sync: false, // We only need the refined structured_prompt, not the image
+        },
+        logs: true,
+      });
+
+      // Extract refined structured_prompt from FIBO response
+      const resultData = result.data as any;
+      const refinedStructuredPrompt = resultData?.structured_prompt || fiboAnalysis;
+
+      console.log(`[Director Variations] Refined prompt for ${director}`);
+
+      return {
+        director,
+        refinedStructuredPrompt,
+      };
+    });
+
+    const refinedPrompts = await Promise.all(refinementPromises);
+
+    console.log(`[Director Variations] Refined ${refinedPrompts.length} prompts`);
+
+    return NextResponse.json({ refinedPrompts, fiboAnalysis });
   } catch (error) {
     console.error("[Director Variations] Error:", error);
     return NextResponse.json(
