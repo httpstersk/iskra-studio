@@ -16,11 +16,13 @@ import { mutation, query } from "./_generated/server";
  * @param type - Type of asset (image or video)
  * @param sizeBytes - Size of the file in bytes
  * @param mimeType - MIME type of the file
+ * @param directorName - Optional director name for AI-generated director-style variations
  * @param metadata - Optional metadata (dimensions, generation params, etc.)
  * @returns Asset ID
  */
 export const uploadAsset = mutation({
   args: {
+    directorName: v.optional(v.string()),
     duration: v.optional(v.number()),
     height: v.optional(v.number()),
     mimeType: v.string(),
@@ -61,9 +63,14 @@ export const uploadAsset = mutation({
       throw new Error("Invalid duration");
     }
 
+    if (args.directorName && args.directorName.length > 100) {
+      throw new Error("Director name too long (max 100 characters)");
+    }
+
     // Create asset record
     const assetId = await ctx.db.insert("assets", {
       createdAt: Date.now(),
+      directorName: args.directorName,
       duration: args.duration,
       height: args.height,
       mimeType: args.mimeType,
