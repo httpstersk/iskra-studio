@@ -11,6 +11,7 @@
  * @module components/canvas/CanvasImage
  */
 
+import { DIRECTOR_LABEL } from "@/constants/canvas";
 import { useAnimationCoordinator } from "@/hooks/useAnimationCoordinator";
 import { useImageCache } from "@/hooks/useImageCache";
 import { useImageDrag } from "@/hooks/useImageDrag";
@@ -20,12 +21,79 @@ import type { PlacedImage } from "@/types/canvas";
 import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
 import React, { useCallback, useEffect, useRef } from "react";
-import { Image as KonvaImage } from "react-konva";
+import { Group, Image as KonvaImage, Rect, Text } from "react-konva";
 
 /**
  * Constant for CORS image loading
  */
 const CORS_MODE = "anonymous" as const;
+
+/**
+ * Props for DirectorLabel component
+ */
+interface DirectorLabelProps {
+  /** Director name to display */
+  directorName: string;
+  /** Height of the parent image */
+  height: number;
+  /** Width of the parent image */
+  width: number;
+  /** X position of the parent image */
+  x: number;
+  /** Y position of the parent image */
+  y: number;
+}
+
+/**
+ * DirectorLabel - Renders a centered label overlay with the director's name
+ *
+ * @component
+ */
+const DirectorLabel: React.FC<DirectorLabelProps> = ({
+  directorName,
+  height,
+  width,
+  x,
+  y,
+}) => {
+  // Calculate text dimensions for background sizing
+  const textWidth = directorName.length * (DIRECTOR_LABEL.FONT_SIZE * 0.6);
+  const backgroundWidth = textWidth + DIRECTOR_LABEL.PADDING_HORIZONTAL * 2;
+  const backgroundHeight = DIRECTOR_LABEL.FONT_SIZE + DIRECTOR_LABEL.PADDING_VERTICAL * 2;
+
+  // Center the label in the image
+  const labelX = x + width / 2 - backgroundWidth / 2;
+  const labelY = y + height / 2 - backgroundHeight / 2;
+
+  return (
+    <Group listening={false}>
+      <Rect
+        fill={DIRECTOR_LABEL.BACKGROUND_COLOR}
+        height={backgroundHeight}
+        listening={false}
+        perfectDrawEnabled={false}
+        shadowForStrokeEnabled={false}
+        width={backgroundWidth}
+        x={labelX}
+        y={labelY}
+      />
+      <Text
+        align="center"
+        fill={DIRECTOR_LABEL.TEXT_COLOR}
+        fontSize={DIRECTOR_LABEL.FONT_SIZE}
+        height={backgroundHeight}
+        listening={false}
+        perfectDrawEnabled={false}
+        shadowForStrokeEnabled={false}
+        text={directorName}
+        verticalAlign="middle"
+        width={backgroundWidth}
+        x={labelX}
+        y={labelY}
+      />
+    </Group>
+  );
+};
 
 /**
  * Props for the CanvasImage component
@@ -384,34 +452,45 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
 
   // Default rendering without pixelated overlay
   return (
-    <KonvaImage
-      draggable={isDraggable}
-      height={image.height}
-      id={image.id}
-      image={img}
-      imageSmoothingEnabled={true}
-      onClick={onSelect}
-      onDblClick={handleDoubleClickWrapper}
-      onDragEnd={handleDragEndWrapper}
-      onDragMove={handleDragMove}
-      onDragStart={handleDragStartInternal}
-      onMouseDown={handleMouseDown}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onMouseUp={handleMouseUp}
-      onTap={onSelect}
-      opacity={finalOpacity}
-      perfectDrawEnabled={false}
-      ref={shapeRef}
-      rotation={image.rotation}
-      stroke={strokeColor}
-      shadowForStrokeEnabled={false}
-      strokeScaleEnabled={false}
-      strokeWidth={strokeWidth}
-      width={image.width}
-      x={image.x}
-      y={image.y}
-    />
+    <>
+      <KonvaImage
+        draggable={isDraggable}
+        height={image.height}
+        id={image.id}
+        image={img}
+        imageSmoothingEnabled={true}
+        onClick={onSelect}
+        onDblClick={handleDoubleClickWrapper}
+        onDragEnd={handleDragEndWrapper}
+        onDragMove={handleDragMove}
+        onDragStart={handleDragStartInternal}
+        onMouseDown={handleMouseDown}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onTap={onSelect}
+        opacity={finalOpacity}
+        perfectDrawEnabled={false}
+        ref={shapeRef}
+        rotation={image.rotation}
+        stroke={strokeColor}
+        shadowForStrokeEnabled={false}
+        strokeScaleEnabled={false}
+        strokeWidth={strokeWidth}
+        width={image.width}
+        x={image.x}
+        y={image.y}
+      />
+      {image.directorName && !image.isLoading && (
+        <DirectorLabel
+          directorName={image.directorName}
+          height={image.height}
+          width={image.width}
+          x={image.x}
+          y={image.y}
+        />
+      )}
+    </>
   );
 };
 
@@ -453,7 +532,9 @@ const arePropsEqual = (
     prevImg.opacity !== nextImg.opacity ||
     prevImg.isLoading !== nextImg.isLoading ||
     prevImg.isGenerated !== nextImg.isGenerated ||
-    prevImg.displayAsThumbnail !== nextImg.displayAsThumbnail
+    prevImg.displayAsThumbnail !== nextImg.displayAsThumbnail ||
+    prevImg.directorName !== nextImg.directorName ||
+    prevImg.isDirector !== nextImg.isDirector
   ) {
     return false;
   }
