@@ -21,12 +21,12 @@ const requestSchema = z.object({
  * Builds director refinement prompt for FIBO
  */
 function buildDirectorPrompt(director: string, userContext?: string): string {
-  let prompt = `Make it look as if it were shot by ${director}.`;
-  
+  let prompt = `Make it look as though it were shot by a film director or cinematographer: ${director}.`;
+
   if (userContext) {
     prompt += ` ${userContext}`;
   }
-  
+
   return prompt;
 }
 
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
         { error: "OpenAI API key not configured" },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -65,13 +65,15 @@ export async function POST(req: Request) {
 
     const fiboAnalysis = await analyzeFiboImageWithRetry({
       imageUrl,
-      seed: 5555,
+      seed: 666,
       timeout: 45000,
     });
 
     console.log("[Director Variations] FIBO analysis complete");
 
-    console.log(`[Director Variations] Refining with ${directors.length} directors using FIBO...`);
+    console.log(
+      `[Director Variations] Refining with ${directors.length} directors using FIBO...`
+    );
 
     // Get FAL client
     const falKey = getFalKey();
@@ -88,13 +90,13 @@ export async function POST(req: Request) {
       // Call FIBO generate with original structured_prompt + director text prompt
       const result = await falClient.subscribe("bria/fibo/generate", {
         input: {
-          structured_prompt: fiboAnalysis,
-          prompt: directorPrompt, // "Make it look as if it were shot by {director}"
-          image_url: imageUrl,
-          seed: 5555,
-          steps_num: 50,
           aspect_ratio: "16:9",
           guidance_scale: 5,
+          image_url: imageUrl,
+          prompt: directorPrompt, // "Make it look as though it were shot by a film director or cinematographer: {director}"
+          seed: 666,
+          steps_num: 50,
+          structured_prompt: fiboAnalysis,
           sync: false, // We only need the refined structured_prompt, not the image
         },
         logs: true,
@@ -102,7 +104,8 @@ export async function POST(req: Request) {
 
       // Extract refined structured_prompt from FIBO response
       const resultData = result.data as any;
-      const refinedStructuredPrompt = resultData?.structured_prompt || fiboAnalysis;
+      const refinedStructuredPrompt =
+        resultData?.structured_prompt || fiboAnalysis;
 
       console.log(`[Director Variations] Refined prompt for ${director}`);
 
@@ -114,7 +117,9 @@ export async function POST(req: Request) {
 
     const refinedPrompts = await Promise.all(refinementPromises);
 
-    console.log(`[Director Variations] Refined ${refinedPrompts.length} prompts`);
+    console.log(
+      `[Director Variations] Refined ${refinedPrompts.length} prompts`
+    );
 
     return NextResponse.json({ refinedPrompts, fiboAnalysis });
   } catch (error) {
@@ -124,7 +129,7 @@ export async function POST(req: Request) {
         error: "Failed to generate director variations",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

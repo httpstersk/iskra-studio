@@ -71,7 +71,7 @@ bria/fibo/generate/structured_prompt
 ### Input Parameters
 
 - `image_url` - Publicly accessible image URL or base64 data URI
-- `seed` - Random seed for reproducibility (default: 5555)
+- `seed` - Random seed for reproducibility (default: 666)
 
 ### Output Structure
 

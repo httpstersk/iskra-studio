@@ -30,7 +30,7 @@ export interface ImageAnalysisResult {
  * @throws Error if analysis fails
  */
 export async function analyzeImageCore(
-  imageUrl: string,
+  imageUrl: string
 ): Promise<ImageAnalysisResult> {
   if (!imageUrl || !imageUrl.trim()) {
     throw new Error("Image URL is required");
@@ -40,7 +40,7 @@ export async function analyzeImageCore(
     // Analyze image with FIBO (includes automatic retry)
     const fiboResult = await analyzeFiboImageWithRetry({
       imageUrl,
-      seed: 5555,
+      seed: 666,
       timeout: 30000,
     });
 
@@ -63,7 +63,7 @@ export async function analyzeImageCore(
     throw new Error(
       error instanceof Error
         ? error.message
-        : "Unknown error during image analysis",
+        : "Unknown error during image analysis"
     );
   }
 }

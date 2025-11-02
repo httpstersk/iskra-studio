@@ -134,12 +134,14 @@ export const handleDirectorImageVariations = async (
 
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
+
       newMap.set(uploadId, {
         imageUrl: "",
         isVariation: true,
         prompt: "",
         status: VARIATION_STATUS.UPLOADING,
       });
+
       return newMap;
     });
 
@@ -164,26 +166,34 @@ export const handleDirectorImageVariations = async (
       timestamp,
     });
 
+    // Create placeholders IMMEDIATELY for optimistic UI
+    const placeholderImages: PlacedImage[] = Array.from(
+      { length: variationCount },
+      (_, index) => makePlaceholder({}, index)
+    );
+
+    setImages((prev) => [...prev, ...placeholderImages]);
+
     // Stage 1: Apply pixelated overlay to reference image during analysis
     const processId = `variation-${timestamp}-process`;
-    
+
     // Update the reference image to show pixelated overlay
     setImages((prev) =>
       prev.map((img) =>
-        img.id === selectedImage.id
-          ? { ...img, pixelatedSrc }
-          : img
+        img.id === selectedImage.id ? { ...img, pixelatedSrc } : img
       )
     );
-    
+
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
+
       newMap.set(processId, {
         imageUrl: signedImageUrl,
         isVariation: true,
         prompt: "",
         status: VARIATION_STATUS.ANALYZING,
       });
+
       return newMap;
     });
 
@@ -206,23 +216,31 @@ export const handleDirectorImageVariations = async (
       return newMap;
     });
 
-    // Stage 4: Create generation placeholders with director metadata
-    const placeholderImages: PlacedImage[] = refinedPrompts.map((item, index) =>
-      makePlaceholder(
-        {
-          isDirector: true,
-          directorName: item.director,
-        },
-        index
-      )
+    // Stage 4: Update existing placeholders with director metadata
+    setImages((prev) =>
+      prev.map((img) => {
+        // Check if this is one of our variation placeholders
+        const match = img.id.match(/^variation-(\d+)-(\d+)$/);
+        if (match && parseInt(match[1]) === timestamp) {
+          const index = parseInt(match[2]);
+          const directorData = refinedPrompts[index];
+          if (directorData) {
+            return {
+              ...img,
+              directorName: directorData.director,
+              isDirector: true,
+            };
+          }
+        }
+        return img;
+      })
     );
-
-    setImages((prev) => [...prev, ...placeholderImages]);
 
     // Stage 5: Set up active generations for Seedream/Nano Banana
     // Convert refined FIBO structured JSON to concise text prompts
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
+
       refinedPrompts.forEach((item, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
 
@@ -233,11 +251,12 @@ export const handleDirectorImageVariations = async (
           imageSize: imageSizeDimensions,
           imageUrl: signedImageUrl,
           isVariation: true,
-          model: imageModel, // Use selected model (Seedream or Nano Banana)
-          prompt: finalPrompt, // Refined prompt converted to text
+          model: imageModel,
+          prompt: finalPrompt,
           status: VARIATION_STATUS.GENERATING,
         });
       });
+
       return newMap;
     });
 
@@ -252,6 +271,7 @@ export const handleDirectorImageVariations = async (
       operation: "Director variation generation",
       context: { variationCount, selectedImageId: selectedImage?.id },
     });
+
     setIsGenerating(false);
   }
 };

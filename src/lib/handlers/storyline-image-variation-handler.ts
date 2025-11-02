@@ -126,6 +126,14 @@ export const handleStorylineImageVariations = async (
       timestamp,
     });
 
+    // Create placeholders IMMEDIATELY for optimistic UI
+    const placeholderImages: PlacedImage[] = Array.from(
+      { length: variationCount },
+      (_, index) => makePlaceholder({}, index)
+    );
+
+    setImages((prev) => [...prev, ...placeholderImages]);
+
     // Stage 1: Apply pixelated overlay to reference image during analysis
     const analyzeId = createVariationId(timestamp, "analyze");
 
@@ -140,6 +148,9 @@ export const handleStorylineImageVariations = async (
       status: VARIATION_STATUS.ANALYZING,
     });
 
+    // DELEGATE TO SERVICE LAYER
+    handlerLogger.info("Delegating to storyline generation service");
+
     // Stage 2: Transition to storyline creation
     const storylineId = createVariationId(timestamp, "storyline");
 
@@ -149,9 +160,6 @@ export const handleStorylineImageVariations = async (
       status: VARIATION_STATUS.CREATING_STORYLINE,
     });
 
-    // DELEGATE TO SERVICE LAYER
-    handlerLogger.info("Delegating to storyline generation service");
-
     const concepts = await generateStorylineConcepts({
       count: variationCount,
       imageUrl: signedImageUrl,
@@ -160,36 +168,41 @@ export const handleStorylineImageVariations = async (
 
     removeGenerationStatus(setActiveGenerations, storylineId);
 
-    // Stage 3: Create placeholders and active generations in single pass
-    const placeholderImages: PlacedImage[] = [];
+    // Stage 3: Update existing placeholders with storyline metadata and set up active generations
     const activeGenerations = new Map<string, ActiveGeneration>();
 
-    concepts.forEach((concept, index) => {
-      // Create placeholder with concept metadata
-      const placeholder = makePlaceholder(
-        {
-          isStoryline: true,
-          narrativeNote: concept.narrativeNote,
-          timeLabel: concept.timeLabel,
-        },
-        index
-      );
-      placeholderImages.push(placeholder);
+    setImages((prev) =>
+      prev.map((img) => {
+        // Check if this is one of our variation placeholders
+        const match = img.id.match(/^variation-(\d+)-(\d+)$/);
+        if (match && parseInt(match[1]) === timestamp) {
+          const index = parseInt(match[2]);
+          const concept = concepts[index];
+          if (concept) {
+            // Set up active generation for this placeholder
+            const placeholderId = createVariationId(timestamp, index.toString());
+            activeGenerations.set(placeholderId, {
+              imageSize: imageSizeDimensions,
+              imageUrl: signedImageUrl,
+              isVariation: true,
+              model: imageModel,
+              prompt: concept.prompt,
+              status: VARIATION_STATUS.GENERATING,
+            });
 
-      // Create corresponding active generation
-      const placeholderId = createVariationId(timestamp, index.toString());
+            // Return updated placeholder with storyline metadata
+            return {
+              ...img,
+              isStoryline: true,
+              narrativeNote: concept.narrativeNote,
+              timeLabel: concept.timeLabel,
+            };
+          }
+        }
+        return img;
+      })
+    );
 
-      activeGenerations.set(placeholderId, {
-        imageSize: imageSizeDimensions,
-        imageUrl: signedImageUrl,
-        isVariation: true,
-        model: imageModel,
-        prompt: concept.prompt,
-        status: VARIATION_STATUS.GENERATING,
-      });
-    });
-
-    setImages((prev) => [...prev, ...placeholderImages]);
     setActiveGenerations((prev) => new Map([...prev, ...activeGenerations]));
 
     handlerLogger.info("Storyline variations setup complete", {

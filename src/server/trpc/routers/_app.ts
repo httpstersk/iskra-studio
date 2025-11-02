@@ -639,10 +639,20 @@ export const appRouter = router({
         structuredPrompt: z.any(), // FIBO structured JSON
         directorPrompt: z.string().optional(), // Text prompt for director style
         aspectRatio: z
-          .enum(["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9"])
+          .enum([
+            "1:1",
+            "2:3",
+            "3:2",
+            "3:4",
+            "4:3",
+            "4:5",
+            "5:4",
+            "9:16",
+            "16:9",
+          ])
           .optional()
           .default("1:1"),
-        seed: z.number().optional().default(5555),
+        seed: z.number().optional().default(666),
         stepsNum: z.number().optional().default(50),
         guidanceScale: z.number().optional().default(5),
         lastEventId: z.string().optional(),
@@ -675,10 +685,10 @@ export const appRouter = router({
 
         // Extract result data - FIBO returns { image: {...} } not { images: [...] }
         const resultData = extractResultData<any>(result);
-        
+
         // Handle FIBO's response structure
         let imageUrl: string | undefined;
-        
+
         if (resultData?.image?.url) {
           // FIBO structure: { image: { url, ... } }
           imageUrl = resultData.image.url;
@@ -688,7 +698,10 @@ export const appRouter = router({
         }
 
         if (!imageUrl) {
-          console.error("[FIBO] No image URL found in result:", JSON.stringify(resultData, null, 2));
+          console.error(
+            "[FIBO] No image URL found in result:",
+            JSON.stringify(resultData, null, 2)
+          );
           yield tracked(`${generationId}_error`, {
             type: "error",
             error: "No image generated from FIBO",
@@ -705,7 +718,7 @@ export const appRouter = router({
           type: "complete",
           imageUrl: fullSizeUrl,
           thumbnailUrl: thumbnailDataUrl,
-          seed: input.seed ?? 5555,
+          seed: input.seed ?? 666,
         });
       } catch (error) {
         yield tracked(`error_${Date.now()}`, {
