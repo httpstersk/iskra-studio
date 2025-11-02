@@ -114,16 +114,45 @@ export function useStorage(
       const loadedImages: PlacedImage[] = [];
       const loadedVideos: PlacedVideo[] = [];
 
+      // Collect unique asset IDs to batch fetch director names
+      const assetIds = new Set<string>();
+      for (const element of canvasState.elements) {
+        if (element.assetId) {
+          assetIds.add(element.assetId);
+        }
+      }
+
+      // Batch fetch assets to get director names
+      const assetDirectorNames = new Map<string, string>();
+      for (const assetId of assetIds) {
+        try {
+          const asset = await convexClient.query(api.assets.getAsset, {
+            assetId: assetId as any,
+          });
+          if (asset?.directorName) {
+            assetDirectorNames.set(assetId, asset.directorName);
+          }
+        } catch (error) {
+          // Asset might have been deleted or inaccessible, skip it
+        }
+      }
+
       for (const element of canvasState.elements) {
         if (element.type === "image") {
           const imageData = await canvasStorage.getImage(element.id);
 
           if (imageData) {
+            const directorName = element.assetId
+              ? assetDirectorNames.get(element.assetId)
+              : undefined;
+
             loadedImages.push({
               assetId: element.assetId,
               assetSyncedAt: element.assetSyncedAt,
+              directorName,
               height: element.height || 300,
               id: element.id,
+              isDirector: !!directorName,
               rotation: element.transform.rotation,
               src: imageData.originalDataUrl,
               width: element.width || 300,
