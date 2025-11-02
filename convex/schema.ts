@@ -55,12 +55,14 @@ export default defineSchema({
    * @property width - Asset width in pixels
    * @property height - Asset height in pixels
    * @property duration - Video duration in seconds (nullable, video only)
+   * @property directorName - Director name for AI-generated director-style variations (nullable)
    * @property mimeType - MIME type (e.g., "image/png", "video/mp4")
    * @property sizeBytes - File size in bytes
    * @property createdAt - Upload timestamp
    */
   assets: defineTable({
     createdAt: v.number(),
+    directorName: v.optional(v.string()),
     duration: v.optional(v.number()),
     height: v.optional(v.number()),
     mimeType: v.string(),
