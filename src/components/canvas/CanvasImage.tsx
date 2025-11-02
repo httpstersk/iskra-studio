@@ -21,7 +21,7 @@ import type { PlacedImage } from "@/types/canvas";
 import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
 import React, { useCallback, useEffect, useRef } from "react";
-import { Group, Image as KonvaImage, Rect, Text } from "react-konva";
+import { Group, Image as KonvaImage, Text } from "react-konva";
 
 /**
  * Constant for CORS image loading
@@ -57,41 +57,28 @@ const DirectorLabel: React.FC<DirectorLabelProps> = ({
   y,
 }) => {
   // Calculate text dimensions for background sizing
-  const textWidth = directorName.length * (DIRECTOR_LABEL.FONT_SIZE * 0.6);
-  const backgroundWidth = textWidth + DIRECTOR_LABEL.PADDING_HORIZONTAL * 2;
-  const backgroundHeight = DIRECTOR_LABEL.FONT_SIZE + DIRECTOR_LABEL.PADDING_VERTICAL * 2;
+  const backgroundWidth = directorName.length * DIRECTOR_LABEL.FONT_SIZE;
+  const backgroundHeight = DIRECTOR_LABEL.FONT_SIZE;
 
   // Center the label in the image
   const labelX = x + width / 2 - backgroundWidth / 2;
   const labelY = y + height / 2 - backgroundHeight / 2;
 
   return (
-    <Group listening={false}>
-      <Rect
-        fill={DIRECTOR_LABEL.BACKGROUND_COLOR}
-        height={backgroundHeight}
-        listening={false}
-        perfectDrawEnabled={false}
-        shadowForStrokeEnabled={false}
-        width={backgroundWidth}
-        x={labelX}
-        y={labelY}
-      />
-      <Text
-        align="center"
-        fill={DIRECTOR_LABEL.TEXT_COLOR}
-        fontSize={DIRECTOR_LABEL.FONT_SIZE}
-        height={backgroundHeight}
-        listening={false}
-        perfectDrawEnabled={false}
-        shadowForStrokeEnabled={false}
-        text={directorName}
-        verticalAlign="middle"
-        width={backgroundWidth}
-        x={labelX}
-        y={labelY}
-      />
-    </Group>
+    <Text
+      align="center"
+      fill={DIRECTOR_LABEL.TEXT_COLOR}
+      fontSize={DIRECTOR_LABEL.FONT_SIZE}
+      height={backgroundHeight}
+      listening={false}
+      perfectDrawEnabled={false}
+      shadowForStrokeEnabled={false}
+      text={directorName}
+      verticalAlign="middle"
+      width={backgroundWidth}
+      x={labelX}
+      y={labelY}
+    />
   );
 };
 

@@ -74,9 +74,6 @@ export const ARIA_LABELS = {
 } as const;
 
 export const DIRECTOR_LABEL = {
-  BACKGROUND_COLOR: "rgba(0, 0, 0, 0.75)",
-  FONT_SIZE: 14,
-  PADDING_HORIZONTAL: 12,
-  PADDING_VERTICAL: 6,
+  FONT_SIZE: 8,
   TEXT_COLOR: "#ffffff",
 } as const;
