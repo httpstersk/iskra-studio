@@ -22,7 +22,7 @@ interface GenerationHandlerDeps {
   generationCount: number;
   generationSettings: GenerationSettings;
   imageModel: "seedream" | "nano-banana";
-  imageVariationType: "camera-angles" | "storyline";
+  imageVariationType: "camera-angles" | "director";
   images: PlacedImage[];
   isAuthenticated: boolean;
   selectedIds: string[];

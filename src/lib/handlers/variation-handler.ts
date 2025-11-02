@@ -34,8 +34,8 @@ interface VariationHandlerDeps {
   falClient: FalClient;
   /** Model to use for image generation */
   imageModel?: "seedream" | "nano-banana";
-  /** Type of image variation (camera-angles or storyline) */
-  imageVariationType?: "camera-angles" | "storyline";
+  /** Type of image variation (camera-angles or director) */
+  imageVariationType?: "camera-angles" | "director";
   /** Array of all placed images */
   images: PlacedImage[];
   /** IDs of selected images */
@@ -102,7 +102,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
   // Route to appropriate handler based on variation mode:
   // - Video mode: Uses Sora 2 with AI analysis (image analysis + storyline generation)
-  // - Image mode with storyline: Uses Seedream with AI analysis for narrative progression with exponential time jumps
+  // - Image mode with director: Uses Seedream/Nano Banana with FIBO analysis + director style refinement
   // - Image mode with camera angles: Uses Seedream without AI analysis (continues below)
   if (variationMode === "video") {
     if (!setVideos || !setActiveVideoGenerations) {
@@ -130,13 +130,13 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     });
   }
 
-  // IMAGE MODE with storyline: Generate storyline variations using AI analysis
-  if (variationMode === "image" && imageVariationType === "storyline") {
-    const { handleStorylineImageVariations } = await import(
-      "./storyline-image-variation-handler"
+  // IMAGE MODE with director: Generate director-style variations using FIBO + refinement
+  if (variationMode === "image" && imageVariationType === "director") {
+    const { handleDirectorImageVariations } = await import(
+      "./director-image-variation-handler"
     );
 
-    return handleStorylineImageVariations({
+    return handleDirectorImageVariations({
       images,
       selectedIds,
       setActiveGenerations,

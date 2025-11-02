@@ -43,9 +43,9 @@ export const generationCountAtom = atom<number>(4);
 /**
  * Image variation type atom - controls type of image variations
  * "camera-angles": Random camera angle variations (default)
- * "storyline": AI-generated narrative sequences with exponential time progression
+ * "director": AI-generated variations with director visual signatures via FIBO
  */
-export const imageVariationTypeAtom = atom<"camera-angles" | "storyline">("camera-angles");
+export const imageVariationTypeAtom = atom<"camera-angles" | "director">("camera-angles");
 
 /**
  * Image model atom - controls which model to use for image variations
