@@ -4,16 +4,16 @@
  * Returns refined structured JSON prompts
  */
 
+import { analyzeFiboImageWithRetry } from "@/lib/services/fibo-image-analyzer";
 import { createFalClient } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { analyzeFiboImageWithRetry } from "@/lib/services/fibo-image-analyzer";
 
 export const maxDuration = 60;
 
 const requestSchema = z.object({
-  imageUrl: z.string().url(),
   directors: z.array(z.string()).min(1).max(12),
+  imageUrl: z.string().url(),
   userContext: z.string().optional(),
 });
 
@@ -54,26 +54,11 @@ export async function POST(req: Request) {
 
     const { imageUrl, directors, userContext } = parseResult.data;
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: "OpenAI API key not configured" },
-        { status: 500 }
-      );
-    }
-
-    console.log("[Director Variations] Starting FIBO analysis...");
-
     const fiboAnalysis = await analyzeFiboImageWithRetry({
       imageUrl,
       seed: 666,
       timeout: 45000,
     });
-
-    console.log("[Director Variations] FIBO analysis complete");
-
-    console.log(
-      `[Director Variations] Refining with ${directors.length} directors using FIBO...`
-    );
 
     // Get FAL client
     const falKey = getFalKey();
@@ -84,8 +69,6 @@ export async function POST(req: Request) {
     // Use FIBO generate to refine the structured prompt for each director
     const refinementPromises = directors.map(async (director) => {
       const directorPrompt = buildDirectorPrompt(director, userContext);
-
-      console.log(`[Director Variations] Refining with ${director}...`);
 
       // Call FIBO generate with original structured_prompt + director text prompt
       const result = await falClient.subscribe("bria/fibo/generate", {
@@ -107,8 +90,6 @@ export async function POST(req: Request) {
       const refinedStructuredPrompt =
         resultData?.structured_prompt || fiboAnalysis;
 
-      console.log(`[Director Variations] Refined prompt for ${director}`);
-
       return {
         director,
         refinedStructuredPrompt,
@@ -116,10 +97,6 @@ export async function POST(req: Request) {
     });
 
     const refinedPrompts = await Promise.all(refinementPromises);
-
-    console.log(
-      `[Director Variations] Refined ${refinedPrompts.length} prompts`
-    );
 
     return NextResponse.json({ refinedPrompts, fiboAnalysis });
   } catch (error) {

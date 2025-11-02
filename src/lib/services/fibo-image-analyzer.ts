@@ -69,7 +69,6 @@ function getFalKey(): string {
  *   imageUrl: "https://example.com/image.jpg",
  *   seed: 666
  * });
- * console.log(result.short_description);
  * ```
  */
 export async function analyzeFiboImage(
@@ -105,19 +104,10 @@ export async function analyzeFiboImage(
             seed,
           },
           logs: true,
-          onQueueUpdate: (update) => {
-            // Log progress for debugging
-            if (update.status === "IN_PROGRESS") {
-              console.log("[FIBO] Analysis in progress...");
-            }
-          },
         }
       )) as { data: FiboApiResponse };
 
       clearTimeout(timeoutId);
-
-      // Log response structure for debugging
-      console.log("[FIBO] Response received:", JSON.stringify(result, null, 2));
 
       // Validate response - check different possible response structures
       if (!result) {
@@ -146,10 +136,6 @@ export async function analyzeFiboImage(
       }
 
       if (!structuredPrompt) {
-        console.error(
-          "[FIBO] Invalid response structure. Expected structured_prompt but got:",
-          Object.keys(result.data || result)
-        );
         throw new FiboAnalysisError(
           "FIBO API returned invalid response: missing structured_prompt. Response keys: " +
             JSON.stringify(Object.keys(result.data || result))
@@ -161,9 +147,6 @@ export async function analyzeFiboImage(
       clearTimeout(timeoutId);
     }
   } catch (error) {
-    // Log error for debugging
-    console.error("[FIBO] Analysis error:", error);
-
     // Handle abort/timeout
     if (error instanceof Error && error.name === "AbortError") {
       throw new FiboAnalysisError(
@@ -180,11 +163,6 @@ export async function analyzeFiboImage(
           (error as { message?: string }).message || "Unknown error";
         const body = (error as { body?: unknown }).body;
 
-        console.error(
-          `[FIBO] API error - Status: ${statusCode}, Message: ${message}`
-        );
-        if (body) console.error("[FIBO] Error body:", body);
-
         throw new FiboAnalysisError(
           `FIBO API error (${statusCode}): ${message}`,
           error,
@@ -195,7 +173,6 @@ export async function analyzeFiboImage(
       // Handle error objects with message
       if ("message" in error) {
         const message = (error as { message: string }).message;
-        console.error("[FIBO] Error message:", message);
         throw new FiboAnalysisError(`FIBO API error: ${message}`, error);
       }
     }
@@ -205,7 +182,6 @@ export async function analyzeFiboImage(
       error instanceof Error
         ? error.message
         : "Unknown error during FIBO analysis";
-    console.error("[FIBO] Unhandled error:", errorMessage);
     throw new FiboAnalysisError(errorMessage, error);
   }
 }
@@ -225,17 +201,9 @@ export async function analyzeFiboImageWithRetry(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      console.log(
-        `[FIBO] Attempt ${attempt + 1}/${maxRetries + 1} - Analyzing image...`
-      );
       return await analyzeFiboImage(options);
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-
-      console.error(
-        `[FIBO] Attempt ${attempt + 1}/${maxRetries + 1} failed:`,
-        error instanceof Error ? error.message : String(error)
-      );
 
       // Don't retry on validation errors or authentication errors
       if (error instanceof FiboAnalysisError) {
@@ -244,7 +212,6 @@ export async function analyzeFiboImageWithRetry(
           error.statusCode === 401 || // Unauthorized
           error.statusCode === 403 // Forbidden
         ) {
-          console.error(`[FIBO] Not retrying due to ${error.statusCode} error`);
           throw error;
         }
       }
@@ -252,16 +219,12 @@ export async function analyzeFiboImageWithRetry(
       // Wait before retry (exponential backoff)
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000;
-        console.warn(
-          `[FIBO] Retrying in ${delay}ms... (${maxRetries - attempt} retries left)`
-        );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
 
   const errorDetails = lastError?.message || "Unknown error";
-  console.error(`[FIBO] All attempts exhausted. Last error: ${errorDetails}`);
 
   throw new FiboAnalysisError(
     `FIBO analysis failed after ${maxRetries + 1} attempts. Last error: ${errorDetails}`,

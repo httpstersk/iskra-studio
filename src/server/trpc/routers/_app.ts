@@ -698,14 +698,11 @@ export const appRouter = router({
         }
 
         if (!imageUrl) {
-          console.error(
-            "[FIBO] No image URL found in result:",
-            JSON.stringify(resultData, null, 2)
-          );
           yield tracked(`${generationId}_error`, {
             type: "error",
             error: "No image generated from FIBO",
           });
+
           return;
         }
 

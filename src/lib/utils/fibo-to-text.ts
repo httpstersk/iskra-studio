@@ -4,7 +4,5 @@
  */
 
 export function fiboStructuredToText(structuredPrompt: any): string {
-  // Stringify the FIBO JSON and wrap in backticks
-  const jsonString = JSON.stringify(structuredPrompt, null, 2);
-  return `\`\`\`json\n${jsonString}\n\`\`\``;
+  return JSON.stringify(structuredPrompt, null, 2);
 }

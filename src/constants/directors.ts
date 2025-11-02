@@ -16,7 +16,6 @@ export const DIRECTORS = [
   "Chloé Zhao",
   "Christopher Nolan",
   "Dario Argento",
-  "David Cronenberg",
   "David Fincher",
   "David Lynch",
   "David O. Russell",

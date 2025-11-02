@@ -97,7 +97,6 @@ export function useProjectGuard(): UseProjectGuardReturn {
 
         return true;
       } catch (error) {
-        console.error("Failed to auto-create project:", error);
         // Don't show error toast - let the action continue locally
         return false;
       } finally {
