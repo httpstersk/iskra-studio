@@ -24,6 +24,7 @@ import {
 } from "./variation-shared-utils";
 import { validateSingleImageSelection } from "./variation-utils";
 import { selectRandomDirectors } from "@/constants/directors";
+import { fiboStructuredToText } from "@/lib/utils/fibo-to-text";
 
 const handlerLogger = logger.child({ handler: "director-image-variation" });
 
@@ -94,9 +95,10 @@ async function generateDirectorVariations(
  * 2. Upload/ensure image is in Convex storage
  * 3. Use FIBO to analyze image and get structured prompt
  * 4. Randomly select directors based on variation count
- * 5. Refine FIBO prompts with director styles
- * 6. Update UI state with placeholders and generation metadata
- * 7. Generate images using Seedream/Nano Banana with refined prompts
+ * 5. Build director text prompts ("Make it look as if it were shot by {director}")
+ * 6. Convert FIBO structured prompts to text descriptions
+ * 7. Combine FIBO text + director instructions
+ * 8. Generate images using Seedream/Nano Banana with combined text prompts
  */
 export const handleDirectorImageVariations = async (
   deps: DirectorImageVariationHandlerDeps
@@ -225,28 +227,26 @@ export const handleDirectorImageVariations = async (
 
     setImages((prev) => [...prev, ...placeholderImages]);
 
-    // Stage 5: Set up active generations for FIBO image generation
-    // FIBO will handle refinement internally with director prompt + structured prompt
+    // Stage 5: Set up active generations for Seedream/Nano Banana
+    // Convert FIBO structured prompt to text and combine with director instruction
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
       directorPrompts.forEach((item, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
 
-        // Store both director prompt and structured prompt for FIBO
-        const fiboParams = {
-          directorPrompt: item.directorPrompt,
-          structuredPrompt: item.structuredPrompt,
-        };
+        // Convert FIBO structured prompt to text description
+        const fiboTextDescription = fiboStructuredToText(item.structuredPrompt);
+        
+        // Combine FIBO text with director instruction
+        const finalPrompt = `${fiboTextDescription}. ${item.directorPrompt}`;
 
         newMap.set(placeholderId, {
           imageSize: imageSizeDimensions,
           imageUrl: signedImageUrl,
           isVariation: true,
-          model: imageModel, // Not used for FIBO, but kept for consistency
-          prompt: JSON.stringify(fiboParams), // Stored as JSON for transport
+          model: imageModel, // Use selected model (Seedream or Nano Banana)
+          prompt: finalPrompt, // Combined text prompt
           status: VARIATION_STATUS.GENERATING,
-          useFibo: true, // Use FIBO generation endpoint
-          fiboAspectRatio: "1:1", // Default aspect ratio, could be made dynamic
         });
       });
       return newMap;

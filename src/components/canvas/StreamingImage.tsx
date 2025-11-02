@@ -60,36 +60,14 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
   };
 
   /**
-   * Conditionally subscribe to FIBO, variation, or regular image generation.
+   * Conditionally subscribe to variation or regular image generation.
    * Only the enabled subscription will make tRPC calls.
    *
-   * Note: All hooks must be called unconditionally (Rules of Hooks),
+   * Note: Both hooks must be called unconditionally (Rules of Hooks),
    * but the `enabled` flag ensures only one is active at a time.
    */
 
-  // FIBO generation with structured prompts and director refinement
-  useSubscription(
-    trpc.generateFiboImageVariation.subscriptionOptions(
-      {
-        imageUrl: generation.imageUrl || "",
-        structuredPrompt: generation.prompt
-          ? JSON.parse(generation.prompt).structuredPrompt
-          : {},
-        directorPrompt: generation.prompt
-          ? JSON.parse(generation.prompt).directorPrompt
-          : undefined,
-        aspectRatio: generation.fiboAspectRatio || "1:1",
-      },
-      {
-        enabled:
-          !!generation.useFibo && !!generation.imageUrl && !!generation.prompt,
-        onData,
-        onError: onErrorHandler,
-      }
-    )
-  );
-
-  // Regular variation generation (Seedream/Nano Banana)
+  // Variation generation (Seedream/Nano Banana) - includes director mode
   useSubscription(
     trpc.generateImageVariation.subscriptionOptions(
       {
@@ -101,7 +79,6 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
       {
         enabled:
           !!generation.isVariation &&
-          !generation.useFibo &&
           !!generation.imageUrl &&
           !!generation.prompt,
         onData,
@@ -120,7 +97,6 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
       {
         enabled:
           !generation.isVariation &&
-          !generation.useFibo &&
           !!generation.imageUrl &&
           !!generation.prompt,
         onData,

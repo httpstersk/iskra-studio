@@ -673,13 +673,22 @@ export const appRouter = router({
           return;
         }
 
-        // Extract result data
-        const resultData = extractResultData<FalImageResult>(result) ?? {
-          images: [],
-        };
-        const images = resultData.images ?? [];
+        // Extract result data - FIBO returns { image: {...} } not { images: [...] }
+        const resultData = extractResultData<any>(result);
+        
+        // Handle FIBO's response structure
+        let imageUrl: string | undefined;
+        
+        if (resultData?.image?.url) {
+          // FIBO structure: { image: { url, ... } }
+          imageUrl = resultData.image.url;
+        } else if (resultData?.images?.[0]?.url) {
+          // Fallback: Standard structure { images: [...] }
+          imageUrl = resultData.images[0].url;
+        }
 
-        if (!images?.[0]?.url) {
+        if (!imageUrl) {
+          console.error("[FIBO] No image URL found in result:", JSON.stringify(resultData, null, 2));
           yield tracked(`${generationId}_error`, {
             type: "error",
             error: "No image generated from FIBO",
@@ -688,7 +697,7 @@ export const appRouter = router({
         }
 
         // Generate thumbnail for immediate display
-        const fullSizeUrl = images[0].url;
+        const fullSizeUrl = imageUrl;
         const thumbnailDataUrl = await generateThumbnailDataUrl(fullSizeUrl);
 
         // Send the final image with thumbnail
