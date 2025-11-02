@@ -185,6 +185,8 @@ export function useStreamingHandlers(
 
       let convexUrl = croppedUrl;
       let thumbnailUrl: string | undefined = croppedThumbnailUrl;
+      let assetId: string | undefined;
+      let assetSyncedAt: number | undefined;
 
       if (isAuthenticated) {
         try {
@@ -192,9 +194,14 @@ export function useStreamingHandlers(
             "@/lib/storage/upload-generated-asset"
           );
 
+          // Get directorName from the image being completed
+          const currentImage = images.find((img) => img.id === id);
+          const directorName = currentImage?.directorName;
+
           const uploadResult = await uploadGeneratedAssetToConvex({
             assetType: "image",
             metadata: {
+              directorName,
               height: naturalHeight,
               prompt: generation?.prompt,
               width: naturalWidth,
@@ -204,6 +211,8 @@ export function useStreamingHandlers(
 
           convexUrl = uploadResult.url;
           thumbnailUrl = uploadResult.thumbnailUrl || croppedThumbnailUrl;
+          assetId = uploadResult.assetId;
+          assetSyncedAt = Date.now();
         } catch (error) {
           log.error("Failed to upload image to Convex", { data: error });
         }
@@ -218,6 +227,8 @@ export function useStreamingHandlers(
           img.id === id
             ? {
                 ...img,
+                assetId,
+                assetSyncedAt,
                 displayAsThumbnail: shouldDisplayThumbnail,
                 fullSizeSrc: convexUrl,
                 isLoading: false,
