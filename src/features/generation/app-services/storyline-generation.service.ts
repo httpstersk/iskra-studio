@@ -8,10 +8,7 @@
 
 import { config } from "@/shared/config/runtime";
 import { logger } from "@/shared/logging/logger";
-import {
-  ImageAnalysisError,
-  ImageGenerationError,
-} from "@/shared/errors";
+import { ImageAnalysisError, ImageGenerationError } from "@/shared/errors";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import { generateStorylineImageConcepts } from "@/lib/storyline-image-generator";
 
@@ -46,7 +43,7 @@ export interface StorylineGenerationParams {
  * Analyzes an image using OpenAI's vision model.
  */
 export async function analyzeImageStyle(
-  imageUrl: string,
+  imageUrl: string
 ): Promise<ImageAnalysisResult> {
   try {
     serviceLogger.info("Analyzing image style", { imageUrl });
@@ -61,7 +58,7 @@ export async function analyzeImageStyle(
       const error = await response.json().catch(() => null);
       throw new ImageAnalysisError(
         error?.error || `Image analysis failed with status ${response.status}`,
-        { imageUrl, statusCode: response.status },
+        { imageUrl, statusCode: response.status }
       );
     }
 
@@ -71,11 +68,11 @@ export async function analyzeImageStyle(
     return { analysis: result.analysis };
   } catch (error) {
     if (error instanceof ImageAnalysisError) throw error;
-    
+
     serviceLogger.error("Image analysis failed", error as Error, { imageUrl });
     throw new ImageAnalysisError(
       error instanceof Error ? error.message : "Unknown error during analysis",
-      { imageUrl },
+      { imageUrl }
     );
   }
 }
@@ -84,7 +81,7 @@ export async function analyzeImageStyle(
  * Generates storyline concepts with exponential time progression.
  */
 export async function generateStorylineConcepts(
-  params: StorylineGenerationParams,
+  params: StorylineGenerationParams
 ): Promise<StorylineConcept[]> {
   try {
     serviceLogger.info("Generating storyline concepts", {
@@ -110,14 +107,21 @@ export async function generateStorylineConcepts(
       timeLabel: c.timeLabel,
     }));
   } catch (error) {
-    if (error instanceof ImageAnalysisError || error instanceof ImageGenerationError) {
+    if (
+      error instanceof ImageAnalysisError ||
+      error instanceof ImageGenerationError
+    ) {
       throw error;
     }
 
-    serviceLogger.error("Storyline concept generation failed", error as Error, { params });
+    serviceLogger.error("Storyline concept generation failed", error as Error, {
+      params,
+    });
     throw new ImageGenerationError(
-      error instanceof Error ? error.message : "Unknown error during storyline generation",
-      { params },
+      error instanceof Error
+        ? error.message
+        : "Unknown error during storyline generation",
+      { params }
     );
   }
 }
