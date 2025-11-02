@@ -24,6 +24,9 @@ const UPLOAD_TIMEOUT_MS = 50000; // 50 seconds
  * Metadata extracted from form data or provided by caller.
  */
 export interface UploadMetadata {
+  /** Director name for AI-generated director-style variations */
+  directorName?: string;
+
   /** Duration in seconds (video only) */
   duration?: number;
 
@@ -180,6 +183,7 @@ async function createAssetRecord(
   const assetType = mimeType.startsWith("image/") ? "image" : "video";
 
   const assetId = await convexClient.mutation(api.assets.uploadAsset, {
+    directorName: metadata.directorName || undefined,
     duration: metadata.duration || undefined,
     height: metadata.height || undefined,
     mimeType,
