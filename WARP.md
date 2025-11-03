@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-**Iskra** is an infinite canvas image and video editor with AI transformations using fal.ai. Built with Next.js 15, React Konva, and tRPC. The project implements an infinite canvas where users can manipulate images and videos with AI-powered features like style transfer, background removal, object isolation, and video generation.
+**Spark Videos** is an infinite canvas image and video editor with AI transformations using fal.ai. Built with Next.js 15, React Konva, tRPC, and Convex. The project implements an infinite canvas where users can manipulate images and videos with AI-powered features like style transfer, background removal, object isolation, and video generation.
 
 ## Development Commands
 
@@ -35,6 +35,18 @@ npm run format:write
 npx lint-staged
 ```
 
+### Convex Backend
+```bash
+# Initialize/start Convex development server
+npx convex dev
+
+# Deploy functions to Convex
+npx convex deploy
+
+# View Convex logs
+npx convex logs
+```
+
 ### Export (Static)
 ```bash
 # Export static site (with fallback workaround)
@@ -43,21 +55,50 @@ npm run export
 
 ## High-Level Architecture
 
-### State Management (Jotai-Based)
-The application uses **Jotai** for centralized state management across four main atom categories:
+### Layered + Feature-Oriented Architecture
+The codebase follows a professional architecture pattern with clear separation of concerns:
 
-- **Canvas State** (`src/store/canvas-atoms.ts`): Images, videos, viewport, canvas dimensions
-- **Generation State** (`src/store/generation-atoms.ts`): AI generation jobs, settings, flags
-- **UI State** (`src/store/ui-atoms.ts`): Dialog visibility, preferences, API keys
-- **History State** (`src/store/history-atoms.ts`): Undo/redo functionality with derived atoms
+```
+src/
+├── shared/              # Cross-cutting concerns
+│   ├── config/          # Runtime configuration
+│   ├── logging/         # Structured logging
+│   ├── errors/          # Typed error handling
+│   └── utils/           # Shared utilities
+│
+├── features/            # Feature-oriented modules
+│   └── generation/
+│       └── app-services/  # Business logic layer
+│
+├── lib/                 # Existing handlers (being migrated)
+│   └── handlers/        # State orchestration layer
+│
+└── app/                 # Next.js app router
+    └── api/             # API route handlers
+```
+
+### State Management (Multi-Layer)
+The application uses multiple state management approaches:
+
+- **Jotai Atoms** (`src/store/`): Client-side reactive state
+  - Canvas State: Images, videos, viewport, canvas dimensions
+  - Generation State: AI generation jobs, settings, flags
+  - UI State: Dialog visibility, preferences, API keys
+  - History State: Undo/redo functionality
+  - Auth State: Authentication and user context
+
+- **Convex Backend**: Real-time database with type-safe queries
+  - Users: Account management and quotas
+  - Assets: Image/video storage and metadata
+  - Projects: Canvas workspace persistence
 
 ### Core Architecture Patterns
 
-#### 1. Proxy Architecture for fal.ai Integration
-The app implements a proxy pattern to bypass Vercel's 4.5MB request body limit:
-- Client uploads through proxy at `/api/fal/route.ts`
-- Uses fal.ai's Next.js proxy (`@fal-ai/server-proxy`)
-- Enables large image uploads that would otherwise be rejected
+#### 1. Dual Backend Architecture
+The app uses both Convex and tRPC for different purposes:
+- **Convex**: Real-time data sync, authentication, asset storage
+- **tRPC**: AI generation streaming and server-side processing
+- Server-side rendering with pre-fetched data for performance
 
 #### 2. Three-Tier Rate Limiting System
 Different limits for users without API keys:
@@ -70,12 +111,24 @@ Different limits for users without API keys:
 - Client receives updates via tRPC subscriptions
 - Smooth UX with gradual image/video appearance during generation
 
+#### 4. Service-Handler Pattern
+- **Services** (`src/features/*/app-services/`): Pure business logic, testable
+- **Handlers** (`src/lib/handlers/`): React state orchestration and UI coordination
+- Clear separation between business logic and UI concerns
+
 ### Component Architecture
 
 #### Main Page Structure
-- **`src/app/page.tsx`**: Main canvas page (1,012 lines, heavily refactored)
+- **`src/app/page.tsx`**: Server component wrapper for SSR optimization
+- **`src/app/canvas-page-client.tsx`**: Client-side canvas interface
 - Uses compound component pattern and alphabetized organization
-- Zero global `useState` calls (migrated to Jotai atoms)
+- Pre-fetched data via server-side rendering for performance
+
+#### Server-Side Rendering (SSR)
+- **`src/lib/server/convex-server.ts`**: Server-side Convex client
+- **`src/components/server/initial-data-provider.tsx`**: Pre-fetches user data, quota, projects
+- **`src/components/server/initial-data-client.tsx`**: Provides pre-fetched data via React Context
+- Eliminates loading states and waterfall requests
 
 #### Key Components
 - **`CanvasStageRenderer`**: React Konva stage with viewport culling
@@ -141,10 +194,12 @@ Business logic is separated into pure handler functions:
 - **Lazy Loading**: Default images load asynchronously
 
 ### Storage Strategy
-- **Canvas State**: React state + Jotai atoms
-- **Persistence**: Auto-save to IndexedDB via `useStorage` hook
+- **Canvas State**: Jotai atoms for reactive updates
+- **Backend Persistence**: Convex real-time database
+- **Asset Storage**: Convex file storage with CDN
+- **Local Storage**: IndexedDB for offline/temporary data via `useStorage` hook
 - **History**: In-memory undo/redo stack
-- **Image Storage**: Original data stored separately in IndexedDB
+- **Asset Synchronization**: Automatic sync between local and Convex storage
 
 ## Environment Setup
 
@@ -153,6 +208,18 @@ Business logic is separated into pure handler functions:
 # Required for AI features
 FAL_KEY=your_fal_api_key_here
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Convex Backend (generated by npx convex dev)
+CONVEX_DEPLOYMENT=your-deployment-name
+NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
+
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
 
 # Optional rate limiting (Upstash KV)
 KV_REST_API_URL=
@@ -184,19 +251,6 @@ The project uses Husky and lint-staged for automated formatting:
 - `role="dialog"` on modals
 - Semantic HTML throughout
 
-## Testing Approach
-
-### Component Testing
-- Pure handler functions are easily testable
-- Jotai atoms can be tested in isolation
-- Components have clear boundaries
-- Mock fal.ai client for AI operations
-
-### Integration Testing
-- Test tRPC subscriptions for streaming
-- Test IndexedDB storage operations
-- Test canvas interactions and state updates
-
 ## Deployment Configuration
 
 ### Vercel Optimization
@@ -215,27 +269,52 @@ The project uses Husky and lint-staged for automated formatting:
 
 ### Adding New AI Models
 1. Update `src/lib/video-models.ts` or create image model config
-2. Add endpoint and parameters to tRPC router
-3. Create UI components in `src/components/canvas/`
-4. Add handlers in `src/lib/handlers/`
+2. Add endpoint and parameters to tRPC router (`src/server/trpc/routers/_app.ts`)
+3. Create business logic service in `src/features/generation/app-services/`
+4. Create or update handler in `src/lib/handlers/`
+5. Add UI components in `src/components/canvas/`
 
 ### Adding New Canvas Features
 1. Define state in appropriate atom file (`src/store/`)
 2. Update corresponding hook in `src/hooks/`
-3. Create handlers in `src/lib/handlers/`
-4. Add UI components with proper accessibility
+3. Create business logic service (if complex)
+4. Create or update handlers in `src/lib/handlers/`
+5. Add UI components with proper accessibility
+6. Update Convex schema if backend persistence needed
+
+### Working with Convex
+```bash
+# Add new database table
+# 1. Update convex/schema.ts
+# 2. Create mutations/queries in convex/[table].ts
+# 3. Use in React components with useQuery/useMutation
+
+# Asset storage workflow
+# 1. Upload via convex/http.ts endpoints
+# 2. Store metadata in assets table
+# 3. Sync with local storage via useAssetSync hook
+```
 
 ### Debugging AI Operations
 - Check browser network tab for fal.ai API calls
 - Use tRPC DevTools for subscription debugging
 - Monitor `activeGenerations` and `activeVideoGenerations` atoms
-- Check console logs for detailed error information
+- Check structured logs with context in server console
+- Use Convex dashboard for real-time data inspection
 
 ### State Management Debugging
 - Use Jotai DevTools (when available)
 - Monitor atom values in React DevTools
-- Check localStorage for persistence issues
-- Verify undo/redo history stack
+- Check Convex dashboard for backend state
+- Use structured logging from `src/shared/logging/logger.ts`
+- Verify asset synchronization status
+
+### Performance Optimization
+- Monitor canvas rendering with React DevTools Profiler
+- Check Convex query performance in dashboard
+- Use server-side rendering for initial data loading
+- Optimize image/video sizes before upload
+- Implement viewport culling for large canvases
 
 ## Architecture Decisions
 
@@ -252,11 +331,12 @@ The project uses Husky and lint-staged for automated formatting:
 - Built-in event handling for canvas elements
 - Viewport culling for performance optimization
 
-### Why tRPC
-- Type-safe API calls between client and server
-- Built-in streaming support for AI operations
-- Excellent TypeScript integration
-- Reduced API surface area compared to REST
+### Why Dual Backend (Convex + tRPC)
+- **Convex**: Real-time database, authentication, file storage
+- **tRPC**: AI generation streaming and server-side processing
+- Type-safe APIs throughout the stack
+- Real-time updates for collaborative features
+- Optimized for different use cases
 
 ### Why fal.ai
 - Comprehensive AI model marketplace
@@ -267,17 +347,22 @@ The project uses Husky and lint-staged for automated formatting:
 ## Troubleshooting
 
 ### Common Issues
+- **Convex setup**: Run `npx convex dev` to initialize backend
+- **Authentication**: Verify Clerk environment variables and webhooks
 - **Large file uploads**: Ensure proxy configuration is correct
 - **Rate limiting**: Verify KV environment variables for Upstash
 - **Canvas performance**: Check viewport culling and image sizing
 - **AI generation failures**: Verify fal.ai API key and model parameters
-- **State synchronization**: Check Jotai atom updates and effects
+- **Asset sync**: Check network connectivity and Convex deployment status
+- **SSR hydration**: Ensure server and client data consistency
 
 ### Performance Issues
 - Monitor canvas rendering performance with React DevTools Profiler
-- Check IndexedDB storage size and cleanup
+- Check Convex query performance and caching
 - Verify image sizes and compression
 - Monitor memory usage with large video files
+- Use server-side rendering for faster initial loads
+- Optimize asset synchronization frequency
 
 
 ## Technical Requirements
