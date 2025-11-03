@@ -21,44 +21,44 @@
 
 ## Tasks
 
-- [ ] 1.0 Update Database Schema and Type Definitions
-  - [ ] 1.1 Add `cameraAngle: v.optional(v.string())` field to `assets` table in `convex/schema.ts`
-  - [ ] 1.2 Add validation for `cameraAngle` length (max 500 characters) in `convex/assets.ts` uploadAsset mutation
-  - [ ] 1.3 Add `cameraAngle` parameter to `uploadAsset` mutation args in `convex/assets.ts`
-  - [ ] 1.4 Include `cameraAngle` in the asset creation logic within uploadAsset handler
-  - [ ] 1.5 Add `cameraAngle?: string` field to `PlacedImage` interface in `src/types/canvas.ts`
-  - [ ] 1.6 Run `npx convex dev` to apply schema changes to development deployment
+- [x] 1.0 Update Database Schema and Type Definitions
+  - [x] 1.1 Add `cameraAngle: v.optional(v.string())` field to `assets` table in `convex/schema.ts`
+  - [x] 1.2 Add validation for `cameraAngle` length (max 500 characters) in `convex/assets.ts` uploadAsset mutation
+  - [x] 1.3 Add `cameraAngle` parameter to `uploadAsset` mutation args in `convex/assets.ts`
+  - [x] 1.4 Include `cameraAngle` in the asset creation logic within uploadAsset handler
+  - [x] 1.5 Add `cameraAngle?: string` field to `PlacedImage` interface in `src/types/canvas.ts`
+  - [x] 1.6 Run `npx convex dev` to apply schema changes to development deployment
 
-- [ ] 2.0 Create Utility Functions for Camera Angle Processing
-  - [ ] 2.1 Create `src/utils/camera-abbreviation-utils.ts` with TSDoc comments
-  - [ ] 2.2 Implement `abbreviateCameraDirective(directive: string): string` function that extracts text before "—" or first 3-5 words
-  - [ ] 2.3 Add unit tests in `src/utils/camera-abbreviation-utils.test.ts` covering various camera directive formats
-  - [ ] 2.4 Update `selectRandomCameraVariations()` in `src/utils/camera-variation-utils.ts` to verify it already prevents duplicates (it does via Fisher-Yates)
-  - [ ] 2.5 Add comment/documentation confirming no-duplicate behavior in `selectRandomCameraVariations()`
+- [x] 2.0 Create Utility Functions for Camera Angle Processing
+  - [x] 2.1 Create `src/utils/camera-abbreviation-utils.ts` with TSDoc comments
+  - [x] 2.2 Implement `abbreviateCameraDirective(directive: string): string` function that extracts text before "—" or first 3-5 words
+  - [x] 2.3 Add unit tests in `src/utils/camera-abbreviation-utils.test.ts` covering various camera directive formats
+  - [x] 2.4 Update `selectRandomCameraVariations()` in `src/utils/camera-variation-utils.ts` to verify it already prevents duplicates (it does via Fisher-Yates)
+  - [x] 2.5 Add comment/documentation confirming no-duplicate behavior in `selectRandomCameraVariations()`
 
-- [ ] 3.0 Refactor Shared FIBO Workflow Logic (DRY)
-  - [ ] 3.1 Analyze `src/lib/handlers/director-image-variation-handler.ts` to identify shared FIBO workflow patterns
-  - [ ] 3.2 Create/update `src/lib/handlers/variation-shared-utils.ts` to extract common FIBO workflow utilities
-  - [ ] 3.3 Extract `performFiboAnalysis()` utility that handles FIBO analysis with error handling and status updates
-  - [ ] 3.4 Extract `createVariationPlaceholders()` utility that combines early preparation and placeholder creation
-  - [ ] 3.5 Update `director-image-variation-handler.ts` to use new shared utilities (refactor existing code)
-  - [ ] 3.6 Add TSDoc comments to all extracted utility functions
-  - [ ] 3.7 Ensure all shared utilities follow the service-handler pattern (pure functions for business logic)
+- [x] 3.0 Refactor Shared FIBO Workflow Logic (DRY)
+  - [x] 3.1 Analyze `src/lib/handlers/director-image-variation-handler.ts` to identify shared FIBO workflow patterns
+  - [x] 3.2 Create/update `src/lib/handlers/variation-shared-utils.ts` to extract common FIBO workflow utilities
+  - [x] 3.3 Extract `performImageUploadWorkflow()` utility that handles upload with error handling and status updates
+  - [x] 3.4 Extract `applyPixelatedOverlayToReferenceImage()`, `setAnalyzingStatus()`, and `removeAnalyzingStatus()` utilities
+  - [x] 3.5 Update `director-image-variation-handler.ts` to use new shared utilities (refactor existing code)
+  - [x] 3.6 Add TSDoc comments to all extracted utility functions
+  - [x] 3.7 Ensure all shared utilities follow the service-handler pattern (pure functions for business logic)
 
-- [ ] 4.0 Implement FIBO-Powered Camera Angles Handler
-  - [ ] 4.1 In `src/lib/handlers/variation-handler.ts`, locate the IMAGE MODE section (lines ~151-270)
-  - [ ] 4.2 Wrap the camera angles implementation in try-catch block for graceful fallback
-  - [ ] 4.3 Add FIBO analysis stage using `performFiboAnalysis()` from shared utils (or inline if not extracted)
-  - [ ] 4.4 Call `analyzeFiboImage()` from `src/lib/services/fibo-image-analyzer.ts` with signed image URL
-  - [ ] 4.5 Convert FIBO structured prompt to text using `fiboStructuredToText()` from `src/lib/utils/fibo-to-text.ts`
-  - [ ] 4.6 Select random camera directives using `selectRandomCameraVariations(variationCount)` (already ensures no duplicates)
-  - [ ] 4.7 For each camera directive, create refined prompt: `{fiboText}\n\nApply this camera angle: {cameraDirective}`
-  - [ ] 4.8 Update placeholder creation to include `cameraAngle` field with full camera directive text
-  - [ ] 4.9 Pass `cameraAngle` to `activeGenerations` map for each variation
-  - [ ] 4.10 Implement catch block that falls back to old direct-to-model approach (keep existing code structure as fallback)
-  - [ ] 4.11 Add status indicator updates: UPLOADING → ANALYZING → GENERATING
-  - [ ] 4.12 Update pixelated overlay logic to show during FIBO analysis phase
-  - [ ] 4.13 Add logging with `logger.child({ handler: "camera-angle-variation" })` for debugging
+- [x] 4.0 Implement FIBO-Powered Camera Angles Handler
+  - [x] 4.1 In `src/lib/handlers/variation-handler.ts`, locate the IMAGE MODE section (lines ~151-270)
+  - [x] 4.2 Wrap the camera angles implementation in try-catch block for graceful fallback
+  - [x] 4.3 Add FIBO analysis stage with inline implementation and nested try-catch for graceful fallback
+  - [x] 4.4 Call `analyzeFiboImage()` from `src/lib/services/fibo-image-analyzer.ts` with signed image URL
+  - [x] 4.5 Convert FIBO structured prompt to text using `fiboStructuredToText()` from `src/lib/utils/fibo-to-text.ts`
+  - [x] 4.6 Select random camera directives using `selectRandomCameraVariations(variationCount)` (already ensures no duplicates)
+  - [x] 4.7 For each camera directive, create refined prompt: `{fiboText}\n\nApply this camera angle: {cameraDirective}`
+  - [x] 4.8 Update placeholder creation to include `cameraAngle` field with full camera directive text
+  - [x] 4.9 Pass `cameraAngle` to placeholders via metadata in makePlaceholder function
+  - [x] 4.10 Implement catch block that falls back to direct camera directive (with optional user prompt)
+  - [x] 4.11 Add status indicator updates: UPLOADING → ANALYZING → GENERATING
+  - [x] 4.12 Update pixelated overlay logic to show during FIBO analysis phase
+  - [x] 4.13 Add logging with `logger.child({ handler: "camera-angle-variation" })` for debugging
 
 - [ ] 5.0 Update UI Components and Asset Synchronization
   - [ ] 5.1 Update `src/components/canvas/StreamingImage.tsx` to pass `cameraAngle` when syncing assets to Convex

@@ -5,33 +5,27 @@
  * @module lib/handlers/variation-handler
  */
 
-import {
-  formatImageVariationPrompt,
-  getRandomCinematographerReference,
-  getRandomDirectorReference,
-  getRandomRecompositionStyle,
-} from "@/lib/prompt-formatters/image-variation-prompt-formatter";
+import { analyzeFiboImage } from "@/lib/services/fibo-image-analyzer";
 import { showError, showErrorFromException } from "@/lib/toast";
+import { fiboStructuredToText } from "@/lib/utils/fibo-to-text";
+import { logger } from "@/shared/logging/logger";
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
-import type { FalClient } from "@fal-ai/client";
 import {
+  applyPixelatedOverlayToReferenceImage,
   createPlaceholderFactory,
   performEarlyPreparation,
+  performImageUploadWorkflow,
+  removeAnalyzingStatus,
+  setAnalyzingStatus,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
-import {
-  ensureImageInConvex,
-  toSignedUrl,
-  validateSingleImageSelection,
-} from "./variation-utils";
+import { validateSingleImageSelection } from "./variation-utils";
 
 /**
  * Dependencies for variation generation handler
  */
 interface VariationHandlerDeps {
-  /** Fal AI client instance */
-  falClient: FalClient;
   /** Model to use for image generation */
   imageModel?: "seedream" | "nano-banana";
   /** Type of image variation (camera-angles or director) */
@@ -83,7 +77,6 @@ export { calculateBalancedPosition } from "./variation-shared-utils";
 export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   const {
     images,
-    falClient,
     selectedIds,
     setActiveGenerations,
     setActiveVideoGenerations,
@@ -108,7 +101,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     if (!setVideos || !setActiveVideoGenerations) {
       showError(
         "Configuration error",
-        "Video generation handlers not available",
+        "Video generation handlers not available"
       );
       return;
     }
@@ -148,8 +141,10 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     });
   }
 
-  // IMAGE MODE: Generate variations using Seedream (no AI analysis)
-  // This path is taken when variationMode === "image"
+  // IMAGE MODE with camera-angles: Generate camera angle variations using FIBO analysis
+  // This path is taken when variationMode === "image" and imageVariationType === "camera-angles"
+
+  const handlerLogger = logger.child({ handler: "camera-angle-variation" });
 
   // Validate selection early
   const selectedImage = validateSingleImageSelection(images, selectedIds);
@@ -158,19 +153,13 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   }
 
   setIsGenerating(true);
-
   const timestamp = Date.now();
 
   // OPTIMIZATION: Perform early preparation BEFORE async operations
-  // This generates pixelated overlay immediately for instant visual feedback
   const { imageSizeDimensions, pixelatedSrc, positionIndices, snappedSource } =
     await performEarlyPreparation(selectedImage, variationCount);
 
-  // Randomly select camera variations from the expanded set
-  // Position indices are assigned sequentially based on variation count:
-  // 4 variations: cardinal directions (0, 2, 4, 6)
-  // 8 variations: all 8 positions (0-7)
-  // 12 variations: inner ring (0-7) + outer cardinal directions (8-11)
+  // Randomly select camera directives (no duplicates via Fisher-Yates)
   const variationsToGenerate = selectRandomCameraVariations(variationCount);
 
   // Create factory function with shared configuration for all placeholders
@@ -183,68 +172,94 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     timestamp,
   });
 
-  // Create placeholders IMMEDIATELY (optimistic UI)
+  // Create placeholders IMMEDIATELY with cameraAngle metadata
   const placeholderImages: PlacedImage[] = variationsToGenerate.map(
-    (_, index) => makePlaceholder({}, index),
+    (cameraDirective, index) =>
+      makePlaceholder({ cameraAngle: cameraDirective }, index)
   );
 
   // Add placeholders immediately - single state update
   setImages((prev) => [...prev, ...placeholderImages]);
 
   try {
-    // Stage 0: Uploading image to ensure it's in Convex
-    const uploadId = `variation-${timestamp}-upload`;
+    // Stage 0: Upload image to Convex
+    const { signedImageUrl } = await performImageUploadWorkflow({
+      selectedImage,
+      setActiveGenerations,
+      timestamp,
+    });
 
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-      newMap.set(uploadId, {
-        imageUrl: "",
-        isVariation: true,
-        prompt: "",
-        status: VARIATION_STATUS.UPLOADING,
+    // Stage 1: FIBO analysis with graceful fallback
+    let fiboText: string | null = null;
+
+    try {
+      // Apply pixelated overlay during analysis
+      applyPixelatedOverlayToReferenceImage({
+        pixelatedSrc,
+        selectedImage,
+        setImages,
       });
-      return newMap;
-    });
 
-    const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
-    const imageUrl = await ensureImageInConvex(sourceImageUrl);
+      const processId = setAnalyzingStatus({
+        signedImageUrl,
+        setActiveGenerations,
+        timestamp,
+      });
 
-    // Remove upload placeholder
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(uploadId);
-      return newMap;
-    });
+      handlerLogger.info("Starting FIBO analysis for camera angles");
 
-    // OPTIMIZATION 4: Batch all activeGeneration updates into single state update
-    // Convert proxy URL to signed URL for tRPC (imageUrl could be proxy or full Convex URL)
-    const signedImageUrl = toSignedUrl(imageUrl);
+      // Analyze image with FIBO
+      const fiboStructuredPrompt = await analyzeFiboImage({
+        imageUrl: signedImageUrl,
+      });
 
+      // Convert FIBO structured prompt to text
+      fiboText = fiboStructuredToText(fiboStructuredPrompt);
+
+      handlerLogger.info("FIBO analysis complete", {
+        hasResult: !!fiboText,
+      });
+
+      // Remove analyzing status
+      removeAnalyzingStatus(processId, setActiveGenerations);
+    } catch (fiboError) {
+      // Log FIBO failure but continue with fallback
+      handlerLogger.warn(
+        "FIBO analysis failed, using direct-to-model fallback",
+        fiboError as Error
+      );
+      fiboText = null;
+    }
+
+    // Stage 2: Generate images with refined prompts (FIBO + camera directive)
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
 
       variationsToGenerate.forEach((cameraDirective, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
-        const recompositionStyle = getRandomRecompositionStyle();
-        const directorReference = getRandomDirectorReference();
-        const cinematographerReference = getRandomCinematographerReference();
-        const formattedPrompt = formatImageVariationPrompt(
-          cameraDirective,
-          variationPrompt,
-          {
-            cinematographerReference,
-            directorReference,
-            outputFormat: "singleline",
-            recompositionStyle,
-          },
-        );
+
+        // Build prompt: FIBO text + camera directive, or just camera directive if FIBO failed
+        let finalPrompt: string;
+
+        if (fiboText) {
+          // FIBO succeeded - combine FIBO analysis with camera directive
+          finalPrompt = `${fiboText}\n\nApply this camera angle: ${cameraDirective}`;
+          handlerLogger.info("Using FIBO-powered prompt", { index });
+        } else {
+          // FIBO failed - fallback to direct camera directive
+          finalPrompt = cameraDirective;
+          if (variationPrompt) {
+            finalPrompt = `${variationPrompt}\n\n${cameraDirective}`;
+          }
+          handlerLogger.info("Using direct-to-model fallback", { index });
+        }
 
         newMap.set(placeholderId, {
           imageSize: imageSizeDimensions,
           imageUrl: signedImageUrl,
           isVariation: true,
           model: imageModel,
-          prompt: formattedPrompt,
+          prompt: finalPrompt,
           status: VARIATION_STATUS.GENERATING,
         });
       });
@@ -252,17 +267,26 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       return newMap;
     });
 
-    // Setup complete - StreamingImage components will handle generation
+    handlerLogger.info("Camera angle variations setup complete", {
+      count: variationsToGenerate.length,
+      usedFibo: !!fiboText,
+    });
+
     setIsGenerating(false);
   } catch (error) {
     // Clean up placeholders on error
     const placeholderIds = placeholderImages.map((img) => img.id);
     setImages((prev) => prev.filter((img) => !placeholderIds.includes(img.id)));
 
+    handlerLogger.error(
+      "Camera angle variation handler failed",
+      error as Error
+    );
+
     showErrorFromException(
       "Generation failed",
       error,
-      "Failed to generate variations",
+      "Failed to generate camera angle variations"
     );
 
     setIsGenerating(false);
