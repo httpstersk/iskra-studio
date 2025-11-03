@@ -22,12 +22,12 @@ const requestSchema = z.object({
  */
 function buildCameraAnglePrompt(
   cameraAngle: string,
-  userContext?: string,
+  userContext?: string
 ): string {
   let prompt = `Apply this camera angle: ${cameraAngle}`;
 
   if (userContext) {
-    prompt += ` ${userContext}`;
+    prompt += `Context: ${userContext}`;
   }
 
   return prompt;
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
         error: "Failed to generate camera angle variations",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

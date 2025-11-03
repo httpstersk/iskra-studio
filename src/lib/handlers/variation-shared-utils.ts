@@ -157,7 +157,7 @@ export function calculateBalancedPosition(
   sourceWidth: number,
   sourceHeight: number,
   variationWidth: number,
-  variationHeight: number,
+  variationHeight: number
 ): { x: number; y: number } {
   switch (angleIndex) {
     case 0: // Top - aligned with source left edge
@@ -240,16 +240,16 @@ export function createPlaceholder(config: PlaceholderConfig): PlacedImage {
     config.sourceWidth,
     config.sourceHeight,
     config.sourceWidth,
-    config.sourceHeight,
+    config.sourceHeight
   );
 
   return {
+    ...config.metadata, // Spread metadata at top level (e.g., cameraAngle, directorName)
     displayAsThumbnail: true,
     height: config.sourceHeight,
     id: `variation-${config.timestamp}-${config.variationIndex}`,
     isGenerated: true,
     isLoading: true,
-    ...(config.metadata && { metadata: config.metadata }),
     naturalHeight: config.naturalHeight,
     naturalWidth: config.naturalWidth,
     pixelatedSrc: config.pixelatedSrc,
@@ -287,7 +287,7 @@ export function createPlaceholder(config: PlaceholderConfig): PlacedImage {
 export function createPlaceholderFactory(baseConfig: VariationBaseConfig) {
   return (
     metadata: Record<string, unknown>,
-    variationIndex: number,
+    variationIndex: number
   ): PlacedImage => {
     const {
       imageSizeDimensions,
@@ -323,7 +323,7 @@ export function createPlaceholderFactory(baseConfig: VariationBaseConfig) {
  * @returns Placeholder video object with loading state
  */
 export function createVideoPlaceholder(
-  config: VideoPlaceholderConfig,
+  config: VideoPlaceholderConfig
 ): PlacedVideo {
   const position = calculateBalancedPosition(
     config.sourceX,
@@ -332,7 +332,7 @@ export function createVideoPlaceholder(
     config.sourceWidth,
     config.sourceHeight,
     config.sourceWidth,
-    config.sourceHeight,
+    config.sourceHeight
   );
 
   // Snap position to grid to align perfectly with ghost placeholders
@@ -388,7 +388,7 @@ export function getPositionIndices(variationCount: number): number[] {
  */
 export async function performEarlyPreparation(
   selectedImage: PlacedImage,
-  variationCount: number,
+  variationCount: number
 ): Promise<EarlyPrepResult> {
   // Snap source position for consistent alignment
   const snappedSource = snapPosition(selectedImage.x, selectedImage.y);
@@ -396,7 +396,7 @@ export async function performEarlyPreparation(
   // Get optimal dimensions for variations (4K resolution: 3840x2160 or 2160x3840)
   const imageSizeDimensions = getOptimalImageDimensions(
     selectedImage.width,
-    selectedImage.height,
+    selectedImage.height
   );
 
   // Generate pixelated overlay EARLY for immediate visual feedback
@@ -459,7 +459,7 @@ export interface UploadWorkflowResult {
  * ```
  */
 export async function performImageUploadWorkflow(
-  config: UploadWorkflowConfig,
+  config: UploadWorkflowConfig
 ): Promise<UploadWorkflowResult> {
   const { selectedImage, setActiveGenerations, timestamp } = config;
 
@@ -527,14 +527,14 @@ export interface ApplyPixelatedOverlayConfig {
  * ```
  */
 export function applyPixelatedOverlayToReferenceImage(
-  config: ApplyPixelatedOverlayConfig,
+  config: ApplyPixelatedOverlayConfig
 ): void {
   const { pixelatedSrc, selectedImage, setImages } = config;
 
   setImages((prev) =>
     prev.map((img) =>
-      img.id === selectedImage.id ? { ...img, pixelatedSrc } : img,
-    ),
+      img.id === selectedImage.id ? { ...img, pixelatedSrc } : img
+    )
   );
 }
 
@@ -601,7 +601,7 @@ export function removeAnalyzingStatus(
   processId: string,
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
-  >,
+  >
 ): void {
   setActiveGenerations((prev) => {
     const newMap = new Map(prev);
