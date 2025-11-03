@@ -1,4 +1,6 @@
 export interface GeneratedAssetMetadata {
+  /** Camera angle directive for AI-generated camera angle variations */
+  cameraAngle?: string;
   /** Director name for AI-generated director-style variations */
   directorName?: string;
   /** Video duration in seconds */

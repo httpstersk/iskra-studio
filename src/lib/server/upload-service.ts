@@ -24,6 +24,9 @@ const UPLOAD_TIMEOUT_MS = 50000; // 50 seconds
  * Metadata extracted from form data or provided by caller.
  */
 export interface UploadMetadata {
+  /** Camera angle directive for AI-generated camera angle variations */
+  cameraAngle?: string;
+
   /** Director name for AI-generated director-style variations */
   directorName?: string;
 
@@ -99,7 +102,7 @@ function validateFile(file: File | Blob): void {
 
   if (!isImage && !isVideo) {
     throw new Error(
-      "Unsupported file type. Only images and videos are allowed."
+      "Unsupported file type. Only images and videos are allowed.",
     );
   }
 }
@@ -112,7 +115,7 @@ function validateFile(file: File | Blob): void {
  * @throws Error if upload fails or times out
  */
 async function uploadToConvexEndpoint(
-  options: UploadFileOptions
+  options: UploadFileOptions,
 ): Promise<ConvexUploadResponse> {
   const { file, thumbnail, authToken } = options;
 
@@ -143,7 +146,7 @@ async function uploadToConvexEndpoint(
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
-        `Convex upload failed (${response.status}): ${errorText}`
+        `Convex upload failed (${response.status}): ${errorText}`,
       );
     }
 
@@ -151,7 +154,7 @@ async function uploadToConvexEndpoint(
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error(
-        `Upload timeout: File upload took longer than ${UPLOAD_TIMEOUT_MS / 1000} seconds`
+        `Upload timeout: File upload took longer than ${UPLOAD_TIMEOUT_MS / 1000} seconds`,
       );
     }
     throw error;
@@ -175,7 +178,7 @@ async function createAssetRecord(
   thumbnailStorageId: string | undefined,
   file: File | Blob,
   metadata: UploadMetadata,
-  authToken: string
+  authToken: string,
 ): Promise<string> {
   const convexClient = createConvexClientWithToken(authToken);
 
@@ -183,6 +186,7 @@ async function createAssetRecord(
   const assetType = mimeType.startsWith("image/") ? "image" : "video";
 
   const assetId = await convexClient.mutation(api.assets.uploadAsset, {
+    cameraAngle: metadata.cameraAngle || undefined,
     directorName: metadata.directorName || undefined,
     duration: metadata.duration || undefined,
     height: metadata.height || undefined,
@@ -235,7 +239,7 @@ function wrapWithProxy(url: string): string {
  * ```
  */
 export async function uploadFileToConvex(
-  options: UploadFileOptions
+  options: UploadFileOptions,
 ): Promise<AssetUploadResult> {
   const { file, metadata = {}, authToken } = options;
 
@@ -252,7 +256,7 @@ export async function uploadFileToConvex(
     thumbnailStorageId,
     file,
     metadata,
-    authToken
+    authToken,
   );
 
   // Wrap URLs with CORS proxy

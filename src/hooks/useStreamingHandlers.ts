@@ -30,13 +30,13 @@ interface StreamingHandlerDeps {
   selectedImageForVideo: string | null;
   setActiveGenerations: (
     updater: (
-      prev: Map<string, ActiveGeneration>
-    ) => Map<string, ActiveGeneration>
+      prev: Map<string, ActiveGeneration>,
+    ) => Map<string, ActiveGeneration>,
   ) => void;
   setActiveVideoGenerations: (
     updater: (
-      prev: Map<string, ActiveVideoGeneration>
-    ) => Map<string, ActiveVideoGeneration>
+      prev: Map<string, ActiveVideoGeneration>,
+    ) => Map<string, ActiveVideoGeneration>,
   ) => void;
   setImages: (updater: (prev: PlacedImage[]) => PlacedImage[]) => void;
   setIsConvertingToVideo: (value: boolean) => void;
@@ -54,20 +54,24 @@ interface StreamingHandlers {
   handleStreamingImageComplete: (
     id: string,
     finalUrl: string,
-    thumbnailUrl?: string
+    thumbnailUrl?: string,
   ) => Promise<void>;
-  handleStreamingImageError: (id: string, error: string, isContentError?: boolean) => void;
+  handleStreamingImageError: (
+    id: string,
+    error: string,
+    isContentError?: boolean,
+  ) => void;
   handleStreamingImageUpdate: (id: string, url: string) => Promise<void>;
   handleVideoGenerationComplete: (
     videoId: string,
     videoUrl: string,
-    duration: number
+    duration: number,
   ) => Promise<void>;
   handleVideoGenerationError: (videoId: string, error: string) => void;
   handleVideoGenerationProgress: (
     videoId: string,
     progress: number,
-    status: string
+    status: string,
   ) => void;
 }
 
@@ -81,7 +85,7 @@ interface StreamingHandlers {
  * @returns Streaming event handlers
  */
 export function useStreamingHandlers(
-  deps: StreamingHandlerDeps
+  deps: StreamingHandlerDeps,
 ): StreamingHandlers {
   const {
     activeGenerations,
@@ -162,8 +166,8 @@ export function useStreamingHandlers(
                   src: croppedThumbnailUrl,
                   thumbnailSrc: croppedThumbnailUrl,
                 }
-              : img
-          )
+              : img,
+          ),
         );
       }
 
@@ -194,13 +198,15 @@ export function useStreamingHandlers(
             "@/lib/storage/upload-generated-asset"
           );
 
-          // Get directorName from the image being completed
+          // Get directorName and cameraAngle from the image being completed
           const currentImage = images.find((img) => img.id === id);
           const directorName = currentImage?.directorName;
+          const cameraAngle = currentImage?.cameraAngle;
 
           const uploadResult = await uploadGeneratedAssetToConvex({
             assetType: "image",
             metadata: {
+              cameraAngle,
               directorName,
               height: naturalHeight,
               prompt: generation?.prompt,
@@ -238,8 +244,8 @@ export function useStreamingHandlers(
                 src: displaySrc,
                 thumbnailSrc: shouldDisplayThumbnail ? thumbnailUrl : undefined,
               }
-            : img
-        )
+            : img,
+        ),
       );
 
       setActiveGenerations((prev) => {
@@ -248,7 +254,7 @@ export function useStreamingHandlers(
 
         if (variationBatchTimestamp && newMap.size > 0) {
           const hasMoreFromBatch = Array.from(newMap.keys()).some((key) =>
-            key.startsWith(`variation-${variationBatchTimestamp}-`)
+            key.startsWith(`variation-${variationBatchTimestamp}-`),
           );
 
           if (!hasMoreFromBatch) {
@@ -277,7 +283,7 @@ export function useStreamingHandlers(
       setImages,
       setIsGenerating,
       setSelectedIds,
-    ]
+    ],
   );
 
   const handleStreamingImageError = useCallback(
@@ -287,19 +293,19 @@ export function useStreamingHandlers(
       // If it's a content validation error, show error overlay instead of removing image
       if (isContentError) {
         const image = images.find((img) => img.id === id);
-        
+
         if (image) {
           try {
             // Generate error overlay from pixelated source or original source
             const { createErrorOverlayFromUrl } = await import(
               "@/utils/image-error-overlay"
             );
-            
+
             const sourceUrl = image.pixelatedSrc || image.src;
             const errorOverlayUrl = await createErrorOverlayFromUrl(
               sourceUrl,
               image.width,
-              image.height
+              image.height,
             );
 
             if (errorOverlayUrl) {
@@ -315,8 +321,8 @@ export function useStreamingHandlers(
                         pixelatedSrc: undefined,
                         src: errorOverlayUrl,
                       }
-                    : img
-                )
+                    : img,
+                ),
               );
             } else {
               // Fallback: remove image if overlay generation fails
@@ -343,7 +349,7 @@ export function useStreamingHandlers(
         // Show error message for content validation
         showError(
           "Content validation failed",
-          "The generated content was flagged by content moderation and cannot be displayed."
+          "The generated content was flagged by content moderation and cannot be displayed.",
         );
       } else {
         // Regular error handling: remove the image
@@ -366,11 +372,11 @@ export function useStreamingHandlers(
           isVariation
             ? "Variation failed"
             : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
-          isVariation ? "One variation failed to generate" : errorMessage
+          isVariation ? "One variation failed to generate" : errorMessage,
         );
       }
     },
-    [images, setActiveGenerations, setImages, setIsGenerating]
+    [images, setActiveGenerations, setImages, setIsGenerating],
   );
 
   const handleStreamingImageUpdate = useCallback(
@@ -397,8 +403,8 @@ export function useStreamingHandlers(
                     displayAsThumbnail: true,
                     src: thumbnailDataUrl,
                   }
-                : img
-            )
+                : img,
+            ),
           );
         } else {
           // Fallback if thumbnail generation fails
@@ -410,8 +416,8 @@ export function useStreamingHandlers(
                     displayAsThumbnail: true,
                     src: croppedResult.croppedSrc,
                   }
-                : img
-            )
+                : img,
+            ),
           );
         }
       } catch (error) {
@@ -427,12 +433,12 @@ export function useStreamingHandlers(
                   displayAsThumbnail: true,
                   src: url,
                 }
-              : img
-          )
+              : img,
+          ),
         );
       }
     },
-    [setImages]
+    [setImages],
   );
 
   const handleVideoGenerationComplete = useCallback(
@@ -496,7 +502,7 @@ export function useStreamingHandlers(
                     isLoading: false,
                     src: convexUrl,
                   }
-                : video
+                : video,
             );
           });
 
@@ -510,7 +516,7 @@ export function useStreamingHandlers(
             saveToHistory();
             showSuccess(
               "Video variations complete",
-              "All 4 cinematic videos have been generated"
+              "All 4 cinematic videos have been generated",
             );
           }
 
@@ -524,7 +530,7 @@ export function useStreamingHandlers(
           duration,
           generation || null,
           images,
-          selectedImageForVideo
+          selectedImageForVideo,
         );
 
         if (newVideo) {
@@ -545,7 +551,7 @@ export function useStreamingHandlers(
         showErrorFromException(
           CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
           error,
-          CANVAS_STRINGS.ERRORS.VIDEO_FAILED
+          CANVAS_STRINGS.ERRORS.VIDEO_FAILED,
         );
       }
     },
@@ -560,7 +566,7 @@ export function useStreamingHandlers(
       setSelectedImageForVideo,
       setVideos,
       videos,
-    ]
+    ],
   );
 
   const handleVideoGenerationError = useCallback(
@@ -576,7 +582,7 @@ export function useStreamingHandlers(
         return newMap;
       });
     },
-    [setActiveVideoGenerations]
+    [setActiveVideoGenerations],
   );
 
   const handleVideoGenerationProgress = useCallback(
@@ -585,7 +591,7 @@ export function useStreamingHandlers(
         data: { videoId, progress, status },
       });
     },
-    []
+    [],
   );
 
   return {
