@@ -101,7 +101,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     if (!setVideos || !setActiveVideoGenerations) {
       showError(
         "Configuration error",
-        "Video generation handlers not available"
+        "Video generation handlers not available",
       );
       return;
     }
@@ -175,7 +175,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // Create placeholders IMMEDIATELY with cameraAngle metadata
   const placeholderImages: PlacedImage[] = variationsToGenerate.map(
     (cameraDirective, index) =>
-      makePlaceholder({ cameraAngle: cameraDirective }, index)
+      makePlaceholder({ cameraAngle: cameraDirective }, index),
   );
 
   // Add placeholders immediately - single state update
@@ -226,7 +226,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       // Log FIBO failure but continue with fallback
       handlerLogger.warn(
         "FIBO analysis failed, using direct-to-model fallback",
-        fiboError as Error
+        fiboError as Error,
       );
       fiboText = null;
     }
@@ -280,13 +280,13 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
     handlerLogger.error(
       "Camera angle variation handler failed",
-      error as Error
+      error as Error,
     );
 
     showErrorFromException(
       "Generation failed",
       error,
-      "Failed to generate camera angle variations"
+      "Failed to generate camera angle variations",
     );
 
     setIsGenerating(false);
