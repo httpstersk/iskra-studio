@@ -36,7 +36,6 @@ export const CAMERA_VARIATIONS = [
   "OVERHEAD BIRD'S EYE VIEW — CAMERA DIRECTLY ABOVE looking down; flattens perspective and creates geometric patterns.",
   "PERISCOPE SHOT — LOW-ANGLE CAMERA peering over obstacle or through gap; creates voyeuristic or hidden perspective.",
   "POV FIRST-PERSON — CAMERA AS CHARACTER'S EYES; creates immersive subjective experience and emotional connection.",
-  "PRISMATIC SPLIT — MULTIPLE OVERLAPPING IMAGES from single lens; creates fragmented, artistic interpretation of scene.",
   "PROFILE EXTREME CLOSE‑UP — NOSE‑LIP‑CHIN CONTOUR in relief; single kicker light sculpts the edge.",
   "PULL-OUT REVEAL — CAMERA MOVES BACKWARD to reveal wider context; creates surprise by showing previously hidden information.",
   "PUSH-IN SLOW — GRADUAL CAMERA MOVEMENT toward subject; builds tension and draws viewer's attention to specific detail.",

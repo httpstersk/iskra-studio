@@ -248,7 +248,7 @@ function generateStyleLockPrompt(fibo: FiboStructuredPrompt): string {
     artistic_style,
   } = fibo;
 
-  return `${style_medium} in ${artistic_style} style, ${photographic_characteristics.lens_focal_length} lens with ${photographic_characteristics.depth_of_field} depth of field, ${aesthetics.color_scheme} color grading, ${lighting.conditions} ${lighting.direction} lighting, ${aesthetics.composition} composition`;
+  return `${style_medium || "digital"} in ${artistic_style || "photographic"} style, ${photographic_characteristics.lens_focal_length || "50mm"} lens with ${photographic_characteristics.depth_of_field || "medium"} depth of field, ${aesthetics.color_scheme || "natural"} color grading, ${lighting.conditions || "natural"} ${lighting.direction || "front"} lighting, ${aesthetics.composition || "balanced"} composition`;
 }
 
 /**
@@ -279,54 +279,84 @@ export function adaptFiboToAnalysis(
         ? "architecture"
         : "object";
 
-  const dominantColors = extractDominantColors(fibo.aesthetics.color_scheme);
-  const saturation = inferSaturation(fibo.aesthetics.color_scheme);
-  const temperature = inferTemperature(fibo.aesthetics.color_scheme);
-  const energy = inferEnergy(fibo.aesthetics.mood_atmosphere);
+  const dominantColors = extractDominantColors(
+    fibo.aesthetics.color_scheme || "neutral tones",
+  );
+  const saturation = inferSaturation(
+    fibo.aesthetics.color_scheme || "neutral tones",
+  );
+  const temperature = inferTemperature(
+    fibo.aesthetics.color_scheme || "neutral tones",
+  );
+  const energy = inferEnergy(
+    fibo.aesthetics.mood_atmosphere || "neutral ambiance",
+  );
   const focalLength = extractFocalLength(
-    fibo.photographic_characteristics.lens_focal_length,
+    fibo.photographic_characteristics.lens_focal_length || "50mm",
   );
 
   return {
     subject: {
       type: subjectType,
-      description: fibo.short_description,
-      context: fibo.context,
+      description: fibo.short_description || "visual scene",
+      context: fibo.context || "general composition",
     },
 
     colorPalette: {
       dominant: dominantColors,
-      grading: fibo.aesthetics.color_scheme,
-      mood: fibo.aesthetics.mood_atmosphere,
+      grading: fibo.aesthetics.color_scheme || "natural color balance",
+      mood: fibo.aesthetics.mood_atmosphere || "neutral ambiance",
       saturation,
       temperature,
     },
 
     lighting: {
-      quality: mapLightingQuality(fibo.lighting.conditions),
-      direction: fibo.lighting.direction,
-      mood: fibo.aesthetics.mood_atmosphere,
-      atmosphere: [fibo.lighting.shadows, fibo.lighting.conditions],
+      quality: mapLightingQuality(fibo.lighting.conditions || "natural"),
+      direction: fibo.lighting.direction || "front",
+      mood: fibo.aesthetics.mood_atmosphere || "neutral ambiance",
+      atmosphere: [
+        fibo.lighting.shadows || "balanced shadows",
+        fibo.lighting.conditions || "natural light",
+      ].filter(Boolean),
     },
 
     visualStyle: {
-      aesthetic: [fibo.artistic_style, fibo.style_medium],
-      composition: fibo.aesthetics.composition,
-      depth: mapDepth(fibo.photographic_characteristics.depth_of_field),
+      aesthetic: [
+        fibo.artistic_style || "photographic",
+        fibo.style_medium || "digital",
+      ].filter(Boolean),
+      composition: fibo.aesthetics.composition || "balanced framing",
+      depth: mapDepth(
+        fibo.photographic_characteristics.depth_of_field || "medium",
+      ),
       filmGrain: "digital clean with subtle texture",
       postProcessing: ["natural color grading", "standard contrast"],
-      texture: fibo.objects.map((obj) => obj.texture).filter(Boolean),
+      texture: fibo.objects
+        .map((obj) => obj.texture)
+        .filter(Boolean)
+        .concat("smooth") // Ensure at least one texture
+        .slice(0, 3),
     },
 
     mood: {
-      primary: fibo.aesthetics.mood_atmosphere.split(",")[0].trim(),
-      secondary: fibo.aesthetics.mood_atmosphere
-        .split(",")
-        .slice(1, 3)
-        .map((s) => s.trim())
-        .filter(Boolean),
+      primary:
+        fibo.aesthetics.mood_atmosphere?.split(",")[0]?.trim() || "neutral",
+      secondary: (() => {
+        const secondaryMoods = (fibo.aesthetics.mood_atmosphere || "")
+          .split(",")
+          .slice(1, 3)
+          .map((s) => s.trim())
+          .filter(Boolean);
+
+        // Ensure we always have at least 2 secondary moods (schema requirement)
+        const defaultMoods = ["contemplative", "atmospheric"];
+        while (secondaryMoods.length < 2) {
+          secondaryMoods.push(defaultMoods[secondaryMoods.length]);
+        }
+        return secondaryMoods;
+      })(),
       energy,
-      atmosphere: fibo.aesthetics.mood_atmosphere,
+      atmosphere: fibo.aesthetics.mood_atmosphere || "neutral ambiance",
     },
 
     styleSignature: {
@@ -335,18 +365,20 @@ export function adaptFiboToAnalysis(
       lensLanguage: {
         focalLengthMm: focalLength,
         apertureF: inferAperture(
-          fibo.photographic_characteristics.depth_of_field,
+          fibo.photographic_characteristics.depth_of_field || "medium",
         ),
         depthOfField:
-          mapDepth(fibo.photographic_characteristics.depth_of_field) ===
-          "layered"
+          mapDepth(
+            fibo.photographic_characteristics.depth_of_field || "medium",
+          ) === "layered"
             ? "shallow"
-            : mapDepth(fibo.photographic_characteristics.depth_of_field) ===
-                "deep-perspective"
+            : mapDepth(
+                  fibo.photographic_characteristics.depth_of_field || "medium",
+                ) === "deep-perspective"
               ? "deep"
               : "medium",
         lensType: "spherical",
-        look: fibo.photographic_characteristics.focus,
+        look: fibo.photographic_characteristics.focus || "sharp focus",
       },
 
       colorimetry: {
@@ -360,7 +392,7 @@ export function adaptFiboToAnalysis(
       },
 
       lightingSignature: {
-        key: fibo.lighting.direction,
+        key: fibo.lighting.direction || "front key",
         fill: "ambient fill",
         back: "subtle separation",
         contrastRatio: "mid-key",
@@ -405,10 +437,13 @@ export function adaptFiboToAnalysis(
 
     narrativeTone: {
       cinematographer: "Roger Deakins", // Generic fallback
-      director: "Denis Villeneuve",
-      genre: [fibo.artistic_style, fibo.style_medium],
+      director: "Denis Villeneuve", // Generic fallback
+      genre: [
+        fibo.artistic_style || "contemporary",
+        fibo.style_medium || "photographic",
+      ].filter(Boolean),
       intensity: 6,
-      storytellingApproach: fibo.context,
+      storytellingApproach: fibo.context || "observational narrative",
     },
   };
 }
