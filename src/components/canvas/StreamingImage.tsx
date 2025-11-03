@@ -10,7 +10,7 @@ interface StreamingImageProps {
   onComplete: (
     imageId: string,
     finalUrl: string,
-    thumbnailUrl?: string
+    thumbnailUrl?: string,
   ) => void;
   onError: (imageId: string, error: string, isContentError?: boolean) => void;
   onStreamingUpdate: (imageId: string, url: string) => void;
@@ -67,7 +67,7 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
    * but the `enabled` flag ensures only one is active at a time.
    */
 
-  // Variation generation (Seedream/Nano Banana) - includes director mode
+  // Variation generation (Seedream/Nano Banana) - includes director and camera angles mode
   useSubscription(
     trpc.generateImageVariation.subscriptionOptions(
       {
@@ -83,8 +83,8 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
           !!generation.prompt,
         onData,
         onError: onErrorHandler,
-      }
-    )
+      },
+    ),
   );
 
   // Text-to-image generation
@@ -101,8 +101,8 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
           !!generation.prompt,
         onData,
         onError: onErrorHandler,
-      }
-    )
+      },
+    ),
   );
 
   return null;

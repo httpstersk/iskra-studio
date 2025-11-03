@@ -53,7 +53,7 @@ interface CanvasStageRendererProps {
     isPanningCanvas: boolean;
     selectionBox: SelectionBox;
     setDragStartPositions: (
-      positions: Map<string, { x: number; y: number }>
+      positions: Map<string, { x: number; y: number }>,
     ) => void;
     setIsDraggingImage: (dragging: boolean) => void;
   };
@@ -88,7 +88,7 @@ function getVisibleItems<
 >(
   items: T[],
   viewport: Viewport,
-  canvasSize: { height: number; width: number }
+  canvasSize: { height: number; width: number },
 ): T[] {
   const buffer = CANVAS_DIMENSIONS.BUFFER;
   const viewBounds = {
@@ -215,7 +215,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
         setSelectedIds([clickedImage.id]);
       }
     },
-    [images, selectedIdsSet, setSelectedIds, videos, viewport]
+    [images, selectedIdsSet, setSelectedIds, videos, viewport],
   );
 
   /**
@@ -225,10 +225,10 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
   const handleImageChange = useCallback(
     (imageId: string) => (newAttrs: Partial<PlacedImage>) => {
       setImages((prev) =>
-        prev.map((img) => (img.id === imageId ? { ...img, ...newAttrs } : img))
+        prev.map((img) => (img.id === imageId ? { ...img, ...newAttrs } : img)),
       );
     },
-    [setImages]
+    [setImages],
   );
 
   /**
@@ -260,7 +260,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
       });
       interactions.setDragStartPositions(positions);
     },
-    [images, interactions, selectedIdsSet, selectedIds, setSelectedIds]
+    [images, interactions, selectedIdsSet, selectedIds, setSelectedIds],
   );
 
   /**
@@ -270,10 +270,10 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
   const handleVideoChange = useCallback(
     (videoId: string) => (newAttrs: Partial<PlacedVideo>) => {
       setVideos((prev) =>
-        prev.map((vid) => (vid.id === videoId ? { ...vid, ...newAttrs } : vid))
+        prev.map((vid) => (vid.id === videoId ? { ...vid, ...newAttrs } : vid)),
       );
     },
-    [setVideos]
+    [setVideos],
   );
 
   /**
@@ -286,7 +286,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
       saveToHistory();
       interactions.setDragStartPositions(new Map());
     },
-    [interactions, saveToHistory]
+    [interactions, saveToHistory],
   );
 
   /**
@@ -308,22 +308,14 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
       });
       interactions.setDragStartPositions(positions);
     },
-    [
-      interactions,
-      selectedIds,
-      selectedIdsSet,
-      setSelectedIds,
-      videos,
-    ]
+    [interactions, selectedIds, selectedIdsSet, setSelectedIds, videos],
   );
-
-
 
   const isVariationMode = useMemo(
     () =>
       selectedIds.length === 1 &&
       (variationMode === "image" || variationMode === "video"),
-    [selectedIds.length, variationMode]
+    [selectedIds.length, variationMode],
   );
 
   const roundedViewport = useMemo(
@@ -332,28 +324,28 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
       x: Math.round(viewport.x / 10) * 10,
       y: Math.round(viewport.y / 10) * 10,
     }),
-    [viewport.scale, viewport.x, viewport.y]
+    [viewport.scale, viewport.x, viewport.y],
   );
 
   const selectedImageForVariation = useMemo(
     () =>
       isVariationMode ? images.find((img) => img.id === selectedIds[0]) : null,
-    [images, isVariationMode, selectedIds]
+    [images, isVariationMode, selectedIds],
   );
 
   const visibleImages = useMemo(() => {
     const videoSourceImageIds = new Set(
-      videos.map((v) => v.sourceImageId).filter(Boolean)
+      videos.map((v) => v.sourceImageId).filter(Boolean),
     );
     const imagesToRender = images.filter(
-      (img) => !videoSourceImageIds.has(img.id)
+      (img) => !videoSourceImageIds.has(img.id),
     );
     return getVisibleItems(imagesToRender, roundedViewport, canvasSize);
   }, [canvasSize, images, roundedViewport, videos]);
 
   const visibleVideos = useMemo(
     () => getVisibleItems(videos, roundedViewport, canvasSize),
-    [canvasSize, roundedViewport, videos]
+    [canvasSize, roundedViewport, videos],
   );
 
   if (!isCanvasReady) return null;

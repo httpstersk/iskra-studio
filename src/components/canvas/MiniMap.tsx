@@ -100,7 +100,16 @@ export const MiniMap: React.FC<MiniMapProps> = ({
         scale: viewport.scale,
       });
     },
-    [setViewport, scale, minX, minY, offsetX, offsetY, viewport.scale, canvasSize]
+    [
+      setViewport,
+      scale,
+      minX,
+      minY,
+      offsetX,
+      offsetY,
+      viewport.scale,
+      canvasSize,
+    ],
   );
 
   const handleMinimapMouseDown = useCallback(
@@ -112,7 +121,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
       // Immediately move viewport on click
       updateViewportFromMinimap(e.clientX, e.clientY);
     },
-    [setViewport, updateViewportFromMinimap]
+    [setViewport, updateViewportFromMinimap],
   );
 
   const handleMouseMove = useCallback(
@@ -120,7 +129,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
       if (!isDragging) return;
       updateViewportFromMinimap(e.clientX, e.clientY);
     },
-    [isDragging, updateViewportFromMinimap]
+    [isDragging, updateViewportFromMinimap],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -146,7 +155,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
       className={cn(
         "absolute top-4 right-2 md:right-4 z-20",
         "flex flex-col gap-2",
-        "select-none"
+        "select-none",
       )}
     >
       {/* Main minimap container */}
@@ -158,7 +167,8 @@ export const MiniMap: React.FC<MiniMapProps> = ({
           "border border-border/60",
           "shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_10px_40px_rgba(0,0,0,0.2)]",
           "transition-all duration-200",
-          isDragging && "shadow-[0_0_0_1px_rgba(0,0,0,0.1),0_15px_50px_rgba(0,0,0,0.3)] scale-[1.02]"
+          isDragging &&
+            "shadow-[0_0_0_1px_rgba(0,0,0,0.1),0_15px_50px_rgba(0,0,0,0.3)] scale-[1.02]",
         )}
       >
         {/* Header */}
@@ -187,14 +197,12 @@ export const MiniMap: React.FC<MiniMapProps> = ({
               "bg-gradient-to-br from-muted/40 via-muted/30 to-muted/20",
               "border border-border/30",
               "shadow-inner",
-              setViewport && "cursor-crosshair"
+              setViewport && "cursor-crosshair",
             )}
             onMouseDown={handleMinimapMouseDown}
           >
             {/* Grid pattern background */}
-            <svg
-              className="absolute inset-0 w-full h-full opacity-20"
-            >
+            <svg className="absolute inset-0 w-full h-full opacity-20">
               <defs>
                 <pattern
                   id="minimap-grid"
@@ -229,7 +237,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
                   "absolute rounded-sm transition-opacity",
                   "bg-gradient-to-br from-blue-500/60 to-blue-600/60",
                   "border border-blue-400/30",
-                  "shadow-sm"
+                  "shadow-sm",
                 )}
                 style={{
                   left: `${(img.x - minX) * scale + offsetX}px`,
@@ -247,7 +255,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
                   "absolute rounded-sm transition-opacity",
                   "bg-gradient-to-br from-purple-500/70 to-purple-600/70",
                   "border border-purple-400/40",
-                  "shadow-sm"
+                  "shadow-sm",
                 )}
                 style={{
                   left: `${(vid.x - minX) * scale + offsetX}px`,
@@ -265,7 +273,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
                 "border-2 border-foreground/70",
                 "bg-foreground/5",
                 "backdrop-blur-[2px]",
-                isDragging && "border-foreground bg-foreground/15 shadow-lg"
+                isDragging && "border-foreground bg-foreground/15 shadow-lg",
               )}
               style={{
                 left: `${(-viewport.x / viewport.scale - minX) * scale + offsetX}px`,

@@ -140,7 +140,12 @@ export const logger = {
       warn: (message: string, context?: LogContext) =>
         log(LogLevel.WARN, message, { ...persistentContext, ...context }),
       error: (message: string, error?: Error, context?: LogContext) =>
-        log(LogLevel.ERROR, message, { ...persistentContext, ...context }, error),
+        log(
+          LogLevel.ERROR,
+          message,
+          { ...persistentContext, ...context },
+          error,
+        ),
     };
   },
 };

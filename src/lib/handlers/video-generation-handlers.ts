@@ -28,7 +28,7 @@ export function createGenerationId(prefix: string): string {
  */
 export async function uploadMediaIfNeeded(
   url: string,
-  userId?: string
+  userId?: string,
 ): Promise<string> {
   if (url.startsWith("data:") || url.startsWith("blob:")) {
     if (!userId) {
@@ -57,7 +57,7 @@ export async function uploadMediaIfNeeded(
 export function createImageToVideoConfig(
   imageUrl: string,
   settings: VideoGenerationSettings,
-  sourceImageId: string
+  sourceImageId: string,
 ) {
   const config = {
     aspectRatio: settings.aspectRatio || "auto",
@@ -83,7 +83,7 @@ export function handleVideoCompletion(
   duration: number,
   generation: { sourceImageId?: string } | null,
   images: PlacedImage[],
-  selectedImageForVideo: string | null
+  selectedImageForVideo: string | null,
 ): { newVideo: PlacedVideo | null; sourceType: "image" | null } {
   const sourceImageId = generation?.sourceImageId || selectedImageForVideo;
 

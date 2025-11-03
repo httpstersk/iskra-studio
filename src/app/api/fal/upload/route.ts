@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     if (authHeader) {
       return NextResponse.json(
         { error: "Custom FAL API keys are not accepted." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -59,9 +59,9 @@ export async function POST(req: NextRequest) {
           status: 429,
           headers: buildRateLimitHeaders(
             limiterResult.period,
-            standardLimitHeaders
+            standardLimitHeaders,
           ),
-        }
+        },
       );
     }
 
@@ -79,13 +79,13 @@ export async function POST(req: NextRequest) {
 
     const mimeType = (file.type || "").toLowerCase();
     const isAllowedType = ALLOWED_MIME_PREFIXES.some((prefix) =>
-      mimeType.startsWith(prefix)
+      mimeType.startsWith(prefix),
     );
 
     if (!isAllowedType) {
       return NextResponse.json(
         { error: "Unsupported file type" },
-        { status: 415 }
+        { status: 415 },
       );
     }
 
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { error: "Failed to get auth token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
           error: "Rate limit exceeded",
           message: "Please try again later.",
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
         error: "Upload failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

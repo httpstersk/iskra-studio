@@ -1,6 +1,6 @@
 /**
- * Director Variations Generation API Route
- * Uses FIBO to analyze images, then uses FIBO generate to refine with director's style
+ * Camera Angle Variations Generation API Route
+ * Uses FIBO to analyze images, then uses FIBO generate to refine with camera angles
  * Returns refined structured JSON prompts
  */
 
@@ -12,16 +12,19 @@ import { z } from "zod";
 export const maxDuration = 60;
 
 const requestSchema = z.object({
-  directors: z.array(z.string()).min(1).max(12),
+  cameraAngles: z.array(z.string()).min(1).max(12),
   imageUrl: z.string().url(),
   userContext: z.string().optional(),
 });
 
 /**
- * Builds director refinement prompt for FIBO
+ * Builds camera angle refinement prompt for FIBO
  */
-function buildDirectorPrompt(director: string, userContext?: string): string {
-  let prompt = `Make it look as though it were shot by a film director or cinematographer: ${director}.`;
+function buildCameraAnglePrompt(
+  cameraAngle: string,
+  userContext?: string,
+): string {
+  let prompt = `Apply this camera angle: ${cameraAngle}`;
 
   if (userContext) {
     prompt += ` ${userContext}`;
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { imageUrl, directors, userContext } = parseResult.data;
+    const { imageUrl, cameraAngles, userContext } = parseResult.data;
 
     const fiboAnalysis = await analyzeFiboImageWithRetry({
       imageUrl,
@@ -66,17 +69,17 @@ export async function POST(req: Request) {
       credentials: () => falKey,
     });
 
-    // Use FIBO generate to refine the structured prompt for each director
-    const refinementPromises = directors.map(async (director) => {
-      const directorPrompt = buildDirectorPrompt(director, userContext);
+    // Use FIBO generate to refine the structured prompt for each camera angle
+    const refinementPromises = cameraAngles.map(async (cameraAngle) => {
+      const cameraPrompt = buildCameraAnglePrompt(cameraAngle, userContext);
 
-      // Call FIBO generate with original structured_prompt + director text prompt
+      // Call FIBO generate with original structured_prompt + camera angle text prompt
       const result = await falClient.subscribe("bria/fibo/generate", {
         input: {
           aspect_ratio: "16:9",
           guidance_scale: 5,
           image_url: imageUrl,
-          prompt: directorPrompt, // "Make it look as though it were shot by a film director or cinematographer: {director}"
+          prompt: cameraPrompt, // "Apply this camera angle: {cameraAngle}"
           seed: 666,
           steps_num: 50,
           structured_prompt: fiboAnalysis,
@@ -91,7 +94,7 @@ export async function POST(req: Request) {
         resultData?.structured_prompt || fiboAnalysis;
 
       return {
-        director,
+        cameraAngle,
         refinedStructuredPrompt,
       };
     });
@@ -100,10 +103,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ refinedPrompts, fiboAnalysis });
   } catch (error) {
-    console.error("[Director Variations] Error:", error);
+    console.error("[Camera Angle Variations] Error:", error);
     return NextResponse.json(
       {
-        error: "Failed to generate director variations",
+        error: "Failed to generate camera angle variations",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

@@ -10,9 +10,7 @@
  */
 
 // Image utilities
-export {
-  getOptimalImageDimensions,
-} from "@/utils/image-crop-utils";
+export { getOptimalImageDimensions } from "@/utils/image-crop-utils";
 
 export {
   generateAndCachePixelatedOverlay,

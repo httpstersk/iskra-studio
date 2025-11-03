@@ -44,7 +44,7 @@ interface UploadGeneratedAssetResult {
  * @throws Error if download or upload fails
  */
 export async function uploadGeneratedAssetToConvex(
-  options: UploadGeneratedAssetOptions
+  options: UploadGeneratedAssetOptions,
 ): Promise<UploadGeneratedAssetResult> {
   try {
     const response = await fetch("/api/convex/fetch-upload", {
@@ -59,7 +59,7 @@ export async function uploadGeneratedAssetToConvex(
       throw new Error(
         `Upload failed: ${
           response.statusText || response.status || "Unknown error"
-        }`
+        }`,
       );
     }
 

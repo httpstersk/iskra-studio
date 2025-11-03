@@ -64,7 +64,7 @@ export const VideoControlsWrapper = React.memo<VideoControlsWrapperProps>(
       video,
       viewport,
       VIDEO_CONTROLS_OFFSET,
-      PLAY_INDICATOR_OFFSET
+      PLAY_INDICATOR_OFFSET,
     );
 
     const wrapperStyle = useMemo(
@@ -83,7 +83,7 @@ export const VideoControlsWrapper = React.memo<VideoControlsWrapperProps>(
         width: position.width,
         zIndex: VIDEO_OVERLAY_Z_INDEX,
       }),
-      [isHidden, position.height, position.left, position.top, position.width]
+      [isHidden, position.height, position.left, position.top, position.width],
     );
 
     const normalizedScale = Math.max(viewport.scale, MINIMUM_SCALE);
@@ -99,13 +99,9 @@ export const VideoControlsWrapper = React.memo<VideoControlsWrapperProps>(
             width: controlsBaseWidth,
           }}
         >
-          <VideoControls
-            className="w-full"
-            onChange={onChange}
-            video={video}
-          />
+          <VideoControls className="w-full" onChange={onChange} video={video} />
         </div>
       </div>
     );
-  }
+  },
 );

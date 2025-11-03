@@ -15,7 +15,7 @@ import { STORYLINE_GENERATION_SYSTEM_PROMPT } from "@/lib/storyline-generator";
  */
 function buildStyleContext(
   analysis: ImageStyleMoodAnalysis,
-  duration: number
+  duration: number,
 ): string {
   const {
     subject,
@@ -89,7 +89,7 @@ interface GenerateStorylinesOptions {
  * @throws Error if OpenAI API key is not configured or generation fails
  */
 export async function generateStorylinesCore(
-  options: GenerateStorylinesOptions
+  options: GenerateStorylinesOptions,
 ): Promise<StorylineSet> {
   const { styleAnalysis, duration, userPrompt } = options;
 

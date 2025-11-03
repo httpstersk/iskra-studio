@@ -13,7 +13,10 @@
  * @module hooks/useSharedVideoAnimation
  */
 
-import { DEFAULT_VIDEO_FPS_INTERVAL, FPS_PRESETS } from "@/constants/video-performance";
+import {
+  DEFAULT_VIDEO_FPS_INTERVAL,
+  FPS_PRESETS,
+} from "@/constants/video-performance";
 import type Konva from "konva";
 import { useEffect, useRef } from "react";
 
@@ -30,7 +33,10 @@ class VideoAnimationCoordinator {
   constructor() {
     // Listen for page visibility changes
     if (typeof document !== "undefined") {
-      document.addEventListener("visibilitychange", this.handleVisibilityChange);
+      document.addEventListener(
+        "visibilitychange",
+        this.handleVisibilityChange,
+      );
     }
   }
 
@@ -39,7 +45,7 @@ class VideoAnimationCoordinator {
    */
   private handleVisibilityChange = () => {
     this.isPageVisible = !document.hidden;
-    
+
     if (!this.isPageVisible) {
       // Tab hidden - use low FPS to save battery
       this.currentFPS = FPS_PRESETS.low;
@@ -89,7 +95,7 @@ class VideoAnimationCoordinator {
     // Collect unique layers to minimize redraws
     const animate = () => {
       const layers = new Set<Konva.Layer>();
-      
+
       // Collect all unique layers from active nodes
       this.activeNodes.forEach((node) => {
         const layer = node.getLayer();
@@ -123,11 +129,11 @@ class VideoAnimationCoordinator {
    */
   setPerformanceMode(mode: "high" | "medium" | "low") {
     this.performanceMode = mode;
-    
+
     // Only update FPS if page is currently visible
     if (this.isPageVisible) {
       this.currentFPS = FPS_PRESETS[mode];
-      
+
       // Restart timer with new FPS if running
       if (this.animationTimer && this.activeNodes.size > 0) {
         this.stop();
@@ -142,7 +148,10 @@ class VideoAnimationCoordinator {
   cleanup() {
     this.stop();
     if (typeof document !== "undefined") {
-      document.removeEventListener("visibilitychange", this.handleVisibilityChange);
+      document.removeEventListener(
+        "visibilitychange",
+        this.handleVisibilityChange,
+      );
     }
   }
 }
@@ -162,11 +171,11 @@ function getCoordinator(): VideoAnimationCoordinator {
 
 /**
  * Hook to register a video node with the shared animation coordinator
- * 
+ *
  * @param shapeRef - Reference to the Konva Image node
  * @param isPlaying - Whether the video is currently playing
  * @param videoSrc - Video source URL (used for change detection)
- * 
+ *
  * @example
  * ```typescript
  * const shapeRef = useRef<Konva.Image>(null);
@@ -176,7 +185,7 @@ function getCoordinator(): VideoAnimationCoordinator {
 export function useSharedVideoAnimation(
   shapeRef: React.RefObject<Konva.Image | null>,
   isPlaying: boolean,
-  videoSrc: string
+  videoSrc: string,
 ) {
   const coordinatorRef = useRef<VideoAnimationCoordinator | null>(null);
 
@@ -203,9 +212,9 @@ export function useSharedVideoAnimation(
 
 /**
  * Hook to set the global performance mode for all videos
- * 
+ *
  * @param mode - Performance mode: "high" (50 FPS), "medium" (30 FPS), "low" (15 FPS)
- * 
+ *
  * @example
  * ```typescript
  * // In a settings component

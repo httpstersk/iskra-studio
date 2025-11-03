@@ -48,7 +48,7 @@ export async function loadImage(dataUrl: string): Promise<HTMLImageElement> {
  * @throws Error if context cannot be obtained
  */
 export function getCanvasContext(
-  canvas: HTMLCanvasElement
+  canvas: HTMLCanvasElement,
 ): CanvasRenderingContext2D {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
@@ -68,7 +68,7 @@ export function getCanvasContext(
 export async function canvasToBlob(
   canvas: HTMLCanvasElement,
   format: string,
-  quality: number
+  quality: number,
 ): Promise<Blob> {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
@@ -80,7 +80,7 @@ export async function canvasToBlob(
         resolve(blob);
       },
       format,
-      quality
+      quality,
     );
   });
 }

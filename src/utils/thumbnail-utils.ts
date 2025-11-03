@@ -33,7 +33,7 @@ const THUMBNAIL_HEIGHT = 169;
 export async function generateThumbnail(
   stage: Konva.Stage | null,
   width: number = THUMBNAIL_WIDTH,
-  height: number = THUMBNAIL_HEIGHT
+  height: number = THUMBNAIL_HEIGHT,
 ): Promise<string> {
   if (!stage) {
     throw new Error("Stage is not available");
@@ -66,7 +66,7 @@ export async function generateThumbnail(
     return dataUrl;
   } catch (error) {
     throw new Error(
-      `Thumbnail generation failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Thumbnail generation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }
@@ -89,7 +89,7 @@ export async function generateThumbnail(
  */
 export async function uploadThumbnail(
   dataUrl: string,
-  userId: string
+  userId: string,
 ): Promise<{ storageId: string; url: string }> {
   try {
     // Convert data URL to blob
@@ -119,7 +119,7 @@ export async function uploadThumbnail(
     };
   } catch (error) {
     throw new Error(
-      `Thumbnail upload failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Thumbnail upload failed: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }
@@ -150,7 +150,7 @@ export async function uploadThumbnail(
  */
 export async function generateAndUploadThumbnail(
   stage: Konva.Stage | null,
-  userId: string
+  userId: string,
 ): Promise<{ storageId: string; url: string }> {
   const dataUrl = await generateThumbnail(stage);
   return await uploadThumbnail(dataUrl, userId);
@@ -180,7 +180,7 @@ export async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
  */
 export function generatePlaceholderThumbnail(
   width: number = THUMBNAIL_WIDTH,
-  height: number = THUMBNAIL_HEIGHT
+  height: number = THUMBNAIL_HEIGHT,
 ): string {
   const canvas = document.createElement("canvas");
   canvas.width = width;

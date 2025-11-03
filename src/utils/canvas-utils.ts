@@ -102,7 +102,7 @@ export const videoToCanvasElement = (video: PlacedVideo): CanvasElement => ({
 export const canvasToScreen = (
   canvasX: number,
   canvasY: number,
-  viewport: Viewport
+  viewport: Viewport,
 ): { x: number; y: number } => {
   return {
     x: canvasX * viewport.scale + viewport.x,
@@ -126,7 +126,7 @@ export const canvasToScreen = (
  * ```
  */
 export const calculateBoundingBox = (
-  image: PlacedImage
+  image: PlacedImage,
 ): { x: number; y: number; width: number; height: number } => {
   const { x, y, width, height, rotation } = image;
 

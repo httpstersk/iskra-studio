@@ -1,6 +1,6 @@
 /**
  * Asset synchronization and validation mutations.
- * 
+ *
  * Handles validation of element-to-asset references and maintains
  * consistency between saved projects and the assets table.
  */
@@ -10,11 +10,11 @@ import { query } from "./_generated/server";
 
 /**
  * Validates element asset references for a project.
- * 
+ *
  * Checks that all elements with assetId references have valid,
  * accessible assets in the database. Returns detailed validation
  * results for invalid or orphaned references.
- * 
+ *
  * @param projectId - ID of the project to validate
  * @returns Validation results with statistics and error details
  */
@@ -119,10 +119,10 @@ export const validateProjectAssets = query({
 
 /**
  * Lists all assets that are referenced by a specific project.
- * 
+ *
  * Useful for understanding asset dependencies and cleanup.
  * Returns asset records for all elements with assetId references.
- * 
+ *
  * @param projectId - ID of the project
  * @returns Array of asset records used in the project
  */
@@ -167,8 +167,8 @@ export const getProjectAssets = query({
         ctx.db
           .query("assets")
           .filter((q) => q.eq(q.field("_id"), assetId as any))
-          .unique()
-      )
+          .unique(),
+      ),
     );
 
     return assets.filter((a) => a !== null);
@@ -177,10 +177,10 @@ export const getProjectAssets = query({
 
 /**
  * Gets projects that use a specific asset.
- * 
+ *
  * Useful for understanding asset usage before deletion.
  * Returns all projects where elements reference the given asset.
- * 
+ *
  * @param assetId - ID of the asset
  * @returns Array of projects using this asset
  */
@@ -216,15 +216,15 @@ export const getProjectsUsingAsset = query({
     // Filter to projects using this asset
     const projectsUsingAsset = projects.filter((project) =>
       project.canvasState.elements.some(
-        (element) => element.assetId === args.assetId
-      )
+        (element) => element.assetId === args.assetId,
+      ),
     );
 
     return projectsUsingAsset.map((p) => ({
       projectId: p._id,
       projectName: p.name,
       elementCount: p.canvasState.elements.filter(
-        (e) => e.assetId === args.assetId
+        (e) => e.assetId === args.assetId,
       ).length,
     }));
   },

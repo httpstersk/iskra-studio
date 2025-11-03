@@ -55,7 +55,7 @@ function detectDeviceCapabilities(): "high" | "medium" | "low" {
  */
 function useBatteryMonitoring(
   onBatteryLow: () => void,
-  onBatteryRecovered: () => void
+  onBatteryRecovered: () => void,
 ) {
   useEffect(() => {
     if (typeof navigator === "undefined" || !("getBattery" in navigator)) {
@@ -106,7 +106,7 @@ function useBatteryMonitoring(
 function useFramePerformanceMonitoring(
   activeVideoCount: number,
   onPerformanceDrop: () => void,
-  onPerformanceRecovered: () => void
+  onPerformanceRecovered: () => void,
 ) {
   const frameTimesRef = useRef<number[]>([]);
   const lastFrameTimeRef = useRef<number>(performance.now());
@@ -129,22 +129,28 @@ function useFramePerformanceMonitoring(
       // Detect slow frames
       if (delta > PERFORMANCE_THRESHOLDS.SLOW_FRAME_THRESHOLD) {
         slowFrameCountRef.current++;
-        
-        if (slowFrameCountRef.current >= PERFORMANCE_THRESHOLDS.SLOW_FRAME_COUNT) {
+
+        if (
+          slowFrameCountRef.current >= PERFORMANCE_THRESHOLDS.SLOW_FRAME_COUNT
+        ) {
           onPerformanceDrop();
           slowFrameCountRef.current = 0; // Reset after triggering
         }
       } else {
         // Reset slow frame count if we have good frames
         if (slowFrameCountRef.current > 0) {
-          slowFrameCountRef.current = Math.max(0, slowFrameCountRef.current - 1);
+          slowFrameCountRef.current = Math.max(
+            0,
+            slowFrameCountRef.current - 1,
+          );
         }
 
         // Check if performance has consistently recovered
         if (frameTimesRef.current.length >= 30) {
           const avgFrameTime =
-            frameTimesRef.current.reduce((a, b) => a + b, 0) / frameTimesRef.current.length;
-          
+            frameTimesRef.current.reduce((a, b) => a + b, 0) /
+            frameTimesRef.current.length;
+
           if (avgFrameTime < PERFORMANCE_THRESHOLDS.SLOW_FRAME_THRESHOLD / 2) {
             onPerformanceRecovered();
           }
@@ -185,10 +191,10 @@ function useFramePerformanceMonitoring(
  */
 export function useAdaptiveVideoPerformance(
   activeVideoCount: number,
-  enabled = true
+  enabled = true,
 ): "high" | "medium" | "low" {
-  const [currentMode, setCurrentMode] = useState<"high" | "medium" | "low">(() =>
-    detectDeviceCapabilities()
+  const [currentMode, setCurrentMode] = useState<"high" | "medium" | "low">(
+    () => detectDeviceCapabilities(),
   );
   const [isLowPowerMode, setIsLowPowerMode] = useState(false);
   const baselineMode = useRef(detectDeviceCapabilities());
@@ -196,7 +202,7 @@ export function useAdaptiveVideoPerformance(
   // Battery monitoring
   useBatteryMonitoring(
     () => setIsLowPowerMode(true),
-    () => setIsLowPowerMode(false)
+    () => setIsLowPowerMode(false),
   );
 
   // Frame performance monitoring
@@ -218,7 +224,7 @@ export function useAdaptiveVideoPerformance(
         if (current === "medium" && baseline === "high") return "high";
         return current;
       });
-    }
+    },
   );
 
   // Apply low power mode if battery is low

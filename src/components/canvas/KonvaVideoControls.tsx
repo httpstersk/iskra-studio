@@ -58,7 +58,7 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
 
       onChange({ currentTime: newTime });
     },
-    [onChange, timelineWidth, video.duration]
+    [onChange, timelineWidth, video.duration],
   );
 
   const handleTimelineDragStart = useCallback(() => {
@@ -82,7 +82,7 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
 
       onChange({ currentTime: newTime });
     },
-    [onChange, timelineWidth, video.duration]
+    [onChange, timelineWidth, video.duration],
   );
 
   const handleTimelineDragEnd = useCallback(() => {

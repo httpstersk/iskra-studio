@@ -54,7 +54,7 @@ export function GenerationsIndicator({
         "flex items-center justify-center gap-3 rounded-xl border border-border/60 px-3 py-2",
         "bg-card/90 text-sm font-medium text-foreground backdrop-blur-md",
         styles.container,
-        className
+        className,
       )}
       role="status"
     >
@@ -90,7 +90,7 @@ export function GenerationsIndicator({
           className={cn(
             "whitespace-nowrap text-sm font-medium",
             "[--color-muted-foreground:theme(colors.zinc.500)]",
-            styles.shimmerHighlight
+            styles.shimmerHighlight,
           )}
           duration={1.5}
         >
@@ -176,7 +176,7 @@ function StatusOrb({
       }
     `;
 
-    const fragmentSource = `
+      const fragmentSource = `
       precision mediump float;
 
       uniform float u_time;
@@ -235,7 +235,7 @@ function StatusOrb({
       const fragmentShader = compileShader(
         gl,
         gl.FRAGMENT_SHADER,
-        fragmentSource
+        fragmentSource,
       );
       const program = createProgram(gl, vertexShader, fragmentShader);
 
@@ -252,7 +252,7 @@ function StatusOrb({
       gl.bufferData(
         gl.ARRAY_BUFFER,
         new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
-        gl.STATIC_DRAW
+        gl.STATIC_DRAW,
       );
 
       const positionLocation = gl.getAttribLocation(program, "a_position");
@@ -361,7 +361,7 @@ function StatusOrb({
 function compileShader(
   gl: WebGLRenderingContext,
   type: number,
-  source: string
+  source: string,
 ) {
   const shader = gl.createShader(type);
   if (!shader) {
@@ -383,7 +383,7 @@ function compileShader(
 function createProgram(
   gl: WebGLRenderingContext,
   vertexShader: WebGLShader,
-  fragmentShader: WebGLShader
+  fragmentShader: WebGLShader,
 ) {
   const program = gl.createProgram();
   if (!program) {

@@ -45,7 +45,7 @@ export function getVideoElement(videoId: string): HTMLVideoElement | null {
  */
 export async function toggleVideoPlayback(
   videoId: string,
-  shouldPlay: boolean
+  shouldPlay: boolean,
 ): Promise<void> {
   const videoEl = getVideoElement(videoId);
   if (!videoEl) return;

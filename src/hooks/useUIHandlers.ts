@@ -22,8 +22,13 @@ interface UIHandlerDeps {
  * @returns UI handler functions
  */
 export function useUIHandlers(deps: UIHandlerDeps) {
-  const { generationCount, selectedIds, setGenerationCount, setVariationMode, variationMode } =
-    deps;
+  const {
+    generationCount,
+    selectedIds,
+    setGenerationCount,
+    setVariationMode,
+    variationMode,
+  } = deps;
 
   /**
    * Handles image double-click to cycle generation count (4 → 8 → 12 → 4)
@@ -45,7 +50,7 @@ export function useUIHandlers(deps: UIHandlerDeps) {
         setGenerationCount(newCount);
       }
     },
-    [generationCount, selectedIds, setGenerationCount, variationMode]
+    [generationCount, selectedIds, setGenerationCount, variationMode],
   );
 
   /**
@@ -58,7 +63,7 @@ export function useUIHandlers(deps: UIHandlerDeps) {
         setGenerationCount(4);
       }
     },
-    [setGenerationCount, setVariationMode]
+    [setGenerationCount, setVariationMode],
   );
 
   return {

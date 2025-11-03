@@ -59,7 +59,7 @@ const generateStorylineImagesRequestSchema = z.object({
 function buildUserPrompt(
   analysis: ImageStyleMoodAnalysis,
   count: number,
-  userContext?: string
+  userContext?: string,
 ): string {
   const styleContext = buildStorylineStyleContext(analysis);
   const { subject, mood } = analysis;
@@ -160,13 +160,13 @@ Generate ${count} storyline concepts now.
 export async function POST(req: Request) {
   try {
     const parseResult = generateStorylineImagesRequestSchema.safeParse(
-      await req.json()
+      await req.json(),
     );
 
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -176,7 +176,7 @@ export async function POST(req: Request) {
     if (!apiKey) {
       return NextResponse.json(
         { error: "OpenAI API key not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -207,7 +207,7 @@ export async function POST(req: Request) {
         error: "Failed to generate storyline images",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

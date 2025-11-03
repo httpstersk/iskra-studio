@@ -45,7 +45,9 @@ export const generationCountAtom = atom<number>(4);
  * "camera-angles": Random camera angle variations (default)
  * "director": AI-generated variations with director visual signatures via FIBO
  */
-export const imageVariationTypeAtom = atom<"camera-angles" | "director">("camera-angles");
+export const imageVariationTypeAtom = atom<"camera-angles" | "director">(
+  "camera-angles",
+);
 
 /**
  * Image model atom - controls which model to use for image variations
@@ -56,12 +58,12 @@ export const imageModelAtom = atom<"seedream" | "nano-banana">("seedream");
 
 /**
  * Network status atom - tracks online/offline state
- * 
+ *
  * @remarks
  * - Initialized with navigator.onLine value
  * - Updated by online/offline event listeners
  * - Used by sync manager to queue changes when offline
  */
 export const isOnlineAtom = atom<boolean>(
-  typeof window !== "undefined" ? navigator.onLine : true
+  typeof window !== "undefined" ? navigator.onLine : true,
 );

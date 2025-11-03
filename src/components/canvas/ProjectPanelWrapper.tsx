@@ -52,7 +52,7 @@ export const ProjectPanelWrapper = React.memo<ProjectPanelWrapperProps>(
           restoreLastGoodState();
         }
       },
-      [loadProject, restoreLastGoodState, setOptimisticProjectId]
+      [loadProject, restoreLastGoodState, setOptimisticProjectId],
     );
 
     return (
@@ -63,5 +63,5 @@ export const ProjectPanelWrapper = React.memo<ProjectPanelWrapperProps>(
         onToggle={onToggle}
       />
     );
-  }
+  },
 );

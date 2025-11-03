@@ -60,7 +60,7 @@ export interface VideoElementHandlers {
  * ```
  */
 export function createVideoElement(
-  config: VideoElementConfig
+  config: VideoElementConfig,
 ): HTMLVideoElement {
   const {
     src,
@@ -96,7 +96,7 @@ export function createVideoElement(
  */
 export function attachVideoHandlers(
   video: HTMLVideoElement,
-  handlers: VideoElementHandlers
+  handlers: VideoElementHandlers,
 ): () => void {
   const listeners: Array<{ event: string; handler: EventListener }> = [];
 
@@ -171,7 +171,7 @@ export function cleanupVideoElement(video: HTMLVideoElement): void {
 export async function setVideoPlayback(
   video: HTMLVideoElement,
   shouldPlay: boolean,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
 ): Promise<void> {
   try {
     if (shouldPlay) {
@@ -201,7 +201,7 @@ export async function setVideoPlayback(
 export function setVideoVolume(
   video: HTMLVideoElement,
   volume: number,
-  muted: boolean
+  muted: boolean,
 ): void {
   video.volume = Math.max(0, Math.min(1, volume));
   video.muted = muted;
@@ -225,7 +225,7 @@ export function setVideoVolume(
 export function seekVideo(
   video: HTMLVideoElement,
   targetTime: number,
-  threshold = 2
+  threshold = 2,
 ): boolean {
   if (Math.abs(video.currentTime - targetTime) > threshold) {
     video.currentTime = targetTime;
@@ -245,7 +245,7 @@ export function seekVideo(
  */
 export function createVideoWithHandlers(
   config: VideoElementConfig,
-  handlers: VideoElementHandlers
+  handlers: VideoElementHandlers,
 ): { video: HTMLVideoElement; cleanup: () => void } {
   const video = createVideoElement(config);
   const cleanup = attachVideoHandlers(video, handlers);

@@ -27,7 +27,7 @@ export const ZoomControls = memo(function ZoomControls({
       const centerY = canvasSize.height / 2;
       setViewport(zoomViewport(viewport, centerX, centerY, delta));
     },
-    [canvasSize.height, canvasSize.width, setViewport, viewport]
+    [canvasSize.height, canvasSize.width, setViewport, viewport],
   );
 
   const handleReset = useCallback(() => {

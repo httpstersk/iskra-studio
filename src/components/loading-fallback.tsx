@@ -1,6 +1,6 @@
 /**
  * Loading fallback component for Suspense boundaries.
- * 
+ *
  * Displays a minimal loading state while data is being fetched.
  */
 

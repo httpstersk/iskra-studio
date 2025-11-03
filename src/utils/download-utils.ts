@@ -34,7 +34,7 @@ const fetchImageAsBlob = async (url: string): Promise<Blob> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(
     () => controller.abort(),
-    DOWNLOAD_CONSTANTS.FETCH_TIMEOUT
+    DOWNLOAD_CONSTANTS.FETCH_TIMEOUT,
   );
 
   try {
@@ -87,7 +87,7 @@ const getFilenameFromUrl = (url: string, index: number): string => {
  */
 export const downloadImagesAsZip = async (
   images: PlacedImage[],
-  selectedIds: string[]
+  selectedIds: string[],
 ): Promise<void> => {
   // Filter selected images
   const selectedImages = images.filter((img) => selectedIds.includes(img.id));

@@ -123,7 +123,7 @@ function toSingleLinePrompt(input: string): string {
  */
 async function getFalClient(
   ctx: { req?: RequestLike; userId?: string },
-  isVideo: boolean = false
+  isVideo: boolean = false,
 ) {
   const headersSource =
     ctx.req?.headers instanceof Headers ? ctx.req.headers : ctx.req?.headers;
@@ -171,7 +171,7 @@ async function downloadImage(url: string): Promise<Buffer> {
  */
 async function generateThumbnailDataUrl(
   imageUrl: string,
-  maxSize: number = 400
+  maxSize: number = 400,
 ): Promise<string> {
   const imageBuffer = await downloadImage(imageUrl);
 
@@ -213,7 +213,7 @@ export const appRouter = router({
           prompt: z.string().optional(),
           resolution: z.enum(["auto", "720p", "1080p"]).optional(),
         })
-        .passthrough()
+        .passthrough(),
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -270,7 +270,7 @@ export const appRouter = router({
           finalPrompt = await generateVideoPrompt(
             input.imageUrl,
             resolvedDuration,
-            userGuidance
+            userGuidance,
           );
 
           // Validate the generated prompt
@@ -384,14 +384,14 @@ export const appRouter = router({
             z.object({ width: z.number(), height: z.number() }),
           ])
           .optional(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       try {
         const falClient = await getFalClient(ctx);
 
         const resolvedImageSize = resolveImageSize(
-          input.imageSize ?? DEFAULT_IMAGE_SIZE_4K_LANDSCAPE
+          input.imageSize ?? DEFAULT_IMAGE_SIZE_4K_LANDSCAPE,
         );
 
         const result = await falClient.subscribe(TEXT_TO_IMAGE_ENDPOINT, {
@@ -423,7 +423,7 @@ export const appRouter = router({
         };
       } catch (error) {
         throw new Error(
-          error instanceof Error ? error.message : "Failed to generate image"
+          error instanceof Error ? error.message : "Failed to generate image",
         );
       }
     }),
@@ -442,7 +442,7 @@ export const appRouter = router({
         prompt: z.string(),
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
-      })
+      }),
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -463,7 +463,7 @@ export const appRouter = router({
               enable_safety_checker: true,
               seed: input.seed,
             },
-          }
+          },
         );
 
         let eventIndex = 0;
@@ -544,7 +544,7 @@ export const appRouter = router({
           .optional(),
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
-      })
+      }),
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -656,7 +656,7 @@ export const appRouter = router({
         stepsNum: z.number().optional().default(50),
         guidanceScale: z.number().optional().default(5),
         lastEventId: z.string().optional(),
-      })
+      }),
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {

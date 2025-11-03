@@ -77,7 +77,7 @@ export interface CanvasStateValidationResult {
 export function validateElementAsset(
   element: CanvasElement,
   assetMap: Map<string, Asset>,
-  userId: string
+  userId: string,
 ): AssetValidationResult {
   const result: AssetValidationResult = {
     elementId: element.id,
@@ -151,7 +151,7 @@ export function validateElementAsset(
 export function validateCanvasState(
   canvasState: CanvasState,
   assetMap: Map<string, Asset>,
-  userId: string
+  userId: string,
 ): CanvasStateValidationResult {
   const invalidElements: AssetValidationResult[] = [];
   const staleMetadata: AssetValidationResult[] = [];
@@ -198,7 +198,7 @@ export function validateCanvasState(
  */
 export function syncElementWithAsset(
   element: CanvasElement,
-  asset: Asset
+  asset: Asset,
 ): CanvasElement {
   return {
     ...element,
@@ -269,7 +269,7 @@ export interface MigrationPlan {
 }
 
 export function generateMigrationPlan(
-  validation: CanvasStateValidationResult
+  validation: CanvasStateValidationResult,
 ): MigrationPlan {
   return {
     elementsToDelete: validation.invalidElements.map((e) => e.elementId),

@@ -40,7 +40,12 @@ export function useVideoDragWithSnap(
             setAllVideos((prev) =>
               prev.map((vid) => {
                 if (vid.id === params.selfId) {
-                  return { ...vid, x: snapped.x, y: snapped.y, isVideo: true as const };
+                  return {
+                    ...vid,
+                    x: snapped.x,
+                    y: snapped.y,
+                    isVideo: true as const,
+                  };
                 }
                 if (params.selectedIds.includes(vid.id)) {
                   const p = params.dragStartPositions.get(vid.id);
@@ -61,7 +66,13 @@ export function useVideoDragWithSnap(
           }
         },
       ),
-    [params.dragStartPositions, params.selectedIds, params.selfId, setAllVideos, onChangeSelf],
+    [
+      params.dragStartPositions,
+      params.selectedIds,
+      params.selfId,
+      setAllVideos,
+      onChangeSelf,
+    ],
   );
 
   const onDragMove = useCallback(
@@ -81,14 +92,20 @@ export function useVideoDragWithSnap(
       lastSnap.current = snapped;
 
       const isMulti =
-        params.selectedIds.includes(params.selfId) && params.selectedIds.length > 1;
+        params.selectedIds.includes(params.selfId) &&
+        params.selectedIds.length > 1;
       const startPos = isMulti
         ? params.dragStartPositions.get(params.selfId)
         : undefined;
 
       throttledStateUpdate(snapped, isMulti, startPos);
     },
-    [params.dragStartPositions, params.selectedIds, params.selfId, throttledStateUpdate],
+    [
+      params.dragStartPositions,
+      params.selectedIds,
+      params.selfId,
+      throttledStateUpdate,
+    ],
   );
 
   const reset = useCallback(() => {

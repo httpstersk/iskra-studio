@@ -38,7 +38,8 @@ export const DEFAULT_VIDEO_FPS_QUALITY = "medium" as const;
 /**
  * Interval in milliseconds for default quality video rendering.
  */
-export const DEFAULT_VIDEO_FPS_INTERVAL = FPS_PRESETS[DEFAULT_VIDEO_FPS_QUALITY];
+export const DEFAULT_VIDEO_FPS_INTERVAL =
+  FPS_PRESETS[DEFAULT_VIDEO_FPS_QUALITY];
 
 /**
  * Type for FPS quality levels

@@ -48,7 +48,7 @@ interface ConflictResolution {
 export function resolveConflict(
   localState: CanvasState,
   remoteState: CanvasState,
-  strategy: ConflictStrategy = "last-write-wins"
+  strategy: ConflictStrategy = "last-write-wins",
 ): CanvasState {
   // Check if there's actually a conflict
   const localModified = localState.lastModified || 0;
@@ -66,7 +66,7 @@ export function resolveConflict(
 
   // Default to remote state if strategy not recognized
   console.warn(
-    `Unknown conflict strategy: ${strategy}, defaulting to remote state`
+    `Unknown conflict strategy: ${strategy}, defaulting to remote state`,
   );
   return remoteState;
 }
@@ -82,7 +82,7 @@ export function resolveConflict(
  */
 function resolveLastWriteWins(
   localState: CanvasState,
-  remoteState: CanvasState
+  remoteState: CanvasState,
 ): CanvasState {
   const localModified = localState.lastModified || 0;
   const remoteModified = remoteState.lastModified || 0;
@@ -117,7 +117,7 @@ function resolveLastWriteWins(
 export function resolveConflictWithMetadata(
   localState: CanvasState,
   remoteState: CanvasState,
-  strategy: ConflictStrategy = "last-write-wins"
+  strategy: ConflictStrategy = "last-write-wins",
 ): ConflictResolution {
   const localModified = localState.lastModified || 0;
   const remoteModified = remoteState.lastModified || 0;
@@ -173,7 +173,7 @@ export function resolveConflictWithMetadata(
  */
 export function hasConflict(
   localState: CanvasState,
-  remoteState: CanvasState
+  remoteState: CanvasState,
 ): boolean {
   const localModified = localState.lastModified || 0;
   const remoteModified = remoteState.lastModified || 0;
@@ -198,7 +198,7 @@ export function hasConflict(
  */
 export function detectChangedElements(
   oldState: CanvasState,
-  newState: CanvasState
+  newState: CanvasState,
 ): string[] {
   const changedIds: string[] = [];
 

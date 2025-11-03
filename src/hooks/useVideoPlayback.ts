@@ -24,7 +24,8 @@ export function useVideoPlayback(
     volume: number;
   },
 ) {
-  const { isPlaying, volume, muted, loop, currentTime, onPlaybackError } = props;
+  const { isPlaying, volume, muted, loop, currentTime, onPlaybackError } =
+    props;
 
   useEffect(() => {
     if (!videoEl) return;

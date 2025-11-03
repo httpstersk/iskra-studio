@@ -43,7 +43,7 @@ export async function compressImage(
   imageBlob: Blob,
   maxWidth: number = MAX_IMAGE_WIDTH,
   maxHeight: number = MAX_IMAGE_HEIGHT,
-  quality: number = JPEG_QUALITY
+  quality: number = JPEG_QUALITY,
 ): Promise<Blob> {
   try {
     const dataUrl = await blobToDataUrl(imageBlob);

@@ -9,17 +9,17 @@ export const imageStyleMoodAnalysisSchema = z.object({
     type: z
       .string()
       .describe(
-        "What is the main subject/object in the scene (e.g., 'person', 'cityscape', 'nature', 'object')"
+        "What is the main subject/object in the scene (e.g., 'person', 'cityscape', 'nature', 'object')",
       ),
     description: z
       .string()
       .describe(
-        "Brief description of the subject (e.g., 'lone figure standing', 'neon-lit street', 'geometric patterns')"
+        "Brief description of the subject (e.g., 'lone figure standing', 'neon-lit street', 'geometric patterns')",
       ),
     context: z
       .string()
       .describe(
-        "What the subject is doing or represents (e.g., 'contemplating', 'in motion', 'at rest')"
+        "What the subject is doing or represents (e.g., 'contemplating', 'in motion', 'at rest')",
       ),
   }),
 
@@ -29,12 +29,12 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .min(3)
       .max(5)
       .describe(
-        "3-5 specific color names (e.g., 'electric cobalt', 'sunset amber')"
+        "3-5 specific color names (e.g., 'electric cobalt', 'sunset amber')",
       ),
     grading: z
       .string()
       .describe(
-        "Detailed color grading description (e.g., 'teal-orange blockbuster', 'desaturated Nordic noir', 'warm golden hour glow')"
+        "Detailed color grading description (e.g., 'teal-orange blockbuster', 'desaturated Nordic noir', 'warm golden hour glow')",
       ),
     mood: z.string().describe("How the colors make you feel"),
     saturation: z.enum(["muted", "balanced", "vibrant", "hyper-saturated"]),
@@ -64,7 +64,7 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .array(z.string())
       .min(1)
       .describe(
-        "Visual aesthetics: cinematic, editorial, surreal, minimalist, etc."
+        "Visual aesthetics: cinematic, editorial, surreal, minimalist, etc.",
       ),
     composition: z
       .string()
@@ -73,13 +73,13 @@ export const imageStyleMoodAnalysisSchema = z.object({
     filmGrain: z
       .string()
       .describe(
-        "Film grain characteristics: none, subtle, moderate, heavy, or specific type (e.g., '35mm Kodak grain', 'digital noise', '16mm texture')"
+        "Film grain characteristics: none, subtle, moderate, heavy, or specific type (e.g., '35mm Kodak grain', 'digital noise', '16mm texture')",
       ),
     postProcessing: z
       .array(z.string())
       .min(1)
       .describe(
-        "Post-processing effects present: vignette, bloom, chromatic aberration, lens distortion, halation, etc."
+        "Post-processing effects present: vignette, bloom, chromatic aberration, lens distortion, halation, etc.",
       ),
     texture: z
       .array(z.string())
@@ -162,7 +162,7 @@ export const imageStyleMoodAnalysisSchema = z.object({
         look: z
           .string()
           .describe(
-            "Lens look characteristics (e.g., oval bokeh, barrel distortion, edge softness)"
+            "Lens look characteristics (e.g., oval bokeh, barrel distortion, edge softness)",
           ),
       })
       .describe("Optical characteristics shaping the mood"),
@@ -202,7 +202,7 @@ export const imageStyleMoodAnalysisSchema = z.object({
     styleLockPrompt: z
       .string()
       .describe(
-        "One concise sentence that locks color, lighting, lens, grain, and emotion for prompts (prepend to prompts)"
+        "One concise sentence that locks color, lighting, lens, grain, and emotion for prompts (prepend to prompts)",
       ),
   }),
 
@@ -211,14 +211,14 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .array(z.string())
       .min(2)
       .describe(
-        "Types of motion that would fit: smooth, frenetic, slow, rhythmic, etc."
+        "Types of motion that would fit: smooth, frenetic, slow, rhythmic, etc.",
       ),
 
     camerawork: z
       .array(z.string())
       .min(2)
       .describe(
-        "Camera techniques that would enhance: push-in, orbit, tilt, etc."
+        "Camera techniques that would enhance: push-in, orbit, tilt, etc.",
       ),
 
     editingPace: z.enum([
@@ -232,7 +232,7 @@ export const imageStyleMoodAnalysisSchema = z.object({
       .array(z.string())
       .min(2)
       .describe(
-        "Effects that would amplify the mood: light streaks, particles, etc."
+        "Effects that would amplify the mood: light streaks, particles, etc.",
       ),
   }),
 
@@ -240,20 +240,20 @@ export const imageStyleMoodAnalysisSchema = z.object({
     cinematographer: z
       .string()
       .describe(
-        "Cinematographer whose style this resembles (e.g., 'Roger Deakins', 'Emmanuel Lubezki', 'Hoyte van Hoytema')"
+        "Cinematographer whose style this resembles (e.g., 'Roger Deakins', 'Emmanuel Lubezki', 'Hoyte van Hoytema')",
       ),
 
     director: z
       .string()
       .describe(
-        "Director whose visual style this evokes (e.g., 'Denis Villeneuve', 'Wes Anderson', 'Christopher Nolan')"
+        "Director whose visual style this evokes (e.g., 'Denis Villeneuve', 'Wes Anderson', 'Christopher Nolan')",
       ),
 
     genre: z
       .array(z.string())
       .min(2)
       .describe(
-        "Cinematic genres this evokes: thriller, fashion, experimental, etc. (at least 2)"
+        "Cinematic genres this evokes: thriller, fashion, experimental, etc. (at least 2)",
       ),
 
     intensity: z

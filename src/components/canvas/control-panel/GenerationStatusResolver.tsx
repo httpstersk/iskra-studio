@@ -74,7 +74,7 @@ interface ResolveStatusMessageParams {
  * @returns Human-readable status message
  */
 export function resolveGenerationStatusMessage(
-  params: ResolveStatusMessageParams
+  params: ResolveStatusMessageParams,
 ): string {
   const {
     activeGenerations,
@@ -128,7 +128,7 @@ export function resolveGenerationStatusMessage(
  * @returns The highest priority status found, or null if none have status set
  */
 function findPriorityStatus(
-  generations: Array<ActiveGeneration | ActiveVideoGeneration>
+  generations: Array<ActiveGeneration | ActiveVideoGeneration>,
 ): GenerationStatus | null {
   for (const priorityStatus of STATUS_PRIORITY) {
     const hasStatus = generations.some((gen) => gen.status === priorityStatus);

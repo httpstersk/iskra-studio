@@ -56,7 +56,7 @@ interface PixelateResources {
 const compileShader = (
   gl: WebGLRenderingContext,
   type: number,
-  source: string
+  source: string,
 ): WebGLShader => {
   const shader = gl.createShader(type);
 
@@ -80,13 +80,13 @@ const createProgram = (gl: WebGLRenderingContext): PixelateResources => {
   const vertexShader = compileShader(
     gl,
     gl.VERTEX_SHADER,
-    VERTEX_SHADER_SOURCE
+    VERTEX_SHADER_SOURCE,
   );
 
   const fragmentShader = compileShader(
     gl,
     gl.FRAGMENT_SHADER,
-    FRAGMENT_SHADER_SOURCE
+    FRAGMENT_SHADER_SOURCE,
   );
 
   const program = gl.createProgram();
@@ -116,14 +116,14 @@ const createProgram = (gl: WebGLRenderingContext): PixelateResources => {
   gl.bufferData(
     gl.ARRAY_BUFFER,
     new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
-    gl.STATIC_DRAW
+    gl.STATIC_DRAW,
   );
 
   gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
   gl.bufferData(
     gl.ARRAY_BUFFER,
     new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
-    gl.STATIC_DRAW
+    gl.STATIC_DRAW,
   );
 
   const attributeLocations = {
@@ -156,7 +156,7 @@ const createProgram = (gl: WebGLRenderingContext): PixelateResources => {
 const configureTexture = (
   gl: WebGLRenderingContext,
   texture: WebGLTexture | null,
-  source: TexImageSource
+  source: TexImageSource,
 ) => {
   if (!texture) {
     throw new Error("Failed to create texture");
@@ -174,7 +174,7 @@ const configureTexture = (
 
 const drawFullscreenQuad = (
   gl: WebGLRenderingContext,
-  resources: PixelateResources
+  resources: PixelateResources,
 ) => {
   gl.bindBuffer(gl.ARRAY_BUFFER, resources.positionBuffer);
   gl.enableVertexAttribArray(resources.attributeLocations.position);
@@ -184,7 +184,7 @@ const drawFullscreenQuad = (
     gl.FLOAT,
     false,
     0,
-    0
+    0,
   );
 
   gl.bindBuffer(gl.ARRAY_BUFFER, resources.texCoordBuffer);
@@ -195,7 +195,7 @@ const drawFullscreenQuad = (
     gl.FLOAT,
     false,
     0,
-    0
+    0,
   );
 
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -205,7 +205,7 @@ const createFallbackRedPixelateCanvas = (
   image: HTMLImageElement,
   width: number,
   height: number,
-  pixelSize: number
+  pixelSize: number,
 ): HTMLCanvasElement => {
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -233,7 +233,8 @@ const createFallbackRedPixelateCanvas = (
       const imageData = context.getImageData(0, 0, width, height);
       const data = imageData.data;
       for (let i = 0; i < data.length; i += 4) {
-        const luminance = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        const luminance =
+          0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
         data[i] = luminance;
         data[i + 1] = luminance * 0.1;
         data[i + 2] = luminance * 0.1;
@@ -248,7 +249,7 @@ export const createRedPixelatedCanvas = (
   image: HTMLImageElement,
   width: number,
   height: number,
-  pixelSize: number = DEFAULT_PIXEL_SIZE
+  pixelSize: number = DEFAULT_PIXEL_SIZE,
 ): HTMLCanvasElement => {
   const targetWidth = Math.max(1, Math.round(width));
   const targetHeight = Math.max(1, Math.round(height));
@@ -271,7 +272,7 @@ export const createRedPixelatedCanvas = (
       image,
       targetWidth,
       targetHeight,
-      pixelSize
+      pixelSize,
     );
   }
 
@@ -296,7 +297,7 @@ export const createRedPixelatedCanvas = (
       gl.uniform2f(
         resources.uniformLocations.resolution,
         targetWidth,
-        targetHeight
+        targetHeight,
       );
     }
 
@@ -312,7 +313,7 @@ export const createRedPixelatedCanvas = (
       image,
       targetWidth,
       targetHeight,
-      pixelSize
+      pixelSize,
     );
   }
 };

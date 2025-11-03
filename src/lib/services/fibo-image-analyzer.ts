@@ -36,7 +36,7 @@ export class FiboAnalysisError extends Error {
   constructor(
     message: string,
     public readonly cause?: unknown,
-    public readonly statusCode?: number
+    public readonly statusCode?: number,
   ) {
     super(message);
     this.name = "FiboAnalysisError";
@@ -50,7 +50,7 @@ function getFalKey(): string {
   const falKey = process.env.FAL_KEY;
   if (!falKey || !falKey.trim()) {
     throw new FiboAnalysisError(
-      "FAL_KEY environment variable is not configured. Get your API key from https://fal.ai/dashboard/keys"
+      "FAL_KEY environment variable is not configured. Get your API key from https://fal.ai/dashboard/keys",
     );
   }
   return falKey;
@@ -72,7 +72,7 @@ function getFalKey(): string {
  * ```
  */
 export async function analyzeFiboImage(
-  options: FiboAnalysisOptions
+  options: FiboAnalysisOptions,
 ): Promise<FiboStructuredPrompt> {
   const { imageUrl, seed = 666, timeout = 30000 } = options;
 
@@ -104,7 +104,7 @@ export async function analyzeFiboImage(
             seed,
           },
           logs: true,
-        }
+        },
       )) as { data: FiboApiResponse };
 
       clearTimeout(timeoutId);
@@ -112,7 +112,7 @@ export async function analyzeFiboImage(
       // Validate response - check different possible response structures
       if (!result) {
         throw new FiboAnalysisError(
-          "FIBO API returned null/undefined response"
+          "FIBO API returned null/undefined response",
         );
       }
 
@@ -138,7 +138,7 @@ export async function analyzeFiboImage(
       if (!structuredPrompt) {
         throw new FiboAnalysisError(
           "FIBO API returned invalid response: missing structured_prompt. Response keys: " +
-            JSON.stringify(Object.keys(result.data || result))
+            JSON.stringify(Object.keys(result.data || result)),
         );
       }
 
@@ -151,7 +151,7 @@ export async function analyzeFiboImage(
     if (error instanceof Error && error.name === "AbortError") {
       throw new FiboAnalysisError(
         `FIBO analysis timed out after ${timeout}ms`,
-        error
+        error,
       );
     }
 
@@ -166,7 +166,7 @@ export async function analyzeFiboImage(
         throw new FiboAnalysisError(
           `FIBO API error (${statusCode}): ${message}`,
           error,
-          statusCode
+          statusCode,
         );
       }
 
@@ -195,7 +195,7 @@ export async function analyzeFiboImage(
  */
 export async function analyzeFiboImageWithRetry(
   options: FiboAnalysisOptions,
-  maxRetries = 2
+  maxRetries = 2,
 ): Promise<FiboStructuredPrompt> {
   let lastError: Error | undefined;
 
@@ -228,6 +228,6 @@ export async function analyzeFiboImageWithRetry(
 
   throw new FiboAnalysisError(
     `FIBO analysis failed after ${maxRetries + 1} attempts. Last error: ${errorDetails}`,
-    lastError
+    lastError,
   );
 }

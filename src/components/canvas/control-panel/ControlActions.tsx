@@ -37,7 +37,7 @@ interface ControlActionsProps {
  * Creates and configures a file input element for image upload
  */
 const createFileInput = (
-  handleFileUpload: (files: FileList | null) => void
+  handleFileUpload: (files: FileList | null) => void,
 ): HTMLInputElement => {
   const input = document.createElement("input");
   input.type = FILE_INPUT_CONFIG.TYPE;
@@ -57,7 +57,7 @@ const createFileInput = (
     } catch (error) {
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_FAILED,
-        CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC
+        CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC,
       );
     } finally {
       if (input.parentNode) {
@@ -88,7 +88,7 @@ const triggerFileDialog = (input: HTMLInputElement) => {
     } catch (error) {
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE,
-        CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC
+        CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC,
       );
 
       if (input.parentNode) {
@@ -165,7 +165,7 @@ export function ControlActions({
             <Button
               className={cn(
                 "gap-2 font-medium transition-all",
-                isGenerating && "bg-secondary"
+                isGenerating && "bg-secondary",
               )}
               disabled={isRunDisabled}
               onClick={handleRun}

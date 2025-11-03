@@ -33,8 +33,7 @@ const alertVariants = cva(
       },
       container: {
         none: "",
-        bordered:
-          "rounded border border-border/50 p-4 bg-card/50",
+        bordered: "rounded border border-border/50 p-4 bg-card/50",
       },
     },
     defaultVariants: {

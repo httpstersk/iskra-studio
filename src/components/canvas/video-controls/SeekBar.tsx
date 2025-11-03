@@ -35,7 +35,7 @@ interface SeekBarProps {
 function calculateTimeFromEvent(
   event: React.MouseEvent<HTMLDivElement>,
   element: HTMLDivElement,
-  duration: number
+  duration: number,
 ): number | null {
   const rect = element.getBoundingClientRect();
   const position = (event.clientX - rect.left) / rect.width;
@@ -65,7 +65,7 @@ export const SeekBar = React.memo<SeekBarProps>(function SeekBar({
         onSeek(time);
       }
     },
-    [duration, onSeek]
+    [duration, onSeek],
   );
 
   const handleMouseDown = useCallback(() => {
@@ -85,7 +85,7 @@ export const SeekBar = React.memo<SeekBarProps>(function SeekBar({
         onSeek(time);
       }
     },
-    [duration, onSeek]
+    [duration, onSeek],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -127,7 +127,7 @@ export const SeekBar = React.memo<SeekBarProps>(function SeekBar({
         onSeek(newTime);
       }
     },
-    [currentTime, duration, onSeek]
+    [currentTime, duration, onSeek],
   );
 
   const progressPercentage = (currentTime / duration) * 100;

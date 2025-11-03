@@ -8,7 +8,7 @@ import { SegmentedControl } from "@radix-ui/themes";
 interface VideoSettingsProps {
   setVideoDuration: (value: "4" | "8" | "12") => void;
   setVideoModel: (
-    value: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro"
+    value: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro",
   ) => void;
   videoDuration: "4" | "8" | "12";
   videoModel: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro";
@@ -82,7 +82,7 @@ export function VideoSettings({
         }
         onValueChange={(value) =>
           handleQualityChange(
-            value === "pro" ? "pro" : modelFamily === "veo" ? "fast" : "normal"
+            value === "pro" ? "pro" : modelFamily === "veo" ? "fast" : "normal",
           )
         }
       >

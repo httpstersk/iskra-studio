@@ -1,7 +1,4 @@
-import {
-  TIME_DISPLAY_STYLES,
-  TIME_FORMAT,
-} from "@/constants/video-overlays";
+import { TIME_DISPLAY_STYLES, TIME_FORMAT } from "@/constants/video-overlays";
 import React from "react";
 
 /**

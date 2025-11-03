@@ -33,7 +33,7 @@ export const ActionButtons = React.memo(function ActionButtons({
       className={cn(
         "rounded-xl overflow-clip flex items-center",
         CONTROL_PANEL_STYLES.GROUP_SHADOW,
-        "dark:shadow-none dark:border dark:border-border"
+        "dark:shadow-none dark:border dark:border-border",
       )}
     >
       <Button

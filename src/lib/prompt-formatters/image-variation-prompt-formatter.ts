@@ -195,7 +195,7 @@ const RECOMPOSITION_STYLE_GUIDANCE: Record<
  * If style is "auto", present a curated style list and instruct to pick one.
  */
 function buildStyleGuidance(
-  style: ImageVariationRecompositionStyle | "auto"
+  style: ImageVariationRecompositionStyle | "auto",
 ): string {
   if (style === "auto") {
     const styleList = Object.keys(RECOMPOSITION_STYLE_GUIDANCE)
@@ -204,7 +204,7 @@ function buildStyleGuidance(
       .join("\n");
 
     return [AUTO_GUIDANCE_CHOOSE_ONE, AUTO_GUIDANCE_DO_NOT_MIX, styleList].join(
-      "\n"
+      "\n",
     );
   }
 
@@ -230,7 +230,7 @@ function getRandomItem<T>(items: readonly T[]): T {
  */
 function buildInstructionsSection(
   directive: string,
-  styleGuidance: string
+  styleGuidance: string,
 ): string {
   return [
     SECTION_INSTRUCTIONS,
@@ -245,18 +245,18 @@ function buildInstructionsSection(
  */
 function buildReferencesSection(
   directorReference?: string,
-  cinematographerReference?: string
+  cinematographerReference?: string,
 ): string {
   const referenceLines: string[] = [];
 
   if (directorReference) {
     referenceLines.push(
-      `- ${LINE_REFERENCE_DIRECTOR_PREFIX} ${directorReference}`
+      `- ${LINE_REFERENCE_DIRECTOR_PREFIX} ${directorReference}`,
     );
   }
   if (cinematographerReference) {
     referenceLines.push(
-      `- ${LINE_REFERENCE_CINEMATOGRAPHER_PREFIX} ${cinematographerReference}`
+      `- ${LINE_REFERENCE_CINEMATOGRAPHER_PREFIX} ${cinematographerReference}`,
     );
   }
 
@@ -336,7 +336,7 @@ export function getAllDirectorReferences(): readonly string[] {
  */
 export function getAllRecompositionStyles(): readonly ImageVariationRecompositionStyle[] {
   return Object.keys(
-    RECOMPOSITION_STYLE_GUIDANCE
+    RECOMPOSITION_STYLE_GUIDANCE,
   ).sort() as ImageVariationRecompositionStyle[];
 }
 
@@ -372,7 +372,7 @@ export function getRandomRecompositionStyle(): ImageVariationRecompositionStyle 
 export function formatImageVariationPrompt(
   directive: string,
   userPrompt?: string,
-  options: ImageVariationOptions = {}
+  options: ImageVariationOptions = {},
 ): string {
   const {
     cinematographerReference,
@@ -384,7 +384,7 @@ export function formatImageVariationPrompt(
   const styleGuidance = buildStyleGuidance(recompositionStyle);
   const referencesSection = buildReferencesSection(
     directorReference,
-    cinematographerReference
+    cinematographerReference,
   );
 
   const sections = [

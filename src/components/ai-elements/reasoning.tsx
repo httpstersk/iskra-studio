@@ -81,10 +81,13 @@ export const Reasoning = memo(
         setIsOpen(true);
       } else if (!isStreaming && isOpen && !defaultOpen && !hasAutoClosedRef) {
         // Use requestIdleCallback for non-critical auto-close to improve performance
-        const timer = requestIdleCallback(() => {
-          setIsOpen(false);
-          setHasAutoClosedRef(true);
-        }, { timeout: AUTO_CLOSE_DELAY });
+        const timer = requestIdleCallback(
+          () => {
+            setIsOpen(false);
+            setHasAutoClosedRef(true);
+          },
+          { timeout: AUTO_CLOSE_DELAY },
+        );
         return () => cancelIdleCallback(timer);
       }
     }, [isStreaming, isOpen, defaultOpen, setIsOpen, hasAutoClosedRef]);

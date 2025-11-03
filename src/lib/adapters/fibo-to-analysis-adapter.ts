@@ -83,7 +83,7 @@ function extractDominantColors(colorScheme: string): string[] {
  * Maps FIBO lighting conditions to our quality enum
  */
 function mapLightingQuality(
-  conditions: string
+  conditions: string,
 ): "soft-diffused" | "hard-dramatic" | "natural" | "artificial" | "mixed" {
   const lower = conditions.toLowerCase();
   if (lower.includes("soft") || lower.includes("diffuse"))
@@ -109,7 +109,7 @@ function mapLightingQuality(
  * Maps FIBO depth of field to our depth enum
  */
 function mapDepth(
-  depthOfField: string
+  depthOfField: string,
 ): "flat" | "layered" | "deep-perspective" {
   const lower = depthOfField.toLowerCase();
   if (lower.includes("shallow") || lower.includes("bokeh")) return "layered";
@@ -122,7 +122,7 @@ function mapDepth(
  * Infers saturation from color scheme description
  */
 function inferSaturation(
-  colorScheme: string
+  colorScheme: string,
 ): "muted" | "balanced" | "vibrant" | "hyper-saturated" {
   const lower = colorScheme.toLowerCase();
   if (
@@ -150,7 +150,7 @@ function inferSaturation(
  * Infers temperature from color scheme
  */
 function inferTemperature(
-  colorScheme: string
+  colorScheme: string,
 ): "cool" | "neutral" | "warm" | "mixed" {
   const lower = colorScheme.toLowerCase();
   const hasCool =
@@ -174,7 +174,7 @@ function inferTemperature(
  * Infers energy level from mood atmosphere
  */
 function inferEnergy(
-  moodAtmosphere: string
+  moodAtmosphere: string,
 ): "calm" | "moderate" | "dynamic" | "explosive" {
   const lower = moodAtmosphere.toLowerCase();
   if (
@@ -255,7 +255,7 @@ function generateStyleLockPrompt(fibo: FiboStructuredPrompt): string {
  * Main adapter function: Transforms FIBO output to ImageStyleMoodAnalysis
  */
 export function adaptFiboToAnalysis(
-  fibo: FiboStructuredPrompt
+  fibo: FiboStructuredPrompt,
 ): ImageStyleMoodAnalysis {
   const primaryObject = fibo.objects[0] || {
     description: "scene",
@@ -284,7 +284,7 @@ export function adaptFiboToAnalysis(
   const temperature = inferTemperature(fibo.aesthetics.color_scheme);
   const energy = inferEnergy(fibo.aesthetics.mood_atmosphere);
   const focalLength = extractFocalLength(
-    fibo.photographic_characteristics.lens_focal_length
+    fibo.photographic_characteristics.lens_focal_length,
   );
 
   return {
@@ -335,7 +335,7 @@ export function adaptFiboToAnalysis(
       lensLanguage: {
         focalLengthMm: focalLength,
         apertureF: inferAperture(
-          fibo.photographic_characteristics.depth_of_field
+          fibo.photographic_characteristics.depth_of_field,
         ),
         depthOfField:
           mapDepth(fibo.photographic_characteristics.depth_of_field) ===

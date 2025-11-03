@@ -27,23 +27,23 @@ export function useUIState() {
   const [generationCount, setGenerationCount] = useAtom(generationCountAtom);
   const [imageModel, setImageModel] = useAtom(imageModelAtom);
   const [imageVariationType, setImageVariationType] = useAtom(
-    imageVariationTypeAtom
+    imageVariationTypeAtom,
   );
   const [isImageToVideoDialogOpen, setIsImageToVideoDialogOpen] = useAtom(
-    isImageToVideoDialogOpenAtom
+    isImageToVideoDialogOpenAtom,
   );
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useAtom(
-    isSettingsDialogOpenAtom
+    isSettingsDialogOpenAtom,
   );
   const [selectedImageForVideo, setSelectedImageForVideo] = useAtom(
-    selectedImageForVideoAtom
+    selectedImageForVideoAtom,
   );
   const [showChat, setShowChat] = useAtom(showChatAtom);
   const [showGrid, setShowGrid] = useAtom(showGridAtom);
   const [showMinimap, setShowMinimap] = useAtom(showMinimapAtom);
   const [variationMode, setVariationMode] = useAtom(variationModeAtom);
   const [visibleIndicators, setVisibleIndicators] = useAtom(
-    visibleIndicatorsAtom
+    visibleIndicatorsAtom,
   );
 
   // Load grid setting from localStorage on mount

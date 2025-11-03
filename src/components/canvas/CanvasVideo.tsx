@@ -25,7 +25,7 @@ const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
 
   const [loadedImg] = useImage(
     pixelatedSrc && !cachedImage ? pixelatedSrc : "",
-    "anonymous"
+    "anonymous",
   );
 
   if (!pixelatedSrc) return undefined;
@@ -95,7 +95,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
     },
     (currentTime) => {
       onChange({ currentTime });
-    }
+    },
   );
 
   // Animation coordinator for pixelated overlay transition
@@ -133,7 +133,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
       onChange({
         currentTime: Math.min(
           video.duration,
-          Math.max(0, video.currentTime + delta)
+          Math.max(0, video.currentTime + delta),
         ),
       }),
     volumeBy: (delta) => {
@@ -151,7 +151,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
       selfId: video.id,
     },
     setVideos,
-    onChange
+    onChange,
   );
 
   /**
@@ -167,7 +167,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
         onSelect(e);
       }
     },
-    [isSelected, onChange, onSelect, video.isPlaying]
+    [isSelected, onChange, onSelect, video.isPlaying],
   );
 
   const handleDragStart = useCallback(
@@ -180,7 +180,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
 
       onDragStart();
     },
-    [isSelected, onDragStart, onSelect]
+    [isSelected, onDragStart, onSelect],
   );
 
   const handleDragEnd = useCallback(() => {
@@ -197,7 +197,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
         return;
       }
     },
-    []
+    [],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -287,7 +287,9 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
           perfectDrawEnabled={false}
           ref={shapeRef}
           shadowForStrokeEnabled={false}
-          stroke={isSelected ? "#0ea5e9" : isHovered ? "#0ea5e9" : "transparent"}
+          stroke={
+            isSelected ? "#0ea5e9" : isHovered ? "#0ea5e9" : "transparent"
+          }
           strokeScaleEnabled={false}
           strokeWidth={isSelected || isHovered ? 2 : 0}
           width={video.width}
@@ -328,7 +330,9 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
           perfectDrawEnabled={false}
           ref={shapeRef}
           shadowForStrokeEnabled={false}
-          stroke={isSelected ? "#0ea5e9" : isHovered ? "#0ea5e9" : "transparent"}
+          stroke={
+            isSelected ? "#0ea5e9" : isHovered ? "#0ea5e9" : "transparent"
+          }
           strokeScaleEnabled={false}
           strokeWidth={isSelected || isHovered ? 2 : 0}
           width={video.width}

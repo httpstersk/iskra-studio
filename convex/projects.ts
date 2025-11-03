@@ -81,7 +81,7 @@ export const saveProject = mutation({
           assetId: v.optional(v.string()),
           assetSyncedAt: v.optional(v.number()),
           assetType: v.optional(
-            v.union(v.literal("image"), v.literal("video"))
+            v.union(v.literal("image"), v.literal("video")),
           ),
           currentTime: v.optional(v.number()),
           duration: v.optional(v.number()),
@@ -99,12 +99,12 @@ export const saveProject = mutation({
             v.literal("image"),
             v.literal("video"),
             v.literal("text"),
-            v.literal("shape")
+            v.literal("shape"),
           ),
           volume: v.optional(v.number()),
           width: v.optional(v.number()),
           zIndex: v.number(),
-        })
+        }),
       ),
       lastModified: v.number(),
       viewport: v.optional(
@@ -112,7 +112,7 @@ export const saveProject = mutation({
           scale: v.number(),
           x: v.number(),
           y: v.number(),
-        })
+        }),
       ),
     }),
     projectId: v.id("projects"),
@@ -195,7 +195,7 @@ export const listProjects = query({
           ...project,
           thumbnailUrl,
         };
-      })
+      }),
     );
 
     return projectsWithUrls;
@@ -251,7 +251,7 @@ export const getProject = query({
     for (const assetId of assetIds) {
       try {
         const asset = (await ctx.db.get(
-          assetId as any
+          assetId as any,
         )) as Doc<"assets"> | null;
         if (asset && asset.thumbnailStorageId) {
           const thumbUrl = await ctx.storage.getUrl(asset.thumbnailStorageId);

@@ -6,10 +6,10 @@ const DEFAULT_PIXEL_SIZE = CANVAS_GRID.PIXEL_SIZE;
 
 /**
  * Creates an error overlay for content validation failures
- * 
- * Combines a red-tinted pixelated version of the source image with a 
+ *
+ * Combines a red-tinted pixelated version of the source image with a
  * centered warning sign to visually communicate that content was flagged.
- * 
+ *
  * @param image - Source image element to transform
  * @param width - Target width for the error overlay
  * @param height - Target height for the error overlay
@@ -20,14 +20,14 @@ export function createErrorOverlay(
   image: HTMLImageElement,
   width: number,
   height: number,
-  pixelSize: number = DEFAULT_PIXEL_SIZE
+  pixelSize: number = DEFAULT_PIXEL_SIZE,
 ): string {
   // Create red pixelated background
   const redPixelatedCanvas = createRedPixelatedCanvas(
     image,
     width,
     height,
-    pixelSize
+    pixelSize,
   );
 
   // Create warning sign (sized relative to canvas dimensions)
@@ -55,9 +55,9 @@ export function createErrorOverlay(
 
 /**
  * Creates an error overlay from an image URL
- * 
+ *
  * Loads the image from URL and generates the error overlay asynchronously.
- * 
+ *
  * @param imageUrl - URL of the source image
  * @param width - Target width for the error overlay
  * @param height - Target height for the error overlay
@@ -68,7 +68,7 @@ export async function createErrorOverlayFromUrl(
   imageUrl: string,
   width: number,
   height: number,
-  pixelSize: number = DEFAULT_PIXEL_SIZE
+  pixelSize: number = DEFAULT_PIXEL_SIZE,
 ): Promise<string | undefined> {
   try {
     const img = new window.Image();
@@ -88,7 +88,7 @@ export async function createErrorOverlayFromUrl(
 
 /**
  * Detects if an error message indicates a content validation failure
- * 
+ *
  * @param errorMessage - Error message from API or generation system
  * @returns true if the error is related to content validation/moderation
  */

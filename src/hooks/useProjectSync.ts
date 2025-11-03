@@ -67,7 +67,7 @@ export function useProjectSync() {
         viewport: project.canvasState.viewport || { scale: 1, x: 0, y: 0 },
       };
     },
-    [images, videos, setSelectedIds, setViewport]
+    [images, videos, setSelectedIds, setViewport],
   );
 
   /**

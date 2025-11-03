@@ -48,8 +48,6 @@ export const AUTOSAVE_CONSTANTS = {
   MAX_DEBOUNCE_MS: 60000,
 } as const;
 
-
-
 /**
  * File validation constants.
  */
@@ -104,7 +102,8 @@ export const UI_CONSTANTS = {
 export const ERROR_MESSAGES = {
   AUTH_REQUIRED: "Authentication required",
   FILE_TOO_LARGE: "File too large. Maximum size is 25MB.",
-  INVALID_FILE_TYPE: "Unsupported file type. Only images and videos are allowed.",
+  INVALID_FILE_TYPE:
+    "Unsupported file type. Only images and videos are allowed.",
   INVALID_FILE_SIZE: "Invalid file size",
   INVALID_MIME_TYPE: "Invalid MIME type",
   INVALID_DIMENSIONS: "Invalid dimensions",
@@ -115,7 +114,7 @@ export const ERROR_MESSAGES = {
   NAME_EMPTY: "Project name cannot be empty",
   NOT_AUTHENTICATED: "Not authenticated",
   PROJECT_NOT_FOUND: "Project not found",
-  
+
   SYNC_FAILED: "Failed to sync to cloud",
   UNAUTHORIZED: "Unauthorized",
   UPLOAD_FAILED: "Upload failed",

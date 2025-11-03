@@ -66,7 +66,7 @@ export interface StorylineImageVariationHandlerDeps {
  * 4. Update UI state with placeholders and generation metadata
  */
 export const handleStorylineImageVariations = async (
-  deps: StorylineImageVariationHandlerDeps
+  deps: StorylineImageVariationHandlerDeps,
 ): Promise<void> => {
   const {
     imageModel = config.imageGeneration.defaultModel,
@@ -129,7 +129,7 @@ export const handleStorylineImageVariations = async (
     // Create placeholders IMMEDIATELY for optimistic UI
     const placeholderImages: PlacedImage[] = Array.from(
       { length: variationCount },
-      (_, index) => makePlaceholder({}, index)
+      (_, index) => makePlaceholder({}, index),
     );
 
     setImages((prev) => [...prev, ...placeholderImages]);
@@ -180,7 +180,10 @@ export const handleStorylineImageVariations = async (
           const concept = concepts[index];
           if (concept) {
             // Set up active generation for this placeholder
-            const placeholderId = createVariationId(timestamp, index.toString());
+            const placeholderId = createVariationId(
+              timestamp,
+              index.toString(),
+            );
             activeGenerations.set(placeholderId, {
               imageSize: imageSizeDimensions,
               imageUrl: signedImageUrl,
@@ -200,7 +203,7 @@ export const handleStorylineImageVariations = async (
           }
         }
         return img;
-      })
+      }),
     );
 
     setActiveGenerations((prev) => new Map([...prev, ...activeGenerations]));

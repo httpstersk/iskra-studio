@@ -34,6 +34,8 @@ export const DimensionDisplayWrapper = React.memo<DimensionDisplayWrapperProps>(
       [images, selectedIds],
     );
 
-    return <DimensionDisplay selectedImages={selectedImages} viewport={viewport} />;
+    return (
+      <DimensionDisplay selectedImages={selectedImages} viewport={viewport} />
+    );
   },
 );

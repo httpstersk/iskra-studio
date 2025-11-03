@@ -21,7 +21,7 @@ import { generateStorylinesCore } from "@/lib/storyline-generator-core";
 export async function generateVideoPrompt(
   imageUrl: string,
   duration: number,
-  userPrompt?: string
+  userPrompt?: string,
 ): Promise<string> {
   // Validate inputs
   if (!imageUrl || !imageUrl.trim()) {
@@ -65,7 +65,7 @@ export async function generateVideoPrompt(
   // Ensure minimum prompt length for quality
   if (prompt.trim().length < 10) {
     throw new Error(
-      `Generated prompt is too short: ${prompt.trim().length} characters`
+      `Generated prompt is too short: ${prompt.trim().length} characters`,
     );
   }
 

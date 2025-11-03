@@ -13,7 +13,7 @@ export function BlinkingCaret({ className }: BlinkingCaretProps) {
       aria-hidden
       className={clsx(
         "pointer-events-none absolute w-[2px] rounded-sm bg-primary shadow-neon-primary animate-neon-blink",
-        className
+        className,
       )}
     />
   );

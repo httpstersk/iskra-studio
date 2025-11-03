@@ -2,7 +2,7 @@
 
 /**
  * Sign-in prompt dialog component.
- * 
+ *
  * Displays a modal prompting users to sign in before generating AI content.
  * Shown when unauthenticated users attempt to use AI generation features.
  */
@@ -25,18 +25,18 @@ import { Sparkles, Lock } from "lucide-react";
 interface SignInPromptDialogProps {
   /** Whether the dialog is open */
   open: boolean;
-  
+
   /** Callback when the dialog close is requested */
   onOpenChange?: (open: boolean) => void;
 }
 
 /**
  * Sign-in prompt dialog component.
- * 
+ *
  * Modal dialog that prompts unauthenticated users to sign in
  * before they can generate AI images and videos. Provides clear
  * messaging about the benefits of signing in.
- * 
+ *
  * @remarks
  * - Only shown to unauthenticated users
  * - Blocks AI generation until user signs in
@@ -46,13 +46,13 @@ interface SignInPromptDialogProps {
  *   - Track storage usage
  * - Provides prominent Sign In button
  * - Can be dismissed (user can cancel generation)
- * 
+ *
  * @example
  * ```tsx
  * function MyComponent() {
  *   const [showPrompt, setShowPrompt] = useState(false);
  *   const { isAuthenticated } = useAuth();
- *   
+ *
  *   const handleGenerate = () => {
  *     if (!isAuthenticated) {
  *       setShowPrompt(true);
@@ -60,19 +60,19 @@ interface SignInPromptDialogProps {
  *     }
  *     // Proceed with generation
  *   };
- *   
+ *
  *   return (
  *     <>
  *       <button onClick={handleGenerate}>Generate</button>
- *       <SignInPromptDialog 
- *         open={showPrompt} 
- *         onOpenChange={setShowPrompt} 
+ *       <SignInPromptDialog
+ *         open={showPrompt}
+ *         onOpenChange={setShowPrompt}
  *       />
  *     </>
  *   );
  * }
  * ```
- * 
+ *
  * @param props - Component props
  * @returns Sign-in prompt dialog component
  */
@@ -92,10 +92,13 @@ export function SignInPromptDialog({
           <DialogTitle>Sign in to generate content</DialogTitle>
           <DialogDescription className="pt-2 space-y-2">
             <p>
-              To use AI generation features, you need to sign in to your account.
+              To use AI generation features, you need to sign in to your
+              account.
             </p>
             <div className="mt-4 space-y-2 text-sm">
-              <p className="font-medium text-content-base">Benefits of signing in:</p>
+              <p className="font-medium text-content-base">
+                Benefits of signing in:
+              </p>
               <ul className="space-y-1.5 ml-4">
                 <li className="flex items-start gap-2">
                   <Sparkles className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
@@ -117,7 +120,7 @@ export function SignInPromptDialog({
             </div>
           </DialogDescription>
         </DialogHeader>
-        
+
         <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
           <Button
             variant="ghost"
@@ -127,11 +130,7 @@ export function SignInPromptDialog({
             Cancel
           </Button>
           <div className="w-full sm:w-auto">
-            <SignInButton 
-              variant="primary" 
-              size="default" 
-              className="w-full"
-            />
+            <SignInButton variant="primary" size="default" className="w-full" />
           </div>
         </DialogFooter>
       </DialogContent>

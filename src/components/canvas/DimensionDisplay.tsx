@@ -51,7 +51,7 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
   const { x: screenX, y: screenY } = canvasToScreen(
     boundingBox.x + boundingBox.width / 2,
     boundingBox.y + boundingBox.height,
-    viewport
+    viewport,
   );
 
   return (

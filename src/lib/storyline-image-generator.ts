@@ -1,17 +1,20 @@
 /**
  * Storyline Image Generator
- * 
+ *
  * Generates single-frame narrative progressions with exponential time jumps.
  * Unlike video storylines (multi-beat sequences), this creates individual images
  * that show how a subject/scene evolves over exponentially increasing time periods.
  */
 
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
-import { calculateTimeProgression, formatTimeLabel } from "@/utils/time-progression-utils";
+import {
+  calculateTimeProgression,
+  formatTimeLabel,
+} from "@/utils/time-progression-utils";
 
 /**
  * System prompt for storyline image generation.
- * 
+ *
  * Focuses on:
  * 1. Narrative continuity (not random B-roll)
  * 2. Exponential time progression
@@ -190,13 +193,13 @@ The number of concepts will match the requested count (4, 8, or 12).
 export interface StorylineImageConcept {
   /** Complete generation prompt with style lock */
   prompt: string;
-  
+
   /** Time elapsed in minutes */
   timeElapsed: number;
-  
+
   /** Formatted time label (e.g., "+1min", "+2h5m") */
   timeLabel: string;
-  
+
   /** Brief narrative description */
   narrativeNote: string;
 }
@@ -215,26 +218,26 @@ export interface StorylineImageConceptSet {
 export interface GenerateStorylineImageConceptsOptions {
   /** Number of storyline images to generate */
   count: number;
-  
+
   /** Style and mood analysis from reference image */
   styleAnalysis: ImageStyleMoodAnalysis;
-  
+
   /** Optional user-provided context */
   userContext?: string;
 }
 
 /**
  * Generates storyline image concepts with exponential time progression.
- * 
+ *
  * Calls the API route which uses OpenAI to generate narrative progressions
  * that maintain visual coherence while advancing the story.
- * 
+ *
  * @param options - Generation options
  * @returns Promise resolving to storyline concept set
  * @throws Error if generation fails
  */
 export async function generateStorylineImageConcepts(
-  options: GenerateStorylineImageConceptsOptions
+  options: GenerateStorylineImageConceptsOptions,
 ): Promise<StorylineImageConceptSet> {
   const { count, styleAnalysis, userContext } = options;
 
@@ -254,7 +257,7 @@ export async function generateStorylineImageConcepts(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `Storyline image generation failed with status ${response.status}`
+        `Storyline image generation failed with status ${response.status}`,
     );
   }
 
@@ -267,9 +270,10 @@ export async function generateStorylineImageConcepts(
  * Used to populate template variables in the system prompt
  */
 export function buildStorylineStyleContext(
-  analysis: ImageStyleMoodAnalysis
+  analysis: ImageStyleMoodAnalysis,
 ): Record<string, string> {
-  const { colorPalette, lighting, visualStyle, styleSignature, narrativeTone } = analysis;
+  const { colorPalette, lighting, visualStyle, styleSignature, narrativeTone } =
+    analysis;
 
   return {
     // Colorimetry
@@ -282,31 +286,34 @@ export function buildStorylineStyleContext(
     saturation: styleSignature.colorimetry.saturation.toString(),
     dominantColors: colorPalette.dominant.join(", "),
     grading: colorPalette.grading,
-    
+
     // Lighting
     keyLight: styleSignature.lightingSignature.key,
     fillLight: styleSignature.lightingSignature.fill,
     backLight: styleSignature.lightingSignature.back,
     contrastRatio: styleSignature.lightingSignature.contrastRatio,
-    
+
     // Lens
     focalLength: styleSignature.lensLanguage.focalLengthMm.toString(),
     aperture: styleSignature.lensLanguage.apertureF,
     depthOfField: styleSignature.lensLanguage.depthOfField,
     lensType: styleSignature.lensLanguage.lensType,
     lensLook: styleSignature.lensLanguage.look,
-    
+
     // Post-processing
-    filmGrainIntensity: styleSignature.postProcessingSignature.filmGrainIntensity.toString(),
+    filmGrainIntensity:
+      styleSignature.postProcessingSignature.filmGrainIntensity.toString(),
     filmGrain: visualStyle.filmGrain,
-    halation: styleSignature.postProcessingSignature.halation ? "present" : "none",
+    halation: styleSignature.postProcessingSignature.halation
+      ? "present"
+      : "none",
     vignette: styleSignature.postProcessingSignature.vignette,
     postProcessingEffects: visualStyle.postProcessing.join(", "),
-    
+
     // Creative authorities
     cinematographer: narrativeTone.cinematographer,
     director: narrativeTone.director,
-    
+
     // Style lock
     styleLockPrompt: styleSignature.styleLockPrompt,
   };

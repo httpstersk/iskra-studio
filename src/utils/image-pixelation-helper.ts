@@ -31,7 +31,7 @@ export async function generatePixelatedOverlay(
   imageUrl: string,
   targetWidth: number,
   targetHeight: number,
-  pixelSize: number = DEFAULT_PIXEL_SIZE
+  pixelSize: number = DEFAULT_PIXEL_SIZE,
 ): Promise<{ dataUrl: string; image: HTMLImageElement } | undefined> {
   try {
     // Load the source image
@@ -49,7 +49,7 @@ export async function generatePixelatedOverlay(
       img,
       targetWidth,
       targetHeight,
-      pixelSize
+      pixelSize,
     );
 
     // Convert to data URL for storage
@@ -83,13 +83,13 @@ export async function generatePixelatedOverlay(
  */
 export async function generateAndCachePixelatedOverlay(
   selectedImage: ImageDimensions,
-  pixelSize: number = DEFAULT_PIXEL_SIZE
+  pixelSize: number = DEFAULT_PIXEL_SIZE,
 ): Promise<string | undefined> {
   const result = await generatePixelatedOverlay(
     selectedImage.src,
     selectedImage.width,
     selectedImage.height,
-    pixelSize
+    pixelSize,
   );
 
   if (result) {

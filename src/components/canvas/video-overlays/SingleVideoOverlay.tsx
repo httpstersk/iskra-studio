@@ -18,12 +18,12 @@ interface SingleVideoOverlayProps {
   handleVideoEnded: (videoId: string, isLooping: boolean) => void;
   handleVideoLoadedMetadata: (
     videoId: string,
-    videoEl: HTMLVideoElement
+    videoEl: HTMLVideoElement,
   ) => void;
   handleVideoTimeUpdate: (
     videoId: string,
     videoEl: HTMLVideoElement,
-    currentTime: number
+    currentTime: number,
   ) => void;
   isControlsHidden: boolean;
   isSelected: boolean;
@@ -55,7 +55,7 @@ export const SingleVideoOverlay = React.memo<SingleVideoOverlayProps>(
       (newAttrs: Partial<PlacedVideo>) => {
         handleVideoChange(video.id, newAttrs);
       },
-      [handleVideoChange, video.id]
+      [handleVideoChange, video.id],
     );
 
     return (
@@ -70,5 +70,5 @@ export const SingleVideoOverlay = React.memo<SingleVideoOverlayProps>(
         )}
       </React.Fragment>
     );
-  }
+  },
 );

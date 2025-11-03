@@ -49,7 +49,7 @@ export const VideoControls = React.memo<VideoControlsProps>(
         seekVideo(video.id, time);
         onChange({ currentTime: time });
       },
-      [onChange, video.id]
+      [onChange, video.id],
     );
 
     const handleClick = useCallback((e: React.MouseEvent) => {
@@ -88,7 +88,7 @@ export const VideoControls = React.memo<VideoControlsProps>(
         />
       </div>
     );
-  }
+  },
 );
 
 VideoControls.displayName = "VideoControls";

@@ -100,7 +100,7 @@ export class ConvexStorageService implements StorageService {
         const isLastAttempt = attempt === maxRetries;
         if (isLastAttempt) {
           throw new Error(
-            `Failed to download file after ${maxRetries + 1} attempts: ${error}`
+            `Failed to download file after ${maxRetries + 1} attempts: ${error}`,
           );
         }
 
@@ -193,7 +193,7 @@ export class ConvexStorageService implements StorageService {
         const isLastAttempt = attempt === this.maxRetries;
         if (isLastAttempt) {
           throw new Error(
-            `Failed to upload file after ${this.maxRetries + 1} attempts: ${error}`
+            `Failed to upload file after ${this.maxRetries + 1} attempts: ${error}`,
           );
         }
 

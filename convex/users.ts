@@ -108,8 +108,6 @@ export const getCurrentUser = query({
   },
 });
 
-
-
 /**
  * Updates user's storage quota by recalculating from all assets.
  *

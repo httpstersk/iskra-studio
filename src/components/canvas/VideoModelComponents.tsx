@@ -61,7 +61,6 @@ export const VideoModelSelector: React.FC<VideoModelSelectorProps> = ({
   );
 };
 
-
 /**
  * Props for the dynamic video model options component.
  */

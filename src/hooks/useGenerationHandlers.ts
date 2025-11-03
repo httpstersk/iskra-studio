@@ -109,7 +109,7 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
       setIsImageToVideoDialogOpen,
       setSelectedImageForVideo,
       setShowSignInPrompt,
-    ]
+    ],
   );
 
   /**
@@ -132,7 +132,7 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
       // Sanitize prompt to ensure we don't pass empty strings to the API
       // For video mode, server will generate a prompt if none provided
       const sanitizedPrompt = sanitizePrompt(
-        generationSettings.variationPrompt
+        generationSettings.variationPrompt,
       );
 
       // Normalize video settings based on model

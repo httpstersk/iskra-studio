@@ -45,7 +45,7 @@ export function updateGenerationStatus(
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, ActiveGeneration>>
   >,
-  config: UpdateGenerationStatusConfig
+  config: UpdateGenerationStatusConfig,
 ): void {
   setActiveGenerations((prev) => {
     const newMap = new Map(prev);
@@ -71,7 +71,7 @@ export function removeGenerationStatus(
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, ActiveGeneration>>
   >,
-  generationId: string
+  generationId: string,
 ): void {
   setActiveGenerations((prev) => {
     const newMap = new Map(prev);
@@ -92,7 +92,7 @@ export function transitionGenerationStatus(
     React.SetStateAction<Map<string, ActiveGeneration>>
   >,
   fromId: string,
-  toConfig: UpdateGenerationStatusConfig
+  toConfig: UpdateGenerationStatusConfig,
 ): void {
   setActiveGenerations((prev) => {
     const newMap = new Map(prev);
@@ -117,13 +117,13 @@ export function transitionGenerationStatus(
  */
 export function applyPixelatedOverlay(
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>,
-  config: ApplyPixelatedOverlayConfig
+  config: ApplyPixelatedOverlayConfig,
 ): void {
   setImages((prev) =>
     prev.map((img) =>
       img.id === config.selectedImageId
         ? { ...img, pixelatedSrc: config.pixelatedSrc }
-        : img
-    )
+        : img,
+    ),
   );
 }

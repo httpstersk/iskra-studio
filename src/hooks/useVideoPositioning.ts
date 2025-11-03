@@ -42,7 +42,7 @@ export function useVideoPositioning(
   video: PlacedVideo,
   viewport: Viewport,
   controlsOffset: number = 10,
-  playIndicatorOffset: number = 5
+  playIndicatorOffset: number = 5,
 ): VideoPosition {
   return useMemo(() => {
     const scaledWidth = video.width * viewport.scale;

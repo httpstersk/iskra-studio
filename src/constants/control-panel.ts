@@ -34,7 +34,7 @@ export const getPromptPlaceholder = (shortcut: string): string =>
  */
 export const getRunTooltipText = (
   hasSelection: boolean,
-  hasPrompt: boolean
+  hasPrompt: boolean,
 ): string => {
   if (hasSelection && !hasPrompt) {
     return "Generate Variations";

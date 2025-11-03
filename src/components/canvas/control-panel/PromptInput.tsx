@@ -52,7 +52,7 @@ export const PromptInput = React.memo(function PromptInput({
         }
       }
     },
-    [generationSettings.prompt, handleRun, hasSelection, isGenerating]
+    [generationSettings.prompt, handleRun, hasSelection, isGenerating],
   );
 
   /**
@@ -65,7 +65,7 @@ export const PromptInput = React.memo(function PromptInput({
         variationPrompt: value,
       });
     },
-    [generationSettings, setGenerationSettings]
+    [generationSettings, setGenerationSettings],
   );
 
   /**
@@ -78,7 +78,7 @@ export const PromptInput = React.memo(function PromptInput({
         prompt: value,
       });
     },
-    [generationSettings, setGenerationSettings]
+    [generationSettings, setGenerationSettings],
   );
 
   if (hasSelection) {

@@ -143,7 +143,7 @@ interface GenerateStorylinesOptions {
  * @param options.userPrompt - Optional user-provided creative direction to influence storylines
  */
 export async function generateStorylines(
-  options: GenerateStorylinesOptions
+  options: GenerateStorylinesOptions,
 ): Promise<StorylineSet> {
   const { styleAnalysis, duration, userPrompt } = options;
 
@@ -163,7 +163,7 @@ export async function generateStorylines(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `Storyline generation failed with status ${response.status}`
+        `Storyline generation failed with status ${response.status}`,
     );
   }
 

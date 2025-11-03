@@ -36,7 +36,7 @@ const LOG_COLORS = {
 function formatLog(
   level: LogLevel,
   message: string,
-  options?: LogOptions
+  options?: LogOptions,
 ): string[] {
   const emoji = LOG_EMOJIS[level];
   const timestamp = new Date().toLocaleTimeString("en-US", {

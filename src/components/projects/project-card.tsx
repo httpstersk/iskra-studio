@@ -109,7 +109,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
       showErrorFromException(
         "Rename failed",
         error,
-        "Failed to rename project"
+        "Failed to rename project",
       );
     }
   };

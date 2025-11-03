@@ -113,7 +113,7 @@ export const useAnimationCoordinator = ({
       ? ANIMATION_CONFIG.PULSE_MIN_OPACITY
       : isGenerated
         ? ANIMATION_CONFIG.GENERATED_OPACITY
-        : ANIMATION_CONFIG.NORMAL_OPACITY
+        : ANIMATION_CONFIG.NORMAL_OPACITY,
   );
   const [transitionProgress, setTransitionProgress] = useState(0);
 
@@ -249,7 +249,7 @@ export const useAnimationCoordinator = ({
         const elapsed = currentTime - transitionStartTimeRef.current;
         const progress = Math.min(
           elapsed / ANIMATION_CONFIG.TRANSITION_DURATION,
-          1
+          1,
         );
         const easedProgress = easeInOutCubic(progress);
 

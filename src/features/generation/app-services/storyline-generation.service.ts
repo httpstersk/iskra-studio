@@ -43,7 +43,7 @@ export interface StorylineGenerationParams {
  * Analyzes an image using OpenAI's vision model.
  */
 export async function analyzeImageStyle(
-  imageUrl: string
+  imageUrl: string,
 ): Promise<ImageAnalysisResult> {
   try {
     serviceLogger.info("Analyzing image style", { imageUrl });
@@ -58,7 +58,7 @@ export async function analyzeImageStyle(
       const error = await response.json().catch(() => null);
       throw new ImageAnalysisError(
         error?.error || `Image analysis failed with status ${response.status}`,
-        { imageUrl, statusCode: response.status }
+        { imageUrl, statusCode: response.status },
       );
     }
 
@@ -72,7 +72,7 @@ export async function analyzeImageStyle(
     serviceLogger.error("Image analysis failed", error as Error, { imageUrl });
     throw new ImageAnalysisError(
       error instanceof Error ? error.message : "Unknown error during analysis",
-      { imageUrl }
+      { imageUrl },
     );
   }
 }
@@ -81,7 +81,7 @@ export async function analyzeImageStyle(
  * Generates storyline concepts with exponential time progression.
  */
 export async function generateStorylineConcepts(
-  params: StorylineGenerationParams
+  params: StorylineGenerationParams,
 ): Promise<StorylineConcept[]> {
   try {
     serviceLogger.info("Generating storyline concepts", {
@@ -121,7 +121,7 @@ export async function generateStorylineConcepts(
       error instanceof Error
         ? error.message
         : "Unknown error during storyline generation",
-      { params }
+      { params },
     );
   }
 }

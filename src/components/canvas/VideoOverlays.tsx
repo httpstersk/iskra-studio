@@ -49,19 +49,19 @@ export const VideoOverlays = React.memo<VideoOverlaysProps>(
           videoEl.play();
           setVideos((prev) =>
             prev.map((vid) =>
-              vid.id === videoId ? { ...vid, isPlaying: true } : vid
-            )
+              vid.id === videoId ? { ...vid, isPlaying: true } : vid,
+            ),
           );
         } else {
           videoEl.pause();
           setVideos((prev) =>
             prev.map((vid) =>
-              vid.id === videoId ? { ...vid, isPlaying: false } : vid
-            )
+              vid.id === videoId ? { ...vid, isPlaying: false } : vid,
+            ),
           );
         }
       },
-      [setVideos]
+      [setVideos],
     );
 
     /**
@@ -78,13 +78,13 @@ export const VideoOverlays = React.memo<VideoOverlaysProps>(
               prev.map((vid) =>
                 vid.id === videoId
                   ? { ...vid, currentTime: videoEl.currentTime }
-                  : vid
-              )
+                  : vid,
+              ),
             );
           }
         }
       },
-      [setVideos]
+      [setVideos],
     );
 
     /**
@@ -96,11 +96,11 @@ export const VideoOverlays = React.memo<VideoOverlaysProps>(
           prev.map((vid) =>
             vid.id === videoId
               ? { ...vid, duration: videoEl.duration, isLoaded: true }
-              : vid
-          )
+              : vid,
+          ),
         );
       },
-      [setVideos]
+      [setVideos],
     );
 
     /**
@@ -113,12 +113,12 @@ export const VideoOverlays = React.memo<VideoOverlaysProps>(
             prev.map((vid) =>
               vid.id === videoId
                 ? { ...vid, currentTime: 0, isPlaying: false }
-                : vid
-            )
+                : vid,
+            ),
           );
         }
       },
-      [setVideos]
+      [setVideos],
     );
 
     /**
@@ -127,10 +127,12 @@ export const VideoOverlays = React.memo<VideoOverlaysProps>(
     const handleVideoChange = useCallback(
       (videoId: string, newAttrs: Partial<PlacedVideo>) => {
         setVideos((prev) =>
-          prev.map((vid) => (vid.id === videoId ? { ...vid, ...newAttrs } : vid))
+          prev.map((vid) =>
+            vid.id === videoId ? { ...vid, ...newAttrs } : vid,
+          ),
         );
       },
-      [setVideos]
+      [setVideos],
     );
 
     /**
@@ -138,7 +140,7 @@ export const VideoOverlays = React.memo<VideoOverlaysProps>(
      */
     const visibleVideos = useMemo(
       () => videos.filter((video) => video.src && !video.isLoading),
-      [videos]
+      [videos],
     );
 
     /**
@@ -150,7 +152,7 @@ export const VideoOverlays = React.memo<VideoOverlaysProps>(
         if (!videoEl) return;
 
         if (video.isPlaying && videoEl.paused) {
-          videoEl.play().catch(() => { });
+          videoEl.play().catch(() => {});
         } else if (!video.isPlaying && !videoEl.paused) {
           videoEl.pause();
         }
@@ -187,5 +189,5 @@ export const VideoOverlays = React.memo<VideoOverlaysProps>(
         ))}
       </>
     );
-  }
+  },
 );

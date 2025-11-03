@@ -1,6 +1,6 @@
 /**
  * Canvas Page - Main application page (Server Component Wrapper)
- * 
+ *
  * Pre-fetches initial data server-side before rendering the canvas.
  * This improves Time to Interactive (TTI) and reduces client-side waterfalls.
  */
@@ -10,7 +10,7 @@ import { CanvasPageClient } from "./canvas-page-client";
 
 /**
  * Server Component: Main canvas page entry point
- * 
+ *
  * Benefits of this architecture:
  * - Server-side data pre-fetching eliminates waterfall requests
  * - User data and projects loaded before client hydration

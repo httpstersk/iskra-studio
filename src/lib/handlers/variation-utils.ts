@@ -101,7 +101,7 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
         }
       },
       "image/png",
-      0.95
+      0.95,
     );
   });
 }
@@ -122,7 +122,7 @@ export async function uploadToConvex(blob: Blob): Promise<string> {
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       throw new Error(
-        errorData?.message || `Upload failed with status ${response.status}`
+        errorData?.message || `Upload failed with status ${response.status}`,
       );
     }
 
@@ -140,7 +140,7 @@ export async function uploadToConvex(blob: Blob): Promise<string> {
     } else {
       showError(
         "Upload failed",
-        error instanceof Error ? error.message : "Unknown error"
+        error instanceof Error ? error.message : "Unknown error",
       );
     }
     throw error;
@@ -185,7 +185,7 @@ export function toSignedUrl(imageUrl: string): string {
 
     if (!signedUrl) {
       throw new Error(
-        `Failed to extract signed URL from proxy URL: ${trimmedUrl.substring(0, 100)}`
+        `Failed to extract signed URL from proxy URL: ${trimmedUrl.substring(0, 100)}`,
       );
     }
     return signedUrl;
@@ -194,14 +194,14 @@ export function toSignedUrl(imageUrl: string): string {
   // Handle data URLs (valid but not suitable for server-side APIs)
   if (trimmedUrl.startsWith("data:")) {
     throw new Error(
-      "Data URLs are not supported for server-side processing. Please upload the image first."
+      "Data URLs are not supported for server-side processing. Please upload the image first.",
     );
   }
 
   // If it's a relative URL that's not a proxy, it's invalid
   if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
     throw new Error(
-      `Invalid image URL format: must be a full URL or proxy URL, got: ${trimmedUrl.substring(0, 100)}`
+      `Invalid image URL format: must be a full URL or proxy URL, got: ${trimmedUrl.substring(0, 100)}`,
     );
   }
 
@@ -221,12 +221,12 @@ export function toSignedUrl(imageUrl: string): string {
  */
 export function validateSingleImageSelection(
   images: PlacedImage[],
-  selectedIds: string[]
+  selectedIds: string[],
 ): PlacedImage | null {
   if (selectedIds.length !== 1) {
     showError(
       "Select one image",
-      "Please select exactly one image to generate variations"
+      "Please select exactly one image to generate variations",
     );
     return null;
   }

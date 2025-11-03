@@ -43,7 +43,7 @@ function formatBeat(
   beatType: string,
   description: string,
   timeSegment: string,
-  transition: string
+  transition: string,
 ): string {
   return `[${timeSegment}] — ${beatType}\n${description} ${transition}`;
 }
@@ -53,7 +53,7 @@ function formatBeat(
  * Follows professional film prompt format with time-segmented beats and visual cues
  */
 export function expandStorylineToPrompt(
-  options: PromptGenerationOptions
+  options: PromptGenerationOptions,
 ): string {
   const { storyline } = options;
 
@@ -63,8 +63,8 @@ export function expandStorylineToPrompt(
       beat.beatType,
       cleanText(beat.description),
       beat.timeSegment,
-      cleanText(beat.transition)
-    )
+      cleanText(beat.transition),
+    ),
   );
 
   const fullPrompt = beatSections.join("\n\n");
@@ -72,7 +72,7 @@ export function expandStorylineToPrompt(
   // Safety check: should never hit this if input follows guidelines
   if (fullPrompt.length > PROMPT_CHAR_LIMIT) {
     console.warn(
-      `Prompt exceeded ${PROMPT_CHAR_LIMIT} chars: ${fullPrompt.length} chars`
+      `Prompt exceeded ${PROMPT_CHAR_LIMIT} chars: ${fullPrompt.length} chars`,
     );
   }
 
@@ -85,9 +85,9 @@ export function expandStorylineToPrompt(
 export function expandStorylinesToPrompts(
   storylines: StorylineConcept[],
   styleAnalysis: ImageStyleMoodAnalysis,
-  duration: number
+  duration: number,
 ): string[] {
   return storylines.map((storyline) =>
-    expandStorylineToPrompt({ storyline, styleAnalysis, duration })
+    expandStorylineToPrompt({ storyline, styleAnalysis, duration }),
   );
 }

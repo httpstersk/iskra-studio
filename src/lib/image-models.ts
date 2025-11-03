@@ -55,7 +55,8 @@ export function resolveImageSize(
   size?: ImageSizePreset | ImageDimensions,
 ): ImageDimensions {
   if (!size) return DEFAULT_IMAGE_SIZE_4K_LANDSCAPE;
-  if (typeof size === "string") return PRESET_DIMENSIONS[size] ?? DEFAULT_IMAGE_SIZE_4K_LANDSCAPE;
+  if (typeof size === "string")
+    return PRESET_DIMENSIONS[size] ?? DEFAULT_IMAGE_SIZE_4K_LANDSCAPE;
   return {
     width: size.width || DEFAULT_IMAGE_SIZE_4K_LANDSCAPE.width,
     height: size.height || DEFAULT_IMAGE_SIZE_4K_LANDSCAPE.height,

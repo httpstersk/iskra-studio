@@ -1,6 +1,6 @@
 /**
  * Root loading UI component for Next.js App Router.
- * 
+ *
  * Displayed while the page is loading via Suspense boundaries.
  * Shows a minimal loading state matching the app's design.
  */

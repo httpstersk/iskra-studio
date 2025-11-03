@@ -33,7 +33,10 @@ export function extractSignedUrlFromProxy(proxyUrl: string): string | null {
     if (!signedUrl || !signedUrl.trim()) return null;
 
     const trimmedUrl = signedUrl.trim();
-    if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+    if (
+      !trimmedUrl.startsWith("http://") &&
+      !trimmedUrl.startsWith("https://")
+    ) {
       return null;
     }
 
@@ -68,7 +71,10 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        (blob) => blob ? resolve(blob) : reject(new StorageError("Failed to create blob")),
+        (blob) =>
+          blob
+            ? resolve(blob)
+            : reject(new StorageError("Failed to create blob")),
         "image/png",
         0.95,
       );
@@ -78,7 +84,7 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
     return blob;
   } catch (error) {
     if (error instanceof StorageError) throw error;
-    
+
     serviceLogger.error("Image to blob conversion failed", error as Error);
     throw new StorageError(
       error instanceof Error ? error.message : "Unknown conversion error",
@@ -115,11 +121,11 @@ export async function uploadToConvex(blob: Blob): Promise<string> {
 
     const result = await response.json();
     serviceLogger.info("Upload successful");
-    
+
     return result.url;
   } catch (error) {
     if (error instanceof StorageError) throw error;
-    
+
     serviceLogger.error("Upload to Convex failed", error as Error);
     throw new StorageError(
       error instanceof Error ? error.message : "Unknown upload error",
@@ -165,7 +171,9 @@ export function toSignedUrl(imageUrl: string): string {
   }
 
   if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
-    throw new ValidationError("Invalid image URL format: must be a full URL or proxy URL");
+    throw new ValidationError(
+      "Invalid image URL format: must be a full URL or proxy URL",
+    );
   }
 
   try {

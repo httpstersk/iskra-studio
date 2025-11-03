@@ -20,10 +20,22 @@ import { StreamingVideo } from "./StreamingVideo";
 interface StreamingGenerationsProps {
   activeGenerations: Map<string, ActiveGeneration>;
   activeVideoGenerations: Map<string, ActiveVideoGeneration>;
-  onImageComplete: (imageId: string, finalUrl: string, thumbnailUrl?: string) => void;
-  onImageError: (imageId: string, error: string, isContentError?: boolean) => void;
+  onImageComplete: (
+    imageId: string,
+    finalUrl: string,
+    thumbnailUrl?: string,
+  ) => void;
+  onImageError: (
+    imageId: string,
+    error: string,
+    isContentError?: boolean,
+  ) => void;
   onImageUpdate: (imageId: string, url: string) => void;
-  onVideoComplete: (videoId: string, videoUrl: string, duration: number) => void;
+  onVideoComplete: (
+    videoId: string,
+    videoUrl: string,
+    duration: number,
+  ) => void;
   onVideoError: (videoId: string, error: string) => void;
   onVideoProgress: (videoId: string, progress: number, status: string) => void;
 }
@@ -49,27 +61,31 @@ export const StreamingGenerations = React.memo<StreamingGenerationsProps>(
   }) {
     return (
       <>
-        {Array.from(activeGenerations.entries()).map(([imageId, generation]) => (
-          <StreamingImage
-            generation={generation}
-            imageId={imageId}
-            key={imageId}
-            onComplete={onImageComplete}
-            onError={onImageError}
-            onStreamingUpdate={onImageUpdate}
-          />
-        ))}
+        {Array.from(activeGenerations.entries()).map(
+          ([imageId, generation]) => (
+            <StreamingImage
+              generation={generation}
+              imageId={imageId}
+              key={imageId}
+              onComplete={onImageComplete}
+              onError={onImageError}
+              onStreamingUpdate={onImageUpdate}
+            />
+          ),
+        )}
 
-        {Array.from(activeVideoGenerations.entries()).map(([id, generation]) => (
-          <StreamingVideo
-            generation={generation}
-            key={id}
-            onComplete={onVideoComplete}
-            onError={onVideoError}
-            onProgress={onVideoProgress}
-            videoId={id}
-          />
-        ))}
+        {Array.from(activeVideoGenerations.entries()).map(
+          ([id, generation]) => (
+            <StreamingVideo
+              generation={generation}
+              key={id}
+              onComplete={onVideoComplete}
+              onError={onVideoError}
+              onProgress={onVideoProgress}
+              videoId={id}
+            />
+          ),
+        )}
       </>
     );
   },

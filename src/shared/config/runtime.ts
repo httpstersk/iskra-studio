@@ -88,7 +88,8 @@ export function validateConfig(): void {
 /**
  * Type for supported image generation models
  */
-export type ImageModel = (typeof config.imageGeneration.supportedModels)[number];
+export type ImageModel =
+  (typeof config.imageGeneration.supportedModels)[number];
 
 /**
  * Type for variation counts

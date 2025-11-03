@@ -39,6 +39,6 @@ export function useVideoContextMenu(videoId: string) {
 
       canvas.dispatchEvent(event);
     },
-    [videoId]
+    [videoId],
   );
 }

@@ -157,7 +157,7 @@ export function CanvasToolbar({
                     setViewport({ x: 0, y: 0, scale: 1 });
                     showInfo(
                       "Storage cleared",
-                      "All saved data has been removed"
+                      "All saved data has been removed",
                     );
                   }
                 }}

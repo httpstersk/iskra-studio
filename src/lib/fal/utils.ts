@@ -46,7 +46,7 @@ export const { limiter: videoRateLimiter, headers: videoLimitHeaders } =
   createFalRateLimiter(VIDEO_RATE_LIMITS);
 
 export function extractBearerToken(
-  authHeader: string | null
+  authHeader: string | null,
 ): string | undefined {
   if (!authHeader) return undefined;
   const match = authHeader.match(/^Bearer\s+([^\s]+)$/i);
@@ -166,7 +166,7 @@ export function getClientIp(headers: HeaderSource, fallback?: string): string {
 
 export function buildRateLimitHeaders(
   period: LimitPeriod,
-  headers: LimitHeaders
+  headers: LimitHeaders,
 ) {
   return {
     "X-RateLimit-Limit": headers[period],
@@ -197,7 +197,7 @@ function createFalRateLimiter(config: RateLimitConfig): {
     limiter: {
       perMinute: createRateLimiter(
         config.perMinute.tokens,
-        config.perMinute.window
+        config.perMinute.window,
       ),
       perHour: createRateLimiter(config.perHour.tokens, config.perHour.window),
       perDay: createRateLimiter(config.perDay.tokens, config.perDay.window),

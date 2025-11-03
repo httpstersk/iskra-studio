@@ -93,7 +93,7 @@ interface UseAutoSaveReturn {
  */
 export function useAutoSave(
   canvasState: CanvasState | null,
-  options: UseAutoSaveOptions = {}
+  options: UseAutoSaveOptions = {},
 ): UseAutoSaveReturn {
   const {
     debounceMs = 10000, // 10 seconds default
@@ -178,7 +178,7 @@ export function useAutoSave(
       await saveProject(
         currentProjectState.id as Id<"projects">,
         canvasState,
-        thumbnailStorageId
+        thumbnailStorageId,
       );
 
       // Update last saved state ref

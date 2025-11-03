@@ -108,7 +108,7 @@ export function GenerationsIndicatorWrapper({
       activeVideoGenerationsSize,
       isGenerating,
       statusMessage,
-    ]
+    ],
   );
 
   const resolvedSuccessMessage = resolveSuccessMessage(successMessage);
@@ -119,7 +119,7 @@ export function GenerationsIndicatorWrapper({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className={cn(
           "pointer-events-none",
-          "absolute inset-x-0 -top-16 z-50 flex justify-center"
+          "absolute inset-x-0 -top-16 z-50 flex justify-center",
         )}
         exit={{
           opacity: 0,

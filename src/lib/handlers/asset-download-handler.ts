@@ -60,7 +60,7 @@ export interface DownloadAndReuploadOptions {
  */
 export async function downloadAndReupload(
   url: string,
-  options: DownloadAndReuploadOptions
+  options: DownloadAndReuploadOptions,
 ): Promise<AssetUploadResult> {
   const storage = createStorageService();
 
@@ -85,7 +85,7 @@ export async function downloadAndReupload(
     return result;
   } catch (error) {
     throw new Error(
-      `Asset migration failed: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Asset migration failed: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }
@@ -101,7 +101,7 @@ export async function downloadAndReupload(
  *
  */
 export async function downloadAndReuploadBatch(
-  assets: Array<{ url: string; options: DownloadAndReuploadOptions }>
+  assets: Array<{ url: string; options: DownloadAndReuploadOptions }>,
 ): Promise<Array<AssetUploadResult | null>> {
   const promises = assets.map(async ({ url, options }) => {
     try {

@@ -6,7 +6,7 @@
  */
 export function determineAspectRatio(
   width: number,
-  height: number
+  height: number,
 ): "landscape_16_9" | "portrait_16_9" {
   const aspectRatio = width / height;
 
@@ -25,7 +25,7 @@ export function determineAspectRatio(
  */
 export function getOptimalImageDimensions(
   width: number,
-  height: number
+  height: number,
 ): { width: number; height: number } {
   const aspectRatioMode = determineAspectRatio(width, height);
 
@@ -45,7 +45,7 @@ export function getOptimalImageDimensions(
 export function calculateCropDimensions(
   originalWidth: number,
   originalHeight: number,
-  targetAspectRatio: "16:9" | "9:16"
+  targetAspectRatio: "16:9" | "9:16",
 ): { width: number; height: number; x: number; y: number } {
   const targetRatio = targetAspectRatio === "16:9" ? 16 / 9 : 9 / 16;
   const currentRatio = originalWidth / originalHeight;
@@ -85,13 +85,13 @@ export function calculateCropDimensions(
  */
 export async function cropImageToAspectRatio(
   imageElement: HTMLImageElement,
-  targetAspectRatio: "landscape_16_9" | "portrait_16_9"
+  targetAspectRatio: "landscape_16_9" | "portrait_16_9",
 ): Promise<string> {
   const aspectRatio = targetAspectRatio === "landscape_16_9" ? "16:9" : "9:16";
   const cropDimensions = calculateCropDimensions(
     imageElement.naturalWidth,
     imageElement.naturalHeight,
-    aspectRatio
+    aspectRatio,
   );
 
   // Create canvas with crop dimensions
@@ -114,7 +114,7 @@ export async function cropImageToAspectRatio(
     0,
     0,
     cropDimensions.width,
-    cropDimensions.height
+    cropDimensions.height,
   );
 
   // Convert to data URL (JPEG for better compression)
@@ -139,7 +139,7 @@ export async function cropImageUrlToAspectRatio(imageUrl: string): Promise<{
       try {
         const targetAspectRatio = determineAspectRatio(
           img.naturalWidth,
-          img.naturalHeight
+          img.naturalHeight,
         );
 
         const croppedSrc = await cropImageToAspectRatio(img, targetAspectRatio);

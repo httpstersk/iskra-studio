@@ -69,7 +69,7 @@ export function ProjectPanel({
         id: project.id,
         label: `${(index + 1).toString().padStart(2, "0")}`,
       })),
-    [projects]
+    [projects],
   );
 
   /**
@@ -128,7 +128,7 @@ export function ProjectPanel({
           "bg-card/96 backdrop-blur-2xl",
           "shadow-[0_8px_32px_rgba(0,0,0,0.45)]",
           "transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          isOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex h-full w-full flex-col items-center px-3 py-6">
@@ -140,7 +140,7 @@ export function ProjectPanel({
               customVariant={cn(
                 "h-11 w-11 rounded-2xl border border-border/50",
                 "bg-card/85 text-muted-foreground",
-                "transition hover:border-border/40 hover:bg-card/90 hover:text-foreground"
+                "transition hover:border-border/40 hover:bg-card/90 hover:text-foreground",
               )}
             >
               <PanelLeftClose className="h-5 w-5" />
@@ -178,7 +178,7 @@ export function ProjectPanel({
                         "transition-all duration-200",
                         isSelected
                           ? "border-primary/40 bg-primary/8 shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)]"
-                          : "border-border/45 hover:border-border/30 hover:bg-card/90"
+                          : "border-border/45 hover:border-border/30 hover:bg-card/90",
                       )}
                     >
                       <span
@@ -186,7 +186,7 @@ export function ProjectPanel({
                           "text-sm font-mono transition",
                           isSelected
                             ? "text-primary"
-                            : "text-muted-foreground group-hover:text-foreground"
+                            : "text-muted-foreground group-hover:text-foreground",
                         )}
                       >
                         {label}
@@ -202,7 +202,7 @@ export function ProjectPanel({
                 customVariant={cn(
                   "mt-2 h-11 w-11 rounded-2xl border border-border/45",
                   "bg-card/88 text-foreground",
-                  "transition hover:border-border/30 hover:bg-card/95"
+                  "transition hover:border-border/30 hover:bg-card/95",
                 )}
               >
                 <Plus className="h-5 w-5" />

@@ -35,7 +35,7 @@ export const IS_RATE_LIMITER_ENABLED =
 export async function shouldLimitRequest(
   limiter: RateLimiter,
   ip: string,
-  keyPrefix?: string
+  keyPrefix?: string,
 ): Promise<LimitResult> {
   if (!IS_RATE_LIMITER_ENABLED) {
     return { shouldLimitRequest: false };
@@ -49,7 +49,7 @@ export async function shouldLimitRequest(
     limits.map(async (limit) => {
       const result = await limiter[limit].limit(rateLimitKey);
       return result;
-    })
+    }),
   );
 
   const limitRequestIndex = results.findIndex((result) => !result.success);

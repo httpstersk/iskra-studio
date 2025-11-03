@@ -35,18 +35,25 @@ class CanvasStorage {
   private db: IDBPDatabase<CanvasDB> | null = null;
 
   async init() {
-    this.db = await openDB<CanvasDB>(STORAGE_CONSTANTS.DB_NAME, STORAGE_CONSTANTS.DB_VERSION, {
-      upgrade(db: IDBPDatabase<CanvasDB>, oldVersion) {
-        if (!db.objectStoreNames.contains(OBJECT_STORES.IMAGES)) {
-          db.createObjectStore(OBJECT_STORES.IMAGES, { keyPath: "id" });
-        }
+    this.db = await openDB<CanvasDB>(
+      STORAGE_CONSTANTS.DB_NAME,
+      STORAGE_CONSTANTS.DB_VERSION,
+      {
+        upgrade(db: IDBPDatabase<CanvasDB>, oldVersion) {
+          if (!db.objectStoreNames.contains(OBJECT_STORES.IMAGES)) {
+            db.createObjectStore(OBJECT_STORES.IMAGES, { keyPath: "id" });
+          }
 
-        // Add videos object store in version 2
-        if (oldVersion < 2 && !db.objectStoreNames.contains(OBJECT_STORES.VIDEOS)) {
-          db.createObjectStore(OBJECT_STORES.VIDEOS, { keyPath: "id" });
-        }
+          // Add videos object store in version 2
+          if (
+            oldVersion < 2 &&
+            !db.objectStoreNames.contains(OBJECT_STORES.VIDEOS)
+          ) {
+            db.createObjectStore(OBJECT_STORES.VIDEOS, { keyPath: "id" });
+          }
+        },
       },
-    });
+    );
   }
 
   /**
@@ -65,8 +72,6 @@ class CanvasStorage {
     await this.db!.delete(OBJECT_STORES.VIDEOS, id);
   }
 
-  
-
   /**
    * Retrieves an image from IndexedDB.
    */
@@ -83,8 +88,6 @@ class CanvasStorage {
     return await this.db!.get(OBJECT_STORES.VIDEOS, id);
   }
 
-  
-
   /**
    * Saves an image to IndexedDB.
    */
@@ -95,7 +98,7 @@ class CanvasStorage {
     const sizeInBytes = new Blob([dataUrl]).size;
     if (sizeInBytes > STORAGE_CONSTANTS.MAX_FILE_SIZE) {
       throw new Error(
-        `Image size exceeds maximum allowed size of ${STORAGE_CONSTANTS.MAX_FILE_SIZE / 1024 / 1024}MB`
+        `Image size exceeds maximum allowed size of ${STORAGE_CONSTANTS.MAX_FILE_SIZE / 1024 / 1024}MB`,
       );
     }
 
@@ -116,7 +119,7 @@ class CanvasStorage {
   async saveVideo(
     videoDataUrl: string,
     duration: number,
-    id?: string
+    id?: string,
   ): Promise<string> {
     if (!this.db) await this.init();
 
@@ -124,7 +127,7 @@ class CanvasStorage {
     const sizeInBytes = new Blob([videoDataUrl]).size;
     if (sizeInBytes > STORAGE_CONSTANTS.MAX_FILE_SIZE) {
       throw new Error(
-        `Video size exceeds maximum allowed size of ${STORAGE_CONSTANTS.MAX_FILE_SIZE / 1024 / 1024}MB`
+        `Video size exceeds maximum allowed size of ${STORAGE_CONSTANTS.MAX_FILE_SIZE / 1024 / 1024}MB`,
       );
     }
 
@@ -179,14 +182,14 @@ class CanvasStorage {
     const usedImageIds = new Set(
       state.elements
         .filter((el) => el.type === "image" && el.assetId)
-        .map((el) => el.assetId!)
+        .map((el) => el.assetId!),
     );
 
     // Get all asset IDs currently in use
     const usedVideoIds = new Set(
       state.elements
         .filter((el) => el.type === "video" && el.assetId)
-        .map((el) => el.assetId!)
+        .map((el) => el.assetId!),
     );
 
     // Delete unused images using cursor for memory efficiency

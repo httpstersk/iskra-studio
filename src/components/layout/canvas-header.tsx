@@ -87,7 +87,6 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
             <>
               {isAuthenticated ? (
                 <>
-
                   <UserMenu />
                 </>
               ) : (

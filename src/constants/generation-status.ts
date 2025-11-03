@@ -1,6 +1,6 @@
 /**
  * Generation Status Constants
- * 
+ *
  * Centralized constants for generation status tracking and management.
  * Used across handlers to maintain consistent status updates.
  */
@@ -37,14 +37,14 @@ export const STATUS_PLACEHOLDER_PREFIX = {
 
 /**
  * Creates a unique placeholder ID for status tracking.
- * 
+ *
  * @param prefix - Type of placeholder (upload, analyze, etc.)
  * @param timestamp - Unique timestamp for this generation batch
  * @returns Unique placeholder ID
  */
 export function createStatusPlaceholderId(
   prefix: keyof typeof STATUS_PLACEHOLDER_PREFIX,
-  timestamp: number
+  timestamp: number,
 ): string {
   return `variation-${timestamp}-${STATUS_PLACEHOLDER_PREFIX[prefix]}`;
 }

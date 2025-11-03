@@ -29,7 +29,7 @@ export function useStorage(
   setImages: (images: PlacedImage[]) => void,
   setVideos: (videos: PlacedVideo[]) => void,
   setViewport: (viewport: Viewport) => void,
-  activeGenerationsSize: number
+  activeGenerationsSize: number,
 ) {
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -86,7 +86,7 @@ export function useStorage(
       // setTimeout necessary here for precise timing delay, not animation-dependent
       setTimeout(
         () => setIsSaving(false),
-        UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS
+        UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS,
       );
     } catch (error) {
       setIsSaving(false);

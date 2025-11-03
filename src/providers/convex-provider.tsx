@@ -7,7 +7,7 @@ import { ReactNode } from "react";
 
 /**
  * Convex client instance for the application.
- * 
+ *
  * @remarks
  * Configured with the Convex deployment URL from environment variables.
  * This client is shared across all components that use Convex.
@@ -24,18 +24,18 @@ interface ConvexProviderProps {
 
 /**
  * Convex provider wrapper with Clerk authentication integration.
- * 
+ *
  * Provides Convex backend access to all child components with integrated
  * Clerk authentication. This allows Convex mutations and queries to access
  * the authenticated user's identity automatically.
- * 
+ *
  * @remarks
  * - Must be nested inside ClerkProvider to access authentication context
  * - Automatically passes Clerk auth tokens to Convex backend
  * - Enables authenticated queries and mutations in Convex functions
  * - Uses Clerk's useAuth hook to manage authentication state
  * - This is a client component and requires "use client" directive
- * 
+ *
  * @example
  * ```tsx
  * <ClerkProvider>
@@ -44,7 +44,7 @@ interface ConvexProviderProps {
  *   </ConvexProvider>
  * </ClerkProvider>
  * ```
- * 
+ *
  * @param props - Component props
  * @returns Convex provider with Clerk auth wrapping children
  */

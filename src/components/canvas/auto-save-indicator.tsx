@@ -1,6 +1,6 @@
 /**
  * Auto-save indicator component for canvas.
- * 
+ *
  * Shows the current save status with visual feedback:
  * - "Saving..." with spinner when save is in progress
  * - "Saved at [time]" with check icon when save succeeds
@@ -39,24 +39,24 @@ interface AutoSaveIndicatorProps {
 
 /**
  * Auto-save indicator component.
- * 
+ *
  * Provides visual feedback for canvas auto-save operations with
  * different states (saving, saved, error). Automatically hides
  * after 3 seconds when save succeeds.
- * 
+ *
  * @remarks
  * - Shows spinner animation during save
  * - Shows check mark with timestamp after successful save
  * - Shows error icon with retry button on failure
  * - Auto-hides success state after 3 seconds
  * - Uses relative time format ("2 minutes ago")
- * 
+ *
  * @example
  * ```tsx
  * function MyCanvas() {
  *   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
  *   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
- *   
+ *
  *   return (
  *     <AutoSaveIndicator
  *       status={saveStatus}
@@ -66,7 +66,7 @@ interface AutoSaveIndicatorProps {
  *   );
  * }
  * ```
- * 
+ *
  * @param props - Component props
  * @returns Auto-save indicator or null if idle
  */
@@ -96,9 +96,12 @@ export function AutoSaveIndicator({
     // Auto-hide after 3 seconds when saved
     // Use requestIdleCallback for non-critical UI updates to avoid blocking main thread
     if (status === "saved") {
-      const timeout = requestIdleCallback(() => {
-        setIsVisible(false);
-      }, { timeout: 3000 });
+      const timeout = requestIdleCallback(
+        () => {
+          setIsVisible(false);
+        },
+        { timeout: 3000 },
+      );
       setHideTimeout(timeout);
     }
 
@@ -160,13 +163,8 @@ export function AutoSaveIndicator({
       {/* Error state */}
       {status === "error" && (
         <>
-          <X
-            className="h-4 w-4 text-destructive"
-            aria-hidden="true"
-          />
-          <span className="text-destructive">
-            {error || "Failed to save"}
-          </span>
+          <X className="h-4 w-4 text-destructive" aria-hidden="true" />
+          <span className="text-destructive">{error || "Failed to save"}</span>
           {onRetry && (
             <Button
               variant="ghost"
@@ -186,16 +184,16 @@ export function AutoSaveIndicator({
 
 /**
  * Hook for managing auto-save indicator state.
- * 
+ *
  * Provides state and helpers for the AutoSaveIndicator component.
- * 
+ *
  * @returns State and functions for managing save indicator
- * 
+ *
  * @example
  * ```tsx
  * function MyCanvas() {
  *   const saveIndicator = useAutoSaveIndicator();
- *   
+ *
  *   const handleSave = async () => {
  *     saveIndicator.setSaving();
  *     try {
@@ -205,7 +203,7 @@ export function AutoSaveIndicator({
  *       saveIndicator.setError(error.message);
  *     }
  *   };
- *   
+ *
  *   return (
  *     <AutoSaveIndicator
  *       status={saveIndicator.status}

@@ -35,10 +35,7 @@ export class AppError extends Error {
  * Validation errors (400)
  */
 export class ValidationError extends AppError {
-  constructor(
-    message: string,
-    context?: Record<string, unknown>,
-  ) {
+  constructor(message: string, context?: Record<string, unknown>) {
     super(message, "VALIDATION_ERROR", 400, context);
   }
 }
@@ -47,10 +44,7 @@ export class ValidationError extends AppError {
  * Resource not found errors (404)
  */
 export class NotFoundError extends AppError {
-  constructor(
-    message: string,
-    context?: Record<string, unknown>,
-  ) {
+  constructor(message: string, context?: Record<string, unknown>) {
     super(message, "NOT_FOUND", 404, context);
   }
 }
@@ -59,10 +53,7 @@ export class NotFoundError extends AppError {
  * Image generation/processing errors
  */
 export class ImageGenerationError extends AppError {
-  constructor(
-    message: string,
-    context?: Record<string, unknown>,
-  ) {
+  constructor(message: string, context?: Record<string, unknown>) {
     super(message, "IMAGE_GENERATION_ERROR", 500, context);
   }
 }
@@ -71,10 +62,7 @@ export class ImageGenerationError extends AppError {
  * Image analysis errors
  */
 export class ImageAnalysisError extends AppError {
-  constructor(
-    message: string,
-    context?: Record<string, unknown>,
-  ) {
+  constructor(message: string, context?: Record<string, unknown>) {
     super(message, "IMAGE_ANALYSIS_ERROR", 500, context);
   }
 }
@@ -83,10 +71,7 @@ export class ImageAnalysisError extends AppError {
  * Storage/upload errors
  */
 export class StorageError extends AppError {
-  constructor(
-    message: string,
-    context?: Record<string, unknown>,
-  ) {
+  constructor(message: string, context?: Record<string, unknown>) {
     super(message, "STORAGE_ERROR", 500, context);
   }
 }

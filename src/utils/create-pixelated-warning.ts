@@ -5,11 +5,13 @@ const BASE_SIZE = 32;
 
 /**
  * Creates a pixelated warning triangle icon with exclamation mark
- * 
+ *
  * @param size - Target size for the warning icon (default: 160px for 8x8 grid at 20px/pixel)
  * @returns Canvas element containing the pixelated warning sign
  */
-export function createPixelatedWarning(size: number = BASE_SIZE * 5): HTMLCanvasElement {
+export function createPixelatedWarning(
+  size: number = BASE_SIZE * 5,
+): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
@@ -46,26 +48,26 @@ export function createPixelatedWarning(size: number = BASE_SIZE * 5): HTMLCanvas
   // Draw triangle outline (yellow/orange gradient)
   // Top point
   drawPixel(centerX, 1, yellow);
-  
+
   // Second row
   drawPixel(centerX - 1, 2, yellow);
   drawPixel(centerX, 2, yellow);
   drawPixel(centerX + 1, 2, yellow);
-  
+
   // Third row
   drawPixel(centerX - 2, 3, darkYellow);
   drawPixel(centerX - 1, 3, yellow);
   drawPixel(centerX, 3, yellow);
   drawPixel(centerX + 1, 3, yellow);
   drawPixel(centerX + 2, 3, darkYellow);
-  
+
   // Fourth row
   drawPixel(centerX - 2, 4, darkYellow);
   drawPixel(centerX - 1, 4, yellow);
   drawPixel(centerX, 4, yellow);
   drawPixel(centerX + 1, 4, yellow);
   drawPixel(centerX + 2, 4, darkYellow);
-  
+
   // Fifth row
   drawPixel(centerX - 3, 5, darkYellow);
   drawPixel(centerX - 2, 5, yellow);
@@ -74,7 +76,7 @@ export function createPixelatedWarning(size: number = BASE_SIZE * 5): HTMLCanvas
   drawPixel(centerX + 1, 5, yellow);
   drawPixel(centerX + 2, 5, yellow);
   drawPixel(centerX + 3, 5, darkYellow);
-  
+
   // Sixth row (bottom)
   for (let i = -3; i <= 3; i++) {
     drawPixel(centerX + i, 6, i === -3 || i === 3 ? darkYellow : yellow);
@@ -84,7 +86,7 @@ export function createPixelatedWarning(size: number = BASE_SIZE * 5): HTMLCanvas
   // Exclamation body
   drawPixel(centerX, 3, black);
   drawPixel(centerX, 4, black);
-  
+
   // Exclamation dot
   drawPixel(centerX, 5, red);
 
@@ -97,7 +99,7 @@ export function createPixelatedWarning(size: number = BASE_SIZE * 5): HTMLCanvas
 
 /**
  * Generates a data URL for the pixelated warning icon
- * 
+ *
  * @param size - Target size for the warning icon
  * @returns Data URL string of the warning icon
  */

@@ -55,7 +55,7 @@ interface UseProjectsReturn {
   saveProject: (
     projectId: Id<"projects">,
     canvasState: CanvasState,
-    thumbnailStorageId?: string
+    thumbnailStorageId?: string,
   ) => Promise<void>;
 }
 
@@ -125,7 +125,7 @@ export function useProjects(): UseProjectsReturn {
   // Convex queries - only run when authenticated
   const projectsQuery = useQuery(
     api.projects.listProjects,
-    isAuthenticated ? { limit: 50 } : "skip"
+    isAuthenticated ? { limit: 50 } : "skip",
   );
 
   // Memoize project list to avoid unnecessary recalculations
@@ -139,10 +139,10 @@ export function useProjects(): UseProjectsReturn {
       lastSavedAt: project.lastSavedAt,
       thumbnailUrl: project.thumbnailUrl,
       imageCount: project.canvasState.elements.filter(
-        (el: any) => el.type === "image"
+        (el: any) => el.type === "image",
       ).length,
       videoCount: project.canvasState.elements.filter(
-        (el: any) => el.type === "video"
+        (el: any) => el.type === "video",
       ).length,
     }));
   }, [projectsQuery]);
@@ -166,16 +166,16 @@ export function useProjects(): UseProjectsReturn {
         return projectId;
       } catch (error) {
         throw new Error(
-          `Project creation failed: ${error instanceof Error ? error.message : "Unknown error"}`
+          `Project creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
       }
     },
-    [createProjectMutation]
+    [createProjectMutation],
   );
 
   /**
    * Loads a project by ID.
-   * 
+   *
    * Uses request sequencing to prevent race conditions when rapidly switching projects.
    * Only the most recent load request will update the state.
    */
@@ -228,10 +228,10 @@ export function useProjects(): UseProjectsReturn {
             lastSavedAt: project.lastSavedAt,
             thumbnailUrl: project.thumbnailUrl,
             imageCount: project.canvasState.elements.filter(
-              (el: any) => el.type === "image"
+              (el: any) => el.type === "image",
             ).length,
             videoCount: project.canvasState.elements.filter(
-              (el: any) => el.type === "video"
+              (el: any) => el.type === "video",
             ).length,
           };
 
@@ -239,7 +239,7 @@ export function useProjects(): UseProjectsReturn {
 
           if (existingIndex === -1) {
             return [metadata, ...prev].sort(
-              (a, b) => b.lastSavedAt - a.lastSavedAt
+              (a, b) => b.lastSavedAt - a.lastSavedAt,
             );
           }
 
@@ -255,7 +255,7 @@ export function useProjects(): UseProjectsReturn {
         throw new Error(
           `Project load failed: ${
             error instanceof Error ? error.message : "Unknown error"
-          }`
+          }`,
         );
       } finally {
         // Only clear loading state if this is still the latest request
@@ -264,7 +264,14 @@ export function useProjects(): UseProjectsReturn {
         }
       }
     },
-    [convex, setCurrentProject, setIsLoading, setLastSavedAt, setProjectList, setOptimisticProjectId]
+    [
+      convex,
+      setCurrentProject,
+      setIsLoading,
+      setLastSavedAt,
+      setProjectList,
+      setOptimisticProjectId,
+    ],
   );
 
   /**
@@ -274,7 +281,7 @@ export function useProjects(): UseProjectsReturn {
     async (
       projectId: Id<"projects">,
       canvasState: CanvasState,
-      thumbnailStorageId?: string
+      thumbnailStorageId?: string,
     ): Promise<void> => {
       try {
         setIsSaving(true);
@@ -300,7 +307,7 @@ export function useProjects(): UseProjectsReturn {
         }
       } catch (error) {
         throw new Error(
-          `Project save failed: ${error instanceof Error ? error.message : "Unknown error"}`
+          `Project save failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
       } finally {
         setIsSaving(false);
@@ -312,7 +319,7 @@ export function useProjects(): UseProjectsReturn {
       setIsSaving,
       setLastSavedAt,
       setCurrentProject,
-    ]
+    ],
   );
 
   /**
@@ -335,11 +342,11 @@ export function useProjects(): UseProjectsReturn {
         // Project list will update automatically via query
       } catch (error) {
         throw new Error(
-          `Project rename failed: ${error instanceof Error ? error.message : "Unknown error"}`
+          `Project rename failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
       }
     },
-    [renameProjectMutation, currentProject, setCurrentProject]
+    [renameProjectMutation, currentProject, setCurrentProject],
   );
 
   return {

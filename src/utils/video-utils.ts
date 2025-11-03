@@ -71,7 +71,7 @@ export const createPlacedVideo = (
   y: number,
   width: number,
   height: number,
-  duration: number
+  duration: number,
 ) => {
   return {
     id,
@@ -115,7 +115,7 @@ export const placeGeneratedVideo = async (
   videoUrl: string,
   duration: number,
   canvasSize: { width: number; height: number },
-  viewport: { x: number; y: number; scale: number }
+  viewport: { x: number; y: number; scale: number },
 ) => {
   // Create a video element to get dimensions
   const video = document.createElement("video");
@@ -154,7 +154,7 @@ export const placeGeneratedVideo = async (
           y,
           width,
           height,
-          duration
+          duration,
         );
 
         // Clean up
@@ -208,7 +208,7 @@ export const convertImageToVideo = (
   },
   videoUrl: string,
   duration: number,
-  replaceOriginal: boolean = false
+  replaceOriginal: boolean = false,
 ) => {
   const id = replaceOriginal
     ? image.id
@@ -223,7 +223,7 @@ export const convertImageToVideo = (
       image.y,
       image.width,
       image.height,
-      duration
+      duration,
     ),
     sourceImageId: image.id,
   };

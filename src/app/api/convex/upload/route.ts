@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     if (!token) {
       return NextResponse.json(
         { error: "Failed to get auth token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
         error: "Upload failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

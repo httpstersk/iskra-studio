@@ -115,11 +115,11 @@ function createUserRateLimiterSet(config: RateLimitConfig): UserRateLimiter {
   return {
     perMinute: createUserRateLimiter(
       config.perMinute.tokens,
-      config.perMinute.window
+      config.perMinute.window,
     ),
     perHour: createUserRateLimiter(
       config.perHour.tokens,
-      config.perHour.window
+      config.perHour.window,
     ),
     perDay: createUserRateLimiter(config.perDay.tokens, config.perDay.window),
   };
@@ -150,7 +150,7 @@ export const videoUserRateLimiter = createUserRateLimiterSet(VIDEO_RATE_LIMITS);
  */
 export async function checkUserRateLimit(
   userId: string,
-  limitType: LimitType = "standard"
+  limitType: LimitType = "standard",
 ): Promise<UserRateLimitResult> {
   if (!IS_RATE_LIMITER_ENABLED) {
     return { shouldLimitRequest: false };
@@ -167,7 +167,7 @@ export async function checkUserRateLimit(
     limits.map(async (limit) => {
       const result = await limiter[limit].limit(rateLimitKey);
       return result;
-    })
+    }),
   );
 
   const limitRequestIndex = results.findIndex((result) => !result.success);

@@ -1,6 +1,6 @@
 /**
  * Conversion utilities for elements between runtime and persistence formats.
- * 
+ *
  * Handles mapping between:
  * - PlacedImage/PlacedVideo (runtime format used in canvas)
  * - CanvasElement (persistence format saved to Convex)
@@ -11,13 +11,13 @@ import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 
 /**
  * Converts a PlacedImage to a CanvasElement for persistence.
- * 
+ *
  * Maps runtime image properties to the persistence format,
  * including asset reference if available.
- * 
+ *
  * @param image - PlacedImage from canvas state
  * @returns CanvasElement for saving to Convex
- * 
+ *
  * @example
  * ```ts
  * const element = convertImageToElement(placedImage);
@@ -45,13 +45,13 @@ export function convertImageToElement(image: PlacedImage): CanvasElement {
 
 /**
  * Converts a PlacedVideo to a CanvasElement for persistence.
- * 
+ *
  * Maps runtime video properties to the persistence format,
  * including playback state and asset reference.
- * 
+ *
  * @param video - PlacedVideo from canvas state
  * @returns CanvasElement for saving to Convex
- * 
+ *
  * @example
  * ```ts
  * const element = convertVideoToElement(placedVideo);
@@ -84,15 +84,15 @@ export function convertVideoToElement(video: PlacedVideo): CanvasElement {
 
 /**
  * Converts a CanvasElement back to PlacedImage for runtime use.
- * 
+ *
  * Restores runtime image properties from persistence format.
  * Note: Some properties like naturalWidth/naturalHeight must be
  * fetched separately after image loads.
- * 
+ *
  * @param element - CanvasElement from Convex
  * @param imageSrc - URL for rendering the image
  * @returns PlacedImage for use in canvas
- * 
+ *
  * @example
  * ```ts
  * const image = convertElementToImage(element, imageUrl);
@@ -101,7 +101,7 @@ export function convertVideoToElement(video: PlacedVideo): CanvasElement {
  */
 export function convertElementToImage(
   element: CanvasElement,
-  imageSrc: string
+  imageSrc: string,
 ): PlacedImage {
   return {
     assetId: element.assetId,
@@ -118,13 +118,13 @@ export function convertElementToImage(
 
 /**
  * Converts a CanvasElement back to PlacedVideo for runtime use.
- * 
+ *
  * Restores runtime video properties from persistence format.
- * 
+ *
  * @param element - CanvasElement from Convex
  * @param videoSrc - URL for rendering the video
  * @returns PlacedVideo for use in canvas
- * 
+ *
  * @example
  * ```ts
  * const video = convertElementToVideo(element, videoUrl);
@@ -133,7 +133,7 @@ export function convertElementToImage(
  */
 export function convertElementToVideo(
   element: CanvasElement,
-  videoSrc: string
+  videoSrc: string,
 ): PlacedVideo {
   return {
     assetId: element.assetId,
@@ -156,14 +156,14 @@ export function convertElementToVideo(
 
 /**
  * Converts PlacedImage/PlacedVideo arrays to CanvasElements for persistence.
- * 
+ *
  * Combines images and videos into a single elements array,
  * suitable for saving to Convex.
- * 
+ *
  * @param images - Array of PlacedImages
  * @param videos - Array of PlacedVideos
  * @returns Array of CanvasElements
- * 
+ *
  * @example
  * ```ts
  * const elements = mergeToElements(canvasState.images, canvasState.videos);
@@ -172,7 +172,7 @@ export function convertElementToVideo(
  */
 export function mergeToElements(
   images: PlacedImage[],
-  videos: PlacedVideo[]
+  videos: PlacedVideo[],
 ): CanvasElement[] {
   const elements: CanvasElement[] = [];
 
@@ -189,14 +189,14 @@ export function mergeToElements(
 
 /**
  * Separates CanvasElements into runtime PlacedImage/PlacedVideo arrays.
- * 
+ *
  * Converts persistence format back to runtime format.
  * Requires asset data or URLs for rendering.
- * 
+ *
  * @param elements - Array of CanvasElements
  * @param assetUrls - Map of asset ID to URL for rendering
  * @returns Object with images and videos arrays
- * 
+ *
  * @example
  * ```ts
  * const { images, videos } = separateElements(
@@ -209,7 +209,7 @@ export function mergeToElements(
  */
 export function separateElements(
   elements: CanvasElement[],
-  assetUrls: Map<string, string>
+  assetUrls: Map<string, string>,
 ): {
   images: PlacedImage[];
   videos: PlacedVideo[];
@@ -219,9 +219,7 @@ export function separateElements(
 
   for (const element of elements) {
     // Get URL from asset or element
-    const url = element.assetId
-      ? assetUrls.get(element.assetId) || ""
-      : "";
+    const url = element.assetId ? assetUrls.get(element.assetId) || "" : "";
 
     if (!url) {
       console.warn(`No URL found for element ${element.id}`);

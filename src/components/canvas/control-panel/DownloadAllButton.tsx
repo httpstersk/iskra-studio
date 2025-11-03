@@ -52,12 +52,12 @@ export function DownloadAllButton({
 
       showSuccess(
         DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_TITLE,
-        DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_DESC
+        DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_DESC,
       );
     } catch (error) {
       showError(
         DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_TITLE,
-        DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_DESC
+        DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_DESC,
       );
     } finally {
       setIsDownloading(false);

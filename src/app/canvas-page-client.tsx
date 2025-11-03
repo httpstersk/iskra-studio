@@ -61,7 +61,7 @@ export function CanvasPageClient() {
   const historyState = useHistoryState(
     canvasState.images,
     canvasState.videos,
-    canvasState.selectedIds
+    canvasState.selectedIds,
   );
   const uiState = useUIState();
 
@@ -84,7 +84,7 @@ export function CanvasPageClient() {
     canvasState.images,
     canvasState.videos,
     canvasState.selectedIds,
-    canvasState.setSelectedIds
+    canvasState.setSelectedIds,
   );
 
   const { isStorageLoaded, saveToStorage } = useStorage(
@@ -94,25 +94,25 @@ export function CanvasPageClient() {
     canvasState.setImages,
     canvasState.setVideos,
     canvasState.setViewport,
-    generationState.activeGenerations.size
+    generationState.activeGenerations.size,
   );
 
   const { handleDrop, handleFileUpload } = useFileUpload(
     canvasState.setImages,
     canvasState.viewport,
     canvasState.canvasSize,
-    userId ?? undefined
+    userId ?? undefined,
   );
 
   const { mutateAsync: generateTextToImage } = useMutation(
-    trpc.generateTextToImage.mutationOptions()
+    trpc.generateTextToImage.mutationOptions(),
   );
 
   useDefaultImages(
     isStorageLoaded,
     canvasState.images.length,
     canvasState.canvasSize,
-    canvasState.setImages
+    canvasState.setImages,
   );
 
   const { handleRedo, handleUndo } = useHistoryHandlers({

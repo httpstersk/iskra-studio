@@ -19,7 +19,7 @@ export function useFileUpload(
     title: string;
     description?: string;
     variant?: "default" | "destructive";
-  }) => void
+  }) => void,
 ) {
   const { ensureProject } = useProjectGuard();
 
@@ -43,13 +43,13 @@ export function useFileUpload(
               // Determine best aspect ratio and crop the image
               const targetAspectRatio = determineAspectRatio(
                 img.naturalWidth,
-                img.naturalHeight
+                img.naturalHeight,
               );
 
               // Crop image to 16:9 or 9:16
               const croppedImageSrc = await cropImageToAspectRatio(
                 img,
-                targetAspectRatio
+                targetAspectRatio,
               );
 
               // Create a new image element to get the cropped dimensions
@@ -135,7 +135,7 @@ export function useFileUpload(
                             width: naturalWidth,
                             height: naturalHeight,
                           },
-                        }
+                        },
                       );
 
                       // Update the image with the proxy URL, asset reference, and thumbnail
@@ -149,14 +149,14 @@ export function useFileUpload(
                                 assetId: uploadResult.assetId,
                                 assetSyncedAt: Date.now(),
                               }
-                            : img
-                        )
+                            : img,
+                        ),
                       );
                     } catch (error) {
                       if (toast) {
                         showError(
                           "Upload failed",
-                          "Image will be stored locally only"
+                          "Image will be stored locally only",
                         );
                       }
                       // Keep using the data URL if upload fails
@@ -173,13 +173,13 @@ export function useFileUpload(
         }
       });
     },
-    [setImages, viewport, canvasSize, userId, toast, ensureProject]
+    [setImages, viewport, canvasSize, userId, toast, ensureProject],
   );
 
   const handleDrop = useCallback(
     (
       e: React.DragEvent,
-      stageRef: React.RefObject<{ container(): HTMLElement }>
+      stageRef: React.RefObject<{ container(): HTMLElement }>,
     ) => {
       e.preventDefault();
 
@@ -196,7 +196,7 @@ export function useFileUpload(
         handleFileUpload(e.dataTransfer.files);
       }
     },
-    [handleFileUpload]
+    [handleFileUpload],
   );
 
   return {

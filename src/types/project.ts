@@ -1,6 +1,6 @@
 /**
  * Project type definitions for canvas workspaces.
- * 
+ *
  * Defines types for managing user projects (canvas workspaces) with
  * saved state, thumbnails, and metadata for the UI.
  */
@@ -80,7 +80,7 @@ export interface CanvasViewport {
 
 /**
  * Canvas state stored in projects.
- * 
+ *
  * Complete snapshot of the canvas workspace including all elements,
  * viewport position, and metadata.
  */
@@ -97,10 +97,10 @@ export interface CanvasState {
 
 /**
  * Project record from Convex database.
- * 
+ *
  * Represents a saved canvas workspace with all its state and metadata.
  * Includes asset thumbnail URLs to optimize bandwidth on project load.
- * 
+ *
  * @remarks
  * - canvasState contains the complete canvas snapshot
  * - thumbnailStorageId references a 300x200px preview image
@@ -132,11 +132,11 @@ export interface Project {
 
 /**
  * Lightweight project metadata for list views.
- * 
+ *
  * Contains only the essential information needed to display
  * a project card in the project list UI. Includes asset thumbnails
  * for efficient preview rendering without loading full-size images.
- * 
+ *
  * @remarks
  * Used to avoid loading full canvas state when listing projects.
  * assetThumbnails maps asset IDs to small thumbnail URLs for preview cards.

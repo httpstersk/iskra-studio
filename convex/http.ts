@@ -50,7 +50,7 @@ http.route({
           {
             status: 401,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
 
@@ -72,7 +72,7 @@ http.route({
           {
             status: 413,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
 
@@ -89,7 +89,7 @@ http.route({
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
 
@@ -105,7 +105,7 @@ http.route({
           {
             status: 500,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
 
@@ -140,7 +140,7 @@ http.route({
             "Content-Type": "application/json",
           },
           status: 200,
-        }
+        },
       );
     } catch (error) {
       return new Response(
@@ -151,7 +151,7 @@ http.route({
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
   }),

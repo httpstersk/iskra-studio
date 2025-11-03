@@ -129,7 +129,7 @@ export interface GenerateBRollConceptsOptions {
  * @throws Error if generation fails
  */
 export async function generateBRollConcepts(
-  options: GenerateBRollConceptsOptions
+  options: GenerateBRollConceptsOptions,
 ): Promise<BRollConceptSet> {
   const { count, styleAnalysis, userContext } = options;
 
@@ -149,7 +149,7 @@ export async function generateBRollConcepts(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `B-roll concept generation failed with status ${response.status}`
+        `B-roll concept generation failed with status ${response.status}`,
     );
   }
 

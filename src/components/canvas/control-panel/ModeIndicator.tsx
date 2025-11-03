@@ -42,7 +42,7 @@ export function ModeIndicator({
         className={cn(
           "h-9 rounded-xl overflow-clip flex items-center px-3",
           "pointer-events-none select-none",
-          CONTROL_PANEL_STYLES.ORANGE_BADGE
+          CONTROL_PANEL_STYLES.ORANGE_BADGE,
         )}
       >
         <div className="flex items-center gap-2 text-xs font-medium">

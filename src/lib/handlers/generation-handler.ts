@@ -35,7 +35,7 @@ interface GenerationHandlerDeps {
 
 export const uploadImageDirect = async (
   dataUrl: string,
-  userId: string | undefined
+  userId: string | undefined,
 ) => {
   // Convert data URL to blob first
   const response = await fetch(dataUrl);
@@ -73,7 +73,7 @@ export const generateImage = (
   setImages: GenerationHandlerDeps["setImages"],
   setActiveGenerations: GenerationHandlerDeps["setActiveGenerations"],
   width: number = 300,
-  height: number = 300
+  height: number = 300,
 ) => {
   const placeholderId = `generated-${Date.now()}`;
   setImages((prev) => [
@@ -96,7 +96,7 @@ export const generateImage = (
     new Map(prev).set(placeholderId, {
       imageUrl,
       prompt: generationSettings.prompt,
-    })
+    }),
   );
 };
 
@@ -153,7 +153,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
                 width: croppedResult.width,
                 height: croppedResult.height,
               },
-            }
+            },
           );
           finalUrl = migrationResult.url;
         } catch (error) {
@@ -175,7 +175,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       const scale = Math.min(
         maxDisplay / Math.max(croppedResult.width, 1),
         maxDisplay / Math.max(croppedResult.height, 1),
-        1
+        1,
       );
       const width = Math.max(1, Math.round(croppedResult.width * scale));
       const height = Math.max(1, Math.round(croppedResult.height * scale));
@@ -202,7 +202,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       showErrorFromException(
         "Generation failed",
         error,
-        "Failed to generate image"
+        "Failed to generate image",
       );
     } finally {
       setIsGenerating(false);
@@ -283,7 +283,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
         setImages,
         setActiveGenerations,
         img.width,
-        img.height
+        img.height,
       );
       successCount++;
     } catch (error) {
@@ -291,7 +291,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       showErrorFromException(
         "Failed to process image",
         error,
-        "Failed to process image"
+        "Failed to process image",
       );
     }
   }

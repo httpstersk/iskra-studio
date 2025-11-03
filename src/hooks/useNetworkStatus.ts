@@ -78,7 +78,7 @@ export function useNetworkStatus(options: UseNetworkStatusOptions = {}) {
       if (showNotifications) {
         showInfo(
           "Back online",
-          "Network connection restored. Syncing changes..."
+          "Network connection restored. Syncing changes...",
         );
       }
 

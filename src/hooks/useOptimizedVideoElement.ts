@@ -21,7 +21,8 @@ import { useEffect, useRef, useState } from "react";
 /**
  * Check if ImageBitmap API is supported
  */
-const supportsImageBitmap = typeof window !== "undefined" && "createImageBitmap" in window;
+const supportsImageBitmap =
+  typeof window !== "undefined" && "createImageBitmap" in window;
 
 /**
  * Creates an optimized video element with ImageBitmap support
@@ -36,7 +37,7 @@ export function useOptimizedVideoElement(
   src: string,
   opts: { currentTime: number; loop?: boolean; muted: boolean; volume: number },
   onMeta: (duration: number) => void,
-  onTime: (currentTime: number) => void
+  onTime: (currentTime: number) => void,
 ): HTMLVideoElement | null {
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const imageBitmapRef = useRef<ImageBitmap | null>(null);
@@ -155,7 +156,7 @@ export function useOptimizedVideoElement(
  * @returns ImageBitmap if available and supported, otherwise the video element
  */
 export function getOptimizedVideoSource(
-  videoEl: HTMLVideoElement | null
+  videoEl: HTMLVideoElement | null,
 ): HTMLVideoElement | ImageBitmap | null {
   // This is a placeholder - in practice, we'd need to store the bitmap
   // in a way that's accessible to the canvas render loop

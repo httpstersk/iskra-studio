@@ -55,8 +55,8 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
           "sourceVideoId",
           "toastId",
           "videoUrl",
-        ].includes(key)
-    )
+        ].includes(key),
+    ),
   );
 
   // Ensure values match tRPC schema
@@ -101,13 +101,13 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
           onProgress(
             videoId,
             eventData.progress ?? 0,
-            eventData.status || STREAMING_COPY.PROGRESS
+            eventData.status || STREAMING_COPY.PROGRESS,
           );
         } else if (eventData.type === "complete" && eventData.videoUrl) {
           onComplete(
             videoId,
             eventData.videoUrl,
-            eventData.duration ?? resolvedDuration
+            eventData.duration ?? resolvedDuration,
           );
         } else if (eventData.type === "error" && eventData.error) {
           onError(videoId, eventData.error);
@@ -116,7 +116,7 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
       onError: (error) => {
         onError(videoId, error.message || STREAMING_COPY.ERROR_SUMMARY);
       },
-    }
+    },
   );
 
   useSubscription(subscriptionOptions);

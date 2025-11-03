@@ -48,7 +48,7 @@ export const POST = async (req: NextRequest) => {
       {
         status: 429,
         headers,
-      }
+      },
     );
   }
 

@@ -91,7 +91,7 @@ export function ProjectDialog({
       // Success toast
       showSuccess(
         "Project created",
-        `"${projectName.trim() || "New project"}" has been created`
+        `"${projectName.trim() || "New project"}" has been created`,
       );
 
       // Reset form
@@ -110,7 +110,7 @@ export function ProjectDialog({
       showErrorFromException(
         "Creation failed",
         error,
-        "Failed to create project"
+        "Failed to create project",
       );
     } finally {
       setIsCreating(false);

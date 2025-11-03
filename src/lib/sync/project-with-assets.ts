@@ -109,7 +109,7 @@ export async function loadProjectWithAssets(
   assets: Asset[],
   assetUrls: Map<string, string>,
   userId: string,
-  options: LoadProjectOptions = {}
+  options: LoadProjectOptions = {},
 ): Promise<LoadProjectResult> {
   const assetMap = new Map(assets.map((a) => [a.id, a]));
   const warnings: string[] = [];
@@ -132,12 +132,12 @@ export async function loadProjectWithAssets(
         const asset = assetMap.get(stale.elementId);
         if (asset) {
           const index = fixedElements.findIndex(
-            (e) => e.id === stale.elementId
+            (e) => e.id === stale.elementId,
           );
           if (index >= 0) {
             fixedElements[index] = syncElementWithAsset(
               fixedElements[index],
-              asset
+              asset,
             );
           }
         }
@@ -146,7 +146,7 @@ export async function loadProjectWithAssets(
       // Orphan invalid elements
       for (const invalid of validation.invalidElements) {
         const index = fixedElements.findIndex(
-          (e) => e.id === invalid.elementId
+          (e) => e.id === invalid.elementId,
         );
         if (index >= 0) {
           if (options.deleteOrphaned) {
@@ -164,13 +164,13 @@ export async function loadProjectWithAssets(
 
       if (validation.invalidElements.length > 0) {
         warnings.push(
-          `${validation.invalidElements.length} elements have missing assets and were orphaned`
+          `${validation.invalidElements.length} elements have missing assets and were orphaned`,
         );
       }
 
       if (validation.staleMetadata.length > 0) {
         warnings.push(
-          `${validation.staleMetadata.length} elements had metadata refreshed`
+          `${validation.staleMetadata.length} elements had metadata refreshed`,
         );
       }
     }
@@ -234,7 +234,7 @@ export function prepareProjectForSave(
   canvasState: CanvasState,
   assets: Asset[],
   userId: string,
-  options: SaveProjectOptions = {}
+  options: SaveProjectOptions = {},
 ) {
   // Convert to persistence format
   const elements = mergeToElements(images, videos);
@@ -245,13 +245,13 @@ export function prepareProjectForSave(
     const validation = validateCanvasState(
       { ...canvasState, elements },
       assetMap,
-      userId
+      userId,
     );
 
     if (!validation.isValid) {
       const plan = generateMigrationPlan(validation);
       options.onValidationError?.(
-        `Validation failed: ${plan.elementsToDelete.length} orphaned, ${plan.elementsToSync.length} stale`
+        `Validation failed: ${plan.elementsToDelete.length} orphaned, ${plan.elementsToSync.length} stale`,
       );
 
       return {
@@ -294,7 +294,7 @@ export function prepareProjectForSave(
  */
 export function countElementsUsingAsset(
   canvasState: CanvasState,
-  assetId: string
+  assetId: string,
 ): number {
   return canvasState.elements.filter((e) => e.assetId === assetId).length;
 }

@@ -22,11 +22,11 @@ interface CanvasHandlerDeps {
   saveToHistory: () => void;
   selectedIds: string[];
   setImages: (
-    images: PlacedImage[] | ((prev: PlacedImage[]) => PlacedImage[])
+    images: PlacedImage[] | ((prev: PlacedImage[]) => PlacedImage[]),
   ) => void;
   setSelectedIds: (ids: string[]) => void;
   setVideos: (
-    videos: PlacedVideo[] | ((prev: PlacedVideo[]) => PlacedVideo[])
+    videos: PlacedVideo[] | ((prev: PlacedVideo[]) => PlacedVideo[]),
   ) => void;
   videos: PlacedVideo[];
 }
@@ -85,7 +85,7 @@ export function useCanvasHandlers(deps: CanvasHandlerDeps): CanvasHandlers {
       showErrorFromException(
         CANVAS_STRINGS.ERRORS.COMBINE_FAILED,
         error,
-        CANVAS_STRINGS.ERRORS.UNKNOWN_ERROR
+        CANVAS_STRINGS.ERRORS.UNKNOWN_ERROR,
       );
     }
   }, [images, saveToHistory, selectedIds, setImages, setSelectedIds]);
@@ -95,7 +95,7 @@ export function useCanvasHandlers(deps: CanvasHandlerDeps): CanvasHandlers {
     const { newImages, newVideos } = deleteElements(
       images,
       videos,
-      selectedIds
+      selectedIds,
     );
     setImages(newImages);
     setSelectedIds([]);
@@ -115,7 +115,7 @@ export function useCanvasHandlers(deps: CanvasHandlerDeps): CanvasHandlers {
     const { newImages, newVideos } = duplicateElements(
       images,
       videos,
-      selectedIds
+      selectedIds,
     );
     setImages((prev) => [...prev, ...newImages]);
     setVideos((prev) => [...prev, ...newVideos]);

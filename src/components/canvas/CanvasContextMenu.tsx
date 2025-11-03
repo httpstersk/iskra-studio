@@ -257,5 +257,5 @@ export const CanvasContextMenu = React.memo<CanvasContextMenuProps>(
         </ContextMenuItem>
       </ContextMenuContent>
     );
-  }
+  },
 );

@@ -11,7 +11,7 @@ export const showError = (title: string, description?: string) => {
 export const showErrorFromException = (
   title: string,
   error: unknown,
-  fallback = "An unknown error occurred"
+  fallback = "An unknown error occurred",
 ) => {
   const description = error instanceof Error ? error.message : fallback;
   toast.error(title, { description });

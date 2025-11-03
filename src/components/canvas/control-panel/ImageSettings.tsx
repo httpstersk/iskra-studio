@@ -21,7 +21,9 @@ export function ImageSettings({
     <SegmentedControl.Root
       size="1"
       value={imageModel}
-      onValueChange={(value) => setImageModel(value as "seedream" | "nano-banana")}
+      onValueChange={(value) =>
+        setImageModel(value as "seedream" | "nano-banana")
+      }
     >
       <SegmentedControl.Item value="seedream">
         <span className="text-xs">Seedream</span>

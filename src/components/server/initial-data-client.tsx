@@ -1,6 +1,6 @@
 /**
  * Client Component that receives server-fetched initial data.
- * 
+ *
  * Creates a React Context to make server-fetched data available
  * throughout the client component tree without prop drilling.
  */
@@ -19,7 +19,7 @@ const InitialDataContext = createContext<InitialData | null>(null);
 
 /**
  * Hook to access server-fetched initial data in client components.
- * 
+ *
  * @returns Initial data object with user and projects
  * @throws Error if used outside InitialDataClient provider
  */
@@ -33,7 +33,7 @@ export function useInitialData() {
 
 /**
  * Client wrapper that provides server-fetched data via React Context.
- * 
+ *
  * @param initialData - Data pre-fetched on the server
  * @param children - Child components that can access the data
  */

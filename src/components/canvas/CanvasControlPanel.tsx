@@ -16,7 +16,10 @@ import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 interface CanvasControlPanelProps {
   activeGenerations: Map<string, import("@/types/canvas").ActiveGeneration>;
   activeGenerationsSize: number;
-  activeVideoGenerations: Map<string, import("@/types/canvas").ActiveVideoGeneration>;
+  activeVideoGenerations: Map<
+    string,
+    import("@/types/canvas").ActiveVideoGeneration
+  >;
   activeVideoGenerationsSize: number;
   canRedo: boolean;
   canUndo: boolean;
@@ -36,7 +39,9 @@ interface CanvasControlPanelProps {
   setImageVariationType?: (type: "camera-angles" | "director") => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   setVideoDuration: (value: "4" | "8" | "12") => void;
-  setVideoModel: (value: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro") => void;
+  setVideoModel: (
+    value: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro",
+  ) => void;
   setVideoResolution: (value: "auto" | "720p" | "1080p") => void;
   showSuccess: boolean;
   undo: () => void;
@@ -86,7 +91,7 @@ export function CanvasControlPanel({
       <div
         className={cn(
           "bg-card/98 backdrop-blur-2xl rounded-2xl border border-border/50",
-          "shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+          "shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
         )}
       >
         <div className="flex flex-col gap-3 px-4 md:px-4 py-3 md:py-3 relative justify-between">

@@ -17,7 +17,7 @@ const loadingPromises = new Map<string, Promise<HTMLImageElement>>();
  */
 function loadImage(
   src: string,
-  crossOrigin: string = "anonymous"
+  crossOrigin: string = "anonymous",
 ): Promise<HTMLImageElement> {
   // Return cached image if available
   if (imageCache.has(src)) {
@@ -62,7 +62,7 @@ function loadImage(
  */
 export function useImageCache(
   src: string,
-  crossOrigin: string = "anonymous"
+  crossOrigin: string = "anonymous",
 ): [HTMLImageElement | undefined, "loading" | "loaded" | "error"] {
   const [image, setImage] = useState<HTMLImageElement | undefined>(() => {
     // Check cache immediately for synchronous return

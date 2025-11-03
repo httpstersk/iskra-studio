@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     if (!userId) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -53,14 +53,14 @@ export async function POST(req: NextRequest) {
     if (!count || count < 1 || count > 12) {
       return NextResponse.json(
         { error: "Count must be between 1 and 12" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (!styleAnalysis) {
       return NextResponse.json(
         { error: "Style analysis is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -185,7 +185,7 @@ Include film grain and all post-processing effects explicitly in every prompt.
       model: OPENAI_MODEL,
       response_format: zodResponseFormat(
         bRollConceptSetSchema,
-        "broll_concepts"
+        "broll_concepts",
       ),
     });
 
@@ -204,7 +204,7 @@ Include film grain and all post-processing effects explicitly in every prompt.
         error: "B-roll concept generation failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

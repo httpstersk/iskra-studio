@@ -69,7 +69,7 @@ export function resolveSourceUrl(sourceUrl: string, origin: string): string {
 
 async function downloadRemoteAsset(
   url: string,
-  assetType: GeneratedAssetUploadPayload["assetType"]
+  assetType: GeneratedAssetUploadPayload["assetType"],
 ): Promise<DownloadedAsset> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -86,7 +86,9 @@ async function downloadRemoteAsset(
   };
 }
 
-async function generateThumbnailBlob(buffer: Buffer): Promise<Blob | undefined> {
+async function generateThumbnailBlob(
+  buffer: Buffer,
+): Promise<Blob | undefined> {
   try {
     const thumbnailBuffer = await sharp(buffer)
       .resize(400, 400, {

@@ -81,7 +81,7 @@ export function useAuth(): UseAuthReturn {
   // Use reactive query instead of mutation for better performance
   const convexUser = useQuery(
     api.users.getCurrentUser,
-    isClerkLoaded && clerkUser ? {} : "skip"
+    isClerkLoaded && clerkUser ? {} : "skip",
   );
 
   // Mutation to create user if doesn't exist

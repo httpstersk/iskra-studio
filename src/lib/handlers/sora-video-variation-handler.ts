@@ -86,7 +86,7 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
   // Validate URL before sending to API
   if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
     throw new Error(
-      `Invalid image URL for analysis: must be a full URL, got: ${imageUrl.substring(0, 100)}`
+      `Invalid image URL for analysis: must be a full URL, got: ${imageUrl.substring(0, 100)}`,
     );
   }
 
@@ -150,7 +150,7 @@ interface CreateVideoGenerationConfigParams {
  * @returns Video generation configuration
  */
 function createVideoGenerationConfig(
-  params: CreateVideoGenerationConfigParams
+  params: CreateVideoGenerationConfigParams,
 ): VideoGenerationConfig {
   const { duration, imageUrl, modelId, prompt, sourceImageId, videoSettings } =
     params;
@@ -176,7 +176,7 @@ function createVideoGenerationConfig(
  * Generates 4 cinematic video variations from a reference image using Sora 2
  */
 export const handleSoraVideoVariations = async (
-  deps: SoraVideoVariationHandlerDeps
+  deps: SoraVideoVariationHandlerDeps,
 ) => {
   const {
     images,
@@ -202,7 +202,7 @@ export const handleSoraVideoVariations = async (
     if (!userId) {
       showError(
         "Authentication required",
-        "Please sign in to generate video variations"
+        "Please sign in to generate video variations",
       );
       setIsGenerating(false);
       return;
@@ -255,7 +255,7 @@ export const handleSoraVideoVariations = async (
       !signedImageUrl.startsWith("https://")
     ) {
       throw new Error(
-        `Invalid signed URL format: Expected full URL but got: ${signedImageUrl.substring(0, 100)}`
+        `Invalid signed URL format: Expected full URL but got: ${signedImageUrl.substring(0, 100)}`,
       );
     }
 
@@ -298,7 +298,7 @@ export const handleSoraVideoVariations = async (
     const videoPrompts = expandStorylinesToPrompts(
       storylineSet.storylines,
       imageAnalysis,
-      duration
+      duration,
     );
 
     // Create video placeholders immediately for optimistic UI
@@ -314,7 +314,7 @@ export const handleSoraVideoVariations = async (
         sourceY: snappedSource.y,
         timestamp,
         variationIndex: index,
-      })
+      }),
     );
 
     // Add placeholders to canvas
@@ -353,7 +353,7 @@ export const handleSoraVideoVariations = async (
     showErrorFromException(
       "Generation failed",
       error,
-      "Failed to generate video variations"
+      "Failed to generate video variations",
     );
 
     setIsGenerating(false);

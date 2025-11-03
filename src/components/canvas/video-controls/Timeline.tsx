@@ -38,7 +38,10 @@ export const Timeline = React.memo<TimelineProps>(function Timeline({
   ].join(" ");
 
   return (
-    <div aria-label={VIDEO_CONTROLS_ARIA.TIMELINE_CONTAINER} className={containerClassName}>
+    <div
+      aria-label={VIDEO_CONTROLS_ARIA.TIMELINE_CONTAINER}
+      className={containerClassName}
+    >
       <SeekBar currentTime={currentTime} duration={duration} onSeek={onSeek} />
       <TimeDisplay currentTime={currentTime} duration={duration} />
     </div>
