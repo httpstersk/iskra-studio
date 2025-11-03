@@ -3,7 +3,7 @@ import type {
   PlacedImage,
   PlacedVideo,
 } from "@/types/canvas";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Viewport } from "./useCanvasState";
 
 interface UseKeyboardShortcutsProps {
@@ -47,8 +47,72 @@ export function useKeyboardShortcuts({
   videos,
   viewport,
 }: UseKeyboardShortcutsProps) {
+  // Use ref to store latest props without triggering effect re-runs
+  const propsRef = useRef({
+    bringForward,
+    canvasSize,
+    generationSettings,
+    handleDelete,
+    handleDuplicate,
+    handleRun,
+    images,
+    isGenerating,
+    redo,
+    selectedIds,
+    sendBackward,
+    sendToBack,
+    sendToFront,
+    setSelectedIds,
+    setViewport,
+    undo,
+    videos,
+    viewport,
+  });
+
+  // Update ref on every render
+  propsRef.current = {
+    bringForward,
+    canvasSize,
+    generationSettings,
+    handleDelete,
+    handleDuplicate,
+    handleRun,
+    images,
+    isGenerating,
+    redo,
+    selectedIds,
+    sendBackward,
+    sendToBack,
+    sendToFront,
+    setSelectedIds,
+    setViewport,
+    undo,
+    videos,
+    viewport,
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const {
+        bringForward,
+        canvasSize,
+        generationSettings,
+        handleDelete,
+        handleDuplicate,
+        handleRun,
+        images,
+        isGenerating,
+        redo,
+        selectedIds,
+        sendBackward,
+        sendToBack,
+        sendToFront,
+        setSelectedIds,
+        setViewport,
+        undo,
+        videos,
+        viewport,
+      } = propsRef.current;
       const isInputElement =
         e.target && (e.target as HTMLElement).matches("input, textarea");
 
@@ -165,24 +229,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [
-    bringForward,
-    canvasSize,
-    generationSettings,
-    handleDelete,
-    handleDuplicate,
-    handleRun,
-    images,
-    isGenerating,
-    redo,
-    selectedIds,
-    sendBackward,
-    sendToBack,
-    sendToFront,
-    setSelectedIds,
-    setViewport,
-    undo,
-    videos,
-    viewport,
-  ]);
+  }, []); // ✅ Empty deps - uses ref for latest values
 }

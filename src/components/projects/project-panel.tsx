@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
 import { PanelLeftClose, Plus } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 /**
  * Props for ProjectPanel component.
@@ -79,6 +79,10 @@ export function ProjectPanel({
     onToggle?.();
   };
 
+  // Store latest onToggle in ref
+  const toggleRef = useRef(onToggle);
+  toggleRef.current = onToggle;
+
   /**
    * Handles keyboard shortcut (Cmd/Ctrl+P).
    */
@@ -87,7 +91,7 @@ export function ProjectPanel({
       // Cmd+P (Mac) or Ctrl+P (Windows/Linux)
       if ((e.metaKey || e.ctrlKey) && e.key === "p") {
         e.preventDefault();
-        togglePanel();
+        toggleRef.current?.();
       }
     };
 
@@ -96,7 +100,7 @@ export function ProjectPanel({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, []); // ✅ Empty deps - uses ref for latest callback
 
   /**
    * Handles creating a new project with auto-generated name.

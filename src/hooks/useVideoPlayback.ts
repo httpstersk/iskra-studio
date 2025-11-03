@@ -5,7 +5,7 @@
  * with a given HTMLVideoElement.
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Synchronizes playback properties with a given HTMLVideoElement.
@@ -27,6 +27,10 @@ export function useVideoPlayback(
   const { isPlaying, volume, muted, loop, currentTime, onPlaybackError } =
     props;
 
+  // Store latest error callback in ref
+  const errorCallbackRef = useRef(onPlaybackError);
+  errorCallbackRef.current = onPlaybackError;
+
   useEffect(() => {
     if (!videoEl) return;
     videoEl.volume = volume;
@@ -44,9 +48,9 @@ export function useVideoPlayback(
   useEffect(() => {
     if (!videoEl) return;
     if (isPlaying) {
-      videoEl.play().catch(onPlaybackError);
+      videoEl.play().catch((error) => errorCallbackRef.current(error));
     } else {
       videoEl.pause();
     }
-  }, [videoEl, isPlaying, onPlaybackError]);
+  }, [videoEl, isPlaying]); // ✅ Uses ref for error callback
 }
