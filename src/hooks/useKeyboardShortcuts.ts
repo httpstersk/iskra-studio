@@ -1,45 +1,51 @@
+import type {
+  GenerationSettings,
+  PlacedImage,
+  PlacedVideo,
+} from "@/types/canvas";
 import { useEffect } from "react";
-import type { PlacedImage, GenerationSettings } from "@/types/canvas";
 import type { Viewport } from "./useCanvasState";
 
 interface UseKeyboardShortcutsProps {
-  images: PlacedImage[];
-  selectedIds: string[];
-  setSelectedIds: (ids: string[]) => void;
-  generationSettings: GenerationSettings;
-  isGenerating: boolean;
-  viewport: Viewport;
-  setViewport: (viewport: Viewport) => void;
+  bringForward: () => void;
   canvasSize: { width: number; height: number };
-  undo: () => void;
-  redo: () => void;
+  generationSettings: GenerationSettings;
   handleDelete: () => void;
   handleDuplicate: () => void;
   handleRun: () => void;
-  sendToFront: () => void;
-  sendToBack: () => void;
-  bringForward: () => void;
+  images: PlacedImage[];
+  isGenerating: boolean;
+  redo: () => void;
+  selectedIds: string[];
   sendBackward: () => void;
+  sendToBack: () => void;
+  sendToFront: () => void;
+  setSelectedIds: (ids: string[]) => void;
+  setViewport: (viewport: Viewport) => void;
+  undo: () => void;
+  videos: PlacedVideo[];
+  viewport: Viewport;
 }
 
 export function useKeyboardShortcuts({
-  images,
-  selectedIds,
-  setSelectedIds,
-  generationSettings,
-  isGenerating,
-  viewport,
-  setViewport,
+  bringForward,
   canvasSize,
-  undo,
-  redo,
+  generationSettings,
   handleDelete,
   handleDuplicate,
   handleRun,
-  sendToFront,
-  sendToBack,
-  bringForward,
+  images,
+  isGenerating,
+  redo,
+  selectedIds,
   sendBackward,
+  sendToBack,
+  sendToFront,
+  setSelectedIds,
+  setViewport,
+  undo,
+  videos,
+  viewport,
 }: UseKeyboardShortcutsProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,7 +66,11 @@ export function useKeyboardShortcuts({
       // Select all
       else if ((e.metaKey || e.ctrlKey) && e.key === "a" && !isInputElement) {
         e.preventDefault();
-        setSelectedIds(images.map((img) => img.id));
+        const allIds = [
+          ...images.map((img) => img.id),
+          ...videos.map((vid) => vid.id),
+        ];
+        setSelectedIds(allIds);
       }
       // Delete
       else if (
@@ -156,22 +166,23 @@ export function useKeyboardShortcuts({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
-    selectedIds,
-    images,
+    bringForward,
+    canvasSize,
     generationSettings,
-    undo,
-    redo,
     handleDelete,
     handleDuplicate,
     handleRun,
-    viewport,
-    canvasSize,
-    sendToFront,
-    sendToBack,
-    bringForward,
+    images,
+    isGenerating,
+    redo,
+    selectedIds,
     sendBackward,
+    sendToBack,
+    sendToFront,
     setSelectedIds,
     setViewport,
-    isGenerating,
+    undo,
+    videos,
+    viewport,
   ]);
 }

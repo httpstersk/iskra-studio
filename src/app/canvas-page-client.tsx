@@ -222,6 +222,7 @@ export function CanvasPageClient() {
     setSelectedIds: canvasState.setSelectedIds,
     setViewport: canvasState.setViewport,
     undo: handleUndo,
+    videos: canvasState.videos,
     viewport: canvasState.viewport,
   });
 
