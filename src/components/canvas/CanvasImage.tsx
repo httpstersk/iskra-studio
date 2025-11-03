@@ -11,7 +11,7 @@
  * @module components/canvas/CanvasImage
  */
 
-import { DIRECTOR_LABEL } from "@/constants/canvas";
+import { DirectiveLabel } from "@/components/canvas/DirectiveLabel";
 import { useAnimationCoordinator } from "@/hooks/useAnimationCoordinator";
 import { abbreviateCameraDirective } from "@/utils/camera-abbreviation-utils";
 import { useImageCache } from "@/hooks/useImageCache";
@@ -28,60 +28,6 @@ import { Group, Image as KonvaImage, Text } from "react-konva";
  * Constant for CORS image loading
  */
 const CORS_MODE = "anonymous" as const;
-
-/**
- * Props for DirectorLabel component
- */
-interface DirectorLabelProps {
-  /** Director name to display */
-  directorName: string;
-  /** Height of the parent image */
-  height: number;
-  /** Width of the parent image */
-  width: number;
-  /** X position of the parent image */
-  x: number;
-  /** Y position of the parent image */
-  y: number;
-}
-
-/**
- * DirectorLabel - Renders a centered label overlay with the director's name
- *
- * @component
- */
-const DirectorLabel: React.FC<DirectorLabelProps> = ({
-  directorName,
-  height,
-  width,
-  x,
-  y,
-}) => {
-  // Calculate text dimensions for background sizing
-  const backgroundWidth = directorName.length * DIRECTOR_LABEL.FONT_SIZE;
-  const backgroundHeight = DIRECTOR_LABEL.FONT_SIZE;
-
-  // Center the label in the image
-  const labelX = x + width / 2 - backgroundWidth / 2;
-  const labelY = y + height / 2 - backgroundHeight / 2;
-
-  return (
-    <Text
-      align="center"
-      fill={DIRECTOR_LABEL.TEXT_COLOR}
-      fontSize={DIRECTOR_LABEL.FONT_SIZE}
-      height={backgroundHeight}
-      listening={false}
-      perfectDrawEnabled={false}
-      shadowForStrokeEnabled={false}
-      text={directorName}
-      verticalAlign="middle"
-      width={backgroundWidth}
-      x={labelX}
-      y={labelY}
-    />
-  );
-};
 
 /**
  * Props for the CanvasImage component
@@ -129,7 +75,7 @@ const useCanvasImageSource = (
   src: string,
   thumbnailSrc: string | undefined,
   isGenerated: boolean,
-  displayAsThumbnail: boolean,
+  displayAsThumbnail: boolean
 ) => {
   // When displayAsThumbnail is true, ONLY load thumbnail, never load src
   // This prevents loading full-size images when we only want thumbnails
@@ -143,11 +89,11 @@ const useCanvasImageSource = (
 
   // Load full-size image (only if shouldLoadFullSize is true)
   const [streamingImg] = useStreamingImage(
-    isGenerated && shouldLoadFullSize ? effectiveSrc : "",
+    isGenerated && shouldLoadFullSize ? effectiveSrc : ""
   );
   const [cachedImg] = useImageCache(
     !isGenerated && shouldLoadFullSize ? effectiveSrc : "",
-    CORS_MODE,
+    CORS_MODE
   );
 
   // Full-size image (once loaded, switch from thumbnail)
@@ -176,7 +122,7 @@ const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
 
   const [loadedImg] = useImageCache(
     pixelatedSrc && !cachedImage ? pixelatedSrc : "",
-    CORS_MODE,
+    CORS_MODE
   );
 
   if (!pixelatedSrc) return undefined;
@@ -254,7 +200,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     image.src,
     image.thumbnailSrc,
     !!image.isGenerated,
-    !!image.displayAsThumbnail,
+    !!image.displayAsThumbnail
   );
 
   // Get pixelated overlay if available
@@ -309,7 +255,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       onChange,
       setImages,
       throttleFrame,
-    },
+    }
   );
 
   // Handle interaction states
@@ -335,7 +281,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       handleDragEndInternal();
       onDragEnd();
     },
-    [handleDragEndInternal, onDragEnd],
+    [handleDragEndInternal, onDragEnd]
   );
 
   // Handle double-click to toggle variation mode
@@ -346,7 +292,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
         onDoubleClick(image.id);
       }
     },
-    [onDoubleClick, image.id],
+    [onDoubleClick, image.id]
   );
 
   // If pixelated overlay exists and hasn't fully transitioned, render both layers
@@ -471,9 +417,9 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       />
 
       {image.directorName && !image.isLoading && (
-        <DirectorLabel
-          directorName={image.directorName}
+        <DirectiveLabel
           height={image.height}
+          labelText={image.directorName}
           width={image.width}
           x={image.x}
           y={image.y}
@@ -481,9 +427,9 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       )}
 
       {!image.directorName && image.cameraAngle && !image.isLoading && (
-        <DirectorLabel
-          directorName={abbreviateCameraDirective(image.cameraAngle)}
+        <DirectiveLabel
           height={image.height}
+          labelText={abbreviateCameraDirective(image.cameraAngle)}
           width={image.width}
           x={image.x}
           y={image.y}
@@ -505,7 +451,7 @@ CanvasImageComponent.displayName = "CanvasImage";
  */
 const arePropsEqual = (
   prevProps: CanvasImageProps,
-  nextProps: CanvasImageProps,
+  nextProps: CanvasImageProps
 ): boolean => {
   // Check primitive props
   if (
