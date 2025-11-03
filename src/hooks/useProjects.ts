@@ -187,8 +187,11 @@ export function useProjects(): UseProjectsReturn {
       try {
         setIsLoading(true);
 
-        // Start loading the project data immediately
-        // The optimistic UI updates are handled in the ProjectPanel component
+        // Set optimistic ID only if this is still the latest request
+        // This prevents the race condition where rapid clicks override each other
+        if (currentSequence === loadSequenceRef.current) {
+          setOptimisticProjectId(projectId);
+        }
 
         // Pre-fetch project data asynchronously
         const projectPromise = convex.query(api.projects.getProject, {
