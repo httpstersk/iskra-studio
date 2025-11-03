@@ -3,7 +3,6 @@ import type {
   GenerationSettings,
   PlacedImage,
 } from "@/types/canvas";
-import type { FalClient } from "@fal-ai/client";
 import { showError, showErrorFromException } from "@/lib/toast";
 import { downloadAndReupload } from "./asset-download-handler";
 import { createStorageService } from "@/lib/storage";
@@ -14,7 +13,6 @@ interface GenerationHandlerDeps {
   generationSettings: GenerationSettings;
   canvasSize: { width: number; height: number };
   viewport: { x: number; y: number; scale: number };
-  falClient: FalClient;
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveGenerations: React.Dispatch<

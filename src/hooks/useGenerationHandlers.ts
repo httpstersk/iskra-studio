@@ -17,7 +17,6 @@ import { useProjectGuard } from "./useProjectGuard";
  */
 interface GenerationHandlerDeps {
   canvasSize: { height: number; width: number };
-  falClient: any;
   generateTextToImage: any;
   generationCount: number;
   generationSettings: GenerationSettings;
@@ -62,7 +61,6 @@ interface GenerationHandlerDeps {
 export function useGenerationHandlers(deps: GenerationHandlerDeps) {
   const {
     canvasSize,
-    falClient,
     generateTextToImage,
     generationCount,
     generationSettings,
@@ -141,10 +139,10 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
       // VEO models don't support "auto" - use defaults if "auto" is selected
       const isVeoModel = videoModel.startsWith("veo");
       const normalizedAspectRatio = isVeoModel ? "16:9" : "auto";
-      const normalizedResolution = isVeoModel && videoResolution === "auto" ? "720p" : videoResolution;
+      const normalizedResolution =
+        isVeoModel && videoResolution === "auto" ? "720p" : videoResolution;
 
       await handleVariationGeneration({
-        falClient,
         imageModel,
         imageVariationType,
         images,
@@ -170,7 +168,6 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     } else {
       await handleRunHandler({
         canvasSize,
-        falClient,
         generateTextToImage,
         generationSettings,
         images,
@@ -185,7 +182,6 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
   }, [
     canvasSize,
     ensureProject,
-    falClient,
     generateTextToImage,
     generationCount,
     generationSettings,

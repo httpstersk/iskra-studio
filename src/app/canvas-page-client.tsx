@@ -25,7 +25,6 @@ import { useCanvasHandlers } from "@/hooks/useCanvasHandlers";
 import { useCanvasInteractions } from "@/hooks/useCanvasInteractions";
 import { useCanvasState } from "@/hooks/useCanvasState-jotai";
 import { useDefaultImages } from "@/hooks/useDefaultImages";
-import { useFalClient } from "@/hooks/useFalClient";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useGenerationHandlers } from "@/hooks/useGenerationHandlers";
 import { useGenerationState } from "@/hooks/useGenerationState-jotai";
@@ -54,7 +53,6 @@ import { useCallback, useRef, useState } from "react";
  */
 export function CanvasPageClient() {
   const { setTheme, theme } = useTheme();
-  const falClient = useFalClient();
   const stageRef = useRef<Konva.Stage>(null);
   const trpc = useTRPC();
 
@@ -156,7 +154,6 @@ export function CanvasPageClient() {
 
   const { handleConvertToVideo, handleRun } = useGenerationHandlers({
     canvasSize: canvasState.canvasSize,
-    falClient,
     generateTextToImage,
     generationCount: uiState.generationCount,
     generationSettings: generationState.generationSettings,
