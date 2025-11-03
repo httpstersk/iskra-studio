@@ -6,6 +6,7 @@
  * - CanvasElement (persistence format saved to Convex)
  */
 
+import type { Asset } from "@/types/asset";
 import type { CanvasElement } from "@/types/project";
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
 
@@ -91,21 +92,25 @@ export function convertVideoToElement(video: PlacedVideo): CanvasElement {
  *
  * @param element - CanvasElement from Convex
  * @param imageSrc - URL for rendering the image
+ * @param asset - Optional asset record to pull metadata from (cameraAngle, directorName)
  * @returns PlacedImage for use in canvas
  *
  * @example
  * ```ts
- * const image = convertElementToImage(element, imageUrl);
+ * const image = convertElementToImage(element, imageUrl, asset);
  * setImages(prev => [...prev, image]);
  * ```
  */
 export function convertElementToImage(
   element: CanvasElement,
   imageSrc: string,
+  asset?: { cameraAngle?: string; directorName?: string },
 ): PlacedImage {
   return {
     assetId: element.assetId,
     assetSyncedAt: element.assetSyncedAt,
+    cameraAngle: asset?.cameraAngle,
+    directorName: asset?.directorName,
     height: element.height || 300,
     id: element.id,
     rotation: element.transform.rotation,
@@ -195,13 +200,15 @@ export function mergeToElements(
  *
  * @param elements - Array of CanvasElements
  * @param assetUrls - Map of asset ID to URL for rendering
+ * @param assets - Optional map of asset ID to Asset record for metadata (cameraAngle, directorName)
  * @returns Object with images and videos arrays
  *
  * @example
  * ```ts
  * const { images, videos } = separateElements(
  *   project.canvasState.elements,
- *   assetUrlMap
+ *   assetUrlMap,
+ *   assetMap
  * );
  * setImages(images);
  * setVideos(videos);
@@ -210,6 +217,7 @@ export function mergeToElements(
 export function separateElements(
   elements: CanvasElement[],
   assetUrls: Map<string, string>,
+  assets?: Map<string, Asset>,
 ): {
   images: PlacedImage[];
   videos: PlacedVideo[];
@@ -227,7 +235,8 @@ export function separateElements(
     }
 
     if (element.type === "image") {
-      images.push(convertElementToImage(element, url));
+      const asset = element.assetId ? assets?.get(element.assetId) : undefined;
+      images.push(convertElementToImage(element, url, asset));
     } else if (element.type === "video") {
       videos.push(convertElementToVideo(element, url));
     }

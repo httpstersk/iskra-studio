@@ -54,8 +54,14 @@ export interface AssetMetadata {
  * - sizeBytes is used for storage quota calculations
  */
 export interface Asset {
+  /** Camera angle directive for AI-generated camera angle variations */
+  cameraAngle?: string;
+
   /** Timestamp when the asset was created (ms since epoch) */
   createdAt: number;
+
+  /** Director name for AI-generated director-style variations */
+  directorName?: string;
 
   /** Duration in seconds (video only) */
   duration?: number;

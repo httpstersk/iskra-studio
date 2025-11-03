@@ -114,7 +114,7 @@ export function useStorage(
       const loadedImages: PlacedImage[] = [];
       const loadedVideos: PlacedVideo[] = [];
 
-      // Collect unique asset IDs to batch fetch director names
+      // Collect unique asset IDs to batch fetch camera angles and director names
       const assetIds = new Set<string>();
       for (const element of canvasState.elements) {
         if (element.assetId) {
@@ -122,15 +122,21 @@ export function useStorage(
         }
       }
 
-      // Batch fetch assets to get director names
-      const assetDirectorNames = new Map<string, string>();
+      // Batch fetch assets to get camera angles and director names
+      const assetMetadata = new Map<
+        string,
+        { cameraAngle?: string; directorName?: string }
+      >();
       for (const assetId of assetIds) {
         try {
           const asset = await convexClient.query(api.assets.getAsset, {
             assetId: assetId as any,
           });
-          if (asset?.directorName) {
-            assetDirectorNames.set(assetId, asset.directorName);
+          if (asset?.cameraAngle || asset?.directorName) {
+            assetMetadata.set(assetId, {
+              cameraAngle: asset.cameraAngle,
+              directorName: asset.directorName,
+            });
           }
         } catch (error) {
           // Asset might have been deleted or inaccessible, skip it
@@ -142,17 +148,18 @@ export function useStorage(
           const imageData = await canvasStorage.getImage(element.id);
 
           if (imageData) {
-            const directorName = element.assetId
-              ? assetDirectorNames.get(element.assetId)
+            const metadata = element.assetId
+              ? assetMetadata.get(element.assetId)
               : undefined;
 
             loadedImages.push({
               assetId: element.assetId,
               assetSyncedAt: element.assetSyncedAt,
-              directorName,
+              cameraAngle: metadata?.cameraAngle,
+              directorName: metadata?.directorName,
               height: element.height || 300,
               id: element.id,
-              isDirector: !!directorName,
+              isDirector: !!metadata?.directorName,
               rotation: element.transform.rotation,
               src: imageData.originalDataUrl,
               width: element.width || 300,

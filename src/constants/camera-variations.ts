@@ -23,8 +23,6 @@ export const CAMERA_VARIATIONS = [
   "CRASH PUSH-IN — AGGRESSIVE RAPID DOLLY toward subject; creates urgency, shock, or comedic punctuation.",
   "CRASH ZOOM OUT — RAPID ZOOM AWAY from subject; creates jarring reveal of wider context or comedic effect.",
   "DOLLY ZOOM VERTIGO — CAMERA PULLS BACK while zooming in; creates disorienting perspective shift that emphasizes emotional moment.",
-  "DRONE AERIAL DESCENT — CAMERA DESCENDS FROM HIGH ALTITUDE toward subject; reveals environment scale before intimate framing.",
-  "DRONE ORBITAL RISE — CIRCULAR MOVEMENT while ascending; combines rotation with elevation for dynamic reveal.",
   "DUTCH ANGLE DYNAMIC — CAMERA TILTED 25-45 DEGREES; creates tension and energy while maintaining subject clarity.",
   "EXTREME LOW‑ANGLE HERO — CAMERA JUST ABOVE GROUND, TILTED UP; architecture looms while SILHOUETTE STAYS READABLE.",
   "FISH-EYE DISTORTION — ULTRA-WIDE LENS with spherical distortion; creates surreal, exaggerated perspective and spatial warping.",

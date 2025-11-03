@@ -182,7 +182,7 @@ export async function loadProjectWithAssets(
   }
 
   // 2. Convert to runtime format
-  const { images, videos } = separateElements(canvasState.elements, assetUrls);
+  const { images, videos } = separateElements(canvasState.elements, assetUrls, assetMap);
 
   return {
     canvasState,
