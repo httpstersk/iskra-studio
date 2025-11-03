@@ -8,9 +8,9 @@ import { generateObject } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { storylineSetSchema } from "@/lib/schemas/storyline-schema";
-import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schema";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schema";
+import { storylineSetSchema } from "@/lib/schemas/storyline-schema";
 import { STORYLINE_GENERATION_SYSTEM_PROMPT } from "@/lib/storyline-generator";
 
 export const maxDuration = 30;
@@ -26,7 +26,7 @@ const generateStorylinesRequestSchema = z.object({
  */
 function buildStyleContext(
   analysis: ImageStyleMoodAnalysis,
-  duration: number,
+  duration: number
 ): string {
   const {
     subject,
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -113,7 +113,7 @@ export async function POST(req: Request) {
     if (!apiKey) {
       return NextResponse.json(
         { error: "OpenAI API key not configured" },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -142,17 +142,16 @@ While you MUST follow the user's creative direction for subject and narrative, y
         },
         {
           role: "user",
-          content: `Generate 4 unique storyline concepts for a ${duration ?? 4}-second rapid-cut video sequence.
-
-STYLE/MOOD ANALYSIS:
-${styleContext}${userDirectionSection}`,
+          content: `
+            Generate 4 unique storyline concepts for a ${duration ?? 4}-second rapid-cut video sequence.
+            STYLE/MOOD ANALYSIS: ${styleContext}${userDirectionSection}
+          `,
         },
       ],
     });
 
     return NextResponse.json({
       storylines: result.object,
-      usage: result.usage,
     });
   } catch (error) {
     return NextResponse.json(
@@ -160,7 +159,7 @@ ${styleContext}${userDirectionSection}`,
         error: "Failed to generate storylines",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

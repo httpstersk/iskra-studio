@@ -5,8 +5,9 @@
  * Now powered by Bria FIBO model for faster, more accurate image analysis
  */
 
-import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import { FIBO_ANALYSIS } from "@/constants/fibo";
 import { adaptFiboToAnalysis } from "@/lib/adapters/fibo-to-analysis-adapter";
+import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import {
   analyzeFiboImageWithRetry,
   FiboAnalysisError,
@@ -14,11 +15,6 @@ import {
 
 export interface ImageAnalysisResult {
   analysis: ImageStyleMoodAnalysis;
-  usage?: {
-    promptTokens?: number;
-    completionTokens?: number;
-    totalTokens?: number;
-  };
 }
 
 /**
@@ -30,7 +26,7 @@ export interface ImageAnalysisResult {
  * @throws Error if analysis fails
  */
 export async function analyzeImageCore(
-  imageUrl: string,
+  imageUrl: string
 ): Promise<ImageAnalysisResult> {
   if (!imageUrl || !imageUrl.trim()) {
     throw new Error("Image URL is required");
@@ -40,8 +36,8 @@ export async function analyzeImageCore(
     // Analyze image with FIBO (includes automatic retry)
     const fiboResult = await analyzeFiboImageWithRetry({
       imageUrl,
-      seed: 666,
-      timeout: 30000,
+      seed: FIBO_ANALYSIS.DEFAULT_SEED,
+      timeout: FIBO_ANALYSIS.DEFAULT_TIMEOUT,
     });
 
     // Transform FIBO output to our schema
@@ -49,21 +45,16 @@ export async function analyzeImageCore(
 
     return {
       analysis,
-      // FIBO doesn't provide token usage, but we can estimate
-      usage: {
-        promptTokens: 0, // FIBO doesn't use text prompts
-        completionTokens: 0,
-        totalTokens: 0,
-      },
     };
   } catch (error) {
     if (error instanceof FiboAnalysisError) {
       throw new Error(`Image analysis failed: ${error.message}`);
     }
+
     throw new Error(
       error instanceof Error
         ? error.message
-        : "Unknown error during image analysis",
+        : "Unknown error during image analysis"
     );
   }
 }

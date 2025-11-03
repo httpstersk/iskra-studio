@@ -7,8 +7,9 @@
  * API: https://fal.ai/models/bria/fibo/generate/structured_prompt/api
  */
 
-import { createFalClient } from "@fal-ai/client";
+import { FIBO_ANALYSIS, FIBO_ENDPOINTS } from "@/constants/fibo";
 import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
+import { createFalClientWithKey } from "@/lib/services/fal-client-factory";
 
 /**
  * FIBO API Response Structure
@@ -44,19 +45,6 @@ export class FiboAnalysisError extends Error {
 }
 
 /**
- * Validates and returns FAL_KEY environment variable
- */
-function getFalKey(): string {
-  const falKey = process.env.FAL_KEY;
-  if (!falKey || !falKey.trim()) {
-    throw new FiboAnalysisError(
-      "FAL_KEY environment variable is not configured. Get your API key from https://fal.ai/dashboard/keys",
-    );
-  }
-  return falKey;
-}
-
-/**
  * Analyzes an image using Bria FIBO model
  *
  * @param options - Analysis configuration
@@ -74,10 +62,11 @@ function getFalKey(): string {
 export async function analyzeFiboImage(
   options: FiboAnalysisOptions,
 ): Promise<FiboStructuredPrompt> {
-  const { imageUrl, seed = 666, timeout = 30000 } = options;
-
-  // Get and validate FAL_KEY
-  const falKey = getFalKey();
+  const {
+    imageUrl,
+    seed = FIBO_ANALYSIS.DEFAULT_SEED,
+    timeout = FIBO_ANALYSIS.DEFAULT_TIMEOUT,
+  } = options;
 
   // Validate image URL
   if (!imageUrl || !imageUrl.trim()) {
@@ -86,9 +75,7 @@ export async function analyzeFiboImage(
 
   try {
     // Create FAL client with credentials
-    const falClient = createFalClient({
-      credentials: () => falKey,
-    });
+    const falClient = createFalClientWithKey();
 
     // Create abort controller for timeout
     const controller = new AbortController();
@@ -96,16 +83,13 @@ export async function analyzeFiboImage(
 
     try {
       // Call FIBO API via fal.ai client
-      const result = (await falClient.subscribe(
-        "bria/fibo/generate/structured_prompt",
-        {
-          input: {
-            image_url: imageUrl,
-            seed,
-          },
-          logs: true,
+      const result = (await falClient.subscribe(FIBO_ENDPOINTS.ANALYZE, {
+        input: {
+          image_url: imageUrl,
+          seed,
         },
-      )) as { data: FiboApiResponse };
+        logs: true,
+      })) as { data: FiboApiResponse };
 
       clearTimeout(timeoutId);
 
