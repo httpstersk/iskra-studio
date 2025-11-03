@@ -1,6 +1,7 @@
 export interface PlacedImage {
   assetId?: string;
   assetSyncedAt?: number;
+  cameraAngle?: string;
   directorName?: string;
   displayAsThumbnail?: boolean;
   fullSizeSrc?: string;
@@ -107,7 +108,16 @@ export interface ActiveGeneration {
   /** Use FIBO generation with structured prompts (prompt will be FIBO JSON) */
   useFibo?: boolean;
   /** Aspect ratio for FIBO generation */
-  fiboAspectRatio?: "1:1" | "2:3" | "3:2" | "3:4" | "4:3" | "4:5" | "5:4" | "9:16" | "16:9";
+  fiboAspectRatio?:
+    | "1:1"
+    | "2:3"
+    | "3:2"
+    | "3:4"
+    | "4:3"
+    | "4:5"
+    | "5:4"
+    | "9:16"
+    | "16:9";
 }
 
 /**

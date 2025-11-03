@@ -412,3 +412,200 @@ export async function performEarlyPreparation(
     snappedSource,
   };
 }
+
+/**
+ * Configuration for image upload workflow
+ */
+export interface UploadWorkflowConfig {
+  /** Selected source image */
+  selectedImage: PlacedImage;
+  /** Setter for active generation states */
+  setActiveGenerations: React.Dispatch<
+    React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
+  >;
+  /** Timestamp for unique ID generation */
+  timestamp: number;
+}
+
+/**
+ * Result of the upload workflow
+ */
+export interface UploadWorkflowResult {
+  /** Convex storage URL of the uploaded image */
+  imageUrl: string;
+  /** Signed URL for tRPC/API calls */
+  signedImageUrl: string;
+}
+
+/**
+ * Handles the image upload workflow with status updates.
+ *
+ * Performs the following:
+ * 1. Sets UPLOADING status indicator
+ * 2. Ensures image is uploaded to Convex storage
+ * 3. Converts to signed URL for API calls
+ * 4. Removes UPLOADING status indicator
+ *
+ * @param config - Upload workflow configuration
+ * @returns Promise resolving to image URLs
+ *
+ * @example
+ * ```typescript
+ * const { imageUrl, signedImageUrl } = await performImageUploadWorkflow({
+ *   selectedImage,
+ *   setActiveGenerations,
+ *   timestamp
+ * });
+ * ```
+ */
+export async function performImageUploadWorkflow(
+  config: UploadWorkflowConfig,
+): Promise<UploadWorkflowResult> {
+  const { selectedImage, setActiveGenerations, timestamp } = config;
+
+  // Import storage utilities (dynamic to avoid circular dependencies)
+  const { ensureImageInConvex, toSignedUrl } = await import(
+    "@/features/generation/app-services/image-storage.service"
+  );
+
+  const uploadId = `variation-${timestamp}-upload`;
+
+  // Set uploading status
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.set(uploadId, {
+      imageUrl: "",
+      isVariation: true,
+      prompt: "",
+      status: VARIATION_STATUS.UPLOADING,
+    });
+    return newMap;
+  });
+
+  // Upload/ensure image is in Convex
+  const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
+  const imageUrl = await ensureImageInConvex(sourceImageUrl);
+  const signedImageUrl = toSignedUrl(imageUrl);
+
+  // Remove uploading status
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.delete(uploadId);
+    return newMap;
+  });
+
+  return { imageUrl, signedImageUrl };
+}
+
+/**
+ * Configuration for applying pixelated overlay to reference image
+ */
+export interface ApplyPixelatedOverlayConfig {
+  /** Pixelated overlay data URL */
+  pixelatedSrc: string | undefined;
+  /** Selected source image */
+  selectedImage: PlacedImage;
+  /** Setter for images state */
+  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
+}
+
+/**
+ * Applies pixelated overlay to the reference image during analysis.
+ *
+ * Updates the selected image to show a pixelated overlay, providing
+ * visual feedback that analysis is in progress.
+ *
+ * @param config - Overlay configuration
+ *
+ * @example
+ * ```typescript
+ * applyPixelatedOverlayToReferenceImage({
+ *   pixelatedSrc,
+ *   selectedImage,
+ *   setImages
+ * });
+ * ```
+ */
+export function applyPixelatedOverlayToReferenceImage(
+  config: ApplyPixelatedOverlayConfig,
+): void {
+  const { pixelatedSrc, selectedImage, setImages } = config;
+
+  setImages((prev) =>
+    prev.map((img) =>
+      img.id === selectedImage.id ? { ...img, pixelatedSrc } : img,
+    ),
+  );
+}
+
+/**
+ * Configuration for setting analyzing status
+ */
+export interface SetAnalyzingStatusConfig {
+  /** Signed image URL for analysis */
+  signedImageUrl: string;
+  /** Setter for active generation states */
+  setActiveGenerations: React.Dispatch<
+    React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
+  >;
+  /** Timestamp for unique ID generation */
+  timestamp: number;
+}
+
+/**
+ * Sets analyzing status indicator and returns the process ID.
+ *
+ * @param config - Analyzing status configuration
+ * @returns Process ID for later removal
+ *
+ * @example
+ * ```typescript
+ * const processId = setAnalyzingStatus({
+ *   signedImageUrl,
+ *   setActiveGenerations,
+ *   timestamp
+ * });
+ * ```
+ */
+export function setAnalyzingStatus(config: SetAnalyzingStatusConfig): string {
+  const { signedImageUrl, setActiveGenerations, timestamp } = config;
+
+  const processId = `variation-${timestamp}-process`;
+
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.set(processId, {
+      imageUrl: signedImageUrl,
+      isVariation: true,
+      prompt: "",
+      status: VARIATION_STATUS.ANALYZING,
+    });
+    return newMap;
+  });
+
+  return processId;
+}
+
+/**
+ * Removes analyzing status indicator.
+ *
+ * @param processId - Process ID from setAnalyzingStatus
+ * @param setActiveGenerations - Setter for active generation states
+ *
+ * @example
+ * ```typescript
+ * removeAnalyzingStatus(processId, setActiveGenerations);
+ * ```
+ */
+export function removeAnalyzingStatus(
+  processId: string,
+  setActiveGenerations: React.Dispatch<
+    React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
+  >,
+): void {
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.delete(processId);
+    return newMap;
+  });
+}

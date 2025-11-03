@@ -6,10 +6,6 @@
  */
 
 import { selectRandomDirectors } from "@/constants/directors";
-import {
-  ensureImageInConvex,
-  toSignedUrl,
-} from "@/features/generation/app-services/image-storage.service";
 import { fiboStructuredToText } from "@/lib/utils/fibo-to-text";
 import {
   config,
@@ -20,8 +16,12 @@ import { handleError } from "@/shared/errors";
 import { logger } from "@/shared/logging/logger";
 import type { PlacedImage } from "@/types/canvas";
 import {
+  applyPixelatedOverlayToReferenceImage,
   createPlaceholderFactory,
   performEarlyPreparation,
+  performImageUploadWorkflow,
+  removeAnalyzingStatus,
+  setAnalyzingStatus,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
 import { validateSingleImageSelection } from "./variation-utils";
@@ -61,7 +61,7 @@ interface DirectorVariationsResponse {
 async function generateDirectorVariations(
   imageUrl: string,
   directors: string[],
-  userContext?: string
+  userContext?: string,
 ): Promise<DirectorVariationsResponse> {
   const response = await fetch("/api/generate-director-variations", {
     method: "POST",
@@ -79,7 +79,7 @@ async function generateDirectorVariations(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `Director variations generation failed with status ${response.status}`
+        `Director variations generation failed with status ${response.status}`,
     );
   }
 
@@ -100,7 +100,7 @@ async function generateDirectorVariations(
  * 8. Generate images using Seedream/Nano Banana with combined text prompts
  */
 export const handleDirectorImageVariations = async (
-  deps: DirectorImageVariationHandlerDeps
+  deps: DirectorImageVariationHandlerDeps,
 ): Promise<void> => {
   const {
     imageModel = config.imageGeneration.defaultModel,
@@ -130,31 +130,11 @@ export const handleDirectorImageVariations = async (
     } = await performEarlyPreparation(selectedImage, variationCount);
 
     // Stage 0: Upload image to ensure it's in Convex
-    const uploadId = `variation-${timestamp}-upload`;
-
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-
-      newMap.set(uploadId, {
-        imageUrl: "",
-        isVariation: true,
-        prompt: "",
-        status: VARIATION_STATUS.UPLOADING,
-      });
-
-      return newMap;
+    const { signedImageUrl } = await performImageUploadWorkflow({
+      selectedImage,
+      setActiveGenerations,
+      timestamp,
     });
-
-    const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
-    const imageUrl = await ensureImageInConvex(sourceImageUrl);
-
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(uploadId);
-      return newMap;
-    });
-
-    const signedImageUrl = toSignedUrl(imageUrl);
 
     // Create factory function with shared configuration for all placeholders
     const makePlaceholder = createPlaceholderFactory({
@@ -169,32 +149,22 @@ export const handleDirectorImageVariations = async (
     // Create placeholders IMMEDIATELY for optimistic UI
     const placeholderImages: PlacedImage[] = Array.from(
       { length: variationCount },
-      (_, index) => makePlaceholder({}, index)
+      (_, index) => makePlaceholder({}, index),
     );
 
     setImages((prev) => [...prev, ...placeholderImages]);
 
     // Stage 1: Apply pixelated overlay to reference image during analysis
-    const processId = `variation-${timestamp}-process`;
+    applyPixelatedOverlayToReferenceImage({
+      pixelatedSrc,
+      selectedImage,
+      setImages,
+    });
 
-    // Update the reference image to show pixelated overlay
-    setImages((prev) =>
-      prev.map((img) =>
-        img.id === selectedImage.id ? { ...img, pixelatedSrc } : img
-      )
-    );
-
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-
-      newMap.set(processId, {
-        imageUrl: signedImageUrl,
-        isVariation: true,
-        prompt: "",
-        status: VARIATION_STATUS.ANALYZING,
-      });
-
-      return newMap;
+    const processId = setAnalyzingStatus({
+      signedImageUrl,
+      setActiveGenerations,
+      timestamp,
     });
 
     // Stage 2: Select random directors
@@ -206,15 +176,11 @@ export const handleDirectorImageVariations = async (
     const { refinedPrompts } = await generateDirectorVariations(
       signedImageUrl,
       selectedDirectors,
-      variationPrompt
+      variationPrompt,
     );
 
-    // Remove analyzing status and clear pixelated overlay from reference image
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(processId);
-      return newMap;
-    });
+    // Remove analyzing status
+    removeAnalyzingStatus(processId, setActiveGenerations);
 
     // Stage 4: Update existing placeholders with director metadata
     setImages((prev) =>
@@ -233,7 +199,7 @@ export const handleDirectorImageVariations = async (
           }
         }
         return img;
-      })
+      }),
     );
 
     // Stage 5: Set up active generations for Seedream/Nano Banana

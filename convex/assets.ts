@@ -1,6 +1,6 @@
 /**
  * Convex asset management functions.
- * 
+ *
  * Handles CRUD operations for assets (images and videos) stored in Convex,
  * including storage quota tracking and user authorization.
  */
@@ -10,18 +10,20 @@ import { mutation, query } from "./_generated/server";
 
 /**
  * Creates an asset record after file upload to storage.
- * 
+ *
  * @param storageId - Convex storage ID of the uploaded file (full-size)
  * @param thumbnailStorageId - Optional Convex storage ID for thumbnail
  * @param type - Type of asset (image or video)
  * @param sizeBytes - Size of the file in bytes
  * @param mimeType - MIME type of the file
  * @param directorName - Optional director name for AI-generated director-style variations
+ * @param cameraAngle - Optional camera angle directive for AI-generated camera angle variations
  * @param metadata - Optional metadata (dimensions, generation params, etc.)
  * @returns Asset ID
  */
 export const uploadAsset = mutation({
   args: {
+    cameraAngle: v.optional(v.string()),
     directorName: v.optional(v.string()),
     duration: v.optional(v.number()),
     height: v.optional(v.number()),
@@ -47,7 +49,10 @@ export const uploadAsset = mutation({
       throw new Error("Invalid file size");
     }
 
-    if (!args.mimeType.startsWith("image/") && !args.mimeType.startsWith("video/")) {
+    if (
+      !args.mimeType.startsWith("image/") &&
+      !args.mimeType.startsWith("video/")
+    ) {
       throw new Error("Invalid MIME type");
     }
 
@@ -69,6 +74,7 @@ export const uploadAsset = mutation({
 
     // Create asset record
     const assetId = await ctx.db.insert("assets", {
+      cameraAngle: args.cameraAngle,
       createdAt: Date.now(),
       directorName: args.directorName,
       duration: args.duration,
@@ -102,7 +108,7 @@ export const uploadAsset = mutation({
 
 /**
  * Deletes an asset from database and storage, updates user quota.
- * 
+ *
  * @param assetId - ID of the asset to delete
  */
 export const deleteAsset = mutation({
@@ -151,7 +157,7 @@ export const deleteAsset = mutation({
 
 /**
  * Gets a single asset by ID with ownership verification.
- * 
+ *
  * @param assetId - ID of the asset to retrieve
  * @returns Asset record
  */
@@ -183,7 +189,7 @@ export const getAsset = query({
 
 /**
  * Lists all assets for the authenticated user with pagination.
- * 
+ *
  * @param limit - Maximum number of assets to return (default: 100)
  * @param type - Optional filter by asset type
  * @returns Array of asset records
@@ -204,7 +210,7 @@ export const listAssets = query({
 
     // Query with optional type filter
     let query;
-    
+
     if (args.type) {
       const assetType = args.type; // TypeScript narrowing
       query = ctx.db

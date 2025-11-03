@@ -1,11 +1,11 @@
 /**
  * Convex Database Schema
- * 
+ *
  * Defines the database tables for Iskra (spark-videos):
  * - users: User accounts with tiers and storage quotas
  * - assets: Images and videos uploaded by users
  * - projects: Canvas workspaces with saved state
- * 
+ *
  * @remarks
  * All tables use userId indexing for efficient per-user queries.
  * Storage quotas are tracked in bytes and enforced before uploads.
@@ -20,10 +20,10 @@ import { v } from "convex/values";
 export default defineSchema({
   /**
    * Users table
-   * 
+   *
    * Stores user account information, tier status, and storage usage.
    * One record per authenticated user (linked to Clerk userId).
-   * 
+   *
    * @property userId - Clerk user ID (unique, indexed)
    * @property email - User's email address
    * @property tier - Subscription tier ("free" | "paid")
@@ -38,15 +38,14 @@ export default defineSchema({
     tier: v.union(v.literal("free"), v.literal("paid")),
     updatedAt: v.number(),
     userId: v.string(),
-  })
-    .index("by_userId", ["userId"]),
+  }).index("by_userId", ["userId"]),
 
   /**
    * Assets table
-   * 
+   *
    * Stores metadata for all uploaded images and videos.
    * Actual files are stored in Convex file storage.
-   * 
+   *
    * @property userId - Owner's Clerk user ID (indexed)
    * @property type - Asset type ("image" | "video")
    * @property storageId - Convex file storage ID (full-size, for FAL API)
@@ -56,11 +55,13 @@ export default defineSchema({
    * @property height - Asset height in pixels
    * @property duration - Video duration in seconds (nullable, video only)
    * @property directorName - Director name for AI-generated director-style variations (nullable)
+   * @property cameraAngle - Camera angle directive for AI-generated camera angle variations (nullable)
    * @property mimeType - MIME type (e.g., "image/png", "video/mp4")
    * @property sizeBytes - File size in bytes
    * @property createdAt - Upload timestamp
    */
   assets: defineTable({
+    cameraAngle: v.optional(v.string()),
     createdAt: v.number(),
     directorName: v.optional(v.string()),
     duration: v.optional(v.number()),
@@ -80,10 +81,10 @@ export default defineSchema({
 
   /**
    * Projects table
-   * 
+   *
    * Stores canvas workspace state for each user's project.
    * Canvas state includes all placed images, videos, viewport position, etc.
-   * 
+   *
    * @property userId - Owner's Clerk user ID (indexed)
    * @property name - Project display name
    * @property canvasState - Complete canvas state object (images, videos, viewport, selections)
@@ -99,7 +100,9 @@ export default defineSchema({
         v.object({
           assetId: v.optional(v.string()),
           assetSyncedAt: v.optional(v.number()),
-          assetType: v.optional(v.union(v.literal("image"), v.literal("video"))),
+          assetType: v.optional(
+            v.union(v.literal("image"), v.literal("video")),
+          ),
           currentTime: v.optional(v.number()),
           duration: v.optional(v.number()),
           height: v.optional(v.number()),
@@ -116,12 +119,12 @@ export default defineSchema({
             v.literal("image"),
             v.literal("video"),
             v.literal("text"),
-            v.literal("shape")
+            v.literal("shape"),
           ),
           volume: v.optional(v.number()),
           width: v.optional(v.number()),
           zIndex: v.number(),
-        })
+        }),
       ),
       lastModified: v.number(),
       viewport: v.optional(
@@ -129,7 +132,7 @@ export default defineSchema({
           scale: v.number(),
           x: v.number(),
           y: v.number(),
-        })
+        }),
       ),
     }),
     createdAt: v.number(),
