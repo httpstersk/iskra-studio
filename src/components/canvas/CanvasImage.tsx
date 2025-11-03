@@ -75,7 +75,7 @@ const useCanvasImageSource = (
   src: string,
   thumbnailSrc: string | undefined,
   isGenerated: boolean,
-  displayAsThumbnail: boolean
+  displayAsThumbnail: boolean,
 ) => {
   // When displayAsThumbnail is true, ONLY load thumbnail, never load src
   // This prevents loading full-size images when we only want thumbnails
@@ -89,11 +89,11 @@ const useCanvasImageSource = (
 
   // Load full-size image (only if shouldLoadFullSize is true)
   const [streamingImg] = useStreamingImage(
-    isGenerated && shouldLoadFullSize ? effectiveSrc : ""
+    isGenerated && shouldLoadFullSize ? effectiveSrc : "",
   );
   const [cachedImg] = useImageCache(
     !isGenerated && shouldLoadFullSize ? effectiveSrc : "",
-    CORS_MODE
+    CORS_MODE,
   );
 
   // Full-size image (once loaded, switch from thumbnail)
@@ -122,7 +122,7 @@ const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
 
   const [loadedImg] = useImageCache(
     pixelatedSrc && !cachedImage ? pixelatedSrc : "",
-    CORS_MODE
+    CORS_MODE,
   );
 
   if (!pixelatedSrc) return undefined;
@@ -200,7 +200,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     image.src,
     image.thumbnailSrc,
     !!image.isGenerated,
-    !!image.displayAsThumbnail
+    !!image.displayAsThumbnail,
   );
 
   // Get pixelated overlay if available
@@ -255,7 +255,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       onChange,
       setImages,
       throttleFrame,
-    }
+    },
   );
 
   // Handle interaction states
@@ -281,7 +281,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       handleDragEndInternal();
       onDragEnd();
     },
-    [handleDragEndInternal, onDragEnd]
+    [handleDragEndInternal, onDragEnd],
   );
 
   // Handle double-click to toggle variation mode
@@ -292,7 +292,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
         onDoubleClick(image.id);
       }
     },
-    [onDoubleClick, image.id]
+    [onDoubleClick, image.id],
   );
 
   // If pixelated overlay exists and hasn't fully transitioned, render both layers
@@ -451,7 +451,7 @@ CanvasImageComponent.displayName = "CanvasImage";
  */
 const arePropsEqual = (
   prevProps: CanvasImageProps,
-  nextProps: CanvasImageProps
+  nextProps: CanvasImageProps,
 ): boolean => {
   // Check primitive props
   if (

@@ -90,7 +90,7 @@ export interface FiboVariationResult<T = string> {
  * ```
  */
 export async function generateFiboVariations<T = string>(
-  config: FiboVariationConfig
+  config: FiboVariationConfig,
 ): Promise<FiboVariationResult<T>> {
   const {
     aspectRatio = FIBO_GENERATION.DEFAULT_ASPECT_RATIO,

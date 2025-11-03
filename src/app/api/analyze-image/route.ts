@@ -19,7 +19,7 @@ const analyzeImageRequestSchema = z.object({
       (value) => value.startsWith("https://") || value.startsWith("http://"),
       {
         message: "Image URL must use http or https",
-      }
+      },
     ),
 });
 
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     if (!parseResult.success) {
       return NextResponse.json(
         { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     if (!imageUrl) {
       return NextResponse.json(
         { error: "Image URL is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
         error: "Failed to analyze image",
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
