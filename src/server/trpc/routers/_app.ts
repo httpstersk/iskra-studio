@@ -1,3 +1,4 @@
+import { FIBO_ENDPOINTS } from "@/constants/fibo";
 import {
   resolveFalClient,
   standardRateLimiter,
@@ -97,9 +98,11 @@ function extractResultData<T extends object>(input: unknown): T | undefined {
   if (typeof input !== "object" || input === null) return undefined;
   const record = input as Record<string, unknown>;
   const data = record["data"];
+
   if (typeof data === "object" && data !== null) {
     return data as T;
   }
+
   return input as T;
 }
 
@@ -109,6 +112,7 @@ function extractResultData<T extends object>(input: unknown): T | undefined {
  */
 const RE_WHITESPACE = /\s+/g;
 const SINGLE_SPACE = " ";
+
 function toSingleLinePrompt(input: string): string {
   return input.replace(RE_WHITESPACE, SINGLE_SPACE).trim();
 }
@@ -671,9 +675,6 @@ export const appRouter = router({
   generateFiboImageVariation: publicProcedure
     .input(
       z.object({
-        imageUrl: z.string().url(),
-        structuredPrompt: z.any(), // FIBO structured JSON
-        directorPrompt: z.string().optional(), // Text prompt for director style
         aspectRatio: z
           .enum([
             "1:1",
@@ -687,11 +688,14 @@ export const appRouter = router({
             "16:9",
           ])
           .optional()
-          .default("1:1"),
+          .default("16:9"),
+        directorPrompt: z.string().optional(), // Text prompt for director style
+        guidanceScale: z.number().optional().default(5),
+        imageUrl: z.string().url(),
+        lastEventId: z.string().optional(),
         seed: z.number().optional().default(666),
         stepsNum: z.number().optional().default(50),
-        guidanceScale: z.number().optional().default(5),
-        lastEventId: z.string().optional(),
+        structuredPrompt: z.any(), // FIBO structured JSON
       })
     )
     .subscription(async function* ({ input, signal, ctx }) {
@@ -701,15 +705,15 @@ export const appRouter = router({
         const generationId = `fibo_gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
         // Subscribe to FIBO generate endpoint with both structured prompt and text prompt
-        const result = await falClient.subscribe("bria/fibo/generate", {
+        const result = await falClient.subscribe(FIBO_ENDPOINTS.GENERATE, {
           input: {
-            structured_prompt: input.structuredPrompt,
-            prompt: input.directorPrompt || "", // Text prompt for refinement
-            image_url: input.imageUrl,
-            seed: input.seed,
-            steps_num: input.stepsNum,
             aspect_ratio: input.aspectRatio,
             guidance_scale: input.guidanceScale,
+            image_url: input.imageUrl,
+            prompt: input.directorPrompt || "", // Text prompt for refinement
+            seed: input.seed,
+            steps_num: input.stepsNum,
+            structured_prompt: input.structuredPrompt,
           },
           pollInterval: 1000,
           logs: true,
