@@ -76,7 +76,7 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
             ? resolve(blob)
             : reject(new StorageError("Failed to create blob")),
         "image/png",
-        0.95,
+        0.95
       );
     });
 
@@ -87,7 +87,7 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
 
     serviceLogger.error("Image to blob conversion failed", error as Error);
     throw new StorageError(
-      error instanceof Error ? error.message : "Unknown conversion error",
+      error instanceof Error ? error.message : "Unknown conversion error"
     );
   }
 }
@@ -100,8 +100,9 @@ export async function uploadToConvex(blob: Blob): Promise<string> {
     formData.append("file", blob, "image.png");
 
     const response = await fetch("/api/convex/upload", {
-      method: "POST",
       body: formData,
+      credentials: "include",
+      method: "POST",
     });
 
     if (!response.ok) {
@@ -115,7 +116,7 @@ export async function uploadToConvex(blob: Blob): Promise<string> {
 
       throw new StorageError(
         errorData?.message || `Upload failed with status ${response.status}`,
-        { statusCode: response.status },
+        { statusCode: response.status }
       );
     }
 
@@ -128,7 +129,7 @@ export async function uploadToConvex(blob: Blob): Promise<string> {
 
     serviceLogger.error("Upload to Convex failed", error as Error);
     throw new StorageError(
-      error instanceof Error ? error.message : "Unknown upload error",
+      error instanceof Error ? error.message : "Unknown upload error"
     );
   }
 }
@@ -166,13 +167,13 @@ export function toSignedUrl(imageUrl: string): string {
 
   if (trimmedUrl.startsWith("data:")) {
     throw new ValidationError(
-      "Data URLs are not supported for server-side processing",
+      "Data URLs are not supported for server-side processing"
     );
   }
 
   if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
     throw new ValidationError(
-      "Invalid image URL format: must be a full URL or proxy URL",
+      "Invalid image URL format: must be a full URL or proxy URL"
     );
   }
 

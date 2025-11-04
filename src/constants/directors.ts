@@ -7,7 +7,6 @@
 
 export const DIRECTORS = [
   "Agnès Varda",
-  "Akira Kurosawa",
   "Alfred Hitchcock",
   "Andrei Tarkovsky",
   "Atsuko Hirayanagi",
@@ -62,7 +61,7 @@ export type Director = (typeof DIRECTORS)[number];
  * @example
  * ```typescript
  * const directors = selectRandomDirectors(4);
- * // ["Stanley Kubrick", "Akira Kurosawa", "Wes Anderson", "Denis Villeneuve"]
+ * // ["Stanley Kubrick", "Wes Anderson", "Denis Villeneuve"]
  * ```
  */
 export function selectRandomDirectors(count: number): string[] {

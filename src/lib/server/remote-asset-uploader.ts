@@ -69,11 +69,14 @@ export function resolveSourceUrl(sourceUrl: string, origin: string): string {
 
 async function downloadRemoteAsset(
   url: string,
-  assetType: GeneratedAssetUploadPayload["assetType"],
+  assetType: GeneratedAssetUploadPayload["assetType"]
 ): Promise<DownloadedAsset> {
   const response = await fetch(url);
+
   if (!response.ok) {
-    throw new Error(`Failed to download asset: ${response.statusText}`);
+    throw new Error(
+      `Failed to download asset from ${url}: ${response.status} ${response.statusText}`
+    );
   }
 
   const fallbackType = assetType === "image" ? "image/png" : "video/mp4";
@@ -87,7 +90,7 @@ async function downloadRemoteAsset(
 }
 
 async function generateThumbnailBlob(
-  buffer: Buffer,
+  buffer: Buffer
 ): Promise<Blob | undefined> {
   try {
     const thumbnailBuffer = await sharp(buffer)
@@ -100,7 +103,6 @@ async function generateThumbnailBlob(
 
     return new Blob([new Uint8Array(thumbnailBuffer)], { type: "image/webp" });
   } catch (error) {
-    console.warn("[Remote Asset Upload] Thumbnail generation failed:", error);
     return undefined;
   }
 }
