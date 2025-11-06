@@ -5,12 +5,12 @@
  * All FIBO-related constants should be defined here.
  */
 
+import { generateFiboSeed } from "@/utils/fibo-seed-generator";
+
 /**
  * Default FIBO analysis parameters
  */
 export const FIBO_ANALYSIS = {
-  /** Default seed for reproducibility */
-  DEFAULT_SEED: 666,
   /** Request timeout in milliseconds */
   DEFAULT_TIMEOUT: 30000,
   /** Extended timeout for batch operations */
@@ -25,8 +25,6 @@ export const FIBO_GENERATION = {
   DEFAULT_ASPECT_RATIO: "16:9" as const,
   /** Default guidance scale */
   DEFAULT_GUIDANCE_SCALE: 5,
-  /** Default seed for reproducibility */
-  DEFAULT_SEED: 666,
   /** Default number of steps */
   DEFAULT_STEPS: 50,
 } as const;
@@ -40,3 +38,13 @@ export const FIBO_ENDPOINTS = {
   /** FIBO image generation endpoint */
   GENERATE: "bria/fibo/generate",
 } as const;
+
+/**
+ * Generates a random seed for FIBO operations.
+ * Wrapper function for convenience when importing from constants.
+ *
+ * @returns A random seed number between 1 and 9,999
+ */
+export function getFiboSeed(): number {
+  return generateFiboSeed();
+}

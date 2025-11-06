@@ -1,4 +1,4 @@
-import { FIBO_ENDPOINTS } from "@/constants/fibo";
+import { FIBO_ENDPOINTS, getFiboSeed } from "@/constants/fibo";
 import {
   resolveFalClient,
   standardRateLimiter,
@@ -693,7 +693,7 @@ export const appRouter = router({
         guidanceScale: z.number().optional().default(5),
         imageUrl: z.string().url(),
         lastEventId: z.string().optional(),
-        seed: z.number().optional().default(666),
+        seed: z.number().optional(),
         stepsNum: z.number().optional().default(50),
         structuredPrompt: z.any(), // FIBO structured JSON
       })
@@ -711,7 +711,7 @@ export const appRouter = router({
             guidance_scale: input.guidanceScale,
             image_url: input.imageUrl,
             prompt: input.directorPrompt || "", // Text prompt for refinement
-            seed: input.seed,
+            seed: input.seed ?? getFiboSeed(),
             steps_num: input.stepsNum,
             structured_prompt: input.structuredPrompt,
           },
@@ -755,7 +755,7 @@ export const appRouter = router({
           type: "complete",
           imageUrl: fullSizeUrl,
           thumbnailUrl: thumbnailDataUrl,
-          seed: input.seed ?? 666,
+          seed: input.seed ?? getFiboSeed(),
         });
       } catch (error) {
         yield tracked(`error_${Date.now()}`, {
