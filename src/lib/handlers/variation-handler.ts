@@ -10,6 +10,7 @@ import { showError, showErrorFromException } from "@/lib/toast";
 import { logger } from "@/shared/logging/logger";
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
+import { selectRandomLightingVariations } from "@/utils/lighting-variation-utils";
 import {
   applyPixelatedOverlayToReferenceImage,
   createPlaceholderFactory,
@@ -28,6 +29,17 @@ interface CameraAngleVariationsResponse {
   refinedPrompts: Array<{
     cameraAngle: string;
     refinedStructuredPrompt: any; // FIBO JSON refined with camera angle
+  }>;
+  fiboAnalysis: any;
+}
+
+/**
+ * Response from lighting variations API
+ */
+interface LightingVariationsResponse {
+  refinedPrompts: Array<{
+    lightingScenario: string;
+    refinedStructuredPrompt: any; // FIBO JSON refined with lighting
   }>;
   fiboAnalysis: any;
 }
@@ -64,13 +76,44 @@ async function generateCameraAngleVariations(
 }
 
 /**
+ * Generates lighting variations (FIBO analysis + lighting refinement on server)
+ */
+async function generateLightingVariations(
+  imageUrl: string,
+  lightingScenarios: string[],
+  userContext?: string,
+): Promise<LightingVariationsResponse> {
+  const response = await fetch("/api/generate-lighting-variations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      imageUrl,
+      lightingScenarios,
+      userContext,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new Error(
+      error?.error ||
+        `Lighting variations generation failed with status ${response.status}`,
+    );
+  }
+
+  return response.json();
+}
+
+/**
  * Dependencies for variation generation handler
  */
 interface VariationHandlerDeps {
   /** Model to use for image generation */
   imageModel?: "seedream" | "nano-banana";
-  /** Type of image variation (camera-angles or director) */
-  imageVariationType?: "camera-angles" | "director";
+  /** Type of image variation (camera-angles, director, or lighting) */
+  imageVariationType?: "camera-angles" | "director" | "lighting";
   /** Array of all placed images */
   images: PlacedImage[];
   /** IDs of selected images */
@@ -180,6 +223,134 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       variationCount: variationCount as 4 | 8 | 12,
       variationPrompt,
     });
+  }
+
+  // IMAGE MODE with lighting: Generate lighting variations using FIBO analysis
+  if (variationMode === "image" && imageVariationType === "lighting") {
+    const handlerLogger = logger.child({ handler: "lighting-variation" });
+
+    // Validate selection early
+    const selectedImage = validateSingleImageSelection(images, selectedIds);
+    if (!selectedImage) {
+      return;
+    }
+
+    setIsGenerating(true);
+    const timestamp = Date.now();
+    let placeholderImages: PlacedImage[] = [];
+
+    try {
+      // OPTIMIZATION: Perform early preparation BEFORE async operations
+      const {
+        imageSizeDimensions,
+        pixelatedSrc,
+        positionIndices,
+        snappedSource,
+      } = await performEarlyPreparation(selectedImage, variationCount);
+
+      // Stage 0: Upload image to Convex
+      const { signedImageUrl } = await performImageUploadWorkflow({
+        selectedImage,
+        setActiveGenerations,
+        timestamp,
+      });
+
+      // Randomly select lighting scenarios (no duplicates via Fisher-Yates)
+      const variationsToGenerate =
+        selectRandomLightingVariations(variationCount);
+
+      // Create factory function with shared configuration for all placeholders
+      const makePlaceholder = createPlaceholderFactory({
+        imageSizeDimensions,
+        pixelatedSrc,
+        positionIndices,
+        selectedImage,
+        snappedSource,
+        timestamp,
+      });
+
+      // Create placeholders IMMEDIATELY with lightingScenario metadata
+      placeholderImages = variationsToGenerate.map(
+        (lightingScenario, index) =>
+          makePlaceholder({ lightingScenario }, index),
+      );
+
+      setImages((prev) => [...prev, ...placeholderImages]);
+
+      // Stage 1: Apply pixelated overlay during analysis
+      applyPixelatedOverlayToReferenceImage({
+        pixelatedSrc,
+        selectedImage,
+        setImages,
+      });
+
+      const processId = setAnalyzingStatus({
+        signedImageUrl,
+        setActiveGenerations,
+        timestamp,
+      });
+
+      // Stage 2: Call API to get FIBO analysis + refined lighting prompts
+      handlerLogger.info("Calling lighting variations API");
+      const { refinedPrompts } = await generateLightingVariations(
+        signedImageUrl,
+        variationsToGenerate,
+        variationPrompt,
+      );
+
+      // Remove analyzing status
+      removeAnalyzingStatus(processId, setActiveGenerations);
+
+      // Stage 3: Set up active generations for Seedream/Nano Banana
+      // Convert refined FIBO structured JSON to text prompts for Seedream/Nano Banana
+      setActiveGenerations((prev) => {
+        const newMap = new Map(prev);
+
+        refinedPrompts.forEach((item, index) => {
+          const placeholderId = `variation-${timestamp}-${index}`;
+
+          // Convert refined FIBO JSON (with lighting baked in) to text prompt
+          const finalPrompt = fiboStructuredToText(
+            item.refinedStructuredPrompt,
+          );
+
+          newMap.set(placeholderId, {
+            imageSize: imageSizeDimensions,
+            imageUrl: signedImageUrl,
+            isVariation: true,
+            model: imageModel,
+            prompt: finalPrompt,
+            status: VARIATION_STATUS.GENERATING,
+          });
+        });
+
+        return newMap;
+      });
+
+      handlerLogger.info("Lighting variations setup complete", {
+        lightingCount: refinedPrompts.length,
+      });
+
+      setIsGenerating(false);
+    } catch (error) {
+      // Clean up placeholders on error
+      const placeholderIds = placeholderImages.map((img) => img.id);
+      setImages((prev) =>
+        prev.filter((img) => !placeholderIds.includes(img.id)),
+      );
+
+      handlerLogger.error("Lighting variation handler failed", error as Error);
+
+      showErrorFromException(
+        "Generation failed",
+        error,
+        "Failed to generate lighting variations",
+      );
+
+      setIsGenerating(false);
+    }
+
+    return;
   }
 
   // IMAGE MODE with camera-angles: Generate camera angle variations using FIBO analysis

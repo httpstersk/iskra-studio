@@ -13,6 +13,7 @@ import {
   PlayIcon,
   CctvIcon,
   PaintBucketIcon,
+  Lightbulb,
 } from "lucide-react";
 
 /**
@@ -21,8 +22,10 @@ import {
 interface ModeIndicatorProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   hasSelection: boolean;
-  imageVariationType?: "camera-angles" | "director";
-  setImageVariationType?: (type: "camera-angles" | "director") => void;
+  imageVariationType?: "camera-angles" | "director" | "lighting";
+  setImageVariationType?: (
+    type: "camera-angles" | "director" | "lighting",
+  ) => void;
   variationMode: "image" | "video";
 }
 
@@ -81,13 +84,15 @@ export function ModeIndicator({
         </SegmentedControl.Item>
       </SegmentedControl.Root>
 
-      {/* Camera Angles vs Director switcher - only show in Image mode */}
+      {/* Camera Angles vs Director vs Lighting switcher - only show in Image mode */}
       {variationMode === "image" && setImageVariationType && (
         <SegmentedControl.Root
           size="1"
           value={imageVariationType}
           onValueChange={(value) =>
-            setImageVariationType(value as "camera-angles" | "director")
+            setImageVariationType(
+              value as "camera-angles" | "director" | "lighting",
+            )
           }
         >
           <SegmentedControl.Item value="camera-angles">
@@ -100,6 +105,12 @@ export function ModeIndicator({
             <div className="flex flex-row items-center gap-1.5">
               <PaintBucketIcon className="size-3.5" />
               <span className="text-xs whitespace-nowrap">Styles</span>
+            </div>
+          </SegmentedControl.Item>
+          <SegmentedControl.Item value="lighting">
+            <div className="flex flex-row items-center gap-1.5">
+              <Lightbulb className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Lighting</span>
             </div>
           </SegmentedControl.Item>
         </SegmentedControl.Root>

@@ -56,6 +56,7 @@ export default defineSchema({
    * @property duration - Video duration in seconds (nullable, video only)
    * @property directorName - Director name for AI-generated director-style variations (nullable)
    * @property cameraAngle - Camera angle directive for AI-generated camera angle variations (nullable)
+   * @property lightingScenario - Lighting scenario for AI-generated lighting variations (nullable)
    * @property mimeType - MIME type (e.g., "image/png", "video/mp4")
    * @property sizeBytes - File size in bytes
    * @property createdAt - Upload timestamp
@@ -66,6 +67,7 @@ export default defineSchema({
     directorName: v.optional(v.string()),
     duration: v.optional(v.number()),
     height: v.optional(v.number()),
+    lightingScenario: v.optional(v.string()),
     mimeType: v.string(),
     originalUrl: v.optional(v.string()),
     sizeBytes: v.number(),

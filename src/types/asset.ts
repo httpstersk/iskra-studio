@@ -60,6 +60,9 @@ export interface Asset {
   /** Timestamp when the asset was created (ms since epoch) */
   createdAt: number;
 
+  /** Lighting scenario for AI-generated lighting variations */
+  lightingScenario?: string;
+
   /** Director name for AI-generated director-style variations */
   directorName?: string;
 

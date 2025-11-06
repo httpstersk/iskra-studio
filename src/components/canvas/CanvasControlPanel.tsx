@@ -29,14 +29,16 @@ interface CanvasControlPanelProps {
   handleRun: () => void;
   handleVariationModeChange: (mode: "image" | "video") => void;
   imageModel: "seedream" | "nano-banana";
-  imageVariationType?: "camera-angles" | "director";
+  imageVariationType?: "camera-angles" | "director" | "lighting";
   images: PlacedImage[];
   isGenerating: boolean;
   redo: () => void;
   selectedIds: string[];
   setGenerationSettings: (settings: GenerationSettings) => void;
   setImageModel: (value: "seedream" | "nano-banana") => void;
-  setImageVariationType?: (type: "camera-angles" | "director") => void;
+  setImageVariationType?: (
+    type: "camera-angles" | "director" | "lighting",
+  ) => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   setVideoDuration: (value: "4" | "8" | "12") => void;
   setVideoModel: (

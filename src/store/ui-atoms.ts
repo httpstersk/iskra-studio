@@ -44,10 +44,11 @@ export const generationCountAtom = atom<number>(4);
  * Image variation type atom - controls type of image variations
  * "camera-angles": Random camera angle variations (default)
  * "director": AI-generated variations with director visual signatures via FIBO
+ * "lighting": Random lighting scenario variations via FIBO
  */
-export const imageVariationTypeAtom = atom<"camera-angles" | "director">(
-  "camera-angles",
-);
+export const imageVariationTypeAtom = atom<
+  "camera-angles" | "director" | "lighting"
+>("camera-angles");
 
 /**
  * Image model atom - controls which model to use for image variations

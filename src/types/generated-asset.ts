@@ -5,6 +5,8 @@ export interface GeneratedAssetMetadata {
   directorName?: string;
   /** Video duration in seconds */
   duration?: number;
+  /** Lighting scenario for AI-generated lighting variations */
+  lightingScenario?: string;
   /** Image/video height in pixels */
   height?: number;
   /** AI model used for generation */

@@ -171,19 +171,22 @@ export function useStreamingHandlers(
       let assetId: string | undefined;
       let assetSyncedAt: number | undefined;
 
-      // Get directorName and cameraAngle from the latest image state
+      // Get directorName, cameraAngle, and lightingScenario from the latest image state
       // Use a synchronous state read to ensure we have the latest value
       let directorName: string | undefined;
       let cameraAngle: string | undefined;
+      let lightingScenario: string | undefined;
 
       setImages((prevImages) => {
         const currentImage = prevImages.find((img) => img.id === id);
         directorName = currentImage?.directorName;
         cameraAngle = currentImage?.cameraAngle;
+        lightingScenario = currentImage?.lightingScenario;
         console.log("[Upload] Found image metadata:", {
           id,
           directorName,
           cameraAngle,
+          lightingScenario,
           hasImage: !!currentImage,
         });
         return prevImages; // No state change, just reading
@@ -201,6 +204,7 @@ export function useStreamingHandlers(
               cameraAngle,
               directorName,
               height: naturalHeight,
+              lightingScenario,
               prompt: generation?.prompt,
               width: naturalWidth,
             },
@@ -229,6 +233,7 @@ export function useStreamingHandlers(
                 assetSyncedAt,
                 cameraAngle, // Preserve from earlier lookup
                 directorName, // Preserve from earlier lookup
+                lightingScenario, // Preserve from earlier lookup
                 displayAsThumbnail: shouldDisplayThumbnail,
                 fullSizeSrc: convexUrl,
                 isLoading: false,

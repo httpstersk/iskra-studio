@@ -18,6 +18,7 @@ import { mutation, query } from "./_generated/server";
  * @param mimeType - MIME type of the file
  * @param directorName - Optional director name for AI-generated director-style variations
  * @param cameraAngle - Optional camera angle directive for AI-generated camera angle variations
+ * @param lightingScenario - Optional lighting scenario for AI-generated lighting variations
  * @param metadata - Optional metadata (dimensions, generation params, etc.)
  * @returns Asset ID
  */
@@ -26,6 +27,7 @@ export const uploadAsset = mutation({
     cameraAngle: v.optional(v.string()),
     directorName: v.optional(v.string()),
     duration: v.optional(v.number()),
+    lightingScenario: v.optional(v.string()),
     height: v.optional(v.number()),
     mimeType: v.string(),
     originalUrl: v.optional(v.string()),
@@ -72,11 +74,16 @@ export const uploadAsset = mutation({
       throw new Error("Director name too long (max 100 characters)");
     }
 
+    if (args.lightingScenario && args.lightingScenario.length > 500) {
+      throw new Error("Lighting scenario too long (max 500 characters)");
+    }
+
     // Create asset record
     const assetId = await ctx.db.insert("assets", {
       cameraAngle: args.cameraAngle,
       createdAt: Date.now(),
       directorName: args.directorName,
+      lightingScenario: args.lightingScenario,
       duration: args.duration,
       height: args.height,
       mimeType: args.mimeType,

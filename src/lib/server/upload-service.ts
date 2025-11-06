@@ -33,6 +33,9 @@ export interface UploadMetadata {
   /** Duration in seconds (video only) */
   duration?: number;
 
+  /** Lighting scenario for AI-generated lighting variations */
+  lightingScenario?: string;
+
   /** Height in pixels */
   height?: number;
 
@@ -190,6 +193,7 @@ async function createAssetRecord(
     directorName: metadata.directorName || undefined,
     duration: metadata.duration || undefined,
     height: metadata.height || undefined,
+    lightingScenario: metadata.lightingScenario || undefined,
     mimeType,
     originalUrl: undefined,
     sizeBytes: file.size,

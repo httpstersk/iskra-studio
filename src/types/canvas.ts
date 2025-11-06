@@ -4,6 +4,7 @@ export interface PlacedImage {
   cameraAngle?: string;
   directorName?: string;
   displayAsThumbnail?: boolean;
+  lightingScenario?: string;
   fullSizeSrc?: string;
   hasContentError?: boolean;
   height: number;
