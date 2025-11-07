@@ -11,6 +11,7 @@ import { SignInPromptDialog } from "@/components/auth/sign-in-prompt-dialog";
 import { CanvasContextMenu } from "@/components/canvas/CanvasContextMenu";
 import { CanvasControlPanel } from "@/components/canvas/CanvasControlPanel";
 import { CanvasDialogs } from "@/components/canvas/CanvasDialogs";
+import { CanvasLoadingOverlay } from "@/components/canvas/CanvasLoadingOverlay";
 import { CanvasStageRenderer } from "@/components/canvas/CanvasStageRenderer";
 import { DimensionDisplayWrapper } from "@/components/canvas/DimensionDisplayWrapper";
 import { MiniMap } from "@/components/canvas/MiniMap";
@@ -253,6 +254,8 @@ export function CanvasPageClient() {
         open={showSignInPrompt}
         onOpenChange={setShowSignInPrompt}
       />
+
+      {isAuthenticated && <CanvasLoadingOverlay isLoading={projects.isLoading} />}
 
       <StreamingGenerations
         activeGenerations={generationState.activeGenerations}

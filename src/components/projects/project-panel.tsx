@@ -7,6 +7,7 @@
 
 "use client";
 
+import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
 import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
@@ -172,6 +173,7 @@ export function ProjectPanel({
               {projectNumbers.length > 0 &&
                 projectNumbers.map(({ id, label }) => {
                   const isSelected = currentProjectId === id;
+                  const isLoadingThisProject = isLoading && isSelected;
                   return (
                     <button
                       key={id}
@@ -184,17 +186,22 @@ export function ProjectPanel({
                           ? "border-primary/40 bg-primary/8 shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)]"
                           : "border-border/45 hover:border-border/30 hover:bg-card/90",
                       )}
+                      disabled={isLoadingThisProject}
                     >
-                      <span
-                        className={cn(
-                          "text-sm font-mono transition",
-                          isSelected
-                            ? "text-primary"
-                            : "text-muted-foreground group-hover:text-foreground",
-                        )}
-                      >
-                        {label}
-                      </span>
+                      {isLoadingThisProject ? (
+                        <Loader size={16} className="text-primary" />
+                      ) : (
+                        <span
+                          className={cn(
+                            "text-sm font-mono transition",
+                            isSelected
+                              ? "text-primary"
+                              : "text-muted-foreground group-hover:text-foreground",
+                          )}
+                        >
+                          {label}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
