@@ -89,14 +89,15 @@ export function CanvasControlPanel({
 }: CanvasControlPanelProps) {
   const hasSelection = selectedIds.length > 0;
   return (
-    <div className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:p-0 md:pb-0">
+    <div className="fixed bottom-0 left-0 right-0 md:absolute md:bottom-4 md:left-1/2 md:transform md:-translate-x-1/2 z-20 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:p-0 md:pb-0 flex justify-center">
       <div
         className={cn(
           "bg-card/98 backdrop-blur-2xl rounded-2xl border border-border/50",
           "shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+          "w-full md:w-fit md:max-w-[95vw]",
         )}
       >
-        <div className="flex flex-col gap-3 px-4 md:px-4 py-3 md:py-3 relative justify-between">
+        <div className="flex flex-col gap-3 px-4 md:px-4 py-3 md:py-3 relative justify-between min-w-0">
           {/* Active generations indicator */}
           <GenerationsIndicatorWrapper
             activeGenerations={activeGenerations}
@@ -145,7 +146,7 @@ export function CanvasControlPanel({
               )}
             </div>
 
-            <div className="flex-1" />
+            <div className="flex-1 min-w-0" />
 
             <ControlActions
               generationSettings={generationSettings}
@@ -159,14 +160,16 @@ export function CanvasControlPanel({
           </div>
 
           {/* Prompt input */}
-          <PromptInput
-            generationSettings={generationSettings}
-            handleRun={handleRun}
-            images={images}
-            isGenerating={isGenerating}
-            selectedIds={selectedIds}
-            setGenerationSettings={setGenerationSettings}
-          />
+          <div className="flex items-center gap-1">
+            <PromptInput
+              generationSettings={generationSettings}
+              handleRun={handleRun}
+              images={images}
+              isGenerating={isGenerating}
+              selectedIds={selectedIds}
+              setGenerationSettings={setGenerationSettings}
+            />
+          </div>
         </div>
       </div>
     </div>

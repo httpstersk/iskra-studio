@@ -83,7 +83,7 @@ export const PromptInput = React.memo(function PromptInput({
 
   if (hasSelection) {
     return (
-      <div className="relative">
+      <div className="relative flex-1 min-w-0">
         <Textarea
           className="w-full h-16 resize-none border-none p-4 pr-24"
           onChange={(e) => handleVariationPromptChange(e.target.value)}
@@ -143,7 +143,7 @@ export const PromptInput = React.memo(function PromptInput({
   }
 
   return (
-    <div className="relative">
+    <div className="relative flex-1 min-w-0">
       <Textarea
         className="w-full h-20 resize-none border-none p-4"
         onChange={(e) => handlePromptChange(e.target.value)}
