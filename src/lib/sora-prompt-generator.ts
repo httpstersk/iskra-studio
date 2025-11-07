@@ -49,8 +49,68 @@ function formatBeat(
 }
 
 /**
+ * Truncates prompt to fit within character limit while preserving structure
+ * Progressively shortens beat descriptions until prompt fits
+ */
+function truncatePromptToLimit(beatSections: string[]): string {
+  let prompt = beatSections.join("\n\n");
+  
+  // If already within limit, return as-is
+  if (prompt.length <= PROMPT_CHAR_LIMIT) {
+    return prompt;
+  }
+
+  // Calculate how much we need to reduce per beat
+  const overhead = prompt.length - PROMPT_CHAR_LIMIT;
+  const beatsCount = beatSections.length;
+  const reductionPerBeat = Math.ceil(overhead / beatsCount) + 20; // Extra buffer
+
+  // Parse and shorten each beat section
+  const shortenedSections = beatSections.map((section) => {
+    // Extract components: [timeSegment] — beatType\ndescription transition
+    const lines = section.split("\n");
+    if (lines.length !== 2) return section;
+
+    const header = lines[0]; // [0–1.5s] — OPEN / HOOK
+    const content = lines[1]; // description + transition
+
+    // Find transition (usually after last period or at end)
+    const transitionMatch = content.match(/(Cut:|Transition:)[^.]*.?$/);
+    const transition = transitionMatch ? transitionMatch[0] : "";
+    const description = transitionMatch
+      ? content.slice(0, transitionMatch.index).trim()
+      : content;
+
+    // Calculate target length for description
+    const currentDescLength = description.length;
+    const targetDescLength = Math.max(
+      80,
+      currentDescLength - reductionPerBeat,
+    );
+
+    // Truncate description if needed
+    const shortenedDesc =
+      description.length > targetDescLength
+        ? limitText(description, targetDescLength)
+        : description;
+
+    return `${header}\n${shortenedDesc}${transition ? " " + transition : ""}`;
+  });
+
+  prompt = shortenedSections.join("\n\n");
+
+  // If still too long, more aggressive truncation
+  if (prompt.length > PROMPT_CHAR_LIMIT) {
+    return limitText(prompt, PROMPT_CHAR_LIMIT);
+  }
+
+  return prompt;
+}
+
+/**
  * Expands a single storyline concept into a cinematic Sora prompt
  * Follows professional film prompt format with time-segmented beats and visual cues
+ * Enforces 1000 character limit to prevent API errors
  */
 export function expandStorylineToPrompt(
   options: PromptGenerationOptions,
@@ -67,16 +127,18 @@ export function expandStorylineToPrompt(
     ),
   );
 
-  const fullPrompt = beatSections.join("\n\n");
+  // Truncate to fit within limit
+  const finalPrompt = truncatePromptToLimit(beatSections);
 
-  // Safety check: should never hit this if input follows guidelines
-  if (fullPrompt.length > PROMPT_CHAR_LIMIT) {
+  // Log warning if truncation occurred
+  const originalLength = beatSections.join("\n\n").length;
+  if (originalLength > PROMPT_CHAR_LIMIT) {
     console.warn(
-      `Prompt exceeded ${PROMPT_CHAR_LIMIT} chars: ${fullPrompt.length} chars`,
+      `Prompt truncated from ${originalLength} to ${finalPrompt.length} characters to fit ${PROMPT_CHAR_LIMIT} char limit`,
     );
   }
 
-  return fullPrompt;
+  return finalPrompt;
 }
 
 /**
