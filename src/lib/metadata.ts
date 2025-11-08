@@ -22,13 +22,7 @@ export function generateBaseMetadata(): Metadata {
     },
     description: APP_DESCRIPTION,
     applicationName: APP_NAME,
-    keywords: [
-      "AI image generation",
-      "AI video generation",
-      "canvas editor",
-      "creative tools",
-      "generative AI",
-    ],
+    keywords: ["AI image generation", "AI video generation"],
     authors: [{ name: "Iskra" }],
     creator: "Iskra",
     formatDetection: {

@@ -56,4 +56,5 @@ const nextConfig = {
   },
 };
 
-export default withBotId(nextConfig);
+const isProd = process.env.NODE_ENV === "production";
+export default isProd ? withBotId(nextConfig) : nextConfig;
