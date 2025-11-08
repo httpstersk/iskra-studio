@@ -27,8 +27,6 @@ export const FIBO_GENERATION = {
   DEFAULT_ASPECT_RATIO: "16:9" as const,
   /** Default guidance scale */
   DEFAULT_GUIDANCE_SCALE: 5,
-  /** Default random seed */
-  DEFAULT_SEED: getFiboSeed(),
   /** Default number of steps */
   DEFAULT_STEPS: 50,
 } as const;

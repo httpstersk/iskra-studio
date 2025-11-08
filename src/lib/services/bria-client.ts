@@ -80,12 +80,21 @@ interface BriaAsyncResponse {
 
 /**
  * Status response when polling
+ * Note: Bria API returns uppercase status values
  */
 interface BriaStatusResponse<T> {
+  error?: string;
   request_id: string;
   result?: T;
-  status: "pending" | "processing" | "completed" | "failed";
-  error?: string;
+  status:
+    | "PENDING"
+    | "IN_PROGRESS"
+    | "COMPLETED"
+    | "FAILED"
+    | "pending"
+    | "processing"
+    | "completed"
+    | "failed";
   warning?: string;
 }
 
@@ -110,8 +119,8 @@ export interface BriaImageGenerationResult {
  * Request options for structured prompt generation
  */
 export interface BriaStructuredPromptRequest {
-  /** Image URL to analyze (optional) */
-  images?: string;
+  /** Image URLs to analyze (optional, array of URLs even for single image) */
+  images?: string[];
   /** Text prompt (optional) */
   prompt?: string;
   /** Existing structured prompt to refine (optional) */
@@ -126,8 +135,8 @@ export interface BriaStructuredPromptRequest {
  * Request options for image generation
  */
 export interface BriaImageGenerationRequest {
-  /** Image URL reference (optional) */
-  images?: string;
+  /** Image URLs reference (optional, array of URLs even for single image) */
+  images?: string[];
   /** Text prompt (optional) */
   prompt?: string;
   /** Structured prompt (optional) */
@@ -198,8 +207,27 @@ async function briaRequest<T>(
 
     // Handle error responses
     if (!response.ok) {
-      const errorMessage =
-        data.error || data.message || `HTTP ${response.status}`;
+      let errorMessage = `HTTP ${response.status}`;
+
+      // Try to extract detailed error message
+      if (data.error) {
+        errorMessage =
+          typeof data.error === "string"
+            ? data.error
+            : JSON.stringify(data.error);
+      } else if (data.message) {
+        errorMessage =
+          typeof data.message === "string"
+            ? data.message
+            : JSON.stringify(data.message);
+      } else if (data.detail) {
+        // Bria API may use 'detail' for validation errors
+        errorMessage =
+          typeof data.detail === "string"
+            ? data.detail
+            : JSON.stringify(data.detail);
+      }
+
       throw new BriaApiError(
         `Bria API error: ${errorMessage}`,
         response.status,
@@ -267,8 +295,10 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
 
       const data = (await response.json()) as BriaStatusResponse<T>;
 
-      // Check status
-      if (data.status === "completed") {
+      // Check status (case-insensitive)
+      const status = data.status?.toLowerCase();
+
+      if (status === "completed") {
         if (!data.result) {
           throw new BriaApiError(
             "Bria API completed but returned no result",
@@ -276,6 +306,7 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
             data.request_id
           );
         }
+
         return {
           request_id: data.request_id,
           result: data.result,
@@ -283,9 +314,14 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
         };
       }
 
-      if (data.status === "failed") {
+      if (status === "failed") {
+        const errorDetail = data.error
+          ? typeof data.error === "string"
+            ? data.error
+            : JSON.stringify(data.error)
+          : "Unknown error";
         throw new BriaApiError(
-          `Bria API request failed: ${data.error || "Unknown error"}`,
+          `Bria API request failed: ${errorDetail}`,
           response.status,
           data.request_id
         );
@@ -299,6 +335,8 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
       if (error instanceof BriaApiError) {
         throw error;
       }
+
+      console.warn(`[Bria] Network error on attempt ${attempts}:`, error);
 
       // Handle network errors - retry
       if (attempts >= POLLING_CONFIG.MAX_ATTEMPTS) {
@@ -317,7 +355,9 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
     }
   }
 
-  throw new BriaApiError("Bria API polling timed out");
+  throw new BriaApiError(
+    `Bria API polling timed out after ${POLLING_CONFIG.MAX_ATTEMPTS} attempts (${(POLLING_CONFIG.MAX_ATTEMPTS * POLLING_CONFIG.INTERVAL_MS) / 1000}s)`
+  );
 }
 
 /**
@@ -332,7 +372,7 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
  * ```typescript
  * // From image
  * const result = await generateStructuredPrompt({
- *   images: "https://example.com/image.jpg",
+ *   images: ["https://example.com/image.jpg"],
  *   seed: 42
  * });
  *
@@ -425,7 +465,7 @@ export async function generateStructuredPrompt(
  *
  * // Refine with reference image
  * const result = await generateImage({
- *   images: "https://example.com/reference.jpg",
+ *   images: ["https://example.com/reference.jpg"],
  *   structured_prompt: structuredPrompt,
  *   prompt: "Inspired by this image",
  *   seed: 42

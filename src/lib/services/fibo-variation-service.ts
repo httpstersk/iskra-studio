@@ -8,10 +8,10 @@
  * 3. Return refined structured prompts for downstream image generation
  */
 
-import { FIBO_ANALYSIS, FIBO_GENERATION } from "@/constants/fibo";
+import { FIBO_ANALYSIS, getFiboSeed } from "@/constants/fibo";
 import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
-import { analyzeFiboImageWithRetry } from "@/lib/services/fibo-image-analyzer";
 import { generateStructuredPrompt } from "@/lib/services/bria-client";
+import { analyzeFiboImageWithRetry } from "@/lib/services/fibo-image-analyzer";
 
 /**
  * Configuration for FIBO variation generation
@@ -89,11 +89,8 @@ export async function generateFiboVariations<T = string>(
   config: FiboVariationConfig
 ): Promise<FiboVariationResult<T>> {
   const {
-    aspectRatio = FIBO_GENERATION.DEFAULT_ASPECT_RATIO,
-    guidanceScale = FIBO_GENERATION.DEFAULT_GUIDANCE_SCALE,
     imageUrl,
-    seed = FIBO_GENERATION.DEFAULT_SEED,
-    stepsNum = FIBO_GENERATION.DEFAULT_STEPS,
+    seed = getFiboSeed(),
     timeout = FIBO_ANALYSIS.EXTENDED_TIMEOUT,
     variations,
   } = config;
@@ -105,7 +102,6 @@ export async function generateFiboVariations<T = string>(
     timeout,
   });
 
-  // Step 2: Refine the structured prompt for each variation in parallel
   const refinementPromises = variations.map(async (variationPrompt) => {
     // Call Bria API to refine structured prompt with variation text prompt
     // We pass the original structured_prompt + variation text prompt

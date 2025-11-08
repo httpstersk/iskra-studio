@@ -704,11 +704,12 @@ export const appRouter = router({
         const generationId = `fibo_gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
         // Call Bria API to generate image from structured prompt
+        // Note: Bria API expects images as an array even for single image
         const result = await generateImage(
           {
             aspect_ratio: input.aspectRatio,
             guidance_scale: input.guidanceScale,
-            images: input.imageUrl,
+            images: [input.imageUrl],
             prompt: input.directorPrompt || "",
             seed: input.seed ?? getFiboSeed(),
             steps_num: input.stepsNum,

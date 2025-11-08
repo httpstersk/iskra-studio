@@ -71,9 +71,10 @@ export async function analyzeFiboImage(
 
   try {
     // Call Bria API to generate structured prompt from image
+    // Note: Bria API expects images as an array even for single image
     const result = await generateStructuredPrompt(
       {
-        images: imageUrl,
+        images: [imageUrl],
         seed,
         sync: false,
       },
@@ -89,7 +90,15 @@ export async function analyzeFiboImage(
   } catch (error) {
     // Handle Bria API errors
     if (error instanceof BriaApiError) {
-      throw new FiboAnalysisError(error.message, error.cause, error.statusCode);
+      let errorMessage = `${error.message} (Request ID: ${error.requestId || "N/A"})`;
+
+      // Add helpful context for common error codes
+      if (error.statusCode === 422) {
+        errorMessage +=
+          " - This may indicate content moderation failure or invalid input parameters. Check that the image URL is publicly accessible and the content is appropriate.";
+      }
+
+      throw new FiboAnalysisError(errorMessage, error.cause, error.statusCode);
     }
 
     // Handle JSON parsing errors
