@@ -5,7 +5,7 @@
  * Now powered by Bria FIBO model for faster, more accurate image analysis
  */
 
-import { FIBO_ANALYSIS } from "@/constants/fibo";
+import { FIBO_ANALYSIS, getFiboSeed } from "@/constants/fibo";
 import { adaptFiboToAnalysis } from "@/lib/adapters/fibo-to-analysis-adapter";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import {
@@ -26,7 +26,7 @@ export interface ImageAnalysisResult {
  * @throws Error if analysis fails
  */
 export async function analyzeImageCore(
-  imageUrl: string,
+  imageUrl: string
 ): Promise<ImageAnalysisResult> {
   if (!imageUrl || !imageUrl.trim()) {
     throw new Error("Image URL is required");
@@ -36,8 +36,8 @@ export async function analyzeImageCore(
     // Analyze image with FIBO (includes automatic retry)
     const fiboResult = await analyzeFiboImageWithRetry({
       imageUrl,
-      seed: FIBO_ANALYSIS.DEFAULT_SEED,
-      timeout: FIBO_ANALYSIS.DEFAULT_TIMEOUT,
+      seed: getFiboSeed(),
+      timeout: FIBO_ANALYSIS.REQUEST_TIMEOUT,
     });
 
     // Transform FIBO output to our schema
@@ -54,7 +54,7 @@ export async function analyzeImageCore(
     throw new Error(
       error instanceof Error
         ? error.message
-        : "Unknown error during image analysis",
+        : "Unknown error during image analysis"
     );
   }
 }

@@ -1,22 +1,18 @@
 /**
  * Bria FIBO Image Analysis Service
  *
- * Integrates with fal.ai's FIBO model for structured image analysis.
+ * Integrates with Bria's official FIBO platform API for structured image analysis.
  * FIBO provides native JSON output without complex prompting.
  *
- * API: https://fal.ai/models/bria/fibo/generate/structured_prompt/api
+ * @see https://docs.bria.ai/image-generation/v2-endpoints/structured-prompt-generate
  */
 
-import { FIBO_ANALYSIS, FIBO_ENDPOINTS, getFiboSeed } from "@/constants/fibo";
+import { FIBO_ANALYSIS, getFiboSeed } from "@/constants/fibo";
 import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
-import { createFalClientWithKey } from "@/lib/services/fal-client-factory";
-
-/**
- * FIBO API Response Structure
- */
-interface FiboApiResponse {
-  structured_prompt: FiboStructuredPrompt;
-}
+import {
+  BriaApiError,
+  generateStructuredPrompt,
+} from "@/lib/services/bria-client";
 
 /**
  * Configuration for FIBO analysis
@@ -65,7 +61,7 @@ export async function analyzeFiboImage(
   const {
     imageUrl,
     seed = getFiboSeed(),
-    timeout = FIBO_ANALYSIS.DEFAULT_TIMEOUT,
+    timeout = FIBO_ANALYSIS.REQUEST_TIMEOUT,
   } = options;
 
   // Validate image URL
@@ -74,91 +70,34 @@ export async function analyzeFiboImage(
   }
 
   try {
-    // Create FAL client with credentials
-    const falClient = createFalClientWithKey();
+    // Call Bria API to generate structured prompt from image
+    const result = await generateStructuredPrompt(
+      {
+        images: imageUrl,
+        seed,
+        sync: false,
+      },
+      timeout
+    );
 
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    // Parse the structured prompt JSON string
+    const structuredPrompt: FiboStructuredPrompt = JSON.parse(
+      result.structured_prompt
+    );
 
-    try {
-      // Call FIBO API via fal.ai client
-      const result = (await falClient.subscribe(FIBO_ENDPOINTS.ANALYZE, {
-        input: {
-          image_url: imageUrl,
-          seed,
-        },
-        logs: true,
-      })) as { data: FiboApiResponse };
-
-      clearTimeout(timeoutId);
-
-      // Validate response - check different possible response structures
-      if (!result) {
-        throw new FiboAnalysisError(
-          "FIBO API returned null/undefined response"
-        );
-      }
-
-      // Try different response structures
-      let structuredPrompt: FiboStructuredPrompt | undefined;
-
-      // Pattern 1: result.data.structured_prompt
-      if (result.data?.structured_prompt) {
-        structuredPrompt = result.data.structured_prompt;
-      }
-      // Pattern 2: result.structured_prompt (direct in result)
-      else if ((result as any).structured_prompt) {
-        structuredPrompt = (result as any).structured_prompt;
-      }
-      // Pattern 3: result.data is the structured_prompt
-      else if (result.data && typeof result.data === "object") {
-        // Check if result.data has the expected fields
-        if ("short_description" in result.data || "objects" in result.data) {
-          structuredPrompt = result.data as any;
-        }
-      }
-
-      if (!structuredPrompt) {
-        throw new FiboAnalysisError(
-          "FIBO API returned invalid response: missing structured_prompt. Response keys: " +
-            JSON.stringify(Object.keys(result.data || result))
-        );
-      }
-
-      return structuredPrompt;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+    return structuredPrompt;
   } catch (error) {
-    // Handle abort/timeout
-    if (error instanceof Error && error.name === "AbortError") {
+    // Handle Bria API errors
+    if (error instanceof BriaApiError) {
+      throw new FiboAnalysisError(error.message, error.cause, error.statusCode);
+    }
+
+    // Handle JSON parsing errors
+    if (error instanceof SyntaxError) {
       throw new FiboAnalysisError(
-        `FIBO analysis timed out after ${timeout}ms`,
+        "Failed to parse FIBO structured prompt: invalid JSON",
         error
       );
-    }
-
-    // Handle fal.ai client errors with detailed info
-    if (error && typeof error === "object") {
-      if ("status" in error) {
-        const statusCode = (error as { status: number }).status;
-        const message =
-          (error as { message?: string }).message || "Unknown error";
-        const body = (error as { body?: unknown }).body;
-
-        throw new FiboAnalysisError(
-          `FIBO API error (${statusCode}): ${message}`,
-          error,
-          statusCode
-        );
-      }
-
-      // Handle error objects with message
-      if ("message" in error) {
-        const message = (error as { message: string }).message;
-        throw new FiboAnalysisError(`FIBO API error: ${message}`, error);
-      }
     }
 
     // Handle other errors

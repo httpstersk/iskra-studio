@@ -1,4 +1,4 @@
-import { FIBO_ENDPOINTS, getFiboSeed } from "@/constants/fibo";
+import { getFiboSeed } from "@/constants/fibo";
 import {
   resolveFalClient,
   standardRateLimiter,
@@ -11,6 +11,7 @@ import {
   TEXT_TO_IMAGE_ENDPOINT,
 } from "@/lib/image-models";
 import { sanitizePrompt } from "@/lib/prompt-utils";
+import { BriaApiError, generateImage } from "@/lib/services/bria-client";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { generateVideoPrompt } from "@/lib/video-prompt-generator";
 import { tracked } from "@trpc/server";
@@ -670,7 +671,7 @@ export const appRouter = router({
   /**
    * Generates image variations using FIBO with structured prompts and director refinement.
    * Accepts FIBO structured JSON + text prompt for director style.
-   * FIBO handles the refinement internally.
+   * Uses official Bria API directly.
    */
   generateFiboImageVariation: publicProcedure
     .input(
@@ -700,54 +701,29 @@ export const appRouter = router({
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
-        const falClient = await getFalClient(ctx);
-
         const generationId = `fibo_gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
-        // Subscribe to FIBO generate endpoint with both structured prompt and text prompt
-        const result = await falClient.subscribe(FIBO_ENDPOINTS.GENERATE, {
-          input: {
+        // Call Bria API to generate image from structured prompt
+        const result = await generateImage(
+          {
             aspect_ratio: input.aspectRatio,
             guidance_scale: input.guidanceScale,
-            image_url: input.imageUrl,
-            prompt: input.directorPrompt || "", // Text prompt for refinement
+            images: input.imageUrl,
+            prompt: input.directorPrompt || "",
             seed: input.seed ?? getFiboSeed(),
             steps_num: input.stepsNum,
-            structured_prompt: input.structuredPrompt,
+            structured_prompt: JSON.stringify(input.structuredPrompt),
+            sync: false,
           },
-          pollInterval: 1000,
-          logs: true,
-        });
+          30000
+        );
 
         if (signal?.aborted) {
           return;
         }
 
-        // Extract result data - FIBO returns { image: {...} } not { images: [...] }
-        const resultData = extractResultData<any>(result);
-
-        // Handle FIBO's response structure
-        let imageUrl: string | undefined;
-
-        if (resultData?.image?.url) {
-          // FIBO structure: { image: { url, ... } }
-          imageUrl = resultData.image.url;
-        } else if (resultData?.images?.[0]?.url) {
-          // Fallback: Standard structure { images: [...] }
-          imageUrl = resultData.images[0].url;
-        }
-
-        if (!imageUrl) {
-          yield tracked(`${generationId}_error`, {
-            type: "error",
-            error: "No image generated from FIBO",
-          });
-
-          return;
-        }
-
         // Generate thumbnail for immediate display
-        const fullSizeUrl = imageUrl;
+        const fullSizeUrl = result.image_url;
         const thumbnailDataUrl = await generateThumbnailDataUrl(fullSizeUrl);
 
         // Send the final image with thumbnail
@@ -755,15 +731,19 @@ export const appRouter = router({
           type: "complete",
           imageUrl: fullSizeUrl,
           thumbnailUrl: thumbnailDataUrl,
-          seed: input.seed ?? getFiboSeed(),
+          seed: result.seed,
         });
       } catch (error) {
+        const errorMessage =
+          error instanceof BriaApiError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "Failed to generate FIBO image variation";
+
         yield tracked(`error_${Date.now()}`, {
           type: "error",
-          error: extractFalErrorMessage(
-            error,
-            "Failed to generate FIBO image variation"
-          ),
+          error: errorMessage,
         });
       }
     }),

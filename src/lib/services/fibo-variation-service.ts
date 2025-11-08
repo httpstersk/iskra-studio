@@ -8,14 +8,10 @@
  * 3. Return refined structured prompts for downstream image generation
  */
 
-import {
-  FIBO_ANALYSIS,
-  FIBO_ENDPOINTS,
-  FIBO_GENERATION,
-} from "@/constants/fibo";
+import { FIBO_ANALYSIS, FIBO_GENERATION } from "@/constants/fibo";
 import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
 import { analyzeFiboImageWithRetry } from "@/lib/services/fibo-image-analyzer";
-import { createFalClientWithKey } from "@/lib/services/fal-client-factory";
+import { generateStructuredPrompt } from "@/lib/services/bria-client";
 
 /**
  * Configuration for FIBO variation generation
@@ -90,7 +86,7 @@ export interface FiboVariationResult<T = string> {
  * ```
  */
 export async function generateFiboVariations<T = string>(
-  config: FiboVariationConfig,
+  config: FiboVariationConfig
 ): Promise<FiboVariationResult<T>> {
   const {
     aspectRatio = FIBO_GENERATION.DEFAULT_ASPECT_RATIO,
@@ -109,31 +105,25 @@ export async function generateFiboVariations<T = string>(
     timeout,
   });
 
-  // Step 2: Create FAL client for refinement operations
-  const falClient = createFalClientWithKey();
-
-  // Step 3: Refine the structured prompt for each variation in parallel
+  // Step 2: Refine the structured prompt for each variation in parallel
   const refinementPromises = variations.map(async (variationPrompt) => {
-    // Call FIBO generate with original structured_prompt + variation text prompt
-    // sync: false means we only get the refined structured_prompt, not the generated image
-    const result = await falClient.subscribe(FIBO_ENDPOINTS.GENERATE, {
-      input: {
-        aspect_ratio: aspectRatio,
-        guidance_scale: guidanceScale,
-        image_url: imageUrl,
+    // Call Bria API to refine structured prompt with variation text prompt
+    // We pass the original structured_prompt + variation text prompt
+    // Bria will return a refined structured_prompt without generating the image
+    const result = await generateStructuredPrompt(
+      {
         prompt: variationPrompt,
         seed,
-        steps_num: stepsNum,
-        structured_prompt: fiboAnalysis,
+        structured_prompt: JSON.stringify(fiboAnalysis),
         sync: false,
       },
-      logs: true,
-    });
+      timeout
+    );
 
-    // Extract refined structured_prompt from FIBO response
-    const resultData = result.data as any;
-    const refinedStructuredPrompt =
-      resultData?.structured_prompt || fiboAnalysis;
+    // Parse the refined structured prompt
+    const refinedStructuredPrompt: FiboStructuredPrompt = JSON.parse(
+      result.structured_prompt
+    );
 
     return {
       refinedStructuredPrompt,
