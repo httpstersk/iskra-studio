@@ -32,8 +32,34 @@ export async function GET(req: NextRequest) {
     if (!providedUrl && !storageId) {
       return NextResponse.json(
         { error: "Either 'url' or 'storageId' parameter required" },
-        { status: 400 },
+        { status: 400 }
       );
+    }
+
+    // Validate URL origin if provided URL - only allow Convex URLs
+    if (providedUrl) {
+      try {
+        const urlObj = new URL(providedUrl);
+        const allowedHosts = [".convex.cloud", ".convex.site"];
+        const isAllowed = allowedHosts.some((host) =>
+          urlObj.hostname.endsWith(host)
+        );
+
+        if (!isAllowed) {
+          return NextResponse.json(
+            {
+              error:
+                "Invalid URL origin. Only Convex storage URLs are allowed.",
+            },
+            { status: 403 }
+          );
+        }
+      } catch (urlError) {
+        return NextResponse.json(
+          { error: "Invalid URL format" },
+          { status: 400 }
+        );
+      }
     }
 
     let storageUrl: string;
@@ -47,7 +73,7 @@ export async function GET(req: NextRequest) {
       if (!convexUrl) {
         return NextResponse.json(
           { error: "Convex configuration missing" },
-          { status: 500 },
+          { status: 500 }
         );
       }
 
@@ -90,7 +116,7 @@ export async function GET(req: NextRequest) {
             error: "Failed to fetch from storage",
             details: lastError?.message || "Unknown error",
           },
-          { status: 502 },
+          { status: 502 }
         );
       }
 
@@ -99,7 +125,7 @@ export async function GET(req: NextRequest) {
       // Should never happen due to earlier check, but satisfy TypeScript
       return NextResponse.json(
         { error: "Either 'url' or 'storageId' parameter required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -116,14 +142,14 @@ export async function GET(req: NextRequest) {
     } catch (fetchError) {
       return NextResponse.json(
         { error: "Failed to fetch from storage", details: String(fetchError) },
-        { status: 502 },
+        { status: 502 }
       );
     }
 
     if (!response) {
       return NextResponse.json(
         { error: "Failed to fetch from storage" },
-        { status: 502 },
+        { status: 502 }
       );
     }
 
@@ -137,7 +163,7 @@ export async function GET(req: NextRequest) {
           error: `Failed to fetch from storage: ${response.status}`,
           details: errorText,
         },
-        { status: response.status },
+        { status: response.status }
       );
     }
 
@@ -155,7 +181,7 @@ export async function GET(req: NextRequest) {
     } catch (bufferError) {
       return NextResponse.json(
         { error: "Failed to process file", details: String(bufferError) },
-        { status: 500 },
+        { status: 500 }
       );
     }
 
@@ -190,7 +216,7 @@ export async function GET(req: NextRequest) {
         error: "Storage proxy failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

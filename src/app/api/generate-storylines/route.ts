@@ -5,7 +5,7 @@
 
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
-import { NextResponse } from "next/server";
+import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
 import { z } from "zod";
 
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
@@ -26,7 +26,7 @@ const generateStorylinesRequestSchema = z.object({
  */
 function buildStyleContext(
   analysis: ImageStyleMoodAnalysis,
-  duration: number,
+  duration: number
 ): string {
   const {
     subject,
@@ -83,39 +83,13 @@ DURATION: ${duration} seconds (${duration} rapid cuts at 1 cut per second)
 `.trim();
 }
 
-export async function POST(req: Request) {
-  try {
-    const rawBody = await req.json();
-    const normalizedBody = {
-      styleAnalysis: rawBody?.styleAnalysis,
-      duration:
-        rawBody?.duration === undefined
-          ? undefined
-          : typeof rawBody.duration === "string"
-            ? Number.parseInt(rawBody.duration, 10)
-            : rawBody.duration,
-      userPrompt: rawBody?.userPrompt,
-    } satisfies Partial<Record<string, unknown>>;
+export const POST = createAuthenticatedHandler({
+  schema: generateStorylinesRequestSchema,
+  handler: async (input) => {
+    const { styleAnalysis, duration, userPrompt } = input;
 
-    const parseResult =
-      generateStorylinesRequestSchema.safeParse(normalizedBody);
-
-    if (!parseResult.success) {
-      return NextResponse.json(
-        { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const { styleAnalysis, duration, userPrompt } = parseResult.data;
-
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "OpenAI API key not configured" },
-        { status: 500 },
-      );
-    }
+    // Validate API key
+    requireEnv("OPENAI_API_KEY", "OpenAI API key");
 
     const styleContext = buildStyleContext(styleAnalysis, duration ?? 4);
 
@@ -150,16 +124,8 @@ While you MUST follow the user's creative direction for subject and narrative, y
       ],
     });
 
-    return NextResponse.json({
+    return {
       storylines: result.object,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Failed to generate storylines",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
-  }
-}
+    };
+  },
+});

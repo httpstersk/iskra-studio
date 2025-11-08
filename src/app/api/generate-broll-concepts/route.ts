@@ -4,15 +4,23 @@
  * Generates contextually relevant B-roll concepts using OpenAI's structured output.
  */
 
-import { auth } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
+import { B_ROLL_GENERATION_SYSTEM_PROMPT } from "@/lib/b-roll-concept-generator";
+import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
-import { B_ROLL_GENERATION_SYSTEM_PROMPT } from "@/lib/b-roll-concept-generator";
-import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 
 const OPENAI_MODEL = "gpt-5";
+
+/**
+ * Request schema for B-roll concept generation
+ */
+const generateBRollRequestSchema = z.object({
+  count: z.number().int().min(1).max(12),
+  styleAnalysis: z.any() as z.ZodType<ImageStyleMoodAnalysis>,
+  userContext: z.string().optional(),
+});
 
 /**
  * Schema for B-roll concept generation response.
@@ -29,40 +37,13 @@ const bRollConceptSetSchema = z.object({
  * Generates contextually relevant B-roll concepts based on image analysis.
  * Uses OpenAI's structured output for reliable JSON responses.
  */
-export async function POST(req: NextRequest) {
-  try {
-    // Authenticate user
-    const { userId } = await auth();
+export const POST = createAuthenticatedHandler({
+  schema: generateBRollRequestSchema,
+  handler: async (input) => {
+    const { count, styleAnalysis, userContext } = input;
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 },
-      );
-    }
-
-    // Parse request body
-    const body = await req.json();
-    const { count, styleAnalysis, userContext } = body as {
-      count: number;
-      styleAnalysis: ImageStyleMoodAnalysis;
-      userContext?: string;
-    };
-
-    // Validate inputs
-    if (!count || count < 1 || count > 12) {
-      return NextResponse.json(
-        { error: "Count must be between 1 and 12" },
-        { status: 400 },
-      );
-    }
-
-    if (!styleAnalysis) {
-      return NextResponse.json(
-        { error: "Style analysis is required" },
-        { status: 400 },
-      );
-    }
+    // Validate API key
+    requireEnv("OPENAI_API_KEY", "OpenAI API key");
 
     // Initialize OpenAI client
     const openai = new OpenAI({
@@ -185,7 +166,7 @@ Include film grain and all post-processing effects explicitly in every prompt.
       model: OPENAI_MODEL,
       response_format: zodResponseFormat(
         bRollConceptSetSchema,
-        "broll_concepts",
+        "broll_concepts"
       ),
     });
 
@@ -195,16 +176,6 @@ Include film grain and all post-processing effects explicitly in every prompt.
       throw new Error("No content in OpenAI response");
     }
 
-    const result = JSON.parse(messageContent);
-
-    return NextResponse.json(result);
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "B-roll concept generation failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
-  }
-}
+    return JSON.parse(messageContent);
+  },
+});

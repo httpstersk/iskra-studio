@@ -1,6 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { NextResponse } from "next/server";
+import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
 import { z } from "zod";
 
 // Allow streaming responses up to 30 seconds
@@ -32,126 +32,114 @@ const uiMessageSchema = uiMessageBaseSchema.refine(
   {
     message: "Message must include content or parts",
     path: ["content"],
-  },
+  }
 );
 
 const chatRequestSchema = z.object({
   messages: z.array(uiMessageSchema).min(1).max(MAX_MESSAGES),
 });
 
-export async function POST(req: Request) {
-  const parseResult = chatRequestSchema.safeParse(await req.json());
+export const POST = createAuthenticatedHandler({
+  schema: chatRequestSchema,
+  handler: async (input) => {
+    const { messages } = input;
 
-  if (!parseResult.success) {
-    return NextResponse.json(
-      { error: "Invalid request", details: parseResult.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const { messages } = parseResult.data;
-
-  for (const message of messages) {
-    const length = (() => {
-      if (typeof message.content === "string") {
-        return message.content.length;
-      }
-
-      if (Array.isArray(message.content)) {
-        return JSON.stringify(message.content).length;
-      }
-
-      if (Array.isArray(message.parts)) {
-        return JSON.stringify(message.parts).length;
-      }
-
-      return 0;
-    })();
-
-    if (length > MAX_MESSAGE_LENGTH) {
-      return NextResponse.json(
-        { error: "Message content is too large" },
-        { status: 413 },
-      );
-    }
-  }
-
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json(
-      { error: "OpenAI API key not configured" },
-      { status: 500 },
-    );
-  }
-  const normalizedMessages: Array<Omit<UIMessage, "id">> = [];
-
-  for (const message of messages) {
-    const baseParts =
-      message.parts ??
-      (() => {
+    // Validate message lengths
+    for (const message of messages) {
+      const length = (() => {
         if (typeof message.content === "string") {
-          return [
-            {
-              type: "text",
-              text: message.content,
-            },
-          ];
+          return message.content.length;
         }
 
         if (Array.isArray(message.content)) {
-          return message.content;
+          return JSON.stringify(message.content).length;
         }
 
-        return [];
+        if (Array.isArray(message.parts)) {
+          return JSON.stringify(message.parts).length;
+        }
+
+        return 0;
       })();
 
-    if (!Array.isArray(baseParts) || baseParts.length === 0) {
-      return NextResponse.json(
-        { error: "Each message must include at least one part" },
-        { status: 400 },
-      );
+      if (length > MAX_MESSAGE_LENGTH) {
+        throw new Error("Message content is too large");
+      }
     }
 
-    const sanitizedParts = baseParts.map((part) => {
-      if (part.type === "text" && typeof part.text !== "string") {
-        return {
-          ...part,
-          text: String(part.text ?? ""),
-        } as UIMessage["parts"][number];
+    // Validate API key
+    requireEnv("OPENAI_API_KEY", "OpenAI API key");
+
+    // Normalize messages
+    const normalizedMessages: Array<Omit<UIMessage, "id">> = [];
+
+    for (const message of messages) {
+      const baseParts =
+        message.parts ??
+        (() => {
+          if (typeof message.content === "string") {
+            return [
+              {
+                type: "text",
+                text: message.content,
+              },
+            ];
+          }
+
+          if (Array.isArray(message.content)) {
+            return message.content;
+          }
+
+          return [];
+        })();
+
+      if (!Array.isArray(baseParts) || baseParts.length === 0) {
+        throw new Error("Each message must include at least one part");
       }
 
-      return part as UIMessage["parts"][number];
-    });
+      const sanitizedParts = baseParts.map((part) => {
+        if (part.type === "text" && typeof part.text !== "string") {
+          return {
+            ...part,
+            text: String(part.text ?? ""),
+          } as UIMessage["parts"][number];
+        }
 
-    normalizedMessages.push({
-      role: (message.role === "tool"
-        ? "assistant"
-        : message.role) as UIMessage["role"],
-      parts: sanitizedParts as UIMessage["parts"],
-    });
-  }
+        return part as UIMessage["parts"][number];
+      });
 
-  const result = streamText({
-    model: openai("gpt-5-mini"),
-    system:
-      "You are a helpful assistant that can generate images. When the user asks you to create or generate an image, use the generateTextToImage tool. For images, you can suggest different styles like anime, cartoon, realistic, etc.",
-    messages: convertToModelMessages(normalizedMessages),
-    tools: {
-      generateTextToImage: {
-        description: "Generate an image from a text prompt with optional style",
-        inputSchema: z.object({
-          prompt: z
-            .string()
-            .describe("The text prompt to generate an image from"),
-          imageSize: z
-            .enum(["square"])
-            .default("square")
-            .describe(
-              "The aspect ratio of the generated image. Always use 'square' format.",
-            ),
-        }),
+      normalizedMessages.push({
+        role: (message.role === "tool"
+          ? "assistant"
+          : message.role) as UIMessage["role"],
+        parts: sanitizedParts as UIMessage["parts"],
+      });
+    }
+
+    const result = streamText({
+      model: openai("gpt-5-mini"),
+      system:
+        "You are a helpful assistant that can generate images. When the user asks you to create or generate an image, use the generateTextToImage tool. For images, you can suggest different styles like anime, cartoon, realistic, etc.",
+      messages: convertToModelMessages(normalizedMessages),
+      tools: {
+        generateTextToImage: {
+          description:
+            "Generate an image from a text prompt with optional style",
+          inputSchema: z.object({
+            prompt: z
+              .string()
+              .describe("The text prompt to generate an image from"),
+            imageSize: z
+              .enum(["square"])
+              .default("square")
+              .describe(
+                "The aspect ratio of the generated image. Always use 'square' format."
+              ),
+          }),
+        },
       },
-    },
-  });
+    });
 
-  return result.toUIMessageStreamResponse();
-}
+    return result.toUIMessageStreamResponse();
+  },
+});

@@ -4,8 +4,8 @@
  * Returns refined structured JSON prompts
  */
 
+import { createAuthenticatedHandler } from "@/lib/api/api-handler";
 import { generateFiboVariations } from "@/lib/services/fibo-variation-service";
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 export const maxDuration = 60;
@@ -29,22 +29,14 @@ function buildDirectorPrompt(director: string, userContext?: string): string {
   return prompt;
 }
 
-export async function POST(req: Request) {
-  try {
-    const parseResult = requestSchema.safeParse(await req.json());
-
-    if (!parseResult.success) {
-      return NextResponse.json(
-        { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const { imageUrl, directors, userContext } = parseResult.data;
+export const POST = createAuthenticatedHandler({
+  schema: requestSchema,
+  handler: async (input) => {
+    const { imageUrl, directors, userContext } = input;
 
     // Build variation prompts for each director
     const variations = directors.map((director) =>
-      buildDirectorPrompt(director, userContext),
+      buildDirectorPrompt(director, userContext)
     );
 
     // Generate FIBO variations using shared service
@@ -59,18 +51,9 @@ export async function POST(req: Request) {
       refinedStructuredPrompt: item.refinedStructuredPrompt,
     }));
 
-    return NextResponse.json({
+    return {
       fiboAnalysis,
       refinedPrompts: transformedPrompts,
-    });
-  } catch (error) {
-    console.error("[Director Variations] Error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to generate director variations",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
-  }
-}
+    };
+  },
+});

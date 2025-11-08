@@ -7,7 +7,7 @@
 
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
-import { NextResponse } from "next/server";
+import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
 import { z } from "zod";
 
 import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schema";
@@ -59,7 +59,7 @@ const generateStorylineImagesRequestSchema = z.object({
 function buildUserPrompt(
   analysis: ImageStyleMoodAnalysis,
   count: number,
-  userContext?: string,
+  userContext?: string
 ): string {
   const styleContext = buildStorylineStyleContext(analysis);
   const { subject, mood } = analysis;
@@ -157,28 +157,13 @@ Generate ${count} storyline concepts now.
 `.trim();
 }
 
-export async function POST(req: Request) {
-  try {
-    const parseResult = generateStorylineImagesRequestSchema.safeParse(
-      await req.json(),
-    );
+export const POST = createAuthenticatedHandler({
+  schema: generateStorylineImagesRequestSchema,
+  handler: async (input) => {
+    const { count, styleAnalysis, userContext } = input;
 
-    if (!parseResult.success) {
-      return NextResponse.json(
-        { error: "Invalid request", details: parseResult.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const { count, styleAnalysis, userContext } = parseResult.data;
-
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "OpenAI API key not configured" },
-        { status: 500 },
-      );
-    }
+    // Validate API key
+    requireEnv("OPENAI_API_KEY", "OpenAI API key");
 
     const userPrompt = buildUserPrompt(styleAnalysis, count, userContext);
 
@@ -197,16 +182,8 @@ export async function POST(req: Request) {
       ],
     });
 
-    return NextResponse.json({
+    return {
       concepts: result.object.concepts,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Failed to generate storyline images",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
-  }
-}
+    };
+  },
+});
