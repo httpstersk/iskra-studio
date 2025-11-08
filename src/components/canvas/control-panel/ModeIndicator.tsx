@@ -1,19 +1,17 @@
 "use client";
 
-import { SegmentedControl } from "@radix-ui/themes";
 import {
   CONTROL_PANEL_STRINGS,
   CONTROL_PANEL_STYLES,
 } from "@/constants/control-panel";
 import { cn } from "@/lib/utils";
+import { SegmentedControl } from "@radix-ui/themes";
 import {
-  Camera,
-  ImagesIcon,
-  Palette,
-  PlayIcon,
   CctvIcon,
-  PaintBucketIcon,
+  ImagesIcon,
   Lightbulb,
+  PaintBucketIcon,
+  PlayIcon,
 } from "lucide-react";
 
 /**
@@ -24,7 +22,7 @@ interface ModeIndicatorProps {
   hasSelection: boolean;
   imageVariationType?: "camera-angles" | "director" | "lighting";
   setImageVariationType?: (
-    type: "camera-angles" | "director" | "lighting",
+    type: "camera-angles" | "director" | "lighting"
   ) => void;
   variationMode: "image" | "video";
 }
@@ -45,7 +43,7 @@ export function ModeIndicator({
         className={cn(
           "h-9 rounded-xl overflow-clip flex items-center px-3",
           "pointer-events-none select-none",
-          CONTROL_PANEL_STYLES.ORANGE_BADGE,
+          CONTROL_PANEL_STYLES.ORANGE_BADGE
         )}
       >
         <div className="flex items-center gap-2 text-xs font-medium">
@@ -91,7 +89,7 @@ export function ModeIndicator({
           value={imageVariationType}
           onValueChange={(value) =>
             setImageVariationType(
-              value as "camera-angles" | "director" | "lighting",
+              value as "camera-angles" | "director" | "lighting"
             )
           }
         >
