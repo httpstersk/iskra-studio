@@ -111,7 +111,7 @@ export async function generateFiboVariations<T = string>(
         prompt: variationPrompt,
         seed,
         structured_prompt: JSON.stringify(fiboAnalysis),
-        sync: false,
+        sync: true,
       },
       timeout
     );

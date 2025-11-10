@@ -26,7 +26,7 @@ function buildCameraAnglePrompt(
   let prompt = `Apply this camera angle: ${cameraAngle}`;
 
   if (userContext) {
-    prompt += `Context: ${userContext}`;
+    prompt += ` Context: ${userContext}`;
   }
 
   return prompt;
