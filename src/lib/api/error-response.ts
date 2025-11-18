@@ -6,15 +6,60 @@ import { NextResponse } from "next/server";
 import { AuthError } from "./auth-middleware";
 import { HttpError } from "./http-client";
 
+const IS_DEVELOPMENT = process.env.NODE_ENV === "development";
+
 export class ApiError extends Error {
   constructor(
     message: string,
     public statusCode: number = 500,
-    public details?: any
+    public details?: any,
+    public isUserFacing: boolean = true
   ) {
     super(message);
     this.name = "ApiError";
   }
+}
+
+/**
+ * Sanitize error message for production
+ * Prevents leaking internal implementation details
+ */
+function sanitizeErrorMessage(
+  error: unknown,
+  fallbackMessage: string
+): { message: string; details?: any } {
+  // In development, show full error details
+  if (IS_DEVELOPMENT) {
+    if (error instanceof Error) {
+      return {
+        message: error.message,
+        details: {
+          name: error.name,
+          stack: error.stack,
+        },
+      };
+    }
+    return { message: String(error) };
+  }
+
+  // In production, sanitize errors
+  if (error instanceof ApiError && error.isUserFacing) {
+    // Only return user-facing errors
+    return { message: error.message };
+  }
+
+  if (error instanceof AuthError) {
+    // Auth errors are safe to expose
+    return { message: error.message };
+  }
+
+  if (error instanceof HttpError) {
+    // Generic HTTP error message for production
+    return { message: "An error occurred while processing your request" };
+  }
+
+  // Generic fallback for unknown errors
+  return { message: fallbackMessage };
 }
 
 /**
@@ -24,14 +69,21 @@ export function createErrorResponse(
   error: unknown,
   fallbackMessage = "Request failed"
 ): NextResponse {
-  console.error("API Error:", error);
+  // Always log full error server-side
+  console.error("API Error:", {
+    error,
+    message: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+    timestamp: new Date().toISOString(),
+  });
 
   // Handle known error types
   if (error instanceof ApiError) {
+    const sanitized = sanitizeErrorMessage(error, fallbackMessage);
     return NextResponse.json(
       {
-        error: error.message,
-        ...(error.details && { details: error.details }),
+        error: sanitized.message,
+        ...(sanitized.details && { details: sanitized.details }),
       },
       { status: error.statusCode }
     );
@@ -45,19 +97,20 @@ export function createErrorResponse(
   }
 
   if (error instanceof HttpError) {
+    const sanitized = sanitizeErrorMessage(error, fallbackMessage);
     return NextResponse.json(
-      {
-        error: error.message,
-        ...(error.response && { details: error.response }),
-      },
+      { error: sanitized.message },
       { status: error.status }
     );
   }
 
-  // Handle generic errors
-  const message = error instanceof Error ? error.message : fallbackMessage;
+  // Handle generic errors with sanitization
+  const sanitized = sanitizeErrorMessage(error, fallbackMessage);
   return NextResponse.json(
-    { error: message },
+    {
+      error: sanitized.message,
+      ...(sanitized.details && { details: sanitized.details }),
+    },
     { status: 500 }
   );
 }

@@ -49,12 +49,33 @@ export function extractBearerToken(
   authHeader: string | null,
 ): string | undefined {
   if (!authHeader) return undefined;
-  const match = authHeader.match(/^Bearer\s+([^\s]+)$/i);
-  if (!match) return undefined;
-  const token = match[1].trim();
-  if (!token || /[\r\n]/.test(token)) {
+
+  // Optimized parsing - avoid regex for better performance and ReDoS prevention
+  const trimmed = authHeader.trim();
+
+  // Check prefix (case-insensitive)
+  if (!trimmed.toLowerCase().startsWith("bearer ")) {
     return undefined;
   }
+
+  // Extract token part after "Bearer "
+  const token = trimmed.slice(7).trim(); // "Bearer ".length === 7
+
+  // Validate token
+  if (!token || token.length === 0) {
+    return undefined;
+  }
+
+  // Enforce maximum token length to prevent abuse
+  if (token.length > 2048) {
+    return undefined;
+  }
+
+  // Check for invalid characters (newlines, carriage returns, spaces)
+  if (/[\r\n\s]/.test(token)) {
+    return undefined;
+  }
+
   return token;
 }
 

@@ -163,7 +163,7 @@ export const saveProject = mutation({
  *
  * Includes asset thumbnail URLs for efficient list rendering.
  *
- * @param limit - Maximum number of projects to return (default: 50)
+ * @param limit - Maximum number of projects to return (default: 20, max: 100)
  * @returns Array of projects sorted by lastSavedAt DESC with asset thumbnails
  */
 export const listProjects = query({
@@ -177,7 +177,10 @@ export const listProjects = query({
     }
 
     const userId = identity.subject;
-    const limit = args.limit ?? 50;
+    // Cap limit to prevent DoS attacks
+    const MAX_LIMIT = 100;
+    const DEFAULT_LIMIT = 20;
+    const limit = Math.min(args.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
 
     const projects = await ctx.db
       .query("projects")

@@ -202,7 +202,7 @@ export const getAsset = query({
 /**
  * Lists all assets for the authenticated user with pagination.
  *
- * @param limit - Maximum number of assets to return (default: 100)
+ * @param limit - Maximum number of assets to return (default: 20, max: 100)
  * @param type - Optional filter by asset type
  * @returns Array of asset records
  */
@@ -218,7 +218,10 @@ export const listAssets = query({
     }
 
     const userId = identity.subject;
-    const limit = args.limit ?? 100;
+    // Cap limit to prevent DoS attacks
+    const MAX_LIMIT = 100;
+    const DEFAULT_LIMIT = 20;
+    const limit = Math.min(args.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
 
     // Query with optional type filter
     let query;
