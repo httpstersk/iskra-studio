@@ -124,15 +124,19 @@ export const saveProject = mutation({
       throw new Error("Not authenticated");
     }
 
-    // Get project
-    const project = await ctx.db.get(args.projectId);
-    if (!project) {
-      throw new Error("Project not found");
-    }
+    const userId = identity.subject;
 
-    // Verify ownership
-    if (project.userId !== identity.subject) {
-      throw new Error("Unauthorized");
+    // Use index-based query to prevent IDOR timing attacks
+    // Only fetch projects owned by the authenticated user
+    const project = await ctx.db
+      .query("projects")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.projectId))
+      .first();
+
+    if (!project) {
+      // Unified error prevents user enumeration
+      throw new Error("Project not found or access denied");
     }
 
     // Validate canvas state
@@ -220,14 +224,19 @@ export const getProject = query({
       throw new Error("Not authenticated");
     }
 
-    const project = await ctx.db.get(args.projectId);
-    if (!project) {
-      throw new Error("Project not found");
-    }
+    const userId = identity.subject;
 
-    // Verify ownership
-    if (project.userId !== identity.subject) {
-      throw new Error("Unauthorized");
+    // Use index-based query to prevent IDOR timing attacks
+    // Only fetch projects owned by the authenticated user
+    const project = await ctx.db
+      .query("projects")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.projectId))
+      .first();
+
+    if (!project) {
+      // Unified error prevents user enumeration
+      throw new Error("Project not found or access denied");
     }
 
     // Get thumbnail URL if exists
@@ -246,22 +255,23 @@ export const getProject = query({
     }
 
     // Fetch asset thumbnails for canvas display (optimize bandwidth on load)
-    // Use db.get() directly for better performance
+    // IMPORTANT: Only fetch assets owned by the user to prevent IDOR
+    // Batch fetch all user's assets, then filter to project assets
+    const userAssets = await ctx.db
+      .query("assets")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    const assetMap = new Map(userAssets.map((a) => [a._id, a]));
     const assetThumbnails: Record<string, string> = {};
+
     for (const assetId of assetIds) {
-      try {
-        const asset = (await ctx.db.get(
-          assetId as any,
-        )) as Doc<"assets"> | null;
-        if (asset && asset.thumbnailStorageId) {
-          const thumbUrl = await ctx.storage.getUrl(asset.thumbnailStorageId);
-          if (thumbUrl) {
-            assetThumbnails[assetId] = thumbUrl;
-          }
+      const asset = assetMap.get(assetId as any);
+      if (asset && asset.thumbnailStorageId) {
+        const thumbUrl = await ctx.storage.getUrl(asset.thumbnailStorageId);
+        if (thumbUrl) {
+          assetThumbnails[assetId] = thumbUrl;
         }
-      } catch (error) {
-        // Asset might have been deleted, skip it
-        console.warn(`Asset ${assetId} not found or deleted`);
       }
     }
 
@@ -290,15 +300,19 @@ export const renameProject = mutation({
       throw new Error("Not authenticated");
     }
 
-    // Get project
-    const project = await ctx.db.get(args.projectId);
-    if (!project) {
-      throw new Error("Project not found");
-    }
+    const userId = identity.subject;
 
-    // Verify ownership
-    if (project.userId !== identity.subject) {
-      throw new Error("Unauthorized");
+    // Use index-based query to prevent IDOR timing attacks
+    // Only fetch projects owned by the authenticated user
+    const project = await ctx.db
+      .query("projects")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.projectId))
+      .first();
+
+    if (!project) {
+      // Unified error prevents user enumeration
+      throw new Error("Project not found or access denied");
     }
 
     // Validate name

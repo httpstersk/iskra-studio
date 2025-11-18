@@ -41,10 +41,49 @@ export async function GET(req: NextRequest) {
     if (providedUrl) {
       try {
         const urlObj = new URL(providedUrl);
-        const allowedHosts = [".convex.cloud", ".convex.site"];
-        const isAllowed = allowedHosts.some((host) =>
-          urlObj.hostname.endsWith(host)
-        );
+
+        // Enforce HTTPS protocol
+        if (urlObj.protocol !== 'https:') {
+          return NextResponse.json(
+            { error: "Only HTTPS URLs are allowed" },
+            { status: 403 }
+          );
+        }
+
+        // Build strict whitelist from environment variables
+        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+        const convexSiteUrl = process.env.CONVEX_SITE_URL;
+
+        const allowedHosts: string[] = [];
+
+        if (convexUrl) {
+          try {
+            const convexHostname = new URL(convexUrl).hostname;
+            allowedHosts.push(convexHostname);
+          } catch {
+            // Invalid convexUrl in env, skip
+          }
+        }
+
+        if (convexSiteUrl) {
+          try {
+            const siteHostname = new URL(convexSiteUrl).hostname;
+            allowedHosts.push(siteHostname);
+          } catch {
+            // Invalid convexSiteUrl in env, skip
+          }
+        }
+
+        // Fallback: if no env vars configured, deny all external URLs
+        if (allowedHosts.length === 0) {
+          return NextResponse.json(
+            { error: "Convex storage not configured" },
+            { status: 500 }
+          );
+        }
+
+        // Strict hostname matching (exact match only, no subdomains)
+        const isAllowed = allowedHosts.includes(urlObj.hostname);
 
         if (!isAllowed) {
           return NextResponse.json(
@@ -52,6 +91,14 @@ export async function GET(req: NextRequest) {
               error:
                 "Invalid URL origin. Only Convex storage URLs are allowed.",
             },
+            { status: 403 }
+          );
+        }
+
+        // Prevent URL manipulation attacks
+        if (urlObj.username || urlObj.password) {
+          return NextResponse.json(
+            { error: "URLs with credentials are not allowed" },
             { status: 403 }
           );
         }
@@ -195,16 +242,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ url: dataUrl, contentType });
     }
 
+    // Restrict CORS to application domain only
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const allowedOrigin = new URL(appUrl).origin;
+
     const responseHeaders = new Headers({
       "Access-Control-Allow-Headers": "Content-Type, Range",
       "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": allowedOrigin,
       "Access-Control-Expose-Headers":
         "Content-Length, Content-Range, Content-Type",
       "Cache-Control": "public, max-age=31536000, immutable",
       "Content-Length": buffer.byteLength.toString(),
       "Content-Type": contentType,
-      "Cross-Origin-Resource-Policy": "cross-origin",
+      "Cross-Origin-Resource-Policy": "same-site",
     });
 
     return new NextResponse(buffer, {
@@ -217,11 +268,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function OPTIONS() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const allowedOrigin = new URL(appUrl).origin;
+
   return new NextResponse(null, {
     headers: {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": allowedOrigin,
       "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, Range",
     },
   });
 }

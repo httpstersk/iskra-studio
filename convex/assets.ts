@@ -130,15 +130,17 @@ export const deleteAsset = mutation({
 
     const userId = identity.subject;
 
-    // Get asset
-    const asset = await ctx.db.get(args.assetId);
-    if (!asset) {
-      throw new Error("Asset not found");
-    }
+    // Use index-based query to prevent IDOR timing attacks
+    // Only fetch assets owned by the authenticated user
+    const asset = await ctx.db
+      .query("assets")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.assetId))
+      .first();
 
-    // Verify ownership
-    if (asset.userId !== userId) {
-      throw new Error("Unauthorized");
+    if (!asset) {
+      // Unified error prevents user enumeration
+      throw new Error("Asset not found or access denied");
     }
 
     // Delete file from storage
@@ -180,14 +182,17 @@ export const getAsset = query({
 
     const userId = identity.subject;
 
-    const asset = await ctx.db.get(args.assetId);
-    if (!asset) {
-      throw new Error("Asset not found");
-    }
+    // Use index-based query to prevent IDOR timing attacks
+    // Only fetch assets owned by the authenticated user
+    const asset = await ctx.db
+      .query("assets")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .filter((q) => q.eq(q.field("_id"), args.assetId))
+      .first();
 
-    // Verify ownership
-    if (asset.userId !== userId) {
-      throw new Error("Unauthorized");
+    if (!asset) {
+      // Unified error prevents user enumeration
+      throw new Error("Asset not found or access denied");
     }
 
     return asset;

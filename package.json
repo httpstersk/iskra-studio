@@ -60,6 +60,7 @@
     "embla-carousel-react": "^8.6.0",
     "eslint-plugin-react-hooks": "^6.1.1",
     "fabric": "^5.5.2",
+    "file-type": "^21.1.0",
     "gsap": "^3.13.0",
     "idb": "^8.0.3",
     "jotai": "^2.15.0",
