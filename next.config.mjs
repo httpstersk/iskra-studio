@@ -41,10 +41,11 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com",
+      "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https://*.convex.cloud https://*.convex.site https://*.clerk.accounts.dev https://*.clerk.com https://fal.ai https://*.fal.media https://api.openai.com https://platform.bria.ai https://*.upstash.io wss://*.convex.cloud",
+      "connect-src 'self' data: blob: https://*.convex.cloud https://*.convex.site https://*.clerk.accounts.dev https://*.clerk.com https://fal.ai https://*.fal.media https://api.openai.com https://platform.bria.ai https://*.upstash.io wss://*.convex.cloud",
       "media-src 'self' https: blob:",
       "object-src 'none'",
       "base-uri 'self'",
