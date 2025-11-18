@@ -13,17 +13,17 @@
 
 import { DirectiveLabel } from "@/components/canvas/DirectiveLabel";
 import { useAnimationCoordinator } from "@/hooks/useAnimationCoordinator";
-import { abbreviateCameraDirective } from "@/utils/camera-abbreviation-utils";
-import { extractShortErrorMessage } from "@/utils/error-message-utils";
 import { useImageCache } from "@/hooks/useImageCache";
 import { useImageDrag } from "@/hooks/useImageDrag";
 import { useImageInteraction } from "@/hooks/useImageInteraction";
 import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
+import { abbreviateCameraDirective } from "@/utils/camera-abbreviation-utils";
+import { extractShortErrorMessage } from "@/utils/error-message-utils";
 import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
-import React, { useCallback, useEffect, useRef } from "react";
-import { Group, Image as KonvaImage, Text } from "react-konva";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { Image as KonvaImage } from "react-konva";
 
 /**
  * Constant for CORS image loading
@@ -76,7 +76,7 @@ const useCanvasImageSource = (
   src: string,
   thumbnailSrc: string | undefined,
   isGenerated: boolean,
-  displayAsThumbnail: boolean,
+  displayAsThumbnail: boolean
 ) => {
   // When displayAsThumbnail is true, ONLY load thumbnail, never load src
   // This prevents loading full-size images when we only want thumbnails
@@ -90,11 +90,11 @@ const useCanvasImageSource = (
 
   // Load full-size image (only if shouldLoadFullSize is true)
   const [streamingImg] = useStreamingImage(
-    isGenerated && shouldLoadFullSize ? effectiveSrc : "",
+    isGenerated && shouldLoadFullSize ? effectiveSrc : ""
   );
   const [cachedImg] = useImageCache(
     !isGenerated && shouldLoadFullSize ? effectiveSrc : "",
-    CORS_MODE,
+    CORS_MODE
   );
 
   // Full-size image (once loaded, switch from thumbnail)
@@ -123,7 +123,7 @@ const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
 
   const [loadedImg] = useImageCache(
     pixelatedSrc && !cachedImage ? pixelatedSrc : "",
-    CORS_MODE,
+    CORS_MODE
   );
 
   if (!pixelatedSrc) return undefined;
@@ -149,6 +149,34 @@ const useFrameThrottle = (limitMs = 16) => {
     lastRef.current = now;
     return true;
   }, [limitMs]);
+};
+
+/**
+ * Helper function to get common dimension/position props.
+ * Used across all KonvaImage instances and DirectiveLabels.
+ *
+ * @param image - The placed image
+ * @returns Object with position and dimension props
+ */
+const getImageDimensions = (image: PlacedImage) => ({
+  height: image.height,
+  width: image.width,
+  x: image.x,
+  y: image.y,
+});
+
+/**
+ * Helper function to get the directive label text for an image.
+ * Priority: directorName > cameraAngle abbreviation
+ *
+ * @param image - The placed image
+ * @returns Label text or undefined if no label should be shown
+ */
+const getDirectiveLabelText = (image: PlacedImage): string | undefined => {
+  if (image.isLoading) return undefined;
+  if (image.directorName) return image.directorName;
+  if (image.cameraAngle) return abbreviateCameraDirective(image.cameraAngle);
+  return undefined;
 };
 
 /**
@@ -202,7 +230,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     image.hasContentError ? "" : image.src,
     image.thumbnailSrc,
     !!image.isGenerated,
-    !!image.displayAsThumbnail,
+    !!image.displayAsThumbnail
   );
 
   // Get pixelated overlay if available
@@ -264,7 +292,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       onChange,
       setImages,
       throttleFrame,
-    },
+    }
   );
 
   // Handle interaction states
@@ -290,7 +318,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       handleDragEndInternal();
       onDragEnd();
     },
-    [handleDragEndInternal, onDragEnd],
+    [handleDragEndInternal, onDragEnd]
   );
 
   // Handle double-click to toggle variation mode
@@ -301,8 +329,52 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
         onDoubleClick(image.id);
       }
     },
-    [onDoubleClick, image.id],
+    [onDoubleClick, image.id]
   );
+
+  // Common props shared across all KonvaImage instances
+  const commonImageProps = useMemo(
+    () => ({
+      ...getImageDimensions(image),
+      draggable: isDraggable,
+      id: image.id,
+      onClick: onSelect,
+      onDblClick: handleDoubleClickWrapper,
+      onDragEnd: handleDragEndWrapper,
+      onDragMove: handleDragMove,
+      onDragStart: handleDragStartInternal,
+      onMouseDown: handleMouseDown,
+      onMouseEnter: handleMouseEnter,
+      onMouseLeave: handleMouseLeave,
+      onMouseUp: handleMouseUp,
+      onTap: onSelect,
+      perfectDrawEnabled: false,
+      ref: shapeRef,
+      rotation: image.rotation,
+      shadowForStrokeEnabled: false,
+      stroke: strokeColor,
+      strokeScaleEnabled: false,
+      strokeWidth: strokeWidth,
+    }),
+    [
+      image,
+      isDraggable,
+      onSelect,
+      handleDoubleClickWrapper,
+      handleDragEndWrapper,
+      handleDragMove,
+      handleDragStartInternal,
+      handleMouseDown,
+      handleMouseEnter,
+      handleMouseLeave,
+      handleMouseUp,
+      strokeColor,
+      strokeWidth,
+    ]
+  );
+
+  // Get directive label text if applicable
+  const directiveLabelText = getDirectiveLabelText(image);
 
   // Special case: Error placeholders show only pixelated overlay
   // No animation, no transition, just the static error state
@@ -310,40 +382,15 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     return (
       <>
         <KonvaImage
-          draggable={isDraggable}
-          height={image.height}
-          id={image.id}
+          {...commonImageProps}
           image={pixelatedImg}
           imageSmoothingEnabled={false}
-          onClick={onSelect}
-          onDblClick={handleDoubleClickWrapper}
-          onDragEnd={handleDragEndWrapper}
-          onDragMove={handleDragMove}
-          onDragStart={handleDragStartInternal}
-          onMouseDown={handleMouseDown}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onMouseUp={handleMouseUp}
-          onTap={onSelect}
           opacity={image.opacity ?? 1.0}
-          perfectDrawEnabled={false}
-          ref={shapeRef}
-          rotation={image.rotation}
-          stroke={strokeColor}
-          shadowForStrokeEnabled={false}
-          strokeScaleEnabled={false}
-          strokeWidth={strokeWidth}
-          width={image.width}
-          x={image.x}
-          y={image.y}
         />
         {/* Display error message label on error placeholders */}
         <DirectiveLabel
-          height={image.height}
+          {...getImageDimensions(image)}
           labelText={extractShortErrorMessage(image.errorMessage)}
-          width={image.width}
-          x={image.x}
-          y={image.y}
         />
       </>
     );
@@ -356,8 +403,8 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       <>
         {/* Reference image - fades from 0.4 to 1.0 opacity during transition */}
         <KonvaImage
+          {...getImageDimensions(image)}
           draggable={false}
-          height={image.height}
           id={`${image.id}-reference`}
           image={img}
           imageSmoothingEnabled={true}
@@ -366,39 +413,14 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
           perfectDrawEnabled={false}
           rotation={image.rotation}
           shadowForStrokeEnabled={false}
-          width={image.width}
-          x={image.x}
-          y={image.y}
         />
 
         {/* Pixelated overlay - fades from 1.0 to 0.0 opacity during transition */}
         <KonvaImage
-          draggable={isDraggable}
-          height={image.height}
-          id={image.id}
+          {...commonImageProps}
           image={pixelatedImg}
           imageSmoothingEnabled={false}
-          onClick={onSelect}
-          onDblClick={handleDoubleClickWrapper}
-          onDragEnd={handleDragEndWrapper}
-          onDragMove={handleDragMove}
-          onDragStart={handleDragStartInternal}
-          onMouseDown={handleMouseDown}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onMouseUp={handleMouseUp}
-          onTap={onSelect}
           opacity={overlayOpacity}
-          perfectDrawEnabled={false}
-          ref={shapeRef}
-          rotation={image.rotation}
-          stroke={strokeColor}
-          shadowForStrokeEnabled={false}
-          strokeScaleEnabled={false}
-          strokeWidth={strokeWidth}
-          width={image.width}
-          x={image.x}
-          y={image.y}
         />
       </>
     );
@@ -408,32 +430,10 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   if (pixelatedImg && !img) {
     return (
       <KonvaImage
-        draggable={isDraggable}
-        height={image.height}
-        id={image.id}
+        {...commonImageProps}
         image={pixelatedImg}
         imageSmoothingEnabled={false}
-        onClick={onSelect}
-        onDblClick={handleDoubleClickWrapper}
-        onDragEnd={handleDragEndWrapper}
-        onDragMove={handleDragMove}
-        onDragStart={handleDragStartInternal}
-        onMouseDown={handleMouseDown}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onMouseUp={handleMouseUp}
-        onTap={onSelect}
         opacity={finalOpacity}
-        perfectDrawEnabled={false}
-        ref={shapeRef}
-        rotation={image.rotation}
-        stroke={strokeColor}
-        shadowForStrokeEnabled={false}
-        strokeScaleEnabled={false}
-        strokeWidth={strokeWidth}
-        width={image.width}
-        x={image.x}
-        y={image.y}
       />
     );
   }
@@ -442,51 +442,16 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   return (
     <>
       <KonvaImage
-        draggable={isDraggable}
-        height={image.height}
-        id={image.id}
+        {...commonImageProps}
         image={img}
         imageSmoothingEnabled={true}
-        onClick={onSelect}
-        onDblClick={handleDoubleClickWrapper}
-        onDragEnd={handleDragEndWrapper}
-        onDragMove={handleDragMove}
-        onDragStart={handleDragStartInternal}
-        onMouseDown={handleMouseDown}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onMouseUp={handleMouseUp}
-        onTap={onSelect}
         opacity={finalOpacity}
-        perfectDrawEnabled={false}
-        ref={shapeRef}
-        rotation={image.rotation}
-        stroke={strokeColor}
-        shadowForStrokeEnabled={false}
-        strokeScaleEnabled={false}
-        strokeWidth={strokeWidth}
-        width={image.width}
-        x={image.x}
-        y={image.y}
       />
 
-      {image.directorName && !image.isLoading && (
+      {directiveLabelText && (
         <DirectiveLabel
-          height={image.height}
-          labelText={image.directorName}
-          width={image.width}
-          x={image.x}
-          y={image.y}
-        />
-      )}
-
-      {!image.directorName && image.cameraAngle && !image.isLoading && (
-        <DirectiveLabel
-          height={image.height}
-          labelText={abbreviateCameraDirective(image.cameraAngle)}
-          width={image.width}
-          x={image.x}
-          y={image.y}
+          {...getImageDimensions(image)}
+          labelText={directiveLabelText}
         />
       )}
     </>
@@ -505,7 +470,7 @@ CanvasImageComponent.displayName = "CanvasImage";
  */
 const arePropsEqual = (
   prevProps: CanvasImageProps,
-  nextProps: CanvasImageProps,
+  nextProps: CanvasImageProps
 ): boolean => {
   // Check primitive props
   if (
