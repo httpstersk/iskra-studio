@@ -196,8 +196,9 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   const throttleFrame = useFrameThrottle();
 
   // Get image source (thumbnail first, then full-size)
+  // Skip loading for error placeholders to save resources
   const img = useCanvasImageSource(
-    image.src,
+    image.hasContentError ? "" : image.src,
     image.thumbnailSrc,
     !!image.isGenerated,
     !!image.displayAsThumbnail,
@@ -232,8 +233,14 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   const overlayOpacity = opacityScale * animatedPixelatedOpacity;
 
   // Clear pixelatedSrc after transition completes to free memory
+  // EXCEPTION: Keep pixelated overlay for error placeholders (hasContentError: true)
   useEffect(() => {
-    if (isTransitionComplete && image.pixelatedSrc && !image.isLoading) {
+    if (
+      isTransitionComplete &&
+      image.pixelatedSrc &&
+      !image.isLoading &&
+      !image.hasContentError
+    ) {
       onChange({
         pixelatedSrc: undefined,
       });
@@ -242,6 +249,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     isTransitionComplete,
     image.pixelatedSrc,
     image.isLoading,
+    image.hasContentError,
     onChange,
     image.id,
   ]);
@@ -294,6 +302,41 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     },
     [onDoubleClick, image.id],
   );
+
+  // Special case: Error placeholders show only pixelated overlay
+  // No animation, no transition, just the static error state
+  if (image.hasContentError && pixelatedImg) {
+    return (
+      <KonvaImage
+        draggable={isDraggable}
+        height={image.height}
+        id={image.id}
+        image={pixelatedImg}
+        imageSmoothingEnabled={false}
+        onClick={onSelect}
+        onDblClick={handleDoubleClickWrapper}
+        onDragEnd={handleDragEndWrapper}
+        onDragMove={handleDragMove}
+        onDragStart={handleDragStartInternal}
+        onMouseDown={handleMouseDown}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onTap={onSelect}
+        opacity={image.opacity ?? 1.0}
+        perfectDrawEnabled={false}
+        ref={shapeRef}
+        rotation={image.rotation}
+        stroke={strokeColor}
+        shadowForStrokeEnabled={false}
+        strokeScaleEnabled={false}
+        strokeWidth={strokeWidth}
+        width={image.width}
+        x={image.x}
+        y={image.y}
+      />
+    );
+  }
 
   // If pixelated overlay exists and hasn't fully transitioned, render both layers
   // Only enter dual-layer mode if both images are available to prevent gaps
@@ -480,7 +523,8 @@ const arePropsEqual = (
     prevImg.displayAsThumbnail !== nextImg.displayAsThumbnail ||
     prevImg.cameraAngle !== nextImg.cameraAngle ||
     prevImg.directorName !== nextImg.directorName ||
-    prevImg.isDirector !== nextImg.isDirector
+    prevImg.isDirector !== nextImg.isDirector ||
+    prevImg.hasContentError !== nextImg.hasContentError
   ) {
     return false;
   }

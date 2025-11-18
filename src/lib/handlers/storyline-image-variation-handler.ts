@@ -21,6 +21,7 @@ import {
 } from "@/features/generation/app-services/image-storage.service";
 import {
   createPlaceholderFactory,
+  handleVariationError,
   performEarlyPreparation,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
@@ -220,6 +221,12 @@ export const handleStorylineImageVariations = async (
       context: { variationCount, selectedImageId: selectedImage?.id },
     });
 
-    setIsGenerating(false);
+    await handleVariationError({
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
   }
 };

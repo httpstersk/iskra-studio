@@ -14,6 +14,7 @@ import { selectRandomLightingVariations } from "@/utils/lighting-variation-utils
 import {
   applyPixelatedOverlayToReferenceImage,
   createPlaceholderFactory,
+  handleVariationError,
   performEarlyPreparation,
   performImageUploadWorkflow,
   removeAnalyzingStatus,
@@ -248,13 +249,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         snappedSource,
       } = await performEarlyPreparation(selectedImage, variationCount);
 
-      // Stage 0: Upload image to Convex
-      const { signedImageUrl } = await performImageUploadWorkflow({
-        selectedImage,
-        setActiveGenerations,
-        timestamp,
-      });
-
       // Randomly select lighting scenarios (no duplicates via Fisher-Yates)
       const variationsToGenerate =
         selectRandomLightingVariations(variationCount);
@@ -269,13 +263,19 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         timestamp,
       });
 
-      // Create placeholders IMMEDIATELY with lightingScenario metadata
-      placeholderImages = variationsToGenerate.map(
-        (lightingScenario, index) =>
-          makePlaceholder({ lightingScenario }, index),
+      // Create placeholders IMMEDIATELY with lightingScenario metadata (BEFORE upload)
+      placeholderImages = variationsToGenerate.map((lightingScenario, index) =>
+        makePlaceholder({ lightingScenario }, index),
       );
 
       setImages((prev) => [...prev, ...placeholderImages]);
+
+      // Stage 0: Upload image to Convex
+      const { signedImageUrl } = await performImageUploadWorkflow({
+        selectedImage,
+        setActiveGenerations,
+        timestamp,
+      });
 
       // Stage 1: Apply pixelated overlay during analysis
       applyPixelatedOverlayToReferenceImage({
@@ -333,21 +333,21 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
       setIsGenerating(false);
     } catch (error) {
-      // Clean up placeholders on error
-      const placeholderIds = placeholderImages.map((img) => img.id);
-      setImages((prev) =>
-        prev.filter((img) => !placeholderIds.includes(img.id)),
-      );
-
       handlerLogger.error("Lighting variation handler failed", error as Error);
+
+      await handleVariationError({
+        selectedImage,
+        setActiveGenerations,
+        setImages,
+        setIsGenerating,
+        timestamp,
+      });
 
       showErrorFromException(
         "Generation failed",
         error,
         "Failed to generate lighting variations",
       );
-
-      setIsGenerating(false);
     }
 
     return;
@@ -377,13 +377,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       snappedSource,
     } = await performEarlyPreparation(selectedImage, variationCount);
 
-    // Stage 0: Upload image to Convex
-    const { signedImageUrl } = await performImageUploadWorkflow({
-      selectedImage,
-      setActiveGenerations,
-      timestamp,
-    });
-
     // Randomly select camera directives (no duplicates via Fisher-Yates)
     const variationsToGenerate = selectRandomCameraVariations(variationCount);
 
@@ -397,12 +390,19 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       timestamp,
     });
 
-    // Create placeholders IMMEDIATELY with cameraAngle metadata
+    // Create placeholders IMMEDIATELY with cameraAngle metadata (BEFORE upload)
     placeholderImages = variationsToGenerate.map((cameraDirective, index) =>
       makePlaceholder({ cameraAngle: cameraDirective }, index),
     );
 
     setImages((prev) => [...prev, ...placeholderImages]);
+
+    // Stage 0: Upload image to Convex
+    const { signedImageUrl } = await performImageUploadWorkflow({
+      selectedImage,
+      setActiveGenerations,
+      timestamp,
+    });
 
     // Stage 1: Apply pixelated overlay during analysis
     applyPixelatedOverlayToReferenceImage({
@@ -460,21 +460,23 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
     setIsGenerating(false);
   } catch (error) {
-    // Clean up placeholders on error
-    const placeholderIds = placeholderImages.map((img) => img.id);
-    setImages((prev) => prev.filter((img) => !placeholderIds.includes(img.id)));
-
     handlerLogger.error(
       "Camera angle variation handler failed",
       error as Error,
     );
+
+    await handleVariationError({
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
 
     showErrorFromException(
       "Generation failed",
       error,
       "Failed to generate camera angle variations",
     );
-
-    setIsGenerating(false);
   }
 };

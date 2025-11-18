@@ -7,11 +7,12 @@
  */
 
 import { generateBRollConcepts } from "@/lib/b-roll-concept-generator";
-import { showErrorFromException } from "@/lib/toast";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import { showErrorFromException } from "@/lib/toast";
 import type { PlacedImage } from "@/types/canvas";
 import {
   createPlaceholderFactory,
+  handleVariationError,
   performEarlyPreparation,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
@@ -82,7 +83,7 @@ interface BrollImageVariationHandlerDeps {
  * @throws Error if analysis fails
  */
 async function analyzeImageStyle(
-  imageUrl: string,
+  imageUrl: string
 ): Promise<ImageStyleMoodAnalysis> {
   const response = await fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
     body: JSON.stringify({ imageUrl }),
@@ -96,7 +97,7 @@ async function analyzeImageStyle(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`,
+        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`
     );
   }
 
@@ -118,7 +119,7 @@ async function analyzeImageStyle(
  * @returns Promise that resolves when generation is set up
  */
 export const handleBrollImageVariations = async (
-  deps: BrollImageVariationHandlerDeps,
+  deps: BrollImageVariationHandlerDeps
 ): Promise<void> => {
   const {
     imageModel = "seedream",
@@ -225,7 +226,7 @@ export const handleBrollImageVariations = async (
 
     // Create placeholders IMMEDIATELY (optimistic UI)
     const placeholderImages: PlacedImage[] = formattedPrompts.map((_, index) =>
-      makePlaceholder({}, index),
+      makePlaceholder({}, index)
     );
 
     // Add placeholders immediately
@@ -256,9 +257,14 @@ export const handleBrollImageVariations = async (
     showErrorFromException(
       "Generation failed",
       error,
-      ERROR_MESSAGES.BROLL_GENERATION_FAILED,
+      ERROR_MESSAGES.BROLL_GENERATION_FAILED
     );
 
-    setIsGenerating(false);
+    await handleVariationError({
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
   }
 };

@@ -17,6 +17,7 @@ import type { PlacedImage } from "@/types/canvas";
 import {
   applyPixelatedOverlayToReferenceImage,
   createPlaceholderFactory,
+  handleVariationError,
   performEarlyPreparation,
   performImageUploadWorkflow,
   removeAnalyzingStatus,
@@ -58,7 +59,7 @@ interface DirectorVariationsResponse {
 async function generateDirectorVariations(
   imageUrl: string,
   directors: string[],
-  userContext?: string
+  userContext?: string,
 ): Promise<DirectorVariationsResponse> {
   const response = await fetch("/api/generate-director-variations", {
     method: "POST",
@@ -76,7 +77,7 @@ async function generateDirectorVariations(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `Director variations generation failed with status ${response.status}`
+        `Director variations generation failed with status ${response.status}`,
     );
   }
 
@@ -97,7 +98,7 @@ async function generateDirectorVariations(
  * 8. Generate images using Seedream/Nano Banana with combined text prompts
  */
 export const handleDirectorImageVariations = async (
-  deps: DirectorImageVariationHandlerDeps
+  deps: DirectorImageVariationHandlerDeps,
 ): Promise<void> => {
   const {
     imageModel = config.imageGeneration.defaultModel,
@@ -126,13 +127,6 @@ export const handleDirectorImageVariations = async (
       snappedSource,
     } = await performEarlyPreparation(selectedImage, variationCount);
 
-    // Stage 0: Upload image to ensure it's in Convex
-    const { signedImageUrl } = await performImageUploadWorkflow({
-      selectedImage,
-      setActiveGenerations,
-      timestamp,
-    });
-
     // Create factory function with shared configuration for all placeholders
     const makePlaceholder = createPlaceholderFactory({
       imageSizeDimensions,
@@ -143,13 +137,20 @@ export const handleDirectorImageVariations = async (
       timestamp,
     });
 
-    // Create placeholders IMMEDIATELY for optimistic UI
+    // Create placeholders IMMEDIATELY for optimistic UI (BEFORE any async operations that can fail)
     const placeholderImages: PlacedImage[] = Array.from(
       { length: variationCount },
-      (_, index) => makePlaceholder({}, index)
+      (_, index) => makePlaceholder({}, index),
     );
 
     setImages((prev) => [...prev, ...placeholderImages]);
+
+    // Stage 0: Upload image to ensure it's in Convex
+    const { signedImageUrl } = await performImageUploadWorkflow({
+      selectedImage,
+      setActiveGenerations,
+      timestamp,
+    });
 
     // Stage 1: Apply pixelated overlay to reference image during analysis
     applyPixelatedOverlayToReferenceImage({
@@ -170,7 +171,7 @@ export const handleDirectorImageVariations = async (
     const { refinedPrompts } = await generateDirectorVariations(
       signedImageUrl,
       selectedDirectors,
-      variationPrompt
+      variationPrompt,
     );
 
     // Remove analyzing status
@@ -193,7 +194,7 @@ export const handleDirectorImageVariations = async (
           }
         }
         return img;
-      })
+      }),
     );
 
     // Stage 5: Set up active generations for Seedream/Nano Banana
@@ -227,6 +228,12 @@ export const handleDirectorImageVariations = async (
       context: { variationCount, selectedImageId: selectedImage?.id },
     });
 
-    setIsGenerating(false);
+    await handleVariationError({
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
   }
 };

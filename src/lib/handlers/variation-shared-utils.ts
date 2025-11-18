@@ -609,3 +609,142 @@ export function removeAnalyzingStatus(
     return newMap;
   });
 }
+
+/**
+ * Configuration for handling variation generation errors
+ */
+export interface HandleVariationErrorConfig {
+  /** Setter for active generation states */
+  setActiveGenerations: React.Dispatch<
+    React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
+  >;
+  /** Setter for images state */
+  setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
+  /** Setter for global generating flag */
+  setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
+  /** Optional selected image (for removing pixelated overlay from reference) */
+  selectedImage?: PlacedImage;
+  /** Timestamp used to create placeholder IDs */
+  timestamp: number;
+}
+
+/**
+ * Handles variation generation errors by marking placeholders with error state.
+ *
+ * This function provides consistent error handling across all variation handlers:
+ * - Generates red error overlays for all placeholder images
+ * - Marks all placeholder images for this timestamp with `hasContentError: true`
+ * - Sets `isLoading: false` to stop loading animation
+ * - Removes pixelated overlay from reference image (if provided)
+ * - Clears all active generation states for this timestamp
+ * - Sets generating flag to false
+ *
+ * @param config - Error handling configuration
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   // ... variation generation logic
+ * } catch (error) {
+ *   handleVariationError({
+ *     setActiveGenerations,
+ *     setImages,
+ *     setIsGenerating,
+ *     selectedImage,
+ *     timestamp
+ *   });
+ *   throw error; // Re-throw for additional error handling if needed
+ * }
+ * ```
+ */
+export async function handleVariationError(
+  config: HandleVariationErrorConfig,
+): Promise<void> {
+  const {
+    setActiveGenerations,
+    setImages,
+    setIsGenerating,
+    selectedImage,
+    timestamp,
+  } = config;
+
+  // Import error overlay utility
+  const { createErrorOverlayFromUrl } = await import(
+    "@/utils/image-error-overlay"
+  );
+
+  // First, mark placeholders as errors immediately
+  setImages((prev) =>
+    prev.map((img) => {
+      const match = img.id.match(/^variation-(\d+)-(\d+)$/);
+      if (match && parseInt(match[1]) === timestamp) {
+        return {
+          ...img,
+          hasContentError: true,
+          isLoading: false,
+          opacity: 1.0,
+        };
+      }
+      return img;
+    }),
+  );
+
+  // Then generate red error overlays asynchronously
+  // Get current images to work with
+  let errorPlaceholders: PlacedImage[] = [];
+  setImages((prev) => {
+    errorPlaceholders = prev.filter((img) => {
+      const match = img.id.match(/^variation-(\d+)-(\d+)$/);
+      return match && parseInt(match[1]) === timestamp;
+    });
+    return prev;
+  });
+
+  // Generate error overlays in parallel
+  const overlayPromises = errorPlaceholders.map(async (img) => {
+    const sourceUrl = img.pixelatedSrc || img.src;
+    const errorOverlay = await createErrorOverlayFromUrl(
+      sourceUrl,
+      img.width,
+      img.height,
+    );
+    return { id: img.id, errorOverlay };
+  });
+
+  const overlays = await Promise.all(overlayPromises);
+
+  // Update placeholders with red error overlays
+  setImages((prev) =>
+    prev.map((img) => {
+      const overlay = overlays.find((o) => o.id === img.id);
+      if (overlay && overlay.errorOverlay) {
+        return {
+          ...img,
+          pixelatedSrc: overlay.errorOverlay,
+        };
+      }
+      return img;
+    }),
+  );
+  if (selectedImage) {
+    setImages((prev) =>
+      prev.map((img) =>
+        img.id === selectedImage.id ? { ...img, pixelatedSrc: undefined } : img,
+      ),
+    );
+  }
+
+  // Clear any active generation states for this timestamp
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    // Remove all generation states for this timestamp
+    Array.from(newMap.keys()).forEach((key) => {
+      if (key.includes(`variation-${timestamp}`)) {
+        newMap.delete(key);
+      }
+    });
+    return newMap;
+  });
+
+  setIsGenerating(false);
+}
