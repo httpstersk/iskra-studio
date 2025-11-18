@@ -45,7 +45,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' data: blob: https://*.convex.cloud https://*.convex.site https://*.clerk.accounts.dev https://*.clerk.com https://fal.ai https://*.fal.media https://api.openai.com https://platform.bria.ai https://*.upstash.io wss://*.convex.cloud",
+      "connect-src 'self' data: blob: https://*.convex.cloud https://*.convex.site https://*.clerk.accounts.dev https://*.clerk.com https://clerk-telemetry.com https://fal.ai https://*.fal.media https://api.openai.com https://platform.bria.ai https://*.upstash.io wss://*.convex.cloud",
       "media-src 'self' https: blob:",
       "object-src 'none'",
       "base-uri 'self'",
