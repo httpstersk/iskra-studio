@@ -314,7 +314,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
 
   // Wrap drag end to call both internal and external handlers
   const handleDragEndWrapper = useCallback(
-    (e: Konva.KonvaEventObject<DragEvent>) => {
+    (_e: Konva.KonvaEventObject<DragEvent>) => {
       handleDragEndInternal();
       onDragEnd();
     },

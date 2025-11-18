@@ -103,7 +103,6 @@ export function useStreamingHandlers(
     setSelectedIds,
     setSelectedImageForVideo,
     setVideos,
-    videos,
   } = deps;
 
   const handleStreamingImageComplete = useCallback(
@@ -268,7 +267,6 @@ export function useStreamingHandlers(
     },
     [
       activeGenerations,
-      images,
       isAuthenticated,
       saveToStorage,
       setActiveGenerations,
@@ -557,7 +555,6 @@ export function useStreamingHandlers(
       setIsConvertingToVideo,
       setSelectedImageForVideo,
       setVideos,
-      videos,
     ]
   );
 

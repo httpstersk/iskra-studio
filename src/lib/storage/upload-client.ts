@@ -17,7 +17,7 @@ export interface UploadMetadata {
   height?: number;
   duration?: number;
   format?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class UploadClient {

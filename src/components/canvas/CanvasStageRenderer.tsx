@@ -281,7 +281,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
    * Saves canvas state
    */
   const handleVideoDragEnd = React.useCallback(
-    (videoId: string) => {
+    (_videoId: string) => {
       interactions.setIsDraggingImage(false);
       saveToHistory();
       interactions.setDragStartPositions(new Map());

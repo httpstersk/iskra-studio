@@ -58,7 +58,7 @@ const INSTRUCTION_APPLY_DIRECTIVE_PREFIX =
 const INSTRUCTION_OUTPUT_IMPORTANT =
   "IMPORTANT: Edit the referenced image according to the user's instructions, while maintaining the colours, mood and cinematic style of the original.";
 /** Instruction bullet: recompose according to chosen style. */
-const INSTRUCTION_RECOMPOSE_CHOSEN_STYLE =
+const _INSTRUCTION_RECOMPOSE_CHOSEN_STYLE =
   "Recompose the scene according to the chosen style.";
 /** Camera aesthetics bullet: pick focal length and aperture. */
 const LINE_CAMERA_PICK_FOCAL_APERTURE =

@@ -4,6 +4,7 @@
  */
 
 import { generateFiboVariations } from "@/lib/services/fibo-variation-service";
+import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
 
 export interface VariationConfig<T extends string> {
   /**
@@ -26,11 +27,11 @@ export interface VariationInput<T extends string> {
 }
 
 export interface VariationOutput<T extends string> {
-  fiboAnalysis: any;
+  fiboAnalysis: unknown;
   refinedPrompts: Array<{
     [K in T]: string;
   } & {
-    refinedStructuredPrompt: any;
+    refinedStructuredPrompt: FiboStructuredPrompt;
   }>;
 }
 

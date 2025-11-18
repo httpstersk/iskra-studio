@@ -10,6 +10,7 @@ import { showError, showErrorFromException } from "@/lib/toast";
 import { expandStorylinesToPrompts } from "@/lib/sora-prompt-generator";
 import { generateStorylines } from "@/lib/storyline-generator";
 import type {
+  ActiveVideoGeneration,
   PlacedImage,
   PlacedVideo,
   VideoGenerationSettings,
@@ -39,35 +40,19 @@ const ERROR_MESSAGES = {
   UPLOAD_FAILED: "Upload failed",
 } as const;
 
-const HTTP_STATUS = {
+const _HTTP_STATUS = {
   RATE_LIMIT: 429,
 } as const;
 
 const VARIATION_COUNT = 4;
-const POSITION_INDICES = [0, 2, 4, 6] as const;
-
-interface ToastProps {
-  description?: string;
-  title: string;
-  variant?: "default" | "destructive";
-}
-
-interface VideoGenerationConfig {
-  duration: number;
-  imageUrl: string;
-  isVariation: true;
-  modelId: string;
-  prompt: string;
-  sourceImageId: string;
-  [key: string]: unknown;
-}
+const _POSITION_INDICES = [0, 2, 4, 6] as const;
 
 interface SoraVideoVariationHandlerDeps {
   basePrompt?: string;
   images: PlacedImage[];
   selectedIds: string[];
   setActiveVideoGenerations: React.Dispatch<
-    React.SetStateAction<Map<string, VideoGenerationConfig>>
+    React.SetStateAction<Map<string, ActiveVideoGeneration>>
   >;
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
   setVideos: React.Dispatch<React.SetStateAction<PlacedVideo[]>>;
@@ -151,7 +136,7 @@ interface CreateVideoGenerationConfigParams {
  */
 function createVideoGenerationConfig(
   params: CreateVideoGenerationConfigParams,
-): VideoGenerationConfig {
+): ActiveVideoGeneration {
   const { duration, imageUrl, modelId, prompt, sourceImageId, videoSettings } =
     params;
 

@@ -167,7 +167,7 @@ export const VideoOverlays = React.memo<VideoOverlaysProps>(
           videoEl.loop = video.isLooping || false;
         }
       });
-    }, [videos]);
+    }, [videos, videoRefs]);
 
     return (
       <>

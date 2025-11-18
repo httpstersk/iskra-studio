@@ -64,7 +64,20 @@ function useBatteryMonitoring(
 
     let isLowBattery = false;
 
-    (navigator as any).getBattery().then((battery: any) => {
+    interface BatteryManager extends EventTarget {
+      charging: boolean;
+      chargingTime: number;
+      dischargingTime: number;
+      level: number;
+      addEventListener(type: "chargingchange" | "levelchange", listener: () => void): void;
+      removeEventListener(type: "chargingchange" | "levelchange", listener: () => void): void;
+    }
+
+    interface NavigatorWithBattery extends Navigator {
+      getBattery(): Promise<BatteryManager>;
+    }
+
+    (navigator as NavigatorWithBattery).getBattery().then((battery: BatteryManager) => {
       const checkBattery = () => {
         const level = battery.level;
         const charging = battery.charging;

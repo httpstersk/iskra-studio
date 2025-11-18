@@ -51,7 +51,7 @@ export interface AssetSyncState {
  * ```
  */
 export function useAssetSync(projectId: string): AssetSyncState {
-  const trpc = useTRPC();
+  const _trpc = useTRPC();
 
   // Query project assets
   const { data: assetValidation, isLoading } = useQuery({
@@ -73,7 +73,7 @@ export function useAssetSync(projectId: string): AssetSyncState {
 
   const validateAssets = useCallback(async () => {
     // TODO: Call Convex mutation
-  }, [projectId]);
+  }, []);
 
   return {
     isValidating: isLoading,

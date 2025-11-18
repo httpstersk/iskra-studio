@@ -42,7 +42,7 @@ export const DimensionDisplay: React.FC<DimensionDisplayProps> = ({
       width: Math.round(image.width),
       height: Math.round(image.height),
     };
-  }, [image?.naturalWidth, image?.naturalHeight, image?.width, image?.height]);
+  }, [image]);
 
   if (!hasSingleSelection || !image || !getApiDimensions) return null;
 

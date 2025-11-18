@@ -128,7 +128,7 @@ export const handleBrollImageVariations = async (
     setActiveGenerations,
     setImages,
     setIsGenerating,
-    toast,
+    toast: _toast,
     variationCount = 4,
     variationPrompt,
   } = deps;

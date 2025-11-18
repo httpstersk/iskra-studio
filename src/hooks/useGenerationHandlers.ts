@@ -17,7 +17,17 @@ import { useProjectGuard } from "./useProjectGuard";
  */
 interface GenerationHandlerDeps {
   canvasSize: { height: number; width: number };
-  generateTextToImage: any;
+  generateTextToImage: (params: {
+    prompt: string;
+    seed?: number;
+    imageSize?:
+      | "square"
+      | "landscape_16_9"
+      | "portrait_16_9"
+      | "landscape_4_3"
+      | "portrait_4_3"
+      | { width: number; height: number };
+  }) => Promise<{ url: string; width: number; height: number; seed: number }>;
   generationCount: number;
   generationSettings: GenerationSettings;
   imageModel: "seedream" | "nano-banana";

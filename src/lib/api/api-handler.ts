@@ -10,7 +10,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { z, ZodSchema } from "zod";
+import { type ZodSchema } from "zod";
 
 /**
  * Standard error response format

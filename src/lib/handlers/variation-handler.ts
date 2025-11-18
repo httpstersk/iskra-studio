@@ -29,9 +29,9 @@ import { validateSingleImageSelection } from "./variation-utils";
 interface CameraAngleVariationsResponse {
   refinedPrompts: Array<{
     cameraAngle: string;
-    refinedStructuredPrompt: any; // FIBO JSON refined with camera angle
+    refinedStructuredPrompt: Record<string, unknown>; // FIBO JSON refined with camera angle
   }>;
-  fiboAnalysis: any;
+  fiboAnalysis: unknown;
 }
 
 /**
@@ -40,9 +40,9 @@ interface CameraAngleVariationsResponse {
 interface LightingVariationsResponse {
   refinedPrompts: Array<{
     lightingScenario: string;
-    refinedStructuredPrompt: any; // FIBO JSON refined with lighting
+    refinedStructuredPrompt: Record<string, unknown>; // FIBO JSON refined with lighting
   }>;
-  fiboAnalysis: any;
+  fiboAnalysis: unknown;
 }
 
 /**
@@ -125,7 +125,7 @@ interface VariationHandlerDeps {
   >;
   /** Setter for active video generation states */
   setActiveVideoGenerations?: React.Dispatch<
-    React.SetStateAction<Map<string, any>>
+    React.SetStateAction<Map<string, import("@/types/canvas").ActiveVideoGeneration>>
   >;
   /** Setter for images state */
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;

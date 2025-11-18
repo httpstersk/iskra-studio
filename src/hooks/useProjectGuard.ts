@@ -96,7 +96,7 @@ export function useProjectGuard(): UseProjectGuardReturn {
         showInfo("Project created", "Your work will be automatically saved");
 
         return true;
-      } catch (error) {
+      } catch (_error) {
         // Don't show error toast - let the action continue locally
         return false;
       } finally {

@@ -156,7 +156,7 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
             },
           );
           finalUrl = migrationResult.url;
-        } catch (error) {
+        } catch (_error) {
           // Continue with cropped data URL if migration fails
         }
       }
@@ -211,8 +211,8 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
   }
 
   // Process each selected image individually for image-to-image
-  let successCount = 0;
-  let failureCount = 0;
+  let _successCount = 0;
+  let _failureCount = 0;
 
   for (const img of selectedImages) {
     try {
@@ -249,28 +249,28 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
       let uploadResult;
       try {
         uploadResult = await uploadImageDirect(dataUrl, userId);
-      } catch (uploadError) {
-        failureCount++;
+      } catch (_uploadError) {
+        _failureCount++;
         // Skip this image if upload fails
         continue;
       }
 
       // Only proceed with generation if upload succeeded
       if (!uploadResult?.url) {
-        failureCount++;
+        _failureCount++;
         continue;
       }
 
       // Calculate output size maintaining aspect ratio
       const aspectRatio = canvas.width / canvas.height;
       const baseSize = 512;
-      let outputWidth = baseSize;
-      let outputHeight = baseSize;
+      let _outputWidth = baseSize;
+      let _outputHeight = baseSize;
 
       if (aspectRatio > 1) {
-        outputHeight = Math.round(baseSize / aspectRatio);
+        _outputHeight = Math.round(baseSize / aspectRatio);
       } else {
-        outputWidth = Math.round(baseSize * aspectRatio);
+        _outputWidth = Math.round(baseSize * aspectRatio);
       }
 
       const groupId = `single-${Date.now()}-${Math.random()}`;
@@ -285,9 +285,9 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
         img.width,
         img.height,
       );
-      successCount++;
+      _successCount++;
     } catch (error) {
-      failureCount++;
+      _failureCount++;
       showErrorFromException(
         "Failed to process image",
         error,

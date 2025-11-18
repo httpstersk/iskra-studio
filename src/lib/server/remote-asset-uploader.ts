@@ -102,7 +102,7 @@ async function generateThumbnailBlob(
       .toBuffer();
 
     return new Blob([new Uint8Array(thumbnailBuffer)], { type: "image/webp" });
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 }

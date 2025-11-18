@@ -1,5 +1,5 @@
 import { DBSchema, IDBPDatabase, openDB } from "idb";
-import { ERROR_MESSAGES, OBJECT_STORES, STORAGE_CONSTANTS } from "./constants";
+import { OBJECT_STORES, STORAGE_CONSTANTS } from "./constants";
 import type { CanvasState } from "@/types/project";
 
 interface CanvasImage {

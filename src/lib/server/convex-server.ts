@@ -85,7 +85,7 @@ export async function getCurrentUser() {
     const client = await getAuthenticatedConvexClient();
     const user = await client.query(api.users.getCurrentUser);
     return user;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -101,7 +101,7 @@ export async function listProjects(limit = 10) {
     const client = await getAuthenticatedConvexClient();
     const projects = await client.query(api.projects.listProjects, { limit });
     return projects;
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }

@@ -234,7 +234,7 @@ export function syncElementWithAsset(
  * ```
  */
 export function orphanElement(element: CanvasElement): CanvasElement {
-  const { assetId, assetType, assetSyncedAt, ...rest } = element;
+  const { assetId: _assetId, assetType: _assetType, assetSyncedAt: _assetSyncedAt, ...rest } = element;
   return rest;
 }
 

@@ -5,7 +5,7 @@
 export interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
   headers?: Record<string, string>;
-  body?: any;
+  body?: unknown;
   timeout?: number;
   retries?: number;
   retryDelay?: number;
@@ -22,7 +22,7 @@ export class HttpError extends Error {
   constructor(
     message: string,
     public status: number,
-    public response?: any
+    public response?: unknown
   ) {
     super(message);
     this.name = 'HttpError';
@@ -214,7 +214,7 @@ class HttpClient {
    */
   private async handleErrorResponse(response: Response): Promise<never> {
     let errorMessage: string;
-    let errorDetails: any;
+    let errorDetails: unknown;
 
     try {
       const contentType = response.headers.get('content-type');
@@ -222,8 +222,8 @@ class HttpClient {
       if (contentType?.includes('application/json')) {
         errorDetails = await response.json();
         errorMessage =
-          errorDetails?.error ||
-          errorDetails?.message ||
+          (errorDetails as { error?: string; message?: string })?.error ||
+          (errorDetails as { error?: string; message?: string })?.message ||
           `Request failed with status ${response.status}`;
       } else {
         const errorText = await response.text();

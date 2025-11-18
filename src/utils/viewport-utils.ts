@@ -297,7 +297,7 @@ export function zoomViewport(
     return viewport;
   }
 
-  const scaleRatio = newScale / oldScale;
+  const _scaleRatio = newScale / oldScale;
   const mouseX = (screenX - viewport.x) / oldScale;
   const mouseY = (screenY - viewport.y) / oldScale;
 

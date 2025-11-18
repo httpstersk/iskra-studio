@@ -83,7 +83,7 @@ export function useDefaultImages(
           };
 
           reader.readAsDataURL(blob);
-        } catch (error) {}
+        } catch (_error) {}
       }
     };
 

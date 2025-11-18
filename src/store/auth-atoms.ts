@@ -10,7 +10,7 @@
  */
 
 import { atom } from "jotai";
-import type { User as ClerkUser } from "@clerk/nextjs/server";
+import type { UserResource } from "@clerk/types";
 import type { User, UserTier } from "@/types/auth";
 
 /**
@@ -21,7 +21,7 @@ import type { User, UserTier } from "@/types/auth";
  */
 export interface UserInfo {
   /** Clerk user object with authentication details */
-  clerkUser: ClerkUser | null;
+  clerkUser: UserResource | null;
 
   /** Convex user record with tier and storage information */
   convexUser: User | null;

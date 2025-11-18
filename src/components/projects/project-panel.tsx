@@ -11,6 +11,7 @@ import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
 import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { PanelLeftClose, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 
@@ -25,7 +26,7 @@ interface ProjectPanelProps {
   isOpen?: boolean;
 
   /** Callback when a project is opened */
-  onOpenProject?: (projectId: string) => void;
+  onOpenProject?: (projectId: Id<"projects">) => void;
 
   /** Callback to toggle the panel */
   onToggle?: () => void;
@@ -65,9 +66,9 @@ export function ProjectPanel({
   const { projects, isLoading, createProject } = useProjects();
 
   const projectNumbers = useMemo(
-    () =>
+    (): { id: Id<"projects">; label: string }[] =>
       projects.map((project, index) => ({
-        id: project.id,
+        id: project.id as Id<"projects">,
         label: `${(index + 1).toString().padStart(2, "0")}`,
       })),
     [projects],
@@ -119,7 +120,7 @@ export function ProjectPanel({
   /**
    * Handles opening a project.
    */
-  const handleOpenProject = async (projectId: string) => {
+  const handleOpenProject = async (projectId: Id<"projects">) => {
     await onOpenProject?.(projectId);
   };
 

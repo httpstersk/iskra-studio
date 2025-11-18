@@ -215,7 +215,7 @@ export function useCanvasInteractions(
   );
 
   const handleMouseUp = useCallback(
-    (e: Konva.KonvaEventObject<MouseEvent>) => {
+    (_e: Konva.KonvaEventObject<MouseEvent>) => {
       if (isPanningCanvas) {
         setIsPanningCanvas(false);
         return;
@@ -412,7 +412,7 @@ export function useCanvasInteractions(
   );
 
   const handleTouchEnd = useCallback(
-    (e: Konva.KonvaEventObject<TouchEvent>) => {
+    (_e: Konva.KonvaEventObject<TouchEvent>) => {
       setLastTouchDistance(null);
       setLastTouchCenter(null);
       setIsTouchingImage(false);

@@ -2,7 +2,7 @@
 
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useAtom, useAtomValue } from "jotai";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import {
   isAuthenticatedAtom,
@@ -103,7 +103,7 @@ export function useAuth(): UseAuthReturn {
           .then((newUser) => {
             if (newUser) {
               setUserInfo({
-                clerkUser: clerkUser as any,
+                clerkUser: clerkUser,
                 convexUser: {
                   userId: newUser.userId,
                   email: newUser.email,
@@ -121,7 +121,7 @@ export function useAuth(): UseAuthReturn {
       } else if (convexUser) {
         // Update atom with fetched Convex user data
         setUserInfo({
-          clerkUser: clerkUser as any,
+          clerkUser: clerkUser,
           convexUser: {
             userId: convexUser.userId,
             email: convexUser.email,

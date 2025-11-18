@@ -1,4 +1,4 @@
-import { Ratelimit } from "@upstash/ratelimit";
+import { Ratelimit, type Duration } from "@upstash/ratelimit";
 import { kv } from "@vercel/kv";
 
 export type RateLimiter = {
@@ -7,10 +7,10 @@ export type RateLimiter = {
   perDay: Ratelimit;
 };
 
-export const createRateLimiter = (tokens: number, window: string) => {
+export const createRateLimiter = (tokens: number, window: Duration) => {
   return new Ratelimit({
     redis: kv,
-    limiter: Ratelimit.slidingWindow(tokens, window as any),
+    limiter: Ratelimit.slidingWindow(tokens, window),
     analytics: false,
   });
 };

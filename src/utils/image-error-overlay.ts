@@ -82,7 +82,7 @@ export async function createErrorOverlayFromUrl(
     });
 
     return createErrorOverlay(img, width, height, pixelSize);
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 }

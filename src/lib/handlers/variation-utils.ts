@@ -5,14 +5,6 @@
 import type { PlacedImage } from "@/types/canvas";
 import { showError } from "@/lib/toast";
 
-interface ToastFunction {
-  (props: {
-    title: string;
-    description?: string;
-    variant?: "default" | "destructive";
-  }): void;
-}
-
 /**
  * Checks if a URL is a Convex storage URL
  */
@@ -60,7 +52,7 @@ export function extractSignedUrlFromProxy(proxyUrl: string): string | null {
     }
 
     return trimmedUrl;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -75,7 +67,7 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
 
   await new Promise<void>((resolve, reject) => {
     img.onload = () => resolve();
-    img.onerror = (error) => {
+    img.onerror = (_error) => {
       reject(new Error(`Failed to load image: ${imageSrc.substring(0, 100)}`));
     };
   });
