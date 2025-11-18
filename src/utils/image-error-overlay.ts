@@ -8,7 +8,8 @@ const DEFAULT_PIXEL_SIZE = CANVAS_GRID.PIXEL_SIZE;
  * Creates an error overlay for content validation failures
  *
  * Combines a red-tinted pixelated version of the source image with a
- * centered warning sign to visually communicate that content was flagged.
+ * centered warning sign. The "FAILED" text is displayed separately via
+ * the DirectiveLabel component for consistent styling.
  *
  * @param image - Source image element to transform
  * @param width - Target width for the error overlay
@@ -38,8 +39,8 @@ export function createErrorOverlay(
   const ctx = redPixelatedCanvas.getContext("2d");
   if (ctx) {
     // Position warning in center
-    const x = (width - warningSize) / 2;
-    const y = (height - warningSize) / 2;
+    const warningX = (width - warningSize) / 2;
+    const warningY = (height - warningSize) / 2;
 
     // Add a subtle shadow for depth
     ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
@@ -47,7 +48,7 @@ export function createErrorOverlay(
     ctx.shadowOffsetX = pixelSize / 2;
     ctx.shadowOffsetY = pixelSize / 2;
 
-    ctx.drawImage(warningCanvas, x, y, warningSize, warningSize);
+    ctx.drawImage(warningCanvas, warningX, warningY, warningSize, warningSize);
   }
 
   return redPixelatedCanvas.toDataURL("image/png");

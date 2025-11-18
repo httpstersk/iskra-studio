@@ -261,6 +261,7 @@ export const handleBrollImageVariations = async (
     );
 
     await handleVariationError({
+      selectedImage,
       setActiveGenerations,
       setImages,
       setIsGenerating,

@@ -307,34 +307,44 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   // No animation, no transition, just the static error state
   if (image.hasContentError && pixelatedImg) {
     return (
-      <KonvaImage
-        draggable={isDraggable}
-        height={image.height}
-        id={image.id}
-        image={pixelatedImg}
-        imageSmoothingEnabled={false}
-        onClick={onSelect}
-        onDblClick={handleDoubleClickWrapper}
-        onDragEnd={handleDragEndWrapper}
-        onDragMove={handleDragMove}
-        onDragStart={handleDragStartInternal}
-        onMouseDown={handleMouseDown}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onMouseUp={handleMouseUp}
-        onTap={onSelect}
-        opacity={image.opacity ?? 1.0}
-        perfectDrawEnabled={false}
-        ref={shapeRef}
-        rotation={image.rotation}
-        stroke={strokeColor}
-        shadowForStrokeEnabled={false}
-        strokeScaleEnabled={false}
-        strokeWidth={strokeWidth}
-        width={image.width}
-        x={image.x}
-        y={image.y}
-      />
+      <>
+        <KonvaImage
+          draggable={isDraggable}
+          height={image.height}
+          id={image.id}
+          image={pixelatedImg}
+          imageSmoothingEnabled={false}
+          onClick={onSelect}
+          onDblClick={handleDoubleClickWrapper}
+          onDragEnd={handleDragEndWrapper}
+          onDragMove={handleDragMove}
+          onDragStart={handleDragStartInternal}
+          onMouseDown={handleMouseDown}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onTap={onSelect}
+          opacity={image.opacity ?? 1.0}
+          perfectDrawEnabled={false}
+          ref={shapeRef}
+          rotation={image.rotation}
+          stroke={strokeColor}
+          shadowForStrokeEnabled={false}
+          strokeScaleEnabled={false}
+          strokeWidth={strokeWidth}
+          width={image.width}
+          x={image.x}
+          y={image.y}
+        />
+        {/* Display FAILED label on error placeholders */}
+        <DirectiveLabel
+          height={image.height}
+          labelText="FAILED"
+          width={image.width}
+          x={image.x}
+          y={image.y}
+        />
+      </>
     );
   }
 
