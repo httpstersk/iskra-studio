@@ -16,6 +16,7 @@ import type {
 export const generationSettingsAtom = atom<GenerationSettings>({
   prompt: "",
   styleId: "custom",
+  variationPrompt: "",
 });
 
 /**
