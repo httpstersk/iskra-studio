@@ -89,7 +89,7 @@ export async function generateThumbnail(
  */
 export async function uploadThumbnail(
   dataUrl: string,
-  userId: string,
+  _userId: string,
 ): Promise<{ storageId: string; url: string }> {
   try {
     // Convert data URL to blob

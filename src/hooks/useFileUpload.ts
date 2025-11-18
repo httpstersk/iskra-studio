@@ -152,7 +152,7 @@ export function useFileUpload(
                             : img,
                         ),
                       );
-                    } catch (error) {
+                    } catch (_error) {
                       if (toast) {
                         showError(
                           "Upload failed",

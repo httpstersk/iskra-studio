@@ -54,7 +54,7 @@ const createFileInput = (
   input.onchange = (e) => {
     try {
       handleFileUpload((e.target as HTMLInputElement).files);
-    } catch (error) {
+    } catch (_error) {
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_FAILED,
         CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC,
@@ -85,7 +85,7 @@ const triggerFileDialog = (input: HTMLInputElement) => {
   requestAnimationFrame(() => {
     try {
       input.click();
-    } catch (error) {
+    } catch (_error) {
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE,
         CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC,

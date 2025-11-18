@@ -106,7 +106,7 @@ export async function downloadAndReuploadBatch(
   const promises = assets.map(async ({ url, options }) => {
     try {
       return await downloadAndReupload(url, options);
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   });

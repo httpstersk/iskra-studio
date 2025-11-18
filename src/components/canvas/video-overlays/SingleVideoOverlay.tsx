@@ -49,7 +49,7 @@ export const SingleVideoOverlay = React.memo<SingleVideoOverlayProps>(
     video,
     viewport,
   }) {
-    const handleContextMenu = useVideoContextMenu(video.id);
+    const _handleContextMenu = useVideoContextMenu(video.id);
 
     const handleChange = React.useCallback(
       (newAttrs: Partial<PlacedVideo>) => {

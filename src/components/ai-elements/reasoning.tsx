@@ -122,7 +122,7 @@ export type ReasoningTriggerProps = ComponentProps<
 export const ReasoningTrigger = memo(
   ({
     className,
-    title = "Reasoning",
+    title: _title = "Reasoning",
     children,
     ...props
   }: ReasoningTriggerProps) => {

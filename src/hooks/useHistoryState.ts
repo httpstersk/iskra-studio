@@ -52,6 +52,7 @@ export function useHistoryState(
     if (history.length === 0) {
       saveToHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {

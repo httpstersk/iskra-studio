@@ -79,13 +79,13 @@ export function CanvasControlPanel({
   setIsSettingsDialogOpen,
   setVideoDuration,
   setVideoModel,
-  setVideoResolution,
+  setVideoResolution: _setVideoResolution,
   showSuccess,
   undo,
   variationMode = "image",
   videoDuration,
   videoModel,
-  videoResolution,
+  videoResolution: _videoResolution,
 }: CanvasControlPanelProps) {
   const hasSelection = selectedIds.length > 0;
   return (

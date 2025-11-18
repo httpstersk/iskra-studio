@@ -21,7 +21,7 @@
  * @returns Debounced version of the function
  *
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
   delay: number,
 ): (...args: Parameters<T>) => void {
@@ -53,7 +53,7 @@ export function debounce<T extends (...args: any[]) => any>(
  * @returns Throttled version of the function
  *
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: never[]) => unknown>(
   func: T,
   limit: number,
 ): (...args: Parameters<T>) => void {
@@ -106,7 +106,7 @@ export function throttle<T extends (...args: any[]) => any>(
  * // Will execute at most once per animation frame (~60fps)
  * ```
  */
-export function throttleRAF<T extends (...args: any[]) => any>(
+export function throttleRAF<T extends (...args: never[]) => unknown>(
   func: T,
 ): (...args: Parameters<T>) => void {
   let rafId: number | null = null;

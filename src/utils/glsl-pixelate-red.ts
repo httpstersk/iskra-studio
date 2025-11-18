@@ -308,7 +308,7 @@ export const createRedPixelatedCanvas = (
     drawFullscreenQuad(gl, resources);
 
     return canvas;
-  } catch (error) {
+  } catch (_error) {
     return createFallbackRedPixelateCanvas(
       image,
       targetWidth,

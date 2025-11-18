@@ -89,7 +89,7 @@ export async function compressImage(
 
     // Return original if compression didn't reduce size
     return imageBlob;
-  } catch (error) {
+  } catch (_error) {
     // Return original blob if compression fails
     return imageBlob;
   }

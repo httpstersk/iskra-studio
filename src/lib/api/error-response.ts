@@ -12,7 +12,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public statusCode: number = 500,
-    public details?: any,
+    public details?: unknown,
     public isUserFacing: boolean = true
   ) {
     super(message);
@@ -27,7 +27,7 @@ export class ApiError extends Error {
 function sanitizeErrorMessage(
   error: unknown,
   fallbackMessage: string
-): { message: string; details?: any } {
+): { message: string; details?: unknown } {
   // In development, show full error details
   if (IS_DEVELOPMENT) {
     if (error instanceof Error) {
@@ -83,7 +83,7 @@ export function createErrorResponse(
     return NextResponse.json(
       {
         error: sanitized.message,
-        ...(sanitized.details && { details: sanitized.details }),
+        ...(sanitized.details ? { details: sanitized.details } : {}),
       },
       { status: error.statusCode }
     );
@@ -109,7 +109,7 @@ export function createErrorResponse(
   return NextResponse.json(
     {
       error: sanitized.message,
-      ...(sanitized.details && { details: sanitized.details }),
+      ...(sanitized.details ? { details: sanitized.details } : {}),
     },
     { status: 500 }
   );
@@ -120,7 +120,7 @@ export function createErrorResponse(
  */
 export async function parseApiError(response: Response): Promise<never> {
   let errorMessage: string;
-  let errorDetails: any;
+  let errorDetails: unknown;
 
   try {
     const contentType = response.headers.get("content-type");
@@ -128,8 +128,8 @@ export async function parseApiError(response: Response): Promise<never> {
     if (contentType?.includes("application/json")) {
       errorDetails = await response.json();
       errorMessage =
-        errorDetails?.error ||
-        errorDetails?.message ||
+        (errorDetails as { error?: string; message?: string })?.error ||
+        (errorDetails as { error?: string; message?: string })?.message ||
         `Request failed with status ${response.status}`;
     } else {
       const errorText = await response.text();

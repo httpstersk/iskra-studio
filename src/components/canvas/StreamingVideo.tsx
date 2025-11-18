@@ -65,13 +65,13 @@ export const StreamingVideo: React.FC<StreamingVideoProps> = ({
 
   const aspectRatio =
     generation.aspectRatio &&
-    validAspectRatios.includes(generation.aspectRatio as any)
+    validAspectRatios.includes(generation.aspectRatio as typeof validAspectRatios[number])
       ? (generation.aspectRatio as "auto" | "9:16" | "16:9")
       : undefined;
 
   const resolution =
     generation.resolution &&
-    validResolutions.includes(generation.resolution as any)
+    validResolutions.includes(generation.resolution as typeof validResolutions[number])
       ? (generation.resolution as "auto" | "720p" | "1080p")
       : "auto";
 

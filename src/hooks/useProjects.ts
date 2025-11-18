@@ -139,10 +139,12 @@ export function useProjects(): UseProjectsReturn {
       lastSavedAt: project.lastSavedAt,
       thumbnailUrl: project.thumbnailUrl,
       imageCount: project.canvasState.elements.filter(
-        (el: any) => el.type === "image",
+        (el) =>
+          typeof el === "object" && el !== null && "type" in el && el.type === "image"
       ).length,
       videoCount: project.canvasState.elements.filter(
-        (el: any) => el.type === "video",
+        (el) =>
+          typeof el === "object" && el !== null && "type" in el && el.type === "video"
       ).length,
     }));
   }, [projectsQuery]);
@@ -231,10 +233,12 @@ export function useProjects(): UseProjectsReturn {
             lastSavedAt: project.lastSavedAt,
             thumbnailUrl: project.thumbnailUrl,
             imageCount: project.canvasState.elements.filter(
-              (el: any) => el.type === "image",
+              (el) =>
+                typeof el === "object" && el !== null && "type" in el && el.type === "image"
             ).length,
             videoCount: project.canvasState.elements.filter(
-              (el: any) => el.type === "video",
+              (el) =>
+                typeof el === "object" && el !== null && "type" in el && el.type === "video"
             ).length,
           };
 

@@ -82,10 +82,6 @@ export function GenerationsIndicatorWrapper({
     isGenerating ||
     showSuccess;
 
-  if (!shouldShow) {
-    return null;
-  }
-
   // Derive output type from active generations
   const isVideoGeneration = activeVideoGenerationsSize > 0;
   const outputType = isVideoGeneration ? "video" : "image";
@@ -112,6 +108,10 @@ export function GenerationsIndicatorWrapper({
   );
 
   const resolvedSuccessMessage = resolveSuccessMessage(successMessage);
+
+  if (!shouldShow) {
+    return null;
+  }
 
   return (
     <AnimatePresence mode="wait">

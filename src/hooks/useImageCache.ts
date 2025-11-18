@@ -40,7 +40,7 @@ function loadImage(
       resolve(img);
     };
 
-    img.onerror = (error) => {
+    img.onerror = (_error) => {
       loadingPromises.delete(src);
       reject(new Error(`Failed to load image from ${src}`));
     };
@@ -100,7 +100,7 @@ export function useImageCache(
           setStatus("loaded");
         }
       })
-      .catch((error) => {
+      .catch((_error) => {
         if (isMountedRef.current) {
           setImage(undefined);
           setStatus("error");

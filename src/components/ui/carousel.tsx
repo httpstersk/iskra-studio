@@ -17,7 +17,7 @@ export interface CarouselApi {
 export const Carousel = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & { setApi?: (api: CarouselApi) => void }
->(({ className, children, setApi, ...props }, ref) => {
+>(({ className, children, ...props }, ref) => {
   return (
     <div ref={ref} className={className} {...props}>
       {children}

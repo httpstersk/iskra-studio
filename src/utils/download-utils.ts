@@ -112,7 +112,7 @@ export const downloadImagesAsZip = async (
         const blob = await fetchImageAsBlob(downloadUrl);
         const filename = getFilenameFromUrl(downloadUrl, index);
         folder.file(filename, blob);
-      } catch (error) {
+      } catch (_error) {
         // Continue with other images even if one fails
       }
     });

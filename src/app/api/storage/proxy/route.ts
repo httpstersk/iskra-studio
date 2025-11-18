@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
             { status: 403 }
           );
         }
-      } catch (urlError) {
+      } catch (_urlError) {
         return NextResponse.json(
           { error: "Invalid URL format" },
           { status: 400 }

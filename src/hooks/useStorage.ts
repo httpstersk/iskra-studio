@@ -88,7 +88,7 @@ export function useStorage(
         () => setIsSaving(false),
         UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS,
       );
-    } catch (error) {
+    } catch (_error) {
       setIsSaving(false);
     }
   }, [currentProject?._id, images, saveProjectMutation, videos, viewport]);
@@ -130,7 +130,7 @@ export function useStorage(
       for (const assetId of assetIds) {
         try {
           const asset = await convexClient.query(api.assets.getAsset, {
-            assetId: assetId as any,
+            assetId: assetId as Id<"assets">,
           });
           if (asset?.cameraAngle || asset?.directorName) {
             assetMetadata.set(assetId, {
@@ -138,7 +138,7 @@ export function useStorage(
               directorName: asset.directorName,
             });
           }
-        } catch (error) {
+        } catch (_error) {
           // Asset might have been deleted or inaccessible, skip it
         }
       }
@@ -197,7 +197,7 @@ export function useStorage(
       setVideos(loadedVideos);
 
       setViewport(canvasState.viewport ?? DEFAULT_VIEWPORT);
-    } catch (error) {
+    } catch (_error) {
       showError("Failed to restore canvas", "Starting with a fresh canvas");
     } finally {
       setIsStorageLoaded(true);

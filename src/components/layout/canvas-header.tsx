@@ -8,20 +8,8 @@
 
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { UserMenu } from "@/components/auth/user-menu";
-import {
-  AutoSaveIndicator,
-  type SaveStatus,
-} from "@/components/canvas/auto-save-indicator";
-import { OfflineIndicator } from "@/components/canvas/offline-indicator";
 
 import { useAuth } from "@/hooks/useAuth";
-import {
-  autoSaveErrorAtom,
-  isAutoSavingAtom,
-  lastSavedAtAtom,
-} from "@/store/project-atoms";
-import { useAtomValue } from "jotai";
-import { useMemo } from "react";
 import { Sparkles } from "lucide-react";
 
 /**
@@ -59,19 +47,6 @@ interface CanvasHeaderProps {
  */
 export function CanvasHeader({ className }: CanvasHeaderProps) {
   const { isAuthenticated, isLoading } = useAuth();
-
-  // Auto-save state
-  const isAutoSaving = useAtomValue(isAutoSavingAtom);
-  const lastSavedAt = useAtomValue(lastSavedAtAtom);
-  const autoSaveError = useAtomValue(autoSaveErrorAtom);
-
-  // Compute save status
-  const saveStatus: SaveStatus = useMemo(() => {
-    if (autoSaveError) return "error";
-    if (isAutoSaving) return "saving";
-    if (lastSavedAt) return "saved";
-    return "idle";
-  }, [isAutoSaving, lastSavedAt, autoSaveError]);
 
   return (
     <header

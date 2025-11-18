@@ -184,7 +184,7 @@ export function getBriaApiToken(): string {
  */
 async function briaRequest<T>(
   endpoint: string,
-  body: Record<string, any>,
+  body: Record<string, unknown>,
   timeout = 30000
 ): Promise<T> {
   const token = getBriaApiToken();
@@ -204,22 +204,23 @@ async function briaRequest<T>(
       let errorMessage = `HTTP ${error.status}`;
 
       // Try to extract detailed error message
-      if (error.response?.error) {
+      const response = error.response as { error?: unknown; message?: unknown; detail?: unknown; request_id?: string } | undefined;
+      if (response?.error) {
         errorMessage =
-          typeof error.response.error === "string"
-            ? error.response.error
-            : JSON.stringify(error.response.error);
-      } else if (error.response?.message) {
+          typeof response.error === "string"
+            ? response.error
+            : JSON.stringify(response.error);
+      } else if (response?.message) {
         errorMessage =
-          typeof error.response.message === "string"
-            ? error.response.message
-            : JSON.stringify(error.response.message);
-      } else if (error.response?.detail) {
+          typeof response.message === "string"
+            ? response.message
+            : JSON.stringify(response.message);
+      } else if (response?.detail) {
         // Bria API may use 'detail' for validation errors
         errorMessage =
-          typeof error.response.detail === "string"
-            ? error.response.detail
-            : JSON.stringify(error.response.detail);
+          typeof response.detail === "string"
+            ? response.detail
+            : JSON.stringify(response.detail);
       } else {
         errorMessage = error.message;
       }
@@ -227,7 +228,7 @@ async function briaRequest<T>(
       throw new BriaApiError(
         `Bria API error: ${errorMessage}`,
         error.status,
-        error.response?.request_id,
+        response?.request_id,
         error
       );
     }

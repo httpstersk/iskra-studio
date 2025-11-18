@@ -9,6 +9,7 @@
 "use client";
 
 import { ProjectPanel } from "@/components/projects/project-panel";
+import type { Id } from "../../../convex/_generated/dataModel";
 import React, { useCallback } from "react";
 
 /**
@@ -17,7 +18,7 @@ import React, { useCallback } from "react";
 interface ProjectPanelWrapperProps {
   currentProjectId: string | undefined;
   isOpen: boolean;
-  loadProject: (projectId: any) => Promise<void>;
+  loadProject: (projectId: Id<"projects">) => Promise<void>;
   onToggle: () => void;
   restoreLastGoodState: () => void;
 }
@@ -36,12 +37,12 @@ export const ProjectPanelWrapper = React.memo<ProjectPanelWrapperProps>(
     restoreLastGoodState,
   }) {
     const handleOpenProject = useCallback(
-      async (projectId: string) => {
+      async (projectId: Id<"projects">) => {
         // The optimistic ID is now handled inside loadProject to prevent race conditions
         // when rapidly switching between projects
         try {
           await loadProject(projectId);
-        } catch (error) {
+        } catch (_error) {
           restoreLastGoodState();
         }
       },

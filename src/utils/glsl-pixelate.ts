@@ -296,7 +296,7 @@ export const createPixelatedCloneCanvas = (
     drawFullscreenQuad(gl, resources);
 
     return canvas;
-  } catch (error) {
+  } catch (_error) {
     return createFallbackPixelateCanvas(
       image,
       targetWidth,

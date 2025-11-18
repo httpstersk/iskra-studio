@@ -143,6 +143,7 @@ export function useOptimizedVideoElement(
       el.removeAttribute("src");
       el.load();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src]);
 
   return videoEl;

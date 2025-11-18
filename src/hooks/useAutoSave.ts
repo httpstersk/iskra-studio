@@ -7,7 +7,7 @@
 
 "use client";
 
-import { showError, showErrorFromException, showInfo } from "@/lib/toast";
+import { showErrorFromException, showInfo } from "@/lib/toast";
 import type { CanvasState } from "@/types/project";
 import {
   activeGenerationsAtom,
@@ -102,7 +102,7 @@ export function useAutoSave(
   } = options;
 
   // Hooks
-  const { saveProject, isSaving, lastSavedAt, currentProject } = useProjects();
+  const { saveProject, isSaving, lastSavedAt } = useProjects();
 
   // Atoms
   const isDirty = useAtomValue(canvasDirtyAtom);

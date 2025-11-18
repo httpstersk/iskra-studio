@@ -7,10 +7,6 @@
  */
 
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
-import {
-  calculateTimeProgression,
-  formatTimeLabel,
-} from "@/utils/time-progression-utils";
 
 /**
  * System prompt for storyline image generation.
@@ -272,7 +268,7 @@ export async function generateStorylineImageConcepts(
 export function buildStorylineStyleContext(
   analysis: ImageStyleMoodAnalysis,
 ): Record<string, string> {
-  const { colorPalette, lighting, visualStyle, styleSignature, narrativeTone } =
+  const { colorPalette, lighting: _lighting, visualStyle, styleSignature, narrativeTone } =
     analysis;
 
   return {

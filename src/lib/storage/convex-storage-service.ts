@@ -60,7 +60,7 @@ export class ConvexStorageService implements StorageService {
    * @param userId - User ID for authorization
    * @throws Error if deletion fails or user is not authorized
    */
-  async delete(storageId: string, userId: string): Promise<void> {
+  async delete(_storageId: string, _userId: string): Promise<void> {
     // TODO: Implement using Convex mutation when client is available
     // This will be called via the API client from the frontend
     throw new Error("Delete operation not yet implemented");

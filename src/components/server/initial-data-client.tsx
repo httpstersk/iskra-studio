@@ -10,8 +10,8 @@
 import { createContext, useContext, ReactNode } from "react";
 
 type InitialData = {
-  user: any | null;
-  projects: any[];
+  user: unknown | null;
+  projects: unknown[];
   isAuthenticated: boolean;
 };
 

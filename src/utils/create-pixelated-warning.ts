@@ -43,7 +43,7 @@ export function createPixelatedWarning(
   // Draw pixelated warning triangle
   // Using a simple triangle pattern for an 8x8 grid
   const centerX = Math.floor(gridSize / 2);
-  const centerY = Math.floor(gridSize / 2);
+  const _centerY = Math.floor(gridSize / 2);
 
   // Draw triangle outline (yellow/orange gradient)
   // Top point

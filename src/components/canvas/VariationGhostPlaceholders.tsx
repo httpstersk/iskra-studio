@@ -27,7 +27,7 @@ export const VariationGhostPlaceholders: React.FC<
   VariationGhostPlaceholdersProps
 > = ({
   selectedImage,
-  variationMode = "image",
+  variationMode: _variationMode = "image",
   generationCount = 4,
   stageRef,
   isDragging,

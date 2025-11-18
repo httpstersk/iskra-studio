@@ -1,4 +1,5 @@
 import { createFalClient, type FalClient } from "@fal-ai/client";
+import type { Duration } from "@upstash/ratelimit";
 
 import {
   createRateLimiter,
@@ -8,7 +9,6 @@ import {
 import {
   checkUserRateLimit,
   type LimitType,
-  type UserRateLimitResult,
 } from "@/lib/ratelimit/per-user-limiter";
 
 import {
@@ -27,7 +27,7 @@ type LimitPeriod = "perMinute" | "perHour" | "perDay";
 
 type RateLimitConfigEntry = {
   tokens: number;
-  window: string;
+  window: Duration;
   header: string;
 };
 

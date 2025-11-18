@@ -1,4 +1,4 @@
-import { Ratelimit } from "@upstash/ratelimit";
+import { Ratelimit, type Duration } from "@upstash/ratelimit";
 import { kv } from "@vercel/kv";
 
 /**
@@ -36,7 +36,7 @@ type RateLimitConfig = Record<
   LimitPeriod,
   {
     tokens: number;
-    window: string;
+    window: Duration;
   }
 >;
 
@@ -91,10 +91,10 @@ export const IS_RATE_LIMITER_ENABLED =
  * const limiter = createUserRateLimiter(5, "60 s");
  * ```
  */
-function createUserRateLimiter(tokens: number, window: string): Ratelimit {
+function createUserRateLimiter(tokens: number, window: Duration): Ratelimit {
   return new Ratelimit({
     redis: kv,
-    limiter: Ratelimit.slidingWindow(tokens, window as any),
+    limiter: Ratelimit.slidingWindow(tokens, window),
     analytics: false,
     prefix: "user_ratelimit",
   });

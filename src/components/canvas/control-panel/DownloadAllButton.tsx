@@ -54,7 +54,7 @@ export function DownloadAllButton({
         DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_TITLE,
         DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_SUCCESS_DESC,
       );
-    } catch (error) {
+    } catch (_error) {
       showError(
         DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_TITLE,
         DOWNLOAD_BUTTON_CONSTANTS.DOWNLOAD_FAILED_DESC,

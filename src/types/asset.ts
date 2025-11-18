@@ -40,6 +40,9 @@ export interface AssetMetadata {
 
   /** Width of image/video in pixels */
   width?: number;
+
+  /** Allow additional metadata properties */
+  [key: string]: unknown;
 }
 
 /**

@@ -48,9 +48,9 @@ export interface DirectorImageVariationHandlerDeps {
 interface DirectorVariationsResponse {
   refinedPrompts: Array<{
     director: string;
-    refinedStructuredPrompt: any; // FIBO JSON refined with director's style
+    refinedStructuredPrompt: Record<string, unknown>; // FIBO JSON refined with director's style
   }>;
-  fiboAnalysis: any;
+  fiboAnalysis: unknown;
 }
 
 /**

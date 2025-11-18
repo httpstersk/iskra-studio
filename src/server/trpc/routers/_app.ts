@@ -138,7 +138,10 @@ function extractFalErrorMessage(
   }
 
   let errorMessage = error.message;
-  const errorObj = error as any;
+  const errorObj = error as Error & {
+    body?: { detail?: unknown };
+    detail?: unknown;
+  };
 
   if (errorObj.body?.detail) {
     errorMessage =
@@ -257,7 +260,7 @@ export const appRouter = router({
         })
         .passthrough()
     )
-    .subscription(async function* ({ input, signal, ctx }) {
+    .subscription(async function* ({ input, signal: _signal, ctx }) {
       try {
         const falClient = await getFalClient(ctx, true);
         const generationId = `img2vid_${Date.now()}_${Math.random().toString(36).substring(7)}`;
@@ -699,7 +702,7 @@ export const appRouter = router({
         structuredPrompt: z.any(), // FIBO structured JSON
       })
     )
-    .subscription(async function* ({ input, signal, ctx }) {
+    .subscription(async function* ({ input, signal, ctx: _ctx }) {
       try {
         const generationId = `fibo_gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 

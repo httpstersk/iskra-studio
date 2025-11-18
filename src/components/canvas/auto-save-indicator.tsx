@@ -110,7 +110,7 @@ export function AutoSaveIndicator({
         cancelIdleCallback(hideTimeout);
       }
     };
-  }, [status]);
+  }, [status, hideTimeout]);
 
   // Don't render if not visible
   if (!isVisible) {

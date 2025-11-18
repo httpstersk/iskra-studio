@@ -7,7 +7,6 @@
 
 import { logger } from "../logging/logger";
 import {
-  AppError,
   getErrorMessage,
   getErrorStatusCode,
   isAppError,

@@ -41,7 +41,7 @@ export function extractSignedUrlFromProxy(proxyUrl: string): string | null {
     }
 
     return trimmedUrl;
-  } catch (error) {
+  } catch (_error) {
     serviceLogger.warn("Failed to extract signed URL", { proxyUrl });
     return null;
   }

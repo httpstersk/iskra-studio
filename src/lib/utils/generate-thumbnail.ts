@@ -103,7 +103,7 @@ export async function generateThumbnail(
     );
 
     return blob;
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 }

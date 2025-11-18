@@ -61,7 +61,7 @@ export interface FiboObject {
  */
 function extractDominantColors(colorScheme: string): string[] {
   // Parse color descriptions from FIBO's text
-  const colors: string[] = [];
+  const _colors: string[] = [];
   const colorPatterns = [
     /\b(red|blue|green|yellow|orange|purple|pink|brown|black|white|grey|gray|teal|indigo|amber|cobalt|crimson|emerald|gold|silver|navy|beige|tan|ivory|pearl)\b/gi,
   ];

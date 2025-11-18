@@ -395,7 +395,7 @@ export const createBlurredCloneCanvas = (
     drawFullscreenQuad(gl, resources);
 
     return canvas;
-  } catch (error) {
+  } catch (_error) {
     return createFallbackBlurCanvas(image, targetWidth, targetHeight, sigma);
   }
 };

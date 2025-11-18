@@ -138,7 +138,7 @@ export interface ActiveVideoGeneration {
   /** Source image URL for image-to-video generation */
   imageUrl?: string;
   /** Model-specific configuration parameters */
-  modelConfig?: any;
+  modelConfig?: Record<string, unknown>;
   /** AI model identifier to use for generation */
   modelId?: string;
   /** Motion settings for the video generation */

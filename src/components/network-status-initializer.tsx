@@ -38,7 +38,7 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus";
  * @returns null (no UI rendered)
  */
 export function NetworkStatusInitializer() {
-  const { isOnline } = useNetworkStatus({
+  useNetworkStatus({
     showNotifications: false, // Don't show notifications at app level
     onOnline: () => {},
     onOffline: () => {},

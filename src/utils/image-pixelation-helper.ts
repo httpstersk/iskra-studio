@@ -66,7 +66,7 @@ export async function generatePixelatedOverlay(
     });
 
     return { dataUrl, image: preloadedImg };
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 }
