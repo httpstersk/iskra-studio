@@ -102,10 +102,17 @@ module.exports = {
           "50%, 55%": { opacity: "0.08" },
           "60%, 100%": { opacity: "1" },
         },
+        arrowCycle: {
+          "0%": { transform: "translateY(0)", opacity: "1" },
+          "40%": { transform: "translateY(-120%)", opacity: "0" },
+          "41%": { transform: "translateY(120%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
       },
       animation: {
         "logo-spin": "logoSpin 4s ease-in-out infinite",
         "neon-blink": "neonBlink 2.2s ease-in-out infinite",
+        "arrow-cycle": "arrowCycle 0.6s ease-in-out",
       },
       boxShadow: {
         "neon-primary":

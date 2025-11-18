@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { showError } from "@/lib/toast";
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +12,7 @@ import {
   FILE_INPUT_CONFIG,
   getRunTooltipText,
 } from "@/constants/control-panel";
+import { showError } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 import { checkOS } from "@/utils/os-utils";
@@ -37,7 +37,7 @@ interface ControlActionsProps {
  * Creates and configures a file input element for image upload
  */
 const createFileInput = (
-  handleFileUpload: (files: FileList | null) => void,
+  handleFileUpload: (files: FileList | null) => void
 ): HTMLInputElement => {
   const input = document.createElement("input");
   input.type = FILE_INPUT_CONFIG.TYPE;
@@ -57,7 +57,7 @@ const createFileInput = (
     } catch (_error) {
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_FAILED,
-        CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC,
+        CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC
       );
     } finally {
       if (input.parentNode) {
@@ -88,7 +88,7 @@ const triggerFileDialog = (input: HTMLInputElement) => {
     } catch (_error) {
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE,
-        CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC,
+        CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC
       );
 
       if (input.parentNode) {
@@ -164,23 +164,25 @@ export function ControlActions({
           <TooltipTrigger asChild>
             <Button
               className={cn(
-                "h-10 w-10 rounded-full transition-all",
+                "group h-10 w-10 rounded-full transition-all overflow-hidden",
                 isRunDisabled
                   ? "bg-neutral-200 dark:bg-neutral-700"
-                  : "bg-white dark:bg-white shadow-[0_0_20px_rgba(255,255,255,0.6)] hover:shadow-[0_0_25px_rgba(255,255,255,0.8)] dark:shadow-[0_0_20px_rgba(255,255,255,0.5)] dark:hover:shadow-[0_0_25px_rgba(255,255,255,0.7)]",
-                isGenerating && "bg-neutral-300 dark:bg-neutral-600 shadow-none",
+                  : "bg-white dark:bg-white shadow-[0_0_20px_rgba(255,255,255,0.6)] hover:bg-white dark:hover:bg-white hover:shadow-[0_0_25px_rgba(255,255,255,0.8)] dark:hover:shadow-[0_0_25px_rgba(255,255,255,0.7)]",
+                isGenerating && "bg-neutral-300 dark:bg-neutral-600 shadow-none"
               )}
               disabled={isRunDisabled}
               onClick={handleRun}
               size="icon"
               variant="ghost"
             >
-              <ArrowUp className={cn(
-                "h-5 w-5",
-                isRunDisabled
-                  ? "text-neutral-400 dark:text-neutral-500"
-                  : "text-neutral-900"
-              )} />
+              <ArrowUp
+                className={cn(
+                  "h-5 w-5",
+                  isRunDisabled
+                    ? "text-neutral-400 dark:text-neutral-500"
+                    : "text-neutral-900 group-hover:animate-arrow-cycle"
+                )}
+              />
             </Button>
           </TooltipTrigger>
 
