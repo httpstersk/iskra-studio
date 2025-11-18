@@ -94,8 +94,6 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
 
 export async function uploadToConvex(blob: Blob): Promise<string> {
   try {
-    serviceLogger.info("Uploading blob to Convex", { blobSize: blob.size });
-
     const formData = new FormData();
     formData.append("file", blob, "image.png");
 

@@ -14,6 +14,7 @@
 import { DirectiveLabel } from "@/components/canvas/DirectiveLabel";
 import { useAnimationCoordinator } from "@/hooks/useAnimationCoordinator";
 import { abbreviateCameraDirective } from "@/utils/camera-abbreviation-utils";
+import { extractShortErrorMessage } from "@/utils/error-message-utils";
 import { useImageCache } from "@/hooks/useImageCache";
 import { useImageDrag } from "@/hooks/useImageDrag";
 import { useImageInteraction } from "@/hooks/useImageInteraction";
@@ -336,10 +337,10 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
           x={image.x}
           y={image.y}
         />
-        {/* Display FAILED label on error placeholders */}
+        {/* Display error message label on error placeholders */}
         <DirectiveLabel
           height={image.height}
-          labelText="FAILED"
+          labelText={extractShortErrorMessage(image.errorMessage)}
           width={image.width}
           x={image.x}
           y={image.y}
@@ -534,7 +535,8 @@ const arePropsEqual = (
     prevImg.cameraAngle !== nextImg.cameraAngle ||
     prevImg.directorName !== nextImg.directorName ||
     prevImg.isDirector !== nextImg.isDirector ||
-    prevImg.hasContentError !== nextImg.hasContentError
+    prevImg.hasContentError !== nextImg.hasContentError ||
+    prevImg.errorMessage !== nextImg.errorMessage
   ) {
     return false;
   }

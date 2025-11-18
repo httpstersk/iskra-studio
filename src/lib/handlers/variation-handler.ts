@@ -336,6 +336,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       handlerLogger.error("Lighting variation handler failed", error as Error);
 
       await handleVariationError({
+        error,
         selectedImage,
         setActiveGenerations,
         setImages,
@@ -466,6 +467,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     );
 
     await handleVariationError({
+      error,
       selectedImage,
       setActiveGenerations,
       setImages,

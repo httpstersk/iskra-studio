@@ -614,6 +614,8 @@ export function removeAnalyzingStatus(
  * Configuration for handling variation generation errors
  */
 export interface HandleVariationErrorConfig {
+  /** The error that occurred */
+  error: unknown;
   /** Setter for active generation states */
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, import("@/types/canvas").ActiveGeneration>>
@@ -661,6 +663,7 @@ export async function handleVariationError(
   config: HandleVariationErrorConfig,
 ): Promise<void> {
   const {
+    error,
     setActiveGenerations,
     setImages,
     setIsGenerating,
@@ -668,10 +671,16 @@ export async function handleVariationError(
     timestamp,
   } = config;
 
-  // Import error overlay utility
+  // Import utilities
   const { createErrorOverlayFromUrl } = await import(
     "@/utils/image-error-overlay"
   );
+  const { extractFullErrorMessage } = await import(
+    "@/utils/error-message-utils"
+  );
+
+  // Extract full error message for storage
+  const fullErrorMessage = extractFullErrorMessage(error);
 
   // First, mark placeholders as errors immediately
   setImages((prev) =>
@@ -680,6 +689,7 @@ export async function handleVariationError(
       if (match && parseInt(match[1]) === timestamp) {
         return {
           ...img,
+          errorMessage: fullErrorMessage,
           hasContentError: true,
           isLoading: false,
           opacity: 1.0,

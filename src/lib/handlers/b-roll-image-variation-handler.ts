@@ -83,7 +83,7 @@ interface BrollImageVariationHandlerDeps {
  * @throws Error if analysis fails
  */
 async function analyzeImageStyle(
-  imageUrl: string
+  imageUrl: string,
 ): Promise<ImageStyleMoodAnalysis> {
   const response = await fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
     body: JSON.stringify({ imageUrl }),
@@ -97,7 +97,7 @@ async function analyzeImageStyle(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`
+        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`,
     );
   }
 
@@ -119,7 +119,7 @@ async function analyzeImageStyle(
  * @returns Promise that resolves when generation is set up
  */
 export const handleBrollImageVariations = async (
-  deps: BrollImageVariationHandlerDeps
+  deps: BrollImageVariationHandlerDeps,
 ): Promise<void> => {
   const {
     imageModel = "seedream",
@@ -163,6 +163,14 @@ export const handleBrollImageVariations = async (
       snappedSource,
       timestamp,
     });
+
+    // Create placeholders IMMEDIATELY (optimistic UI) BEFORE async operations
+    const placeholderImages: PlacedImage[] = Array.from(
+      { length: variationCount },
+      (_, index) => makePlaceholder({}, index),
+    );
+
+    setImages((prev) => [...prev, ...placeholderImages]);
 
     // Stage 0: Upload image to ensure it's in Convex
     const uploadId = `variation-${timestamp}-upload`;
@@ -224,14 +232,6 @@ export const handleBrollImageVariations = async (
     // Stage 3: Use generated prompts directly (they're already formatted)
     const formattedPrompts = brollConcepts.concepts;
 
-    // Create placeholders IMMEDIATELY (optimistic UI)
-    const placeholderImages: PlacedImage[] = formattedPrompts.map((_, index) =>
-      makePlaceholder({}, index)
-    );
-
-    // Add placeholders immediately
-    setImages((prev) => [...prev, ...placeholderImages]);
-
     // Batch all activeGeneration updates into single state update
     setActiveGenerations((prev) => {
       const newMap = new Map(prev);
@@ -257,11 +257,11 @@ export const handleBrollImageVariations = async (
     showErrorFromException(
       "Generation failed",
       error,
-      ERROR_MESSAGES.BROLL_GENERATION_FAILED
+      ERROR_MESSAGES.BROLL_GENERATION_FAILED,
     );
 
     await handleVariationError({
-      selectedImage,
+      error,
       setActiveGenerations,
       setImages,
       setIsGenerating,

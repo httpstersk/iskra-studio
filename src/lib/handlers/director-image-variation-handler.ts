@@ -229,6 +229,7 @@ export const handleDirectorImageVariations = async (
     });
 
     await handleVariationError({
+      error,
       selectedImage,
       setActiveGenerations,
       setImages,

@@ -101,6 +101,24 @@ export const handleStorylineImageVariations = async (
       snappedSource,
     } = await performEarlyPreparation(selectedImage, variationCount);
 
+    // Create factory function with shared configuration for all placeholders
+    const makePlaceholder = createPlaceholderFactory({
+      imageSizeDimensions,
+      pixelatedSrc,
+      positionIndices,
+      selectedImage,
+      snappedSource,
+      timestamp,
+    });
+
+    // Create placeholders IMMEDIATELY for optimistic UI (BEFORE upload)
+    const placeholderImages: PlacedImage[] = Array.from(
+      { length: variationCount },
+      (_, index) => makePlaceholder({}, index),
+    );
+
+    setImages((prev) => [...prev, ...placeholderImages]);
+
     // Stage 0: Upload image to ensure it's in Convex
     const uploadId = createVariationId(timestamp, "upload");
 
@@ -116,24 +134,6 @@ export const handleStorylineImageVariations = async (
     removeGenerationStatus(setActiveGenerations, uploadId);
 
     const signedImageUrl = toSignedUrl(imageUrl);
-
-    // Create factory function with shared configuration for all placeholders
-    const makePlaceholder = createPlaceholderFactory({
-      imageSizeDimensions,
-      pixelatedSrc,
-      positionIndices,
-      selectedImage,
-      snappedSource,
-      timestamp,
-    });
-
-    // Create placeholders IMMEDIATELY for optimistic UI
-    const placeholderImages: PlacedImage[] = Array.from(
-      { length: variationCount },
-      (_, index) => makePlaceholder({}, index),
-    );
-
-    setImages((prev) => [...prev, ...placeholderImages]);
 
     // Stage 1: Apply pixelated overlay to reference image during analysis
     const analyzeId = createVariationId(timestamp, "analyze");
@@ -222,6 +222,7 @@ export const handleStorylineImageVariations = async (
     });
 
     await handleVariationError({
+      error,
       selectedImage,
       setActiveGenerations,
       setImages,
