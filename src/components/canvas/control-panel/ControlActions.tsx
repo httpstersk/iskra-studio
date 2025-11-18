@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 import { checkOS } from "@/utils/os-utils";
-import { Paperclip, SparklesIcon } from "lucide-react";
+import { ArrowUp, Paperclip } from "lucide-react";
 import { ShortcutBadge } from "../ShortcutBadge";
 import { DownloadAllButton } from "./DownloadAllButton";
 
@@ -164,15 +164,15 @@ export function ControlActions({
           <TooltipTrigger asChild>
             <Button
               className={cn(
-                "gap-2 font-medium transition-all",
-                isGenerating && "bg-secondary",
+                "h-10 w-10 rounded-full bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 transition-all",
+                isGenerating && "bg-neutral-300 dark:bg-neutral-600",
               )}
               disabled={isRunDisabled}
               onClick={handleRun}
               size="icon"
-              variant="primary"
+              variant="ghost"
             >
-              <SparklesIcon className="h-4 w-4 text-white fill-white" />
+              <ArrowUp className="h-5 w-5 text-neutral-900 dark:text-neutral-100" />
             </Button>
           </TooltipTrigger>
 
