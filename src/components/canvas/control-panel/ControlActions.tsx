@@ -164,15 +164,23 @@ export function ControlActions({
           <TooltipTrigger asChild>
             <Button
               className={cn(
-                "h-10 w-10 rounded-full bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 transition-all",
-                isGenerating && "bg-neutral-300 dark:bg-neutral-600",
+                "h-10 w-10 rounded-full transition-all",
+                isRunDisabled
+                  ? "bg-neutral-200 dark:bg-neutral-700"
+                  : "bg-white dark:bg-white shadow-[0_0_20px_rgba(255,255,255,0.6)] hover:shadow-[0_0_25px_rgba(255,255,255,0.8)] dark:shadow-[0_0_20px_rgba(255,255,255,0.5)] dark:hover:shadow-[0_0_25px_rgba(255,255,255,0.7)]",
+                isGenerating && "bg-neutral-300 dark:bg-neutral-600 shadow-none",
               )}
               disabled={isRunDisabled}
               onClick={handleRun}
               size="icon"
               variant="ghost"
             >
-              <ArrowUp className="h-5 w-5 text-neutral-900 dark:text-neutral-100" />
+              <ArrowUp className={cn(
+                "h-5 w-5",
+                isRunDisabled
+                  ? "text-neutral-400 dark:text-neutral-500"
+                  : "text-neutral-900"
+              )} />
             </Button>
           </TooltipTrigger>
 
