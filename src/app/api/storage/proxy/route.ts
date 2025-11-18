@@ -12,6 +12,7 @@
  * Returns the file from Convex with Access-Control-Allow-Origin: *
  */
 
+import { createErrorResponse } from "@/lib/api/error-response";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -211,13 +212,7 @@ export async function GET(req: NextRequest) {
       headers: responseHeaders,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Storage proxy failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return createErrorResponse(error, "Storage proxy failed");
   }
 }
 

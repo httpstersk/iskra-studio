@@ -5,7 +5,7 @@
  */
 
 import { createAuthenticatedHandler } from "@/lib/api/api-handler";
-import { generateFiboVariations } from "@/lib/services/fibo-variation-service";
+import { handleVariations, variationHandlers } from "@/lib/api/variation-api-helper";
 import { z } from "zod";
 
 export const maxDuration = 60;
@@ -16,47 +16,16 @@ const requestSchema = z.object({
   userContext: z.string().optional(),
 });
 
-/**
- * Builds lighting scenario refinement prompt for FIBO
- */
-function buildLightingPrompt(
-  lightingScenario: string,
-  userContext?: string
-): string {
-  let prompt = `Apply this lighting: ${lightingScenario}`;
-
-  if (userContext) {
-    prompt += `\n\nContext: ${userContext}`;
-  }
-
-  return prompt;
-}
-
 export const POST = createAuthenticatedHandler({
   schema: requestSchema,
   handler: async (input) => {
     const { imageUrl, lightingScenarios, userContext } = input;
 
-    // Build variation prompts for each lighting scenario
-    const variations = lightingScenarios.map((lightingScenario) =>
-      buildLightingPrompt(lightingScenario, userContext)
-    );
-
-    // Generate FIBO variations using shared service
-    const { fiboAnalysis, refinedPrompts } = await generateFiboVariations({
+    return handleVariations(variationHandlers.lighting, {
       imageUrl,
-      variations,
+      items: lightingScenarios,
+      userContext,
+      itemKey: "lightingScenario",
     });
-
-    // Transform result to match expected API response format
-    const transformedPrompts = refinedPrompts.map((item, index) => ({
-      lightingScenario: lightingScenarios[index],
-      refinedStructuredPrompt: item.refinedStructuredPrompt,
-    }));
-
-    return {
-      fiboAnalysis,
-      refinedPrompts: transformedPrompts,
-    };
   },
 });

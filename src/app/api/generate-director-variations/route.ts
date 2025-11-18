@@ -5,7 +5,7 @@
  */
 
 import { createAuthenticatedHandler } from "@/lib/api/api-handler";
-import { generateFiboVariations } from "@/lib/services/fibo-variation-service";
+import { handleVariations, variationHandlers } from "@/lib/api/variation-api-helper";
 import { z } from "zod";
 
 export const maxDuration = 60;
@@ -16,44 +16,16 @@ const requestSchema = z.object({
   userContext: z.string().optional(),
 });
 
-/**
- * Builds director refinement prompt for FIBO
- */
-function buildDirectorPrompt(director: string, userContext?: string): string {
-  let prompt = `Make it look as though it were shot by a film director or cinematographer: ${director}.`;
-
-  if (userContext) {
-    prompt += ` ${userContext}`;
-  }
-
-  return prompt;
-}
-
 export const POST = createAuthenticatedHandler({
   schema: requestSchema,
   handler: async (input) => {
     const { imageUrl, directors, userContext } = input;
 
-    // Build variation prompts for each director
-    const variations = directors.map((director) =>
-      buildDirectorPrompt(director, userContext)
-    );
-
-    // Generate FIBO variations using shared service
-    const { fiboAnalysis, refinedPrompts } = await generateFiboVariations({
+    return handleVariations(variationHandlers.director, {
       imageUrl,
-      variations,
+      items: directors,
+      userContext,
+      itemKey: "director",
     });
-
-    // Transform result to match expected API response format
-    const transformedPrompts = refinedPrompts.map((item, index) => ({
-      director: directors[index],
-      refinedStructuredPrompt: item.refinedStructuredPrompt,
-    }));
-
-    return {
-      fiboAnalysis,
-      refinedPrompts: transformedPrompts,
-    };
   },
 });

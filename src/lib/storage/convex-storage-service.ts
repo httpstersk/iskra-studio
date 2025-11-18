@@ -12,6 +12,8 @@ import type {
   UploadOptions,
 } from "./storage-service";
 import { generateThumbnail } from "@/lib/utils/generate-thumbnail";
+import { httpClient } from "@/lib/api/http-client";
+import { uploadClient } from "./upload-client";
 
 /**
  * Convex storage service implementation.
@@ -79,39 +81,19 @@ export class ConvexStorageService implements StorageService {
     const timeout = options?.timeout ?? 30000;
     const maxRetries = options?.maxRetries ?? this.maxRetries;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const controller = new AbortController();
-        // setTimeout necessary here for network request timeout using AbortController
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await httpClient.fetch<Blob>(url, {
+        method: "GET",
+        timeout,
+        retries: maxRetries,
+      });
 
-        const response = await fetch(url, {
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        return await response.blob();
-      } catch (error) {
-        const isLastAttempt = attempt === maxRetries;
-        if (isLastAttempt) {
-          throw new Error(
-            `Failed to download file after ${maxRetries + 1} attempts: ${error}`,
-          );
-        }
-
-        // Exponential backoff: 1s, 2s, 4s
-        // setTimeout necessary here for precise async delay in retry logic
-        const delay = Math.pow(2, attempt) * 1000;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        `Failed to download file after ${maxRetries + 1} attempts: ${error}`,
+      );
     }
-
-    throw new Error("Download failed");
   }
 
   /**
@@ -148,62 +130,23 @@ export class ConvexStorageService implements StorageService {
     // SECURITY: userId should NOT be sent from client - it's derived from auth on backend
     // Remove userId from the formData - backend will get it from authenticated session
 
-    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        // Generate thumbnail for images on client-side (bandwidth optimization)
-        if (file.type.startsWith("image/")) {
-          const thumbnailBlob = await generateThumbnail(file);
-          if (thumbnailBlob) {
-            formData.append("thumbnail", thumbnailBlob);
-          }
-        }
-
-        // Send metadata including dimensions if available
-        if (options.metadata) {
-          formData.append("metadata", JSON.stringify(options.metadata));
-
-          // Extract dimensions for form fields (required by backend)
-          if (options.metadata.width) {
-            formData.append("width", options.metadata.width.toString());
-          }
-          if (options.metadata.height) {
-            formData.append("height", options.metadata.height.toString());
-          }
-          if (options.metadata.duration) {
-            formData.append("duration", options.metadata.duration.toString());
-          }
-        }
-
-        const response = await fetch("/api/convex/upload", {
-          body: formData,
-          method: "POST",
-        });
-
-        if (!response.ok) {
-          const error = await response.text();
-          throw new Error(`Upload failed: ${error}`);
-        }
-
-        const result = await response.json();
-        return result as AssetUploadResult;
-      } catch (error) {
-        const isLastAttempt = attempt === this.maxRetries;
-        if (isLastAttempt) {
-          throw new Error(
-            `Failed to upload file after ${this.maxRetries + 1} attempts: ${error}`,
-          );
-        }
-
-        // Exponential backoff with jitter to prevent thundering herd
-        // setTimeout necessary here for precise async delay in retry logic
-        const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-        await new Promise((resolve) => setTimeout(resolve, delay));
+    try {
+      // Generate thumbnail for images on client-side (bandwidth optimization)
+      let thumbnailBlob: Blob | undefined;
+      if (file.type.startsWith("image/")) {
+        thumbnailBlob = await generateThumbnail(file);
       }
-    }
 
-    throw new Error("Upload failed");
+      // Use upload client with retry logic
+      return await uploadClient.upload({
+        file,
+        thumbnail: thumbnailBlob,
+        metadata: options.metadata,
+      });
+    } catch (error) {
+      throw new Error(
+        `Failed to upload file after ${this.maxRetries + 1} attempts: ${error}`,
+      );
+    }
   }
 }

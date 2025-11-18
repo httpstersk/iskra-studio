@@ -5,7 +5,7 @@
  */
 
 import { createAuthenticatedHandler } from "@/lib/api/api-handler";
-import { generateFiboVariations } from "@/lib/services/fibo-variation-service";
+import { handleVariations, variationHandlers } from "@/lib/api/variation-api-helper";
 import { z } from "zod";
 
 export const maxDuration = 60;
@@ -16,47 +16,16 @@ const requestSchema = z.object({
   userContext: z.string().optional(),
 });
 
-/**
- * Builds camera angle refinement prompt for FIBO
- */
-function buildCameraAnglePrompt(
-  cameraAngle: string,
-  userContext?: string
-): string {
-  let prompt = `Apply this camera angle: ${cameraAngle}`;
-
-  if (userContext) {
-    prompt += ` Context: ${userContext}`;
-  }
-
-  return prompt;
-}
-
 export const POST = createAuthenticatedHandler({
   schema: requestSchema,
   handler: async (input) => {
     const { imageUrl, cameraAngles, userContext } = input;
 
-    // Build variation prompts for each camera angle
-    const variations = cameraAngles.map((cameraAngle) =>
-      buildCameraAnglePrompt(cameraAngle, userContext)
-    );
-
-    // Generate FIBO variations using shared service
-    const { fiboAnalysis, refinedPrompts } = await generateFiboVariations({
+    return handleVariations(variationHandlers.cameraAngle, {
       imageUrl,
-      variations,
+      items: cameraAngles,
+      userContext,
+      itemKey: "cameraAngle",
     });
-
-    // Transform result to match expected API response format
-    const transformedPrompts = refinedPrompts.map((item, index) => ({
-      cameraAngle: cameraAngles[index],
-      refinedStructuredPrompt: item.refinedStructuredPrompt,
-    }));
-
-    return {
-      fiboAnalysis,
-      refinedPrompts: transformedPrompts,
-    };
   },
 });

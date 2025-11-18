@@ -1,6 +1,7 @@
 import { uploadRemoteAsset } from "@/lib/server/remote-asset-uploader";
 import type { GeneratedAssetUploadPayload } from "@/types/generated-asset";
-import { auth } from "@clerk/nextjs/server";
+import { requireAuth } from "@/lib/api/auth-middleware";
+import { createErrorResponse, createSuccessResponse } from "@/lib/api/error-response";
 import { NextResponse, type NextRequest } from "next/server";
 
 export const maxDuration = 60;
@@ -8,24 +9,8 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
-    const authData = await auth();
-    const { userId, getToken } = authData;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 },
-      );
-    }
-
-    const token = await getToken({ template: "convex" });
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Failed to get auth token" },
-        { status: 401 },
-      );
-    }
+    // Authenticate user and get Convex token
+    const { convexToken } = await requireAuth();
 
     const payload = (await req.json()) as GeneratedAssetUploadPayload;
 
@@ -37,19 +22,13 @@ export async function POST(req: NextRequest) {
     }
 
     const uploadResult = await uploadRemoteAsset({
-      authToken: token,
+      authToken: convexToken,
       origin: req.nextUrl.origin,
       payload,
     });
 
-    return NextResponse.json(uploadResult);
+    return createSuccessResponse(uploadResult);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Upload failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Upload failed");
   }
 }

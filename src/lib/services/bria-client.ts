@@ -7,6 +7,8 @@
  * @see https://docs.bria.ai/image-generation/v2-endpoints
  */
 
+import { httpClient, HttpError } from "@/lib/api/http-client";
+
 /**
  * Base URL for Bria API
  */
@@ -187,71 +189,47 @@ async function briaRequest<T>(
 ): Promise<T> {
   const token = getBriaApiToken();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
   try {
-    const response = await fetch(endpoint, {
-      body: JSON.stringify(body),
+    return await httpClient.fetchJson<T>(endpoint, {
+      method: "POST",
       headers: {
-        "Content-Type": "application/json",
         api_token: token,
       },
-      method: "POST",
-      signal: controller.signal,
+      body,
+      timeout,
     });
-
-    clearTimeout(timeoutId);
-
-    const data = await response.json();
-
-    // Handle error responses
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}`;
+  } catch (error) {
+    // Convert HttpError to BriaApiError
+    if (error instanceof HttpError) {
+      let errorMessage = `HTTP ${error.status}`;
 
       // Try to extract detailed error message
-      if (data.error) {
+      if (error.response?.error) {
         errorMessage =
-          typeof data.error === "string"
-            ? data.error
-            : JSON.stringify(data.error);
-      } else if (data.message) {
+          typeof error.response.error === "string"
+            ? error.response.error
+            : JSON.stringify(error.response.error);
+      } else if (error.response?.message) {
         errorMessage =
-          typeof data.message === "string"
-            ? data.message
-            : JSON.stringify(data.message);
-      } else if (data.detail) {
+          typeof error.response.message === "string"
+            ? error.response.message
+            : JSON.stringify(error.response.message);
+      } else if (error.response?.detail) {
         // Bria API may use 'detail' for validation errors
         errorMessage =
-          typeof data.detail === "string"
-            ? data.detail
-            : JSON.stringify(data.detail);
+          typeof error.response.detail === "string"
+            ? error.response.detail
+            : JSON.stringify(error.response.detail);
+      } else {
+        errorMessage = error.message;
       }
 
       throw new BriaApiError(
         `Bria API error: ${errorMessage}`,
-        response.status,
-        data.request_id
-      );
-    }
-
-    return data as T;
-  } catch (error) {
-    clearTimeout(timeoutId);
-
-    // Handle timeout
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new BriaApiError(
-        `Bria API request timed out after ${timeout}ms`,
-        undefined,
-        undefined,
+        error.status,
+        error.response?.request_id,
         error
       );
-    }
-
-    // Re-throw BriaApiError
-    if (error instanceof BriaApiError) {
-      throw error;
     }
 
     // Handle other errors
@@ -286,14 +264,16 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
     attempts++;
 
     try {
-      const response = await fetch(statusUrl, {
-        headers: {
-          api_token: token,
-        },
-        method: "GET",
-      });
-
-      const data = (await response.json()) as BriaStatusResponse<T>;
+      const data = await httpClient.fetchJson<BriaStatusResponse<T>>(
+        statusUrl,
+        {
+          method: "GET",
+          headers: {
+            api_token: token,
+          },
+          timeout: 10000, // 10 second timeout for polling requests
+        }
+      );
 
       // Check status (case-insensitive)
       const status = data.status?.toLowerCase();
@@ -302,7 +282,7 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
         if (!data.result) {
           throw new BriaApiError(
             "Bria API completed but returned no result",
-            response.status,
+            undefined,
             data.request_id
           );
         }
@@ -322,7 +302,7 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
           : "Unknown error";
         throw new BriaApiError(
           `Bria API request failed: ${errorDetail}`,
-          response.status,
+          undefined,
           data.request_id
         );
       }

@@ -16,6 +16,7 @@ import "server-only";
 import type { AssetUploadResult } from "@/types/asset";
 import { api } from "../../../convex/_generated/api";
 import { createConvexClientWithToken, getConvexSiteUrl } from "./convex-server";
+import { httpClient } from "@/lib/api/http-client";
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 const UPLOAD_TIMEOUT_MS = 50000; // 50 seconds
@@ -130,40 +131,19 @@ async function uploadToConvexEndpoint(
     formData.append("thumbnail", thumbnail);
   }
 
-  // Setup timeout controller
-  const controller = new AbortController();
-  // setTimeout necessary here for network request timeout using AbortController
-  const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+  const convexSiteUrl = getConvexSiteUrl();
 
-  try {
-    const convexSiteUrl = getConvexSiteUrl();
-    const response = await fetch(`${convexSiteUrl}/upload`, {
-      body: formData,
+  return httpClient.fetchFormData<ConvexUploadResponse>(
+    `${convexSiteUrl}/upload`,
+    formData,
+    {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${authToken}`,
       },
-      method: "POST",
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Convex upload failed (${response.status}): ${errorText}`,
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(
-        `Upload timeout: File upload took longer than ${UPLOAD_TIMEOUT_MS / 1000} seconds`,
-      );
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+      timeout: UPLOAD_TIMEOUT_MS,
+    },
+  );
 }
 
 /**

@@ -10,7 +10,8 @@ import {
   uploadFileToConvex,
   type UploadMetadata,
 } from "@/lib/server/upload-service";
-import { auth } from "@clerk/nextjs/server";
+import { requireAuth } from "@/lib/api/auth-middleware";
+import { createErrorResponse, createSuccessResponse } from "@/lib/api/error-response";
 import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60;
@@ -50,25 +51,8 @@ export const config = {
  */
 export async function POST(req: NextRequest) {
   try {
-    // Authenticate user
-    const authData = await auth();
-    const { userId } = authData;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 },
-      );
-    }
-
-    // Get Convex auth token
-    const token = await authData.getToken({ template: "convex" });
-    if (!token) {
-      return NextResponse.json(
-        { error: "Failed to get auth token" },
-        { status: 401 },
-      );
-    }
+    // Authenticate user and get Convex token
+    const { convexToken } = await requireAuth();
 
     // Parse form data
     const formData = await req.formData();
@@ -84,21 +68,15 @@ export async function POST(req: NextRequest) {
 
     // Upload file using service layer
     const result = await uploadFileToConvex({
-      authToken: token,
+      authToken: convexToken,
       file,
       metadata,
       thumbnail: thumbnail instanceof Blob ? thumbnail : undefined,
     });
 
-    return NextResponse.json(result);
+    return createSuccessResponse(result);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Upload failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    return createErrorResponse(error, "Upload failed");
   }
 }
 
