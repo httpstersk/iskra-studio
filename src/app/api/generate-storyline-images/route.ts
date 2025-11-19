@@ -5,15 +5,9 @@
  * Each image shows how the subject/scene evolves: +1min, +5min, +25min, +2h5m, etc.
  */
 
-import { openai } from "@ai-sdk/openai";
-import { generateObject } from "ai";
 import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
-import { z } from "zod";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../../../../convex/_generated/api";
-
-import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schema";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schema";
 import {
   STORYLINE_IMAGE_GENERATION_SYSTEM_PROMPT,
   buildStorylineStyleContext,
@@ -22,6 +16,12 @@ import {
   calculateTimeProgression,
   formatTimeLabel,
 } from "@/utils/time-progression-utils";
+import { openai } from "@ai-sdk/openai";
+import { auth } from "@clerk/nextjs/server";
+import { generateObject } from "ai";
+import { ConvexHttpClient } from "convex/browser";
+import { z } from "zod";
+import { api } from "../../../../convex/_generated/api";
 
 export const maxDuration = 30;
 
@@ -165,11 +165,14 @@ export const POST = createAuthenticatedHandler({
     const { count, styleAnalysis, userContext } = input;
 
     // Initialize Convex client for quota operations
+    const { getToken } = await auth();
+    const token = await getToken({ template: "convex" });
     const convex = new ConvexHttpClient(
       requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL")
     );
-
-    convex.setAuth(requireEnv("CONVEX_DEPLOY_KEY", "Convex deploy key"));
+    if (token) {
+      convex.setAuth(token);
+    }
 
     // Check quota before generation
     try {

@@ -5,9 +5,13 @@
  */
 
 import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
-import { handleVariations, variationHandlers } from "@/lib/api/variation-api-helper";
-import { z } from "zod";
+import {
+  handleVariations,
+  variationHandlers,
+} from "@/lib/api/variation-api-helper";
+import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
+import { z } from "zod";
 import { api } from "../../../../convex/_generated/api";
 
 export const maxDuration = 60;
@@ -24,8 +28,15 @@ export const POST = createAuthenticatedHandler({
     const { imageUrl, directors, userContext } = input;
 
     // Initialize Convex client for quota operations
-    const convex = new ConvexHttpClient(requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL"));
-    convex.setAuth(requireEnv("CONVEX_DEPLOY_KEY", "Convex deploy key"));
+    const { getToken } = await auth();
+    const token = await getToken({ template: "convex" });
+    const convex = new ConvexHttpClient(
+      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL")
+    );
+
+    if (token) {
+      convex.setAuth(token);
+    }
 
     // Check quota before generation
     try {
