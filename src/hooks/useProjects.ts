@@ -186,14 +186,13 @@ export function useProjects(): UseProjectsReturn {
       // Increment sequence counter for this load request
       const currentSequence = ++loadSequenceRef.current;
 
+      // Set optimistic ID immediately for instant UI feedback
+      // This must happen BEFORE setIsLoading to prevent the UI from briefly
+      // showing the wrong project as loading
+      setOptimisticProjectId(projectId);
+
       try {
         setIsLoading(true);
-
-        // Set optimistic ID only if this is still the latest request
-        // This prevents the race condition where rapid clicks override each other
-        if (currentSequence === loadSequenceRef.current) {
-          setOptimisticProjectId(projectId);
-        }
 
         // Pre-fetch project data asynchronously
         const projectPromise = convex.query(api.projects.getProject, {
@@ -245,14 +244,12 @@ export function useProjects(): UseProjectsReturn {
           const existingIndex = prev.findIndex((p) => p.id === project._id);
 
           if (existingIndex === -1) {
-            return [metadata, ...prev].sort(
-              (a, b) => b.lastSavedAt - a.lastSavedAt,
-            );
+            return [metadata, ...prev];
           }
 
           const updated = [...prev];
           updated[existingIndex] = metadata;
-          return updated.sort((a, b) => b.lastSavedAt - a.lastSavedAt);
+          return updated;
         });
       } catch (error) {
         // Only clear optimistic state if this is still the latest request
@@ -260,8 +257,7 @@ export function useProjects(): UseProjectsReturn {
           setOptimisticProjectId(null);
         }
         throw new Error(
-          `Project load failed: ${
-            error instanceof Error ? error.message : "Unknown error"
+          `Project load failed: ${error instanceof Error ? error.message : "Unknown error"
           }`,
         );
       } finally {
