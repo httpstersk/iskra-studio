@@ -4,8 +4,12 @@ import type {
   PlacedImage,
 } from "@/types/canvas";
 import { showError, showErrorFromException } from "@/lib/toast";
-import { downloadAndReupload } from "./asset-download-handler";
-import { createStorageService } from "@/lib/storage";
+import { downloadAndReupload } from "@/lib/handlers/asset-download-handler";
+import {
+  calculateCenteredPlacement,
+  convertImageToBlob,
+} from "@/utils/canvas-utils";
+import { uploadImageDirect } from "@/lib/utils/upload-utils";
 
 interface GenerationHandlerDeps {
   images: PlacedImage[];
@@ -23,48 +27,21 @@ interface GenerationHandlerDeps {
     prompt: string;
     seed?: number;
     imageSize?:
-      | "landscape_4_3"
-      | "portrait_4_3"
-      | "square"
-      | "landscape_16_9"
-      | "portrait_16_9";
+    | "landscape_4_3"
+    | "portrait_4_3"
+    | "square"
+    | "landscape_16_9"
+    | "portrait_16_9";
   }) => Promise<{ width: number; height: number; url: string }>;
   userId?: string; // Optional user ID for Convex storage
   useConvexStorage?: boolean; // Flag to enable Convex storage migration
 }
 
-export const uploadImageDirect = async (
-  dataUrl: string,
-  userId: string | undefined,
-) => {
-  // Convert data URL to blob first
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
-
-  try {
-    // Upload to Convex storage
-    if (!userId) {
-      throw new Error("User ID required for upload");
-    }
-
-    const storage = createStorageService();
-    const uploadResult = await storage.upload(blob, {
-      userId,
-      type: "image",
-      mimeType: blob.type || "image/png",
-      metadata: {},
-    });
-
-    return { url: uploadResult.url };
-  } catch (error: unknown) {
-    showErrorFromException("Failed to upload image", error, "Unknown error");
-
-    // Re-throw the error so calling code knows upload failed
-    throw error;
-  }
-};
-
-export const generateImage = (
+/**
+ * Adds a generated image to the canvas state.
+ * Used for both initial generation and variations.
+ */
+export const addImageToCanvasState = (
   imageUrl: string,
   x: number,
   y: number,
@@ -100,20 +77,238 @@ export const generateImage = (
   );
 };
 
-export const handleRun = async (deps: GenerationHandlerDeps) => {
+const handleOptimisticUpload = async (
+  imageUrl: string,
+  imageId: string,
+  generationSettings: GenerationSettings,
+  originalWidth: number,
+  originalHeight: number,
+  userId: string | undefined,
+  useConvexStorage: boolean,
+  setImages: GenerationHandlerDeps["setImages"],
+) => {
+  if (useConvexStorage && userId) {
+    try {
+      const migrationResult = await downloadAndReupload(imageUrl, {
+        userId,
+        type: "image",
+        mimeType: "image/jpeg",
+        metadata: {
+          prompt: generationSettings.prompt,
+          width: originalWidth,
+          height: originalHeight,
+        },
+      });
+
+      // Update image with permanent Convex URL once upload finishes
+      setImages((prev) =>
+        prev.map((img) =>
+          img.id === imageId
+            ? { ...img, src: migrationResult.url, isLoading: false }
+            : img,
+        ),
+      );
+    } catch (error) {
+      console.error("Background upload failed:", error);
+      // Stop loading spinner, keep original URL
+      setImages((prev) =>
+        prev.map((img) =>
+          img.id === imageId ? { ...img, isLoading: false } : img,
+        ),
+      );
+    }
+  } else {
+    // If not using Convex storage, just mark as loaded
+    setImages((prev) =>
+      prev.map((img) =>
+        img.id === imageId ? { ...img, isLoading: false } : img,
+      ),
+    );
+  }
+};
+
+const handleTextToImage = async (deps: GenerationHandlerDeps) => {
   const {
-    images,
-    selectedIds,
     generationSettings,
     canvasSize,
     viewport,
     setImages,
     setSelectedIds,
-    setActiveGenerations,
-    setIsGenerating,
     generateTextToImage,
     userId,
     useConvexStorage = false,
+  } = deps;
+
+  try {
+    const result = (await generateTextToImage({
+      prompt: generationSettings.prompt,
+    })) as { width: number; height: number; url: string };
+
+    // Crop the generated image to 16:9 aspect ratio
+    const { cropImageUrlToAspectRatio } = await import(
+      "@/utils/image-crop-utils"
+    );
+    const croppedResult = await cropImageUrlToAspectRatio(result.url);
+
+    // Add the generated image to the canvas immediately (Optimistic Update)
+    const id = `generated-${Date.now()}-${Math.random()}`;
+
+    const placement = calculateCenteredPlacement(
+      canvasSize,
+      viewport,
+      croppedResult.width,
+      croppedResult.height,
+    );
+
+    // 1. Show image immediately with Fal URL
+    setImages((prev) => [
+      ...prev,
+      {
+        id,
+        src: croppedResult.croppedSrc, // Use Fal URL initially
+        x: placement.x,
+        y: placement.y,
+        width: placement.width,
+        height: placement.height,
+        rotation: 0,
+        isGenerated: true,
+        naturalWidth: croppedResult.width,
+        naturalHeight: croppedResult.height,
+        isLoading: true, // Mark as loading/uploading
+      },
+    ]);
+
+    // Select the new image
+    setSelectedIds([id]);
+
+    // 2. Upload to Convex in background
+    // We don't await this promise so the UI stays responsive
+    handleOptimisticUpload(
+      croppedResult.croppedSrc,
+      id,
+      generationSettings,
+      croppedResult.width,
+      croppedResult.height,
+      userId,
+      useConvexStorage,
+      setImages,
+    );
+  } catch (error) {
+    showErrorFromException(
+      "Generation failed",
+      error,
+      "Failed to generate image",
+    );
+  }
+};
+
+const processImageVariation = async (
+  img: PlacedImage,
+  deps: GenerationHandlerDeps,
+): Promise<boolean> => {
+  const {
+    generationSettings,
+    setImages,
+    setActiveGenerations,
+    userId,
+  } = deps;
+
+  try {
+    // Convert image to blob for upload
+    const blob = await convertImageToBlob(img.src);
+
+    const reader = new FileReader();
+    const dataUrl = await new Promise<string>((resolve) => {
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.readAsDataURL(blob);
+    });
+
+    let uploadResult;
+    try {
+      uploadResult = await uploadImageDirect(dataUrl, userId);
+    } catch (_uploadError) {
+      return false;
+    }
+
+    // Only proceed with generation if upload succeeded
+    if (!uploadResult?.url) {
+      return false;
+    }
+
+    // Calculate output size maintaining aspect ratio
+    // We can use the blob size or image dimensions
+    const imgElement = new window.Image();
+    imgElement.src = dataUrl;
+
+    await new Promise((resolve) => {
+      imgElement.onload = resolve;
+    });
+
+    const aspectRatio = imgElement.naturalWidth / imgElement.naturalHeight;
+    const baseSize = 512;
+
+    let _outputWidth = baseSize;
+    let _outputHeight = baseSize;
+
+    if (aspectRatio > 1) {
+      _outputHeight = Math.round(baseSize / aspectRatio);
+    } else {
+      _outputWidth = Math.round(baseSize * aspectRatio);
+    }
+
+    const groupId = `single-${Date.now()}-${Math.random()}`;
+
+    addImageToCanvasState(
+      uploadResult.url,
+      img.x + img.width + 20,
+      img.y,
+      groupId,
+      generationSettings,
+      setImages,
+      setActiveGenerations,
+      img.width,
+      img.height,
+    );
+    return true;
+  } catch (error) {
+    showErrorFromException(
+      "Failed to process image",
+      error,
+      "Failed to process image",
+    );
+    return false;
+  }
+};
+
+const handleImageToImage = async (
+  selectedImages: PlacedImage[],
+  deps: GenerationHandlerDeps,
+) => {
+  const { setIsGenerating } = deps;
+
+  let _successCount = 0;
+  let _failureCount = 0;
+
+  for (const img of selectedImages) {
+    const success = await processImageVariation(img, deps);
+
+    if (success) {
+      _successCount++;
+    } else {
+      _failureCount++;
+    }
+  }
+
+  // Done processing all images
+  setIsGenerating(false);
+};
+
+export const handleRun = async (deps: GenerationHandlerDeps) => {
+  const {
+    images,
+    selectedIds,
+    generationSettings,
+    setIsGenerating,
   } = deps;
 
   if (!generationSettings.prompt) {
@@ -126,176 +321,11 @@ export const handleRun = async (deps: GenerationHandlerDeps) => {
 
   // If no images are selected, do text-to-image generation
   if (selectedImages.length === 0) {
-    try {
-      const result = (await generateTextToImage({
-        prompt: generationSettings.prompt,
-      })) as { width: number; height: number; url: string };
-
-      // Crop the generated image to 16:9 aspect ratio
-      const { cropImageUrlToAspectRatio } = await import(
-        "@/utils/image-crop-utils"
-      );
-      const croppedResult = await cropImageUrlToAspectRatio(result.url);
-
-      // Migrate to Convex storage if enabled and userId is provided
-      let finalUrl = croppedResult.croppedSrc;
-
-      if (useConvexStorage && userId) {
-        try {
-          const migrationResult = await downloadAndReupload(
-            croppedResult.croppedSrc,
-            {
-              userId,
-              type: "image",
-              mimeType: "image/jpeg",
-              metadata: {
-                prompt: generationSettings.prompt,
-                width: croppedResult.width,
-                height: croppedResult.height,
-              },
-            },
-          );
-          finalUrl = migrationResult.url;
-        } catch (_error) {
-          // Continue with cropped data URL if migration fails
-        }
-      }
-
-      // Add the generated image to the canvas
-      const id = `generated-${Date.now()}-${Math.random()}`;
-
-      // Place at center of viewport
-      const viewportCenterX =
-        (canvasSize.width / 2 - viewport.x) / viewport.scale;
-      const viewportCenterY =
-        (canvasSize.height / 2 - viewport.y) / viewport.scale;
-
-      // Preserve aspect ratio while limiting the longest side to 512px
-      const maxDisplay = 512;
-      const scale = Math.min(
-        maxDisplay / Math.max(croppedResult.width, 1),
-        maxDisplay / Math.max(croppedResult.height, 1),
-        1,
-      );
-      const width = Math.max(1, Math.round(croppedResult.width * scale));
-      const height = Math.max(1, Math.round(croppedResult.height * scale));
-
-      setImages((prev) => [
-        ...prev,
-        {
-          id,
-          src: finalUrl,
-          x: viewportCenterX - width / 2,
-          y: viewportCenterY - height / 2,
-          width,
-          height,
-          rotation: 0,
-          isGenerated: true,
-          naturalWidth: croppedResult.width,
-          naturalHeight: croppedResult.height,
-        },
-      ]);
-
-      // Select the new image
-      setSelectedIds([id]);
-    } catch (error) {
-      showErrorFromException(
-        "Generation failed",
-        error,
-        "Failed to generate image",
-      );
-    } finally {
-      setIsGenerating(false);
-    }
+    await handleTextToImage(deps);
+    setIsGenerating(false);
     return;
   }
 
   // Process each selected image individually for image-to-image
-  let _successCount = 0;
-  let _failureCount = 0;
-
-  for (const img of selectedImages) {
-    try {
-      // Load the image
-      const imgElement = new window.Image();
-      imgElement.crossOrigin = "anonymous"; // Enable CORS
-      imgElement.src = img.src;
-      await new Promise((resolve) => {
-        imgElement.onload = resolve;
-      });
-
-      // Create a canvas for the image at original resolution
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Failed to get canvas context");
-
-      // Set canvas size to the original resolution (not display size)
-      canvas.width = imgElement.naturalWidth;
-      canvas.height = imgElement.naturalHeight;
-
-      ctx.drawImage(imgElement, 0, 0);
-
-      // Convert to blob and upload
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob!), "image/png");
-      });
-
-      const reader = new FileReader();
-      const dataUrl = await new Promise<string>((resolve) => {
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.readAsDataURL(blob);
-      });
-
-      let uploadResult;
-      try {
-        uploadResult = await uploadImageDirect(dataUrl, userId);
-      } catch (_uploadError) {
-        _failureCount++;
-        // Skip this image if upload fails
-        continue;
-      }
-
-      // Only proceed with generation if upload succeeded
-      if (!uploadResult?.url) {
-        _failureCount++;
-        continue;
-      }
-
-      // Calculate output size maintaining aspect ratio
-      const aspectRatio = canvas.width / canvas.height;
-      const baseSize = 512;
-      let _outputWidth = baseSize;
-      let _outputHeight = baseSize;
-
-      if (aspectRatio > 1) {
-        _outputHeight = Math.round(baseSize / aspectRatio);
-      } else {
-        _outputWidth = Math.round(baseSize * aspectRatio);
-      }
-
-      const groupId = `single-${Date.now()}-${Math.random()}`;
-      generateImage(
-        uploadResult.url,
-        img.x + img.width + 20,
-        img.y,
-        groupId,
-        generationSettings,
-        setImages,
-        setActiveGenerations,
-        img.width,
-        img.height,
-      );
-      _successCount++;
-    } catch (error) {
-      _failureCount++;
-      showErrorFromException(
-        "Failed to process image",
-        error,
-        "Failed to process image",
-      );
-    }
-  }
-
-  // Done processing all images
-  setIsGenerating(false);
+  await handleImageToImage(selectedImages, deps);
 };
