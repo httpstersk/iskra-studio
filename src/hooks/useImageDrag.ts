@@ -14,7 +14,7 @@ import type { PlacedImage } from "@/types/canvas";
 import {
   calculateSnapLines,
   snapPosition,
-  snapPositionWithThreshold,
+  snapToGridWithThreshold,
   triggerSnapHaptic,
 } from "@/utils/snap-utils";
 
@@ -114,11 +114,19 @@ export const useImageDrag = ({
         );
 
         // Fallback to magnetic grid snapping if no object snap occurred
-        const gridSnapped = snapPositionWithThreshold(nodeX, nodeY);
-        snapped = {
-          x: snapResult.x !== nodeX ? snapResult.x : gridSnapped.x,
-          y: snapResult.y !== nodeY ? snapResult.y : gridSnapped.y,
-        };
+        // Optimization: Only calculate grid snap if object snap didn't happen
+        // and do it per axis to avoid object allocation
+        const finalX =
+          snapResult.x !== nodeX
+            ? snapResult.x
+            : snapToGridWithThreshold(nodeX);
+
+        const finalY =
+          snapResult.y !== nodeY
+            ? snapResult.y
+            : snapToGridWithThreshold(nodeY);
+
+        snapped = { x: finalX, y: finalY };
 
         setSnapLines(snapResult.snapLines);
       } else {
