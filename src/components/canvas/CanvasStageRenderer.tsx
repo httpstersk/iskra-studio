@@ -24,7 +24,7 @@ import type {
 } from "@/types/canvas";
 import type Konva from "konva";
 import React, { useCallback, useMemo } from "react";
-import { Layer, Stage } from "react-konva";
+import { Layer, Line, Stage } from "react-konva";
 import { CanvasGrid } from "./CanvasGrid";
 import { CanvasImage } from "./CanvasImage";
 import { CanvasVideo } from "./CanvasVideo";
@@ -56,6 +56,8 @@ interface CanvasStageRendererProps {
       positions: Map<string, { x: number; y: number }>,
     ) => void;
     setIsDraggingImage: (dragging: boolean) => void;
+    snapLines: import("@/types/canvas").SnapLine[];
+    setSnapLines: (lines: import("@/types/canvas").SnapLine[]) => void;
   };
   isCanvasReady: boolean;
   isGenerating: boolean;
@@ -358,7 +360,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
         height={canvasSize.height}
         onContextMenu={handleContextMenu}
         onMouseDown={interactions.handleMouseDown}
-        onMouseLeave={() => {}}
+        onMouseLeave={() => { }}
         onMouseMove={interactions.handleMouseMove}
         onMouseUp={interactions.handleMouseUp}
         onTouchEnd={interactions.handleTouchEnd}
@@ -382,6 +384,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
             <CanvasImage
               dragStartPositions={interactions.dragStartPositions}
               image={image}
+              images={images}
               isDraggingImage={interactions.isDraggingImage}
               isSelected={selectedIdsSet.has(image.id)}
               key={image.id}
@@ -392,8 +395,24 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
               onSelect={(e) => interactions.handleSelect(image.id, e)}
               selectedIds={selectedIds}
               setImages={setImages}
+              setSnapLines={interactions.setSnapLines}
             />
           ))}
+
+          {interactions.snapLines &&
+            interactions.snapLines.map((line, i) => (
+              <Line
+                dash={[4, 4]}
+                key={i}
+                points={
+                  line.orientation === "vertical"
+                    ? [line.x!, line.start, line.x!, line.end]
+                    : [line.start, line.y!, line.end, line.y!]
+                }
+                stroke="#ff0000"
+                strokeWidth={1}
+              />
+            ))}
 
           {isVariationMode && selectedImageForVariation && (
             <VariationGhostPlaceholders
@@ -425,3 +444,4 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
     </>
   );
 });
+

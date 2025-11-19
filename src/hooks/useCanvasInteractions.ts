@@ -26,6 +26,9 @@ export function useCanvasInteractions(
   const [dragStartPositions, setDragStartPositions] = useState<
     Map<string, { x: number; y: number }>
   >(new Map());
+  const [snapLines, setSnapLines] = useState<
+    import("@/types/canvas").SnapLine[]
+  >([]);
 
   // Touch event states for mobile
   const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(
@@ -436,5 +439,7 @@ export function useCanvasInteractions(
     selectionBox,
     setDragStartPositions,
     setIsDraggingImage,
+    setSnapLines,
+    snapLines,
   };
 }

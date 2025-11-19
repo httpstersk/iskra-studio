@@ -38,6 +38,8 @@ interface CanvasImageProps {
   dragStartPositions: Map<string, { x: number; y: number }>;
   /** The image to render */
   image: PlacedImage;
+  /** All images on canvas (for sibling snapping) */
+  images: PlacedImage[];
   /** Whether any image is currently being dragged */
   isDraggingImage: boolean;
   /** Whether this image is currently selected */
@@ -56,6 +58,8 @@ interface CanvasImageProps {
   selectedIds: string[];
   /** State setter for all images (used in multi-selection) */
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
+  /** Setter for snap lines visualization */
+  setSnapLines: (lines: import("@/types/canvas").SnapLine[]) => void;
 }
 
 /**
@@ -212,6 +216,7 @@ const getDirectiveLabelText = (image: PlacedImage): string | undefined => {
 const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   dragStartPositions,
   image,
+  images,
   isSelected,
   onChange,
   onDoubleClick,
@@ -220,6 +225,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   onSelect,
   selectedIds,
   setImages,
+  setSnapLines,
 }) => {
   const shapeRef = useRef<Konva.Image>(null);
   const throttleFrame = useFrameThrottle();
@@ -287,10 +293,12 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   const { handleDragMove, handleDragEnd: handleDragEndInternal } = useImageDrag(
     {
       image,
+      images,
       selectedIds,
       dragStartPositions,
       onChange,
       setImages,
+      setSnapLines,
       throttleFrame,
     }
   );
@@ -537,7 +545,9 @@ const arePropsEqual = (
     prevProps.onDragStart !== nextProps.onDragStart ||
     prevProps.onSelect !== nextProps.onSelect ||
     prevProps.onDoubleClick !== nextProps.onDoubleClick ||
-    prevProps.setImages !== nextProps.setImages
+    prevProps.setImages !== nextProps.setImages ||
+    prevProps.setSnapLines !== nextProps.setSnapLines ||
+    prevProps.images !== nextProps.images
   ) {
     return false;
   }

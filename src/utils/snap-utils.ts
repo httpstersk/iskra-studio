@@ -266,19 +266,17 @@ export const triggerSnapHaptic = (): void => {
  * };
  * ```
  */
-export const useSnapFeedback = () => {
+export const useSnapFeedback = (gridSize: number = GRID_SIZE) => {
   let lastSnappedX: number | null = null;
   let lastSnappedY: number | null = null;
 
   return (x: number, y: number) => {
-    const snapped = snapPosition(x, y);
+    const snapped = snapPosition(x, y, gridSize);
 
-    // Trigger haptic feedback if position changed after snapping
-    if (
-      (lastSnappedX !== null && lastSnappedX !== snapped.x) ||
-      (lastSnappedY !== null && lastSnappedY !== snapped.y)
-    ) {
-      triggerSnapHaptic();
+    if (lastSnappedX !== null && lastSnappedY !== null) {
+      if (snapped.x !== lastSnappedX || snapped.y !== lastSnappedY) {
+        triggerSnapHaptic();
+      }
     }
 
     lastSnappedX = snapped.x;
@@ -286,4 +284,167 @@ export const useSnapFeedback = () => {
 
     return snapped;
   };
+};
+
+/**
+ * Calculates snap lines for an image being dragged relative to other images.
+ * Checks for alignment with edges (left, right, top, bottom) and centers.
+ *
+ * @param activeImage - The image being dragged
+ * @param otherImages - Array of other images to snap to
+ * @param threshold - Distance in pixels to trigger snapping (default: 10)
+ * @returns Object containing snapped position and array of snap lines to render
+ */
+export const calculateSnapLines = (
+  activeImage: PlacedImage,
+  otherImages: PlacedImage[],
+  threshold: number = 10,
+): { x: number; y: number; snapLines: import("@/types/canvas").SnapLine[] } => {
+  let newX = activeImage.x;
+  let newY = activeImage.y;
+  const snapLines: import("@/types/canvas").SnapLine[] = [];
+
+  // Calculate active image edges and center
+  const activeLeft = activeImage.x;
+  const activeRight = activeImage.x + activeImage.width;
+  const activeTop = activeImage.y;
+  const activeBottom = activeImage.y + activeImage.height;
+  const activeCenterX = activeImage.x + activeImage.width / 2;
+  const activeCenterY = activeImage.y + activeImage.height / 2;
+
+  // Track closest snaps to prioritize closest lines
+  let minDistX = threshold;
+  let minDistY = threshold;
+
+  otherImages.forEach((img) => {
+    if (img.id === activeImage.id) return;
+
+    const imgLeft = img.x;
+    const imgRight = img.x + img.width;
+    const imgTop = img.y;
+    const imgBottom = img.y + img.height;
+    const imgCenterX = img.x + img.width / 2;
+    const imgCenterY = img.y + img.height / 2;
+
+    // Vertical snapping (X-axis alignment)
+    const checkVerticalSnap = (
+      val1: number,
+      val2: number,
+      snapX: number,
+      lineX: number,
+    ) => {
+      const dist = Math.abs(val1 - val2);
+      if (dist < minDistX) {
+        minDistX = dist;
+        newX = snapX;
+        // Clear previous vertical lines as we found a closer one
+        const horizontalLines = snapLines.filter(
+          (l) => l.orientation === "horizontal",
+        );
+        snapLines.length = 0;
+        snapLines.push(...horizontalLines);
+        snapLines.push({
+          orientation: "vertical",
+          x: lineX,
+          start: Math.min(activeTop, imgTop),
+          end: Math.max(activeBottom, imgBottom),
+        });
+      } else if (dist === minDistX && dist < threshold) {
+        // Add additional line if equidistant
+        snapLines.push({
+          orientation: "vertical",
+          x: lineX,
+          start: Math.min(activeTop, imgTop),
+          end: Math.max(activeBottom, imgBottom),
+        });
+      }
+    };
+
+    // Left to Left
+    checkVerticalSnap(activeLeft, imgLeft, imgLeft, imgLeft);
+    // Left to Right
+    checkVerticalSnap(activeLeft, imgRight, imgRight, imgRight);
+    // Right to Left
+    checkVerticalSnap(
+      activeRight,
+      imgLeft,
+      imgLeft - activeImage.width,
+      imgLeft,
+    );
+    // Right to Right
+    checkVerticalSnap(
+      activeRight,
+      imgRight,
+      imgRight - activeImage.width,
+      imgRight,
+    );
+    // Center to Center
+    checkVerticalSnap(
+      activeCenterX,
+      imgCenterX,
+      imgCenterX - activeImage.width / 2,
+      imgCenterX,
+    );
+
+    // Horizontal snapping (Y-axis alignment)
+    const checkHorizontalSnap = (
+      val1: number,
+      val2: number,
+      snapY: number,
+      lineY: number,
+    ) => {
+      const dist = Math.abs(val1 - val2);
+      if (dist < minDistY) {
+        minDistY = dist;
+        newY = snapY;
+        // Clear previous horizontal lines as we found a closer one
+        const verticalLines = snapLines.filter(
+          (l) => l.orientation === "vertical",
+        );
+        snapLines.length = 0;
+        snapLines.push(...verticalLines);
+        snapLines.push({
+          orientation: "horizontal",
+          y: lineY,
+          start: Math.min(activeLeft, imgLeft),
+          end: Math.max(activeRight, imgRight),
+        });
+      } else if (dist === minDistY && dist < threshold) {
+        snapLines.push({
+          orientation: "horizontal",
+          y: lineY,
+          start: Math.min(activeLeft, imgLeft),
+          end: Math.max(activeRight, imgRight),
+        });
+      }
+    };
+
+    // Top to Top
+    checkHorizontalSnap(activeTop, imgTop, imgTop, imgTop);
+    // Top to Bottom
+    checkHorizontalSnap(activeTop, imgBottom, imgBottom, imgBottom);
+    // Bottom to Top
+    checkHorizontalSnap(
+      activeBottom,
+      imgTop,
+      imgTop - activeImage.height,
+      imgTop,
+    );
+    // Bottom to Bottom
+    checkHorizontalSnap(
+      activeBottom,
+      imgBottom,
+      imgBottom - activeImage.height,
+      imgBottom,
+    );
+    // Center to Center
+    checkHorizontalSnap(
+      activeCenterY,
+      imgCenterY,
+      imgCenterY - activeImage.height / 2,
+      imgCenterY,
+    );
+  });
+
+  return { x: newX, y: newY, snapLines };
 };

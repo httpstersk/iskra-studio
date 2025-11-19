@@ -11,7 +11,11 @@
 import { useRef, useCallback } from "react";
 import type Konva from "konva";
 import type { PlacedImage } from "@/types/canvas";
-import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
+import {
+  calculateSnapLines,
+  snapPosition,
+  triggerSnapHaptic,
+} from "@/utils/snap-utils";
 
 /**
  * Props for useImageDrag hook
@@ -19,6 +23,8 @@ import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
 interface UseImageDragProps {
   /** The image being dragged */
   image: PlacedImage;
+  /** All images on canvas (for sibling snapping) */
+  images: PlacedImage[];
   /** IDs of all currently selected images */
   selectedIds: string[];
   /** Map of image IDs to their positions at drag start */
@@ -27,6 +33,8 @@ interface UseImageDragProps {
   onChange: (newAttrs: Partial<PlacedImage>) => void;
   /** State setter for all images (used in multi-selection) */
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
+  /** Setter for snap lines visualization */
+  setSnapLines: (lines: import("@/types/canvas").SnapLine[]) => void;
   /** Throttle function that returns true if update should proceed */
   throttleFrame: () => boolean;
 }
@@ -58,10 +66,12 @@ interface UseImageDragReturn {
  * ```typescript
  * const { handleDragMove, handleDragEnd } = useImageDrag({
  *   image: placedImage,
+ *   images: allImages,
  *   selectedIds: ['img1', 'img2'],
  *   dragStartPositions: dragPosMap,
  *   onChange: updateImage,
  *   setImages: setAllImages,
+ *   setSnapLines: setSnapLines,
  *   throttleFrame: () => true
  * });
  *
@@ -73,10 +83,12 @@ interface UseImageDragReturn {
  */
 export const useImageDrag = ({
   image,
+  images,
   selectedIds,
   dragStartPositions,
   onChange,
   setImages,
+  setSnapLines,
   throttleFrame,
 }: UseImageDragProps): UseImageDragReturn => {
   const lastSnapPos = useRef<{ x: number; y: number } | null>(null);
@@ -87,10 +99,27 @@ export const useImageDrag = ({
       const nodeX = node.x();
       const nodeY = node.y();
 
-      // Snap to grid
-      const snapped = snapPosition(nodeX, nodeY);
+      // Handle multi-selection vs single-selection drag
+      const isMultiDrag =
+        selectedIds.includes(image.id) && selectedIds.length > 1;
 
-      // Always constrain visual position to grid
+      let snapped = { x: nodeX, y: nodeY };
+
+      if (!isMultiDrag) {
+        // Single item drag: snap to siblings
+        const snapResult = calculateSnapLines(
+          { ...image, x: nodeX, y: nodeY },
+          images,
+        );
+        snapped = { x: snapResult.x, y: snapResult.y };
+        setSnapLines(snapResult.snapLines);
+      } else {
+        // Multi-selection drag: snap to grid (existing behavior)
+        snapped = snapPosition(nodeX, nodeY);
+        setSnapLines([]);
+      }
+
+      // Always constrain visual position
       node.x(snapped.x);
       node.y(snapped.y);
 
@@ -101,7 +130,7 @@ export const useImageDrag = ({
         lastSnapPos.current.y !== snapped.y;
 
       if (!hasPositionChanged) {
-        return; // Skip state updates if still in same grid cell
+        return; // Skip state updates if still in same position
       }
 
       // Throttle state updates only when position changes
@@ -114,10 +143,6 @@ export const useImageDrag = ({
         triggerSnapHaptic();
       }
       lastSnapPos.current = snapped;
-
-      // Handle multi-selection vs single-selection drag
-      const isMultiDrag =
-        selectedIds.includes(image.id) && selectedIds.length > 1;
 
       if (isMultiDrag) {
         // Multi-selection drag: move all selected items together
@@ -162,11 +187,13 @@ export const useImageDrag = ({
       }
     },
     [
-      image.id,
+      image,
+      images,
       selectedIds,
       dragStartPositions,
       onChange,
       setImages,
+      setSnapLines,
       throttleFrame,
     ],
   );
@@ -174,7 +201,8 @@ export const useImageDrag = ({
   const handleDragEnd = useCallback(() => {
     // Reset snap tracking on drag end
     lastSnapPos.current = null;
-  }, []);
+    setSnapLines([]);
+  }, [setSnapLines]);
 
   return {
     handleDragMove,
