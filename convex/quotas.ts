@@ -7,7 +7,6 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-
 /**
  * Check if user has available quota for a generation
  *
@@ -66,8 +65,8 @@ export const checkQuota = query({
 
     const used =
       args.type === "image"
-        ? user.imagesUsedInPeriod ?? 0
-        : user.videosUsedInPeriod ?? 0;
+        ? (user.imagesUsedInPeriod ?? 0)
+        : (user.videosUsedInPeriod ?? 0);
 
     const remaining = Math.max(0, limit - used);
     const hasQuota = remaining > 0;
@@ -118,10 +117,13 @@ export const getQuotaStatus = query({
     const now = Date.now();
     const imagesUsed = user.imagesUsedInPeriod ?? 0;
     const videosUsed = user.videosUsedInPeriod ?? 0;
+    const effectiveBillingCycleStart = user.billingCycleStart ?? user.createdAt;
 
     return {
-      billingCycleEnd: user.billingCycleEnd ?? calculateNextBillingDate(user.createdAt),
-      billingCycleStart: user.billingCycleStart ?? user.createdAt,
+      billingCycleEnd:
+        user.billingCycleEnd ??
+        calculateNextBillingDate(effectiveBillingCycleStart),
+      billingCycleStart: effectiveBillingCycleStart,
       daysUntilReset: user.billingCycleEnd
         ? Math.ceil((user.billingCycleEnd - now) / (1000 * 60 * 60 * 24))
         : 30,
@@ -333,7 +335,6 @@ export const updateGenerationStatus = mutation({
     return { success: true };
   },
 });
-
 
 /**
  * Helper function to calculate next billing date from signup date
