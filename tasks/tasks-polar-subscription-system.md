@@ -107,30 +107,30 @@ Update the file after completing each sub-task, not just after completing an ent
     - [x] 3.4.3 Return portal URL to frontend
   - [x] 3.5 Update `convex/http.ts` to expose webhook endpoint if needed - Not needed, using Next.js API routes
 
-- [ ] 4.0 Implement quota tracking and enforcement logic
-  - [ ] 4.1 Create `convex/quotas.ts`:
-    - [ ] 4.1.1 Define quota constants (FREE_IMAGE_QUOTA: 24, FREE_VIDEO_QUOTA: 4, PRO_IMAGE_QUOTA: 480, PRO_VIDEO_QUOTA: 96)
-    - [ ] 4.1.2 Implement `checkQuota` query (userId, type) - returns available quota
-    - [ ] 4.1.3 Implement `incrementQuota` mutation (userId, type) - increments usage counter
-    - [ ] 4.1.4 Implement `resetQuota` mutation (userId) - resets counters to zero
-    - [ ] 4.1.5 Implement `getQuotaStatus` query - returns usage, limits, reset date
-    - [ ] 4.1.6 Implement `checkAndResetIfNeeded` internal function - auto-reset if billing period ended
-  - [ ] 4.2 Create `src/lib/quota-utils.ts`:
-    - [ ] 4.2.1 Export quota constants
-    - [ ] 4.2.2 Implement `calculateDaysUntilReset` helper function
-    - [ ] 4.2.3 Implement `getQuotaLimits` helper (returns limits based on tier)
-    - [ ] 4.2.4 Implement `calculateQuotaPercentage` helper
-  - [ ] 4.3 Update generation API routes to enforce quotas:
-    - [ ] 4.3.1 Update `src/app/api/generate-storyline-images/route.ts` - check image quota before generation
-    - [ ] 4.3.2 Update `src/app/api/generate-director-variations/route.ts` - check image quota
-    - [ ] 4.3.3 Update `src/app/api/generate-camera-angle-variations/route.ts` - check image quota
-    - [ ] 4.3.4 Update `src/app/api/generate-lighting-variations/route.ts` - check image quota
-    - [ ] 4.3.5 Update any video generation endpoints to check video quota
-    - [ ] 4.3.6 Add quota increment after successful generation in all routes
-    - [ ] 4.3.7 Ensure failed generations do NOT increment quota
-  - [ ] 4.4 Create Convex scheduled function for automatic quota resets:
-    - [ ] 4.4.1 Create `convex/crons.ts` with daily job to check and reset expired quotas
-    - [ ] 4.4.2 Configure cron schedule in Convex dashboard or config
+- [x] 4.0 Implement quota tracking and enforcement logic
+  - [x] 4.1 Create `convex/quotas.ts`:
+    - [x] 4.1.1 Define quota constants (FREE_IMAGE_QUOTA: 24, FREE_VIDEO_QUOTA: 4, PRO_IMAGE_QUOTA: 480, PRO_VIDEO_QUOTA: 96)
+    - [x] 4.1.2 Implement `checkQuota` query (userId, type) - returns available quota
+    - [x] 4.1.3 Implement `incrementQuota` mutation (userId, type) - increments usage counter
+    - [x] 4.1.4 Implement `resetQuota` mutation (userId) - resets counters to zero
+    - [x] 4.1.5 Implement `getQuotaStatus` query - returns usage, limits, reset date
+    - [x] 4.1.6 Implement `checkAndResetIfNeeded` internal function - auto-reset if billing period ended
+  - [x] 4.2 Create `src/lib/quota-utils.ts`:
+    - [x] 4.2.1 Export quota constants
+    - [x] 4.2.2 Implement `calculateDaysUntilReset` helper function
+    - [x] 4.2.3 Implement `getQuotaLimits` helper (returns limits based on tier)
+    - [x] 4.2.4 Implement `calculateQuotaPercentage` helper
+  - [x] 4.3 Update generation API routes to enforce quotas:
+    - [x] 4.3.1 Update `src/app/api/generate-storyline-images/route.ts` - check image quota before generation
+    - [x] 4.3.2 Update `src/app/api/generate-director-variations/route.ts` - check image quota
+    - [x] 4.3.3 Update `src/app/api/generate-camera-angle-variations/route.ts` - check image quota
+    - [x] 4.3.4 Update `src/app/api/generate-lighting-variations/route.ts` - check image quota
+    - [x] 4.3.5 Update any video generation endpoints to check video quota (no video gen routes found)
+    - [x] 4.3.6 Add quota increment after successful generation in all routes
+    - [x] 4.3.7 Ensure failed generations do NOT increment quota
+  - [x] 4.4 Create Convex scheduled function for automatic quota resets:
+    - [x] 4.4.1 Create `convex/crons.ts` with daily job to check and reset expired quotas
+    - [x] 4.4.2 Configure cron schedule in Convex dashboard or config
 
 - [x] 5.0 Build user interface for subscription management and quota display
   - [x] 5.1 Create `src/types/subscription.ts`:

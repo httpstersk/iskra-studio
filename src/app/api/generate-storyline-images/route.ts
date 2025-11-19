@@ -9,6 +9,8 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
 import { z } from "zod";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../../../convex/_generated/api";
 
 import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schema";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
@@ -159,31 +161,69 @@ Generate ${count} storyline concepts now.
 
 export const POST = createAuthenticatedHandler({
   schema: generateStorylineImagesRequestSchema,
-  handler: async (input) => {
+  handler: async (input, userId) => {
     const { count, styleAnalysis, userContext } = input;
+
+    // Initialize Convex client for quota operations
+    const convex = new ConvexHttpClient(requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL"));
+    convex.setAuth(requireEnv("CONVEX_DEPLOY_KEY", "Convex deploy key"));
+
+    // Check quota before generation
+    try {
+      const quotaCheck = await convex.query(api.quotas.checkQuota, {
+        type: "image",
+      });
+
+      if (!quotaCheck.hasQuota) {
+        throw new Error(
+          `Image quota exceeded. You've used ${quotaCheck.used}/${quotaCheck.limit} images this period.`
+        );
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("quota exceeded")) {
+        throw error;
+      }
+      // Log but don't fail on quota check errors
+      console.error("Quota check failed:", error);
+    }
 
     // Validate API key
     requireEnv("OPENAI_API_KEY", "OpenAI API key");
 
     const userPrompt = buildUserPrompt(styleAnalysis, count, userContext);
 
-    const result = await generateObject({
-      model: openai("gpt-5"),
-      schema: storylineImageConceptSetSchema,
-      messages: [
-        {
-          role: "system",
-          content: STORYLINE_IMAGE_GENERATION_SYSTEM_PROMPT,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
-    });
+    try {
+      const result = await generateObject({
+        model: openai("gpt-5"),
+        schema: storylineImageConceptSetSchema,
+        messages: [
+          {
+            role: "system",
+            content: STORYLINE_IMAGE_GENERATION_SYSTEM_PROMPT,
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+      });
 
-    return {
-      concepts: result.object.concepts,
-    };
+      // Increment quota after successful generation
+      try {
+        await convex.mutation(api.quotas.incrementQuota, {
+          type: "image",
+        });
+      } catch (error) {
+        console.error("Failed to increment quota:", error);
+        // Don't fail the request if quota increment fails
+      }
+
+      return {
+        concepts: result.object.concepts,
+      };
+    } catch (error) {
+      // Don't increment quota on failed generation
+      throw error;
+    }
   },
 });
