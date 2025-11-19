@@ -24,4 +24,35 @@ crons.daily(
   internal.quotas.resetExpiredQuotas
 );
 
+/**
+ * Weekly webhook events cleanup job
+ *
+ * Runs every Sunday at 02:00 UTC to remove webhook event records
+ * older than 30 days. Prevents the webhookEvents table from growing
+ * indefinitely while maintaining replay attack protection.
+ */
+crons.weekly(
+  "cleanup-old-webhook-events",
+  {
+    hourUTC: 2, // Run at 2 AM UTC on Sundays
+    minuteUTC: 0,
+    dayOfWeek: "sunday",
+  },
+  internal.webhooks.cleanupOldEvents
+);
+
+/**
+ * Hourly upload rate limit records cleanup job
+ *
+ * Runs every hour to remove upload rate limit records older than 1 hour.
+ * Keeps the uploadRateLimits table lean while maintaining effective rate limiting.
+ */
+crons.hourly(
+  "cleanup-old-upload-records",
+  {
+    minuteUTC: 30, // Run at 30 minutes past each hour
+  },
+  internal.uploadRateLimit.cleanupOldUploadRecords
+);
+
 export default crons;

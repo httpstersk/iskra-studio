@@ -74,11 +74,7 @@ export default defineSchema({
         v.literal("trialing")
       )
     ),
-    tier: v.union(
-      v.literal("free"),
-      v.literal("paid"),
-      v.literal("pro")
-    ),
+    tier: v.union(v.literal("free"), v.literal("paid"), v.literal("pro")),
     updatedAt: v.number(),
     userId: v.string(),
     videosUsedInPeriod: v.optional(v.number()),
@@ -150,7 +146,7 @@ export default defineSchema({
           assetId: v.optional(v.string()),
           assetSyncedAt: v.optional(v.number()),
           assetType: v.optional(
-            v.union(v.literal("image"), v.literal("video")),
+            v.union(v.literal("image"), v.literal("video"))
           ),
           currentTime: v.optional(v.number()),
           duration: v.optional(v.number()),
@@ -168,12 +164,12 @@ export default defineSchema({
             v.literal("image"),
             v.literal("video"),
             v.literal("text"),
-            v.literal("shape"),
+            v.literal("shape")
           ),
           volume: v.optional(v.number()),
           width: v.optional(v.number()),
           zIndex: v.number(),
-        }),
+        })
       ),
       lastModified: v.number(),
       viewport: v.optional(
@@ -181,7 +177,7 @@ export default defineSchema({
           scale: v.number(),
           x: v.number(),
           y: v.number(),
-        }),
+        })
       ),
     }),
     createdAt: v.number(),
@@ -227,4 +223,40 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_userId_and_type", ["userId", "type"])
     .index("by_userId_and_status", ["userId", "status"]),
+
+  /**
+   * Webhook Events table
+   *
+   * Tracks processed webhook events to prevent replay attacks.
+   * Events older than 30 days are automatically cleaned up.
+   *
+   * @property eventId - Unique event ID from webhook provider (indexed)
+   * @property eventType - Type of webhook event (e.g., "subscription.created")
+   * @property processedAt - Timestamp when event was processed
+   * @property source - Webhook source ("polar")
+   */
+  webhookEvents: defineTable({
+    eventId: v.string(),
+    eventType: v.string(),
+    processedAt: v.number(),
+    source: v.string(),
+  })
+    .index("by_eventId", ["eventId"])
+    .index("by_processedAt", ["processedAt"]),
+
+  /**
+   * Upload Rate Limits table
+   *
+   * Tracks upload requests per user for rate limiting.
+   * Records older than 1 hour are automatically cleaned up.
+   *
+   * @property userId - User ID making the upload request
+   * @property timestamp - When the upload request was made
+   */
+  uploadRateLimits: defineTable({
+    userId: v.string(),
+    timestamp: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_timestamp", ["timestamp"]),
 });

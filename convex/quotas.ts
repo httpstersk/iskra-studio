@@ -143,8 +143,96 @@ export const getQuotaStatus = query({
 });
 
 /**
+ * Atomically check and reserve quota for a generation
+ *
+ * This mutation combines quota checking and incrementing into a single atomic operation
+ * to prevent race conditions where multiple parallel requests could exceed quota limits.
+ *
+ * @param type - Generation type ("image" or "video")
+ * @returns Object with success status and quota information
+ * @throws Error if quota is exceeded or user not found
+ */
+export const checkAndReserveQuota = mutation({
+  args: {
+    type: v.union(v.literal("image"), v.literal("video")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const userId = identity.subject;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Fetch plan details
+    const planKey = user.tier === "paid" ? "pro" : user.tier;
+    const plan = await ctx.db
+      .query("plans")
+      .withIndex("by_key", (q) => q.eq("key", planKey))
+      .first();
+
+    const imageLimit = plan?.imagesPerPeriod ?? (planKey === "pro" ? 480 : 24);
+    const videoLimit = plan?.videosPerPeriod ?? (planKey === "pro" ? 96 : 4);
+    const limit = args.type === "image" ? imageLimit : videoLimit;
+
+    // Check if billing period has ended
+    const now = Date.now();
+    const needsReset = user.billingCycleEnd && now > user.billingCycleEnd;
+
+    let currentUsed: number;
+
+    if (needsReset) {
+      // Period has expired, treat as fresh quota
+      currentUsed = 0;
+    } else {
+      currentUsed =
+        args.type === "image"
+          ? (user.imagesUsedInPeriod ?? 0)
+          : (user.videosUsedInPeriod ?? 0);
+    }
+
+    // Check if quota is available BEFORE incrementing
+    if (currentUsed >= limit) {
+      throw new Error(`Quota exceeded: ${currentUsed}/${limit} ${args.type}s used this period`);
+    }
+
+    // Atomically increment quota (this happens in same transaction as the check)
+    const newUsed = currentUsed + 1;
+
+    if (args.type === "image") {
+      await ctx.db.patch(user._id, {
+        imagesUsedInPeriod: newUsed,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.patch(user._id, {
+        videosUsedInPeriod: newUsed,
+        updatedAt: Date.now(),
+      });
+    }
+
+    return {
+      success: true,
+      used: newUsed,
+      limit,
+      remaining: limit - newUsed,
+    };
+  },
+});
+
+/**
  * Increment quota usage after successful generation
  *
+ * @deprecated Use checkAndReserveQuota instead for atomic operation
  * @param type - Generation type ("image" or "video")
  * @param generationId - ID of the generation record (optional, for tracking)
  */

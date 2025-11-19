@@ -6,7 +6,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 /**
  * Creates an asset record after file upload to storage.
@@ -97,17 +97,24 @@ export const uploadAsset = mutation({
     });
 
     // Update user's storage quota
+    // Note: Convex mutations use optimistic concurrency control (OCC) with automatic
+    // retries. If multiple uploads happen concurrently and cause a conflict, Convex
+    // will automatically retry this mutation with the latest user data, ensuring
+    // accurate quota tracking without race conditions.
     const user = await ctx.db
       .query("users")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
 
-    if (user) {
-      await ctx.db.patch(user._id, {
-        storageUsedBytes: user.storageUsedBytes + args.sizeBytes,
-        updatedAt: Date.now(),
-      });
+    if (!user) {
+      // User should exist since we're authenticated, but handle gracefully
+      throw new Error("User record not found");
     }
+
+    await ctx.db.patch(user._id, {
+      storageUsedBytes: user.storageUsedBytes + args.sizeBytes,
+      updatedAt: Date.now(),
+    });
 
     return assetId;
   },
@@ -150,17 +157,24 @@ export const deleteAsset = mutation({
     await ctx.db.delete(args.assetId);
 
     // Update user's storage quota
+    // Note: Convex mutations use optimistic concurrency control (OCC) with automatic
+    // retries. If multiple deletes happen concurrently and cause a conflict, Convex
+    // will automatically retry this mutation with the latest user data, ensuring
+    // accurate quota tracking without race conditions.
     const user = await ctx.db
       .query("users")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
 
-    if (user) {
-      await ctx.db.patch(user._id, {
-        storageUsedBytes: Math.max(0, user.storageUsedBytes - asset.sizeBytes),
-        updatedAt: Date.now(),
-      });
+    if (!user) {
+      // User should exist since we're authenticated, but handle gracefully
+      throw new Error("User record not found");
     }
+
+    await ctx.db.patch(user._id, {
+      storageUsedBytes: Math.max(0, user.storageUsedBytes - asset.sizeBytes),
+      updatedAt: Date.now(),
+    });
   },
 });
 
@@ -231,7 +245,7 @@ export const listAssets = query({
       query = ctx.db
         .query("assets")
         .withIndex("by_userId_and_type", (q) =>
-          q.eq("userId", userId).eq("type", assetType),
+          q.eq("userId", userId).eq("type", assetType)
         );
     } else {
       query = ctx.db
@@ -242,5 +256,76 @@ export const listAssets = query({
     const assets = await query.order("desc").take(limit);
 
     return assets;
+  },
+});
+
+/**
+ * Internal mutation to atomically increment storage quota
+ *
+ * This prevents race conditions when multiple uploads happen concurrently.
+ * Uses optimistic concurrency control with retry logic.
+ *
+ * @param userId - User ID
+ * @param sizeBytes - Number of bytes to add to storage quota
+ */
+export const incrementStorageQuota = internalMutation({
+  args: {
+    userId: v.string(),
+    sizeBytes: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!user) {
+      throw new Error(`User not found: ${args.userId}`);
+    }
+
+    // Atomic update - Convex handles concurrency with automatic retries
+    await ctx.db.patch(user._id, {
+      storageUsedBytes: user.storageUsedBytes + args.sizeBytes,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true, newTotal: user.storageUsedBytes + args.sizeBytes };
+  },
+});
+
+/**
+ * Internal mutation to atomically decrement storage quota
+ *
+ * This prevents race conditions when multiple deletes happen concurrently.
+ * Uses optimistic concurrency control with retry logic.
+ *
+ * @param userId - User ID
+ * @param sizeBytes - Number of bytes to subtract from storage quota
+ */
+export const decrementStorageQuota = internalMutation({
+  args: {
+    userId: v.string(),
+    sizeBytes: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!user) {
+      throw new Error(`User not found: ${args.userId}`);
+    }
+
+    // Atomic update - Convex handles concurrency with automatic retries
+    // Ensure storage doesn't go negative
+    const newTotal = Math.max(0, user.storageUsedBytes - args.sizeBytes);
+
+    await ctx.db.patch(user._id, {
+      storageUsedBytes: newTotal,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true, newTotal };
   },
 });

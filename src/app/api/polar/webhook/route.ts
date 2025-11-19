@@ -8,15 +8,123 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateEvent, WebhookVerificationError } from "@polar-sh/sdk/webhooks";
 import { ConvexHttpClient } from "convex/browser";
-import { api } from "../../../../../convex/_generated/api";
+import { api, internal } from "../../../../../convex/_generated/api";
+import { z } from "zod";
+import { createRateLimiter, shouldLimitRequest } from "@/lib/ratelimit";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+/**
+ * Rate limiter for webhook endpoint
+ * Conservative limits to prevent abuse while allowing legitimate webhook bursts
+ */
+const webhookRateLimiter = {
+  perMinute: createRateLimiter(100, "1 m"), // 100 requests per minute
+  perHour: createRateLimiter(500, "1 h"),   // 500 requests per hour
+  perDay: createRateLimiter(2000, "1 d"),    // 2000 requests per day
+};
+
+/**
+ * Zod schemas for Polar webhook event validation
+ *
+ * These schemas validate the structure and content of webhook payloads
+ * to prevent malformed data from causing errors or security issues.
+ */
+
+// Base subscription data schema
+const subscriptionDataSchema = z.object({
+  id: z.string(),
+  customer_id: z.string().optional(),
+  current_period_start: z.string().datetime().optional(),
+  current_period_end: z.string().datetime().optional(),
+  metadata: z.object({
+    clerkUserId: z.string().optional(),
+  }).optional(),
+});
+
+// Subscription created event
+const subscriptionCreatedSchema = z.object({
+  id: z.string(),
+  type: z.literal("subscription.created"),
+  data: subscriptionDataSchema.extend({
+    customer_id: z.string(),
+    current_period_start: z.string().datetime(),
+    current_period_end: z.string().datetime(),
+    metadata: z.object({
+      clerkUserId: z.string(),
+    }),
+  }),
+});
+
+// Subscription updated event
+const subscriptionUpdatedSchema = z.object({
+  id: z.string(),
+  type: z.literal("subscription.updated"),
+  data: subscriptionDataSchema.extend({
+    current_period_start: z.string().datetime(),
+    current_period_end: z.string().datetime(),
+  }),
+});
+
+// Subscription canceled/revoked event
+const subscriptionCanceledSchema = z.object({
+  id: z.string(),
+  type: z.union([
+    z.literal("subscription.canceled"),
+    z.literal("subscription.revoked"),
+  ]),
+  data: subscriptionDataSchema,
+});
+
+// Subscription active event
+const subscriptionActiveSchema = z.object({
+  id: z.string(),
+  type: z.literal("subscription.active"),
+  data: subscriptionDataSchema,
+});
+
+// Order created event
+const orderCreatedSchema = z.object({
+  id: z.string(),
+  type: z.literal("order.created"),
+  data: z.object({
+    id: z.string(),
+    metadata: z.object({
+      clerkUserId: z.string().optional(),
+    }).optional(),
+  }),
+});
+
+// Union of all event schemas
+const polarWebhookEventSchema = z.discriminatedUnion("type", [
+  subscriptionCreatedSchema,
+  subscriptionUpdatedSchema,
+  subscriptionCanceledSchema,
+  subscriptionActiveSchema,
+  orderCreatedSchema,
+]);
 
 /**
  * POST handler for Polar webhooks
  */
 export async function POST(req: NextRequest) {
   try {
+    // Apply rate limiting to prevent abuse
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    const rateLimitResult = await shouldLimitRequest(
+      webhookRateLimiter,
+      ip,
+      "polar-webhook"
+    );
+
+    if (rateLimitResult.shouldLimitRequest) {
+      console.warn(`Webhook rate limit exceeded for IP ${ip}`);
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429 }
+      );
+    }
+
     // Get raw body for signature verification
     const payload = await req.text();
     const headers = Object.fromEntries(req.headers.entries());
@@ -42,33 +150,64 @@ export async function POST(req: NextRequest) {
 
     console.log("Received Polar webhook event:", event.type);
 
+    // Check for replay attacks - verify event hasn't been processed before
+    const alreadyProcessed = await convex.query(internal.webhooks.isEventProcessed, {
+      eventId: event.id,
+    });
+
+    if (alreadyProcessed) {
+      console.log(`Event ${event.id} already processed, skipping (replay protection)`);
+      return NextResponse.json({ received: true }, { status: 200 });
+    }
+
+    // Validate event structure using Zod schemas
+    const validationResult = polarWebhookEventSchema.safeParse(event);
+    if (!validationResult.success) {
+      console.error("Webhook event validation failed:", validationResult.error);
+      return NextResponse.json(
+        { error: "Invalid event structure" },
+        { status: 400 }
+      );
+    }
+
+    const validatedEvent = validationResult.data;
+
     // Handle different event types
-    switch (event.type) {
+    switch (validatedEvent.type) {
       case "subscription.created":
-        await handleSubscriptionCreated(event);
+        await handleSubscriptionCreated(validatedEvent);
         break;
 
       case "subscription.updated":
-        await handleSubscriptionUpdated(event);
+        await handleSubscriptionUpdated(validatedEvent);
         break;
 
       case "subscription.canceled":
       case "subscription.revoked":
-        await handleSubscriptionCanceled(event);
+        await handleSubscriptionCanceled(validatedEvent);
         break;
 
       case "subscription.active":
-        await handleSubscriptionActive(event);
+        await handleSubscriptionActive(validatedEvent);
         break;
 
       case "order.created":
         // Payment successful for new subscription
-        await handleOrderCreated(event);
+        await handleOrderCreated(validatedEvent);
         break;
 
       default:
-        console.log(`Unhandled webhook event type: ${event.type}`);
+        // TypeScript exhaustiveness check - this should never be reached
+        const _exhaustive: never = validatedEvent;
+        console.log(`Unhandled webhook event type: ${_exhaustive}`);
     }
+
+    // Mark event as processed to prevent replay attacks
+    await convex.mutation(internal.webhooks.markEventProcessed, {
+      eventId: validatedEvent.id,
+      eventType: validatedEvent.type,
+      source: "polar",
+    });
 
     // Return 200 OK to acknowledge receipt
     return NextResponse.json({ received: true }, { status: 200 });
@@ -81,7 +220,12 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// Infer TypeScript type from Zod schema for type safety
+type PolarWebhookEvent = z.infer<typeof polarWebhookEventSchema>;
+
+// Legacy interface for backward compatibility with existing handler functions
 interface PolarEvent {
+  id: string;
   type: string;
   data: {
     id: string;

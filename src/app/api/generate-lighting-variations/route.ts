@@ -38,45 +38,28 @@ export const POST = createAuthenticatedHandler({
       convex.setAuth(token);
     }
 
-    // Check quota before generation
+    // Atomically check and reserve quota before generation
+    // This prevents race conditions where parallel requests could exceed quota limits
     try {
-      const quotaCheck = await convex.query(api.quotas.checkQuota, {
+      await convex.mutation(api.quotas.checkAndReserveQuota, {
         type: "image",
       });
-
-      if (!quotaCheck.hasQuota) {
-        throw new Error(
-          `Image quota exceeded. You've used ${quotaCheck.used}/${quotaCheck.limit} images this period.`
-        );
-      }
     } catch (error) {
-      if (error instanceof Error && error.message.includes("quota exceeded")) {
+      if (error instanceof Error && error.message.includes("Quota exceeded")) {
         throw error;
       }
-      console.error("Quota check failed:", error);
+      console.error("Quota reservation failed:", error);
+      throw new Error("Failed to reserve quota for generation");
     }
 
-    try {
-      const result = await handleVariations(variationHandlers.lighting, {
-        imageUrl,
-        items: lightingScenarios,
-        userContext,
-        itemKey: "lightingScenario",
-      });
+    // Quota has been reserved, proceed with generation
+    const result = await handleVariations(variationHandlers.lighting, {
+      imageUrl,
+      items: lightingScenarios,
+      userContext,
+      itemKey: "lightingScenario",
+    });
 
-      // Increment quota after successful generation
-      try {
-        await convex.mutation(api.quotas.incrementQuota, {
-          type: "image",
-        });
-      } catch (error) {
-        console.error("Failed to increment quota:", error);
-      }
-
-      return result;
-    } catch (error) {
-      // Don't increment quota on failed generation
-      throw error;
-    }
+    return result;
   },
 });
