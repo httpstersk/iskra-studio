@@ -43,12 +43,13 @@ export const POST = createAuthenticatedHandler({
     try {
       await convex.mutation(api.quotas.checkAndReserveQuota, {
         type: "image",
+        count: directors.length,
       });
     } catch (error) {
       if (error instanceof Error && error.message.includes("Quota exceeded")) {
         throw error;
       }
-      console.error("Quota reservation failed:", error);
+
       throw new Error("Failed to reserve quota for generation");
     }
 

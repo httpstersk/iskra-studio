@@ -174,23 +174,19 @@ export const POST = createAuthenticatedHandler({
       convex.setAuth(token);
     }
 
-    // Check quota before generation
+    // Atomically check and reserve quota before generation
+    // This prevents race conditions where parallel requests could exceed quota limits
     try {
-      const quotaCheck = await convex.query(api.quotas.checkQuota, {
+      await convex.mutation(api.quotas.checkAndReserveQuota, {
         type: "image",
+        count: count,
       });
-
-      if (!quotaCheck.hasQuota) {
-        throw new Error(
-          `Image quota exceeded. You've used ${quotaCheck.used}/${quotaCheck.limit} images this period.`
-        );
-      }
     } catch (error) {
-      if (error instanceof Error && error.message.includes("quota exceeded")) {
+      if (error instanceof Error && error.message.includes("Quota exceeded")) {
         throw error;
       }
-      // Log but don't fail on quota check errors
-      console.error("Quota check failed:", error);
+
+      throw new Error("Failed to reserve quota for generation");
     }
 
     // Validate API key
@@ -198,38 +194,24 @@ export const POST = createAuthenticatedHandler({
 
     const userPrompt = buildUserPrompt(styleAnalysis, count, userContext);
 
-    try {
-      const result = await generateObject({
-        model: openai("gpt-5"),
-        schema: storylineImageConceptSetSchema,
-        messages: [
-          {
-            role: "system",
-            content: STORYLINE_IMAGE_GENERATION_SYSTEM_PROMPT,
-          },
-          {
-            role: "user",
-            content: userPrompt,
-          },
-        ],
-      });
+    // Quota has been reserved, proceed with generation
+    const result = await generateObject({
+      model: openai("gpt-5"),
+      schema: storylineImageConceptSetSchema,
+      messages: [
+        {
+          role: "system",
+          content: STORYLINE_IMAGE_GENERATION_SYSTEM_PROMPT,
+        },
+        {
+          role: "user",
+          content: userPrompt,
+        },
+      ],
+    });
 
-      // Increment quota after successful generation
-      try {
-        await convex.mutation(api.quotas.incrementQuota, {
-          type: "image",
-        });
-      } catch (error) {
-        console.error("Failed to increment quota:", error);
-        // Don't fail the request if quota increment fails
-      }
-
-      return {
-        concepts: result.object.concepts,
-      };
-    } catch (error) {
-      // Don't increment quota on failed generation
-      throw error;
-    }
+    return {
+      concepts: result.object.concepts,
+    };
   },
 });

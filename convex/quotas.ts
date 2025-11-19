@@ -50,7 +50,7 @@ export const checkQuota = query({
     // We don't reset here to avoid side effects in queries
     const now = Date.now();
     const needsReset = user.billingCycleEnd && now > user.billingCycleEnd;
-    
+
     if (needsReset) {
       // Return fresh quota status - scheduled job will handle actual reset
       return {
@@ -149,12 +149,14 @@ export const getQuotaStatus = query({
  * to prevent race conditions where multiple parallel requests could exceed quota limits.
  *
  * @param type - Generation type ("image" or "video")
+ * @param count - Number of items to reserve (default: 1)
  * @returns Object with success status and quota information
  * @throws Error if quota is exceeded or user not found
  */
 export const checkAndReserveQuota = mutation({
   args: {
     type: v.union(v.literal("image"), v.literal("video")),
+    count: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -163,6 +165,12 @@ export const checkAndReserveQuota = mutation({
     }
 
     const userId = identity.subject;
+    const count = args.count ?? 1;
+
+    // Validate count
+    if (count < 1) {
+      throw new Error("Count must be at least 1");
+    }
 
     const user = await ctx.db
       .query("users")
@@ -201,12 +209,14 @@ export const checkAndReserveQuota = mutation({
     }
 
     // Check if quota is available BEFORE incrementing
-    if (currentUsed >= limit) {
-      throw new Error(`Quota exceeded: ${currentUsed}/${limit} ${args.type}s used this period`);
+    if (currentUsed + count > limit) {
+      throw new Error(
+        `Quota exceeded: ${currentUsed}/${limit} ${args.type}s used this period. Requested ${count}, but only ${limit - currentUsed} remaining.`
+      );
     }
 
     // Atomically increment quota (this happens in same transaction as the check)
-    const newUsed = currentUsed + 1;
+    const newUsed = currentUsed + count;
 
     if (args.type === "image") {
       await ctx.db.patch(user._id, {
@@ -371,7 +381,7 @@ export const resetExpiredQuotas = internalMutation({
           billingCycleEnd: newBillingEnd,
           updatedAt: now,
         });
-        
+
         resetCount++;
       }
     }
