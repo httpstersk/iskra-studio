@@ -8,6 +8,7 @@
 
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { UserMenu } from "@/components/auth/user-menu";
+import { QuotaDisplay } from "@/components/subscription/quota-display";
 
 import { useAuth } from "@/hooks/useAuth";
 import { Sparkles } from "lucide-react";
@@ -62,6 +63,9 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
             <>
               {isAuthenticated ? (
                 <>
+                  <div className="hidden lg:block">
+                    <QuotaDisplay compact className="w-64" />
+                  </div>
                   <UserMenu />
                 </>
               ) : (

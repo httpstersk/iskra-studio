@@ -132,47 +132,47 @@ Update the file after completing each sub-task, not just after completing an ent
     - [ ] 4.4.1 Create `convex/crons.ts` with daily job to check and reset expired quotas
     - [ ] 4.4.2 Configure cron schedule in Convex dashboard or config
 
-- [ ] 5.0 Build user interface for subscription management and quota display
-  - [ ] 5.1 Create `src/types/subscription.ts`:
-    - [ ] 5.1.1 Define SubscriptionTier type
-    - [ ] 5.1.2 Define QuotaStatus type
-    - [ ] 5.1.3 Define SubscriptionStatus type
-  - [ ] 5.2 Create `src/hooks/use-subscription.ts`:
-    - [ ] 5.2.1 Implement hook to fetch subscription status from Convex
-    - [ ] 5.2.2 Export upgrade and cancel functions
-    - [ ] 5.2.3 Add loading and error states
-  - [ ] 5.3 Create `src/hooks/use-quota.ts`:
-    - [ ] 5.3.1 Implement hook to fetch quota status from Convex
-    - [ ] 5.3.2 Return images/videos used, limits, and reset date
-    - [ ] 5.3.3 Add real-time updates (Convex reactive queries)
-  - [ ] 5.4 Create `src/components/subscription/quota-display.tsx`:
-    - [ ] 5.4.1 Display images remaining (e.g., "18/24 images")
-    - [ ] 5.4.2 Display videos remaining (e.g., "2/4 videos")
-    - [ ] 5.4.3 Show progress bars for visual indication
-    - [ ] 5.4.4 Display days until quota reset
-    - [ ] 5.4.5 Add warning styling when quota > 80%
-    - [ ] 5.4.6 Make component responsive and compact
-  - [ ] 5.5 Create `src/components/subscription/upgrade-modal.tsx`:
-    - [ ] 5.5.1 Design modal with Pro plan benefits
-    - [ ] 5.5.2 Show pricing for monthly and annual options
-    - [ ] 5.5.3 Add CTA button that redirects to Polar checkout
-    - [ ] 5.5.4 Handle checkout session creation
-    - [ ] 5.5.5 Add loading states during checkout creation
-  - [ ] 5.6 Create `src/components/subscription/subscription-management.tsx`:
-    - [ ] 5.6.1 Display current plan (Free or Pro)
-    - [ ] 5.6.2 Show billing frequency for Pro users (monthly/annual)
-    - [ ] 5.6.3 Display next billing date
-    - [ ] 5.6.4 Add "Manage Subscription" button (links to Polar portal)
-    - [ ] 5.6.5 Add "Upgrade to Pro" button for Free users
-    - [ ] 5.6.6 Show cancellation status if user cancelled
-  - [ ] 5.7 Create `src/components/subscription/quota-exceeded-modal.tsx`:
-    - [ ] 5.7.1 Display error message explaining quota exceeded
-    - [ ] 5.7.2 Show which quota was exceeded (images or videos)
-    - [ ] 5.7.3 Display current usage
-    - [ ] 5.7.4 Add "Upgrade to Pro" CTA for Free users
-    - [ ] 5.7.5 Show quota reset date as alternative
-  - [ ] 5.8 Integrate components into main UI:
-    - [ ] 5.8.1 Add QuotaDisplay to header or sidebar in `src/app/canvas-page-client.tsx`
-    - [ ] 5.8.2 Show QuotaExceededModal when generation fails due to quota
-    - [ ] 5.8.3 Add subscription settings page/section to user menu
-    - [ ] 5.8.4 Add upgrade prompts at strategic locations
+- [x] 5.0 Build user interface for subscription management and quota display
+  - [x] 5.1 Create `src/types/subscription.ts`:
+    - [x] 5.1.1 Define SubscriptionTier type
+    - [x] 5.1.2 Define QuotaStatus type
+    - [x] 5.1.3 Define SubscriptionStatus type
+  - [x] 5.2 Create `src/hooks/use-subscription.ts`:
+    - [x] 5.2.1 Implement hook to fetch subscription status from Convex
+    - [x] 5.2.2 Export upgrade and cancel functions
+    - [x] 5.2.3 Add loading and error states
+  - [x] 5.3 Create `src/hooks/use-quota.ts`:
+    - [x] 5.3.1 Implement hook to fetch quota status from Convex
+    - [x] 5.3.2 Return images/videos used, limits, and reset date
+    - [x] 5.3.3 Add real-time updates (Convex reactive queries)
+  - [x] 5.4 Create `src/components/subscription/quota-display.tsx`:
+    - [x] 5.4.1 Display images remaining (e.g., "18/24 images")
+    - [x] 5.4.2 Display videos remaining (e.g., "2/4 videos")
+    - [x] 5.4.3 Show progress bars for visual indication
+    - [x] 5.4.4 Display days until quota reset
+    - [x] 5.4.5 Add warning styling when quota > 80%
+    - [x] 5.4.6 Make component responsive and compact
+  - [x] 5.5 Create `src/components/subscription/upgrade-modal.tsx`:
+    - [x] 5.5.1 Design modal with Pro plan benefits
+    - [x] 5.5.2 Show pricing for monthly and annual options
+    - [x] 5.5.3 Add CTA button that redirects to Polar checkout
+    - [x] 5.5.4 Handle checkout session creation
+    - [x] 5.5.5 Add loading states during checkout creation
+  - [x] 5.6 Create `src/components/subscription/subscription-management.tsx`:
+    - [x] 5.6.1 Display current plan (Free or Pro)
+    - [x] 5.6.2 Show billing frequency for Pro users (monthly/annual)
+    - [x] 5.6.3 Display next billing date
+    - [x] 5.6.4 Add "Manage Subscription" button (links to Polar portal)
+    - [x] 5.6.5 Add "Upgrade to Pro" button for Free users
+    - [x] 5.6.6 Show cancellation status if user cancelled
+  - [x] 5.7 Create `src/components/subscription/quota-exceeded-modal.tsx`:
+    - [x] 5.7.1 Display error message explaining quota exceeded
+    - [x] 5.7.2 Show which quota was exceeded (images or videos)
+    - [x] 5.7.3 Display current usage
+    - [x] 5.7.4 Add "Upgrade to Pro" CTA for Free users
+    - [x] 5.7.5 Show quota reset date as alternative
+  - [x] 5.8 Integrate components into main UI:
+    - [x] 5.8.1 Add QuotaDisplay to header or sidebar in `src/app/canvas-page-client.tsx`
+    - [x] 5.8.2 Show QuotaExceededModal when generation fails due to quota
+    - [x] 5.8.3 Add subscription settings page/section to user menu
+    - [x] 5.8.4 Add upgrade prompts at strategic locations

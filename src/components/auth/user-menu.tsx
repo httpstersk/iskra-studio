@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 
-import { Crown, LogOut, Settings, User } from "lucide-react";
+import { Crown, LogOut, Settings, User, CreditCard } from "lucide-react";
 
 /**
  * Props for the UserMenu component.
@@ -116,6 +116,17 @@ export function UserMenu({ className }: UserMenuProps) {
           >
             <Settings className="w-4 h-4 mr-2" />
             Settings
+          </a>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <a
+            aria-label="Manage subscription"
+            className="cursor-pointer"
+            href="/subscription"
+          >
+            <CreditCard className="w-4 h-4 mr-2" />
+            Subscription
           </a>
         </DropdownMenuItem>
 
