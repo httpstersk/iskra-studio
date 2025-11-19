@@ -111,9 +111,9 @@ export function useProjects(): UseProjectsReturn {
   const { isAuthenticated } = useAuth();
   const convex = useConvex();
 
-  // Use useOptimistic for instant UI feedback during project switching
+  // Use useOptimistic for instant UI feedback during project renames
   // Automatically reverts on error without manual cleanup
-  const [optimisticProject, setOptimisticProject] = useOptimistic(
+  const [_optimisticProject, setOptimisticProject] = useOptimistic(
     currentProject,
     (_, newProject: Project | null) => newProject,
   );
@@ -179,8 +179,8 @@ export function useProjects(): UseProjectsReturn {
   /**
    * Loads a project by ID.
    *
-   * Uses React's useOptimistic hook for instant UI feedback without manual cleanup.
-   * Automatically reverts optimistic state if the load fails.
+   * Sets loading state and updates the current project atomically.
+   * Canvas elements will be loaded by useStorage when it detects the project change.
    */
   const loadProject = useCallback(
     async (projectId: Id<"projects">): Promise<void> => {
@@ -201,13 +201,9 @@ export function useProjects(): UseProjectsReturn {
           id: project._id,
         };
 
-        // Apply optimistic update within a transition
-        // This will automatically revert if an error is thrown
-        startTransition(() => {
-          setOptimisticProject(normalizedProject);
-        });
-
         // Commit to actual state
+        // Note: We don't use optimistic updates for project loading because
+        // other hooks (useStorage) need to coordinate based on the committed state
         setCurrentProject(normalizedProject);
         setLastSavedAt(normalizedProject.lastSavedAt ?? null);
 
@@ -246,7 +242,6 @@ export function useProjects(): UseProjectsReturn {
           return updated;
         });
       } catch (error) {
-        // useOptimistic automatically reverts on error - no manual cleanup needed
         throw new Error(
           `Project load failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
@@ -254,14 +249,7 @@ export function useProjects(): UseProjectsReturn {
         setIsLoading(false);
       }
     },
-    [
-      convex,
-      setCurrentProject,
-      setIsLoading,
-      setLastSavedAt,
-      setProjectList,
-      setOptimisticProject,
-    ],
+    [convex, setCurrentProject, setIsLoading, setLastSavedAt, setProjectList],
   );
 
   /**
@@ -362,7 +350,7 @@ export function useProjects(): UseProjectsReturn {
 
   return {
     createProject,
-    currentProject: optimisticProject,
+    currentProject, // Return committed project, not optimistic (fixes race condition)
     isLoading,
     isSaving,
     lastSavedAt,

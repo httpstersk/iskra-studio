@@ -11,7 +11,7 @@ import {
 import { snapImagesToGrid } from "@/utils/snap-utils";
 import { useConvex, useMutation } from "convex/react";
 import { useAtomValue } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { Viewport } from "./useCanvasState";
@@ -36,6 +36,9 @@ export function useStorage(
   const convexClient = useConvex();
   const saveProjectMutation = useMutation(api.projects.saveProject);
   const currentProject = useAtomValue(currentProjectAtom);
+
+  // Track the last loaded project ID to prevent race conditions
+  const lastLoadedProjectIdRef = useRef<string | null>(null);
 
   const saveToStorage = useCallback(async () => {
     try {
@@ -95,13 +98,34 @@ export function useStorage(
 
   const loadFromStorage = useCallback(async () => {
     try {
+      // Track which project we're loading to prevent race conditions
+      const projectIdToLoad = currentProject?._id ?? null;
+
+      // Skip if we've already loaded this project
+      if (projectIdToLoad === lastLoadedProjectIdRef.current) {
+        return;
+      }
+
+      // Clear canvas immediately when switching projects to prevent showing old content
+      setImages([]);
+      setVideos([]);
+      setIsStorageLoaded(false);
+
       let canvasState: CanvasState | null = null;
-      if (currentProject?._id) {
+      if (projectIdToLoad) {
         const project = await convexClient.query(api.projects.getProject, {
-          projectId: currentProject._id as Id<"projects">,
+          projectId: projectIdToLoad as Id<"projects">,
         });
         canvasState = project?.canvasState ?? null;
       }
+
+      // Verify we're still loading the same project (not switched again)
+      if (projectIdToLoad !== (currentProject?._id ?? null)) {
+        return; // Project changed during load, abort
+      }
+
+      // Mark this project as loaded
+      lastLoadedProjectIdRef.current = projectIdToLoad;
 
       if (!canvasState) {
         setImages([]);
@@ -204,10 +228,11 @@ export function useStorage(
     }
   }, [convexClient, currentProject?._id, setImages, setVideos, setViewport]);
 
-  // Load from storage on mount
+  // Load from storage when project changes
   useEffect(() => {
-    loadFromStorage();
-  }, [loadFromStorage]);
+    void loadFromStorage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentProject?._id]); // Intentionally only depend on project ID, not the callback
 
   // Auto-save to storage when images change (with debounce)
   useEffect(() => {
