@@ -14,7 +14,7 @@ export const CAMERA_VARIATIONS = [
   "B-ROLL: ENVIRONMENTAL TEXTURE — DETAIL SHOT of surfaces, materials, or patterns in scene; establishes atmosphere and production value.",
   "B-ROLL: ESTABLISHING WIDE — EXPANSIVE SHOT showing location and context; orients viewer to space before closer shots.",
   "B-ROLL: HANDS IN ACTION — CLOSE-UP of hands performing task or gesture; adds human element and narrative detail.",
-  "BOHKEH PANORAMA — EXTREMELY SHALLOW DEPTH OF FIELD on wide shot; creates impossible combination of wide angle and background blur (Brenizer Method).",
+  "BOKEH PANORAMA — EXTREMELY SHALLOW DEPTH OF FIELD on wide shot; creates impossible combination of wide angle and background blur (Brenizer Method).",
   "B-ROLL: TRANSITION ELEMENT — ABSTRACT MOVEMENT or color that serves as visual bridge; smooth cuts between main footage.",
   "BULLET TIME FREEZE — 360-DEGREE ARRAY with frozen moment; creates matrix-style suspended-time effect with rotating perspective.",
   "CANTED HORIZON EXTREME — CAMERA TILTED 60-90 DEGREES; creates surreal, disorienting perspective for dramatic effect.",
