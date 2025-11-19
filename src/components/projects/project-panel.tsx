@@ -144,7 +144,7 @@ export function ProjectPanel({
               size="icon"
               onClick={togglePanel}
               customVariant={cn(
-                "h-11 w-11 rounded-2xl border border-border/50",
+                "h-11 w-11 rounded-full border border-border/50",
                 "bg-card/85 text-muted-foreground",
                 "transition hover:border-border/40 hover:bg-card/90 hover:text-foreground",
               )}
@@ -164,7 +164,7 @@ export function ProjectPanel({
                   {Array.from({ length: 4 }).map((_, index) => (
                     <div
                       key={index}
-                      className="h-11 w-11 animate-pulse rounded-2xl border border-border/45 bg-card/85"
+                      className="h-11 w-11 animate-pulse rounded-full border border-border/45 bg-card/85"
                     />
                   ))}
                 </div>
@@ -180,11 +180,11 @@ export function ProjectPanel({
                       key={id}
                       onClick={() => handleOpenProject(id)}
                       className={cn(
-                        "group flex h-11 w-11 items-center justify-center rounded-2xl border",
+                        "group flex h-11 w-11 items-center justify-center rounded-full border",
                         "bg-card/85 text-xs text-foreground",
                         "transition-all duration-200",
                         isSelected
-                          ? "border-primary/40 bg-primary/8 shadow-[0_0_12px_rgba(var(--primary-rgb),0.15)]"
+                          ? "border-transparent bg-secondary text-secondary-foreground shadow-none"
                           : "border-border/45 hover:border-border/30 hover:bg-card/90",
                       )}
                       disabled={isLoadingThisProject}
@@ -196,7 +196,7 @@ export function ProjectPanel({
                           className={cn(
                             "text-sm font-mono transition",
                             isSelected
-                              ? "text-primary"
+                              ? "text-foreground"
                               : "text-muted-foreground group-hover:text-foreground",
                           )}
                         >
@@ -212,7 +212,7 @@ export function ProjectPanel({
                 size="icon"
                 onClick={handleNewProject}
                 customVariant={cn(
-                  "mt-2 h-11 w-11 rounded-2xl border border-border/45",
+                  "mt-2 h-11 w-11 rounded-full border border-border/45",
                   "bg-card/88 text-foreground",
                   "transition hover:border-border/30 hover:bg-card/95",
                 )}
