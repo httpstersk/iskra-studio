@@ -8,7 +8,7 @@ import type { PlacedVideo } from "@/types/canvas";
 import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Group, Image as KonvaImage } from "react-konva";
+import { Group, Image as KonvaImage, Rect } from "react-konva";
 import useImage from "use-image";
 import { KonvaVideoControls } from "./KonvaVideoControls";
 
@@ -73,8 +73,31 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
 
-  // Get pixelated overlay if available
-  const pixelatedImg = usePixelatedOverlay(video.pixelatedSrc);
+  // Skeleton shimmer animation
+  const [shimmerOpacity, setShimmerOpacity] = useState(0.15);
+
+  useEffect(() => {
+    if (!video.isSkeleton) return;
+
+    const startTime = performance.now();
+    const duration = 1500;
+
+    const animate = () => {
+      const elapsed = (performance.now() - startTime) % duration;
+      const progress = elapsed / duration;
+      const opacity = 0.15 + Math.sin(progress * Math.PI * 2) * 0.05;
+      setShimmerOpacity(opacity);
+      requestAnimationFrame(animate);
+    };
+
+    const animationId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationId);
+  }, [video.isSkeleton]);
+
+  // Get pixelated overlay if available (skip for skeletons)
+  const pixelatedImg = usePixelatedOverlay(
+    video.isSkeleton ? undefined : video.pixelatedSrc
+  );
 
   // Create HTMLVideoElement and wire events
   const videoElement = useVideoElement(
@@ -236,6 +259,28 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   // - Page Visibility API (pauses when tab hidden)
   // - Adaptive FPS based on device performance
   useSharedVideoAnimation(shapeRef, video.isPlaying, video.src);
+
+  // Skeleton placeholder rendering - shows before real video loads
+  if (video.isSkeleton) {
+    return (
+      <Group x={video.x} y={video.y} rotation={video.rotation}>
+        <Rect
+          width={video.width}
+          height={video.height}
+          cornerRadius={8}
+          fill="#1a1a1a"
+          opacity={0.5}
+        />
+        <Rect
+          width={video.width}
+          height={video.height}
+          cornerRadius={8}
+          fill="#2a2a2a"
+          opacity={shimmerOpacity}
+        />
+      </Group>
+    );
+  }
 
   // Render both video and pixelated overlay during transition
   if (pixelatedImg && !isTransitionComplete && videoElement) {

@@ -13,6 +13,7 @@ export interface PlacedImage {
   isDirector?: boolean;
   isGenerated?: boolean;
   isLoading?: boolean;
+  isSkeleton?: boolean;
   naturalHeight?: number;
   naturalWidth?: number;
   opacity?: number;

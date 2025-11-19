@@ -23,7 +23,7 @@ import { extractShortErrorMessage } from "@/utils/error-message-utils";
 import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { Image as KonvaImage } from "react-konva";
+import { Group, Image as KonvaImage, Rect } from "react-konva";
 
 /**
  * Constant for CORS image loading
@@ -184,6 +184,37 @@ const getDirectiveLabelText = (image: PlacedImage): string | undefined => {
 };
 
 /**
+ * Custom hook for skeleton shimmer animation.
+ * Creates a pulsing opacity effect for skeleton placeholders.
+ *
+ * @returns Current shimmer opacity value
+ */
+const useSkeletonShimmer = () => {
+  const [shimmerOpacity, setShimmerOpacity] = React.useState(0.15);
+
+  useEffect(() => {
+    const startTime = performance.now();
+    const duration = 1500; // 1.5 second cycle
+
+    const animate = () => {
+      const elapsed = (performance.now() - startTime) % duration;
+      const progress = elapsed / duration;
+
+      // Sine wave for smooth pulsing: 0.15 to 0.25
+      const opacity = 0.15 + Math.sin(progress * Math.PI * 2) * 0.05;
+      setShimmerOpacity(opacity);
+
+      requestAnimationFrame(animate);
+    };
+
+    const animationId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationId);
+  }, []);
+
+  return shimmerOpacity;
+};
+
+/**
  * CanvasImage component renders an image on the Konva canvas with full interaction support.
  *
  * This component integrates multiple hooks to provide a complete image editing experience:
@@ -230,17 +261,22 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   const shapeRef = useRef<Konva.Image>(null);
   const throttleFrame = useFrameThrottle();
 
+  // Skeleton shimmer animation
+  const shimmerOpacity = useSkeletonShimmer();
+
   // Get image source (thumbnail first, then full-size)
-  // Skip loading for error placeholders to save resources
+  // Skip loading for error placeholders and skeletons to save resources
   const img = useCanvasImageSource(
-    image.hasContentError ? "" : image.src,
+    image.hasContentError || image.isSkeleton ? "" : image.src,
     image.thumbnailSrc,
     !!image.isGenerated,
     !!image.displayAsThumbnail
   );
 
-  // Get pixelated overlay if available
-  const pixelatedImg = usePixelatedOverlay(image.pixelatedSrc);
+  // Get pixelated overlay if available (skip for skeletons)
+  const pixelatedImg = usePixelatedOverlay(
+    image.isSkeleton ? undefined : image.pixelatedSrc
+  );
 
   // Unified animation coordinator for all animations
   const {
@@ -384,6 +420,30 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   // Get directive label text if applicable
   const directiveLabelText = getDirectiveLabelText(image);
 
+  // Skeleton placeholder rendering - shows before real image loads
+  if (image.isSkeleton) {
+    return (
+      <Group>
+        {/* Base skeleton rectangle */}
+        <Rect
+          {...getImageDimensions(image)}
+          cornerRadius={8}
+          fill="#1a1a1a"
+          opacity={0.5}
+          rotation={image.rotation}
+        />
+        {/* Shimmer overlay for animation */}
+        <Rect
+          {...getImageDimensions(image)}
+          cornerRadius={8}
+          fill="#2a2a2a"
+          opacity={shimmerOpacity}
+          rotation={image.rotation}
+        />
+      </Group>
+    );
+  }
+
   // Special case: Error placeholders show only pixelated overlay
   // No animation, no transition, just the static error state
   if (image.hasContentError && pixelatedImg) {
@@ -504,6 +564,7 @@ const arePropsEqual = (
     prevImg.opacity !== nextImg.opacity ||
     prevImg.isLoading !== nextImg.isLoading ||
     prevImg.isGenerated !== nextImg.isGenerated ||
+    prevImg.isSkeleton !== nextImg.isSkeleton ||
     prevImg.displayAsThumbnail !== nextImg.displayAsThumbnail ||
     prevImg.cameraAngle !== nextImg.cameraAngle ||
     prevImg.directorName !== nextImg.directorName ||

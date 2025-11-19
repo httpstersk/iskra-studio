@@ -135,6 +135,52 @@ export function useStorage(
         return;
       }
 
+      // Create skeleton placeholders from canvas state for immediate display
+      const skeletonImages: PlacedImage[] = [];
+      const skeletonVideos: PlacedVideo[] = [];
+
+      for (const element of canvasState.elements) {
+        if (element.type === "image") {
+          skeletonImages.push({
+            height: element.height || 300,
+            id: element.id,
+            isSkeleton: true,
+            rotation: element.transform.rotation,
+            src: "", // Empty src for skeleton
+            width: element.width || 300,
+            x: element.transform.x,
+            y: element.transform.y,
+          });
+        } else if (element.type === "video") {
+          skeletonVideos.push({
+            currentTime: 0,
+            duration: 0,
+            height: element.height || 300,
+            id: element.id,
+            isSkeleton: true,
+            isLoaded: false,
+            isPlaying: false,
+            isVideo: true,
+            muted: false,
+            rotation: element.transform.rotation,
+            src: "", // Empty src for skeleton
+            volume: 1,
+            width: element.width || 300,
+            x: element.transform.x,
+            y: element.transform.y,
+          });
+        }
+      }
+
+      // Display skeletons immediately for better perceived performance
+      setImages(snapImagesToGrid(skeletonImages));
+      setVideos(skeletonVideos);
+      setViewport(canvasState.viewport ?? DEFAULT_VIEWPORT);
+
+      // Track current state of images/videos for progressive updates
+      const currentImages = [...skeletonImages];
+      const currentVideos = [...skeletonVideos];
+
       const loadedImages: PlacedImage[] = [];
       const loadedVideos: PlacedVideo[] = [];
 
@@ -167,6 +213,7 @@ export function useStorage(
         }
       }
 
+      // Load real images/videos and progressively replace skeletons
       for (const element of canvasState.elements) {
         if (element.type === "image") {
           const imageData = await canvasStorage.getImage(element.id);
@@ -176,7 +223,7 @@ export function useStorage(
               ? assetMetadata.get(element.assetId)
               : undefined;
 
-            loadedImages.push({
+            const loadedImage: PlacedImage = {
               assetId: element.assetId,
               assetSyncedAt: element.assetSyncedAt,
               cameraAngle: metadata?.cameraAngle,
@@ -189,13 +236,23 @@ export function useStorage(
               width: element.width || 300,
               x: element.transform.x,
               y: element.transform.y,
-            });
+            };
+
+            // Replace skeleton with real image in tracking array
+            const index = currentImages.findIndex((img) => img.id === element.id);
+            if (index !== -1) {
+              currentImages[index] = loadedImage;
+              // Update state with new array
+              setImages(snapImagesToGrid([...currentImages]));
+            }
+
+            loadedImages.push(loadedImage);
           }
         } else if (element.type === "video") {
           const videoData = await canvasStorage.getVideo(element.id);
 
           if (videoData) {
-            loadedVideos.push({
+            const loadedVideo: PlacedVideo = {
               assetId: element.assetId,
               assetSyncedAt: element.assetSyncedAt,
               currentTime: element.currentTime || 0,
@@ -212,15 +269,20 @@ export function useStorage(
               width: element.width || 300,
               x: element.transform.x,
               y: element.transform.y,
-            });
+            };
+
+            // Replace skeleton with real video in tracking array
+            const index = currentVideos.findIndex((vid) => vid.id === element.id);
+            if (index !== -1) {
+              currentVideos[index] = loadedVideo;
+              // Update state with new array
+              setVideos([...currentVideos]);
+            }
+
+            loadedVideos.push(loadedVideo);
           }
         }
       }
-
-      setImages(snapImagesToGrid(loadedImages));
-      setVideos(loadedVideos);
-
-      setViewport(canvasState.viewport ?? DEFAULT_VIEWPORT);
     } catch (_error) {
       showError("Failed to restore canvas", "Starting with a fresh canvas");
     } finally {
