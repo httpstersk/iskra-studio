@@ -37,14 +37,25 @@ export const getSubscriptionStatus = query({
       return null;
     }
 
+    const plan = await ctx.db
+      .query("plans")
+      .withIndex("by_key", (q) => q.eq("key", user.tier === "paid" ? "pro" : user.tier))
+      .first();
+
+    const limits = {
+      images: plan?.imagesPerPeriod ?? (user.tier === "pro" || user.tier === "paid" ? 480 : 24),
+      videos: plan?.videosPerPeriod ?? (user.tier === "pro" || user.tier === "paid" ? 96 : 4),
+    };
+
     return {
-      tier: user.tier,
-      subscriptionStatus: user.subscriptionStatus ?? null,
+      billingCycleEnd: user.billingCycleEnd ?? null,
+      billingCycleStart: user.billingCycleStart ?? null,
+      imagesUsedInPeriod: user.imagesUsedInPeriod ?? 0,
       polarCustomerId: user.polarCustomerId ?? null,
       polarSubscriptionId: user.polarSubscriptionId ?? null,
-      billingCycleStart: user.billingCycleStart ?? null,
-      billingCycleEnd: user.billingCycleEnd ?? null,
-      imagesUsedInPeriod: user.imagesUsedInPeriod ?? 0,
+      quotaLimits: limits,
+      subscriptionStatus: user.subscriptionStatus ?? null,
+      tier: user.tier,
       videosUsedInPeriod: user.videosUsedInPeriod ?? 0,
     };
   },

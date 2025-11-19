@@ -7,24 +7,6 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
-/**
- * Quota limits for each subscription tier
- */
-export const QUOTA_LIMITS = {
-  free: {
-    images: 24,
-    videos: 4,
-  },
-  pro: {
-    images: 480,
-    videos: 96,
-  },
-  paid: {
-    // Legacy tier - same as pro
-    images: 480,
-    videos: 96,
-  },
-} as const;
 
 /**
  * Check if user has available quota for a generation
@@ -53,6 +35,17 @@ export const checkQuota = query({
       throw new Error("User not found");
     }
 
+    // Fetch plan details
+    const planKey = user.tier === "paid" ? "pro" : user.tier;
+    const plan = await ctx.db
+      .query("plans")
+      .withIndex("by_key", (q) => q.eq("key", planKey))
+      .first();
+
+    const imageLimit = plan?.imagesPerPeriod ?? (planKey === "pro" ? 480 : 24);
+    const videoLimit = plan?.videosPerPeriod ?? (planKey === "pro" ? 96 : 4);
+    const limit = args.type === "image" ? imageLimit : videoLimit;
+
     // Check if billing period has ended and reset if needed
     const now = Date.now();
     if (user.billingCycleEnd && now > user.billingCycleEnd) {
@@ -65,9 +58,9 @@ export const checkQuota = query({
       // Return fresh quota after reset
       return {
         hasQuota: true,
+        limit,
+        remaining: limit,
         used: 0,
-        limit: getQuotaLimit(user.tier, args.type),
-        remaining: getQuotaLimit(user.tier, args.type),
       };
     }
 
@@ -76,15 +69,14 @@ export const checkQuota = query({
         ? user.imagesUsedInPeriod ?? 0
         : user.videosUsedInPeriod ?? 0;
 
-    const limit = getQuotaLimit(user.tier, args.type);
     const remaining = Math.max(0, limit - used);
     const hasQuota = remaining > 0;
 
     return {
       hasQuota,
-      used,
       limit,
       remaining,
+      used,
     };
   },
 });
@@ -113,32 +105,39 @@ export const getQuotaStatus = query({
       return null;
     }
 
+    // Fetch plan details
+    const planKey = user.tier === "paid" ? "pro" : user.tier;
+    const plan = await ctx.db
+      .query("plans")
+      .withIndex("by_key", (q) => q.eq("key", planKey))
+      .first();
+
+    const imageLimit = plan?.imagesPerPeriod ?? (planKey === "pro" ? 480 : 24);
+    const videoLimit = plan?.videosPerPeriod ?? (planKey === "pro" ? 96 : 4);
+
     const now = Date.now();
     const imagesUsed = user.imagesUsedInPeriod ?? 0;
     const videosUsed = user.videosUsedInPeriod ?? 0;
 
-    const imageLimit = getQuotaLimit(user.tier, "image");
-    const videoLimit = getQuotaLimit(user.tier, "video");
-
     return {
-      tier: user.tier,
-      images: {
-        used: imagesUsed,
-        limit: imageLimit,
-        remaining: Math.max(0, imageLimit - imagesUsed),
-        percentage: Math.min(100, Math.round((imagesUsed / imageLimit) * 100)),
-      },
-      videos: {
-        used: videosUsed,
-        limit: videoLimit,
-        remaining: Math.max(0, videoLimit - videosUsed),
-        percentage: Math.min(100, Math.round((videosUsed / videoLimit) * 100)),
-      },
-      billingCycleStart: user.billingCycleStart ?? user.createdAt,
       billingCycleEnd: user.billingCycleEnd ?? calculateNextBillingDate(user.createdAt),
+      billingCycleStart: user.billingCycleStart ?? user.createdAt,
       daysUntilReset: user.billingCycleEnd
         ? Math.ceil((user.billingCycleEnd - now) / (1000 * 60 * 60 * 24))
         : 30,
+      images: {
+        limit: imageLimit,
+        percentage: Math.min(100, Math.round((imagesUsed / imageLimit) * 100)),
+        remaining: Math.max(0, imageLimit - imagesUsed),
+        used: imagesUsed,
+      },
+      tier: user.tier,
+      videos: {
+        limit: videoLimit,
+        percentage: Math.min(100, Math.round((videosUsed / videoLimit) * 100)),
+        remaining: Math.max(0, videoLimit - videosUsed),
+        used: videosUsed,
+      },
     };
   },
 });
@@ -335,16 +334,6 @@ export const updateGenerationStatus = mutation({
   },
 });
 
-/**
- * Helper function to get quota limit for a tier and type
- */
-function getQuotaLimit(
-  tier: "free" | "pro" | "paid",
-  type: "image" | "video"
-): number {
-  const tierLimits = QUOTA_LIMITS[tier];
-  return type === "image" ? tierLimits.images : tierLimits.videos;
-}
 
 /**
  * Helper function to calculate next billing date from signup date

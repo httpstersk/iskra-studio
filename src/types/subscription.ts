@@ -29,26 +29,26 @@ export type GenerationType = "image" | "video";
  * Quota status information
  */
 export interface QuotaStatus {
-  imagesUsed: number;
-  imagesLimit: number;
-  videosUsed: number;
-  videosLimit: number;
-  resetDate: Date | null;
   daysUntilReset: number;
+  imagesLimit: number;
+  imagesUsed: number;
+  resetDate: Date | null;
+  videosLimit: number;
+  videosUsed: number;
 }
 
 /**
  * Subscription information
  */
 export interface SubscriptionInfo {
-  tier: SubscriptionTier;
-  status: SubscriptionStatus | null;
+  billingCycleEnd: Date | null;
+  billingCycleStart: Date | null;
+  billingInterval: BillingInterval | null;
+  cancelAtPeriodEnd: boolean;
   polarCustomerId: string | null;
   polarSubscriptionId: string | null;
-  billingInterval: BillingInterval | null;
-  billingCycleStart: Date | null;
-  billingCycleEnd: Date | null;
-  cancelAtPeriodEnd: boolean;
+  status: SubscriptionStatus | null;
+  tier: SubscriptionTier;
 }
 
 /**

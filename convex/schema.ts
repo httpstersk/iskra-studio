@@ -19,6 +19,24 @@ import { v } from "convex/values";
  */
 export default defineSchema({
   /**
+   * Plans table
+   *
+   * Stores subscription plan configurations and quota limits.
+   * Replaces hardcoded constants in the codebase.
+   *
+   * @property key - Plan identifier ("free", "pro")
+   * @property name - Display name
+   * @property imagesPerPeriod - Number of images allowed per billing period
+   * @property videosPerPeriod - Number of videos allowed per billing period
+   */
+  plans: defineTable({
+    imagesPerPeriod: v.number(),
+    key: v.string(),
+    name: v.string(),
+    videosPerPeriod: v.number(),
+  }).index("by_key", ["key"]),
+
+  /**
    * Users table
    *
    * Stores user account information, tier status, and storage usage.

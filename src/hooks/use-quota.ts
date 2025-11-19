@@ -118,7 +118,8 @@ export function useQuota(): UseQuotaReturn {
     if (!subscriptionData) return null;
 
     const tier = subscriptionData.tier;
-    const limits = getQuotaLimits(tier);
+    // Use limits from backend if available, otherwise fallback to client-side constants
+    const limits = subscriptionData.quotaLimits ?? getQuotaLimits(tier);
 
     const resetDate = subscriptionData.billingCycleEnd
       ? new Date(subscriptionData.billingCycleEnd)
@@ -165,21 +166,21 @@ export function useQuota(): UseQuotaReturn {
   };
 
   return {
-    quotaStatus,
-    isLoading: subscriptionData === undefined && isAuthenticated,
-    imagesUsed,
-    imagesLimit,
-    imagesRemaining,
-    imagesPercentage,
-    videosUsed,
-    videosLimit,
-    videosRemaining,
-    videosPercentage,
-    daysUntilReset,
-    resetDate,
-    imageQuotaExceeded,
-    videoQuotaExceeded,
-    isWarning,
     canGenerate,
+    daysUntilReset,
+    imageQuotaExceeded,
+    imagesLimit,
+    imagesPercentage,
+    imagesRemaining,
+    imagesUsed,
+    isLoading: subscriptionData === undefined && isAuthenticated,
+    isWarning,
+    quotaStatus,
+    resetDate,
+    videoQuotaExceeded,
+    videosLimit,
+    videosPercentage,
+    videosRemaining,
+    videosUsed,
   };
 }
