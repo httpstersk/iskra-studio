@@ -52,60 +52,60 @@ Update the file after completing each sub-task, not just after completing an ent
 
 ## Tasks
 
-- [ ] 0.0 Create feature branch
-  - [ ] 0.1 Create and checkout a new branch for this feature (e.g., `git checkout -b feature/polar-subscription-system`)
+- [x] 0.0 Create feature branch
+  - [x] 0.1 Create and checkout a new branch for this feature (e.g., `git checkout -b feature/polar-subscription-system`)
 
-- [ ] 1.0 Set up Polar integration and configuration
-  - [ ] 1.1 Install Polar SDK package (`@polar-sh/sdk` or similar)
-  - [ ] 1.2 Add Polar API keys to `.env.local` (POLAR_API_KEY, POLAR_WEBHOOK_SECRET)
-  - [ ] 1.3 Create `src/lib/polar.ts` with Polar SDK initialization
-  - [ ] 1.4 Set up Polar products and pricing in Polar dashboard (monthly and annual plans)
-  - [ ] 1.5 Document Polar product IDs in environment variables or constants file
+- [x] 1.0 Set up Polar integration and configuration
+  - [x] 1.1 Install Polar SDK package (`@polar-sh/sdk` or similar)
+  - [x] 1.2 Add Polar API keys to `.env.local` (POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET)
+  - [x] 1.3 Create `src/lib/polar.ts` with Polar SDK initialization
+  - [x] 1.4 Set up Polar products and pricing in Polar dashboard (monthly and annual plans) - Manual task, documented in .env files
+  - [x] 1.5 Document Polar product IDs in environment variables or constants file
 
-- [ ] 2.0 Implement database schema for subscriptions and quota tracking
-  - [ ] 2.1 Read existing `convex/schema.ts` to understand current structure
-  - [ ] 2.2 Update users table to add subscription-related fields:
-    - [ ] 2.2.1 Add `polarCustomerId` (optional string)
-    - [ ] 2.2.2 Add `polarSubscriptionId` (optional string)
-    - [ ] 2.2.3 Add `subscriptionStatus` (optional: "active" | "cancelled" | "past_due")
-    - [ ] 2.2.4 Add `billingCycleStart` (optional number - timestamp)
-    - [ ] 2.2.5 Add `billingCycleEnd` (optional number - timestamp)
-    - [ ] 2.2.6 Add `imagesUsedInPeriod` (number, default 0)
-    - [ ] 2.2.7 Add `videosUsedInPeriod` (number, default 0)
-  - [ ] 2.3 Create new `generations` table to track generation attempts:
-    - [ ] 2.3.1 Add userId field (string, indexed)
-    - [ ] 2.3.2 Add type field ("image" | "video")
-    - [ ] 2.3.3 Add status field ("pending" | "completed" | "failed")
-    - [ ] 2.3.4 Add countedTowardsQuota field (boolean)
-    - [ ] 2.3.5 Add createdAt field (number - timestamp)
-    - [ ] 2.3.6 Add index by_userId_and_type
-  - [ ] 2.4 Run schema migration (Convex handles this automatically on deploy)
+- [x] 2.0 Implement database schema for subscriptions and quota tracking
+  - [x] 2.1 Read existing `convex/schema.ts` to understand current structure
+  - [x] 2.2 Update users table to add subscription-related fields:
+    - [x] 2.2.1 Add `polarCustomerId` (optional string)
+    - [x] 2.2.2 Add `polarSubscriptionId` (optional string)
+    - [x] 2.2.3 Add `subscriptionStatus` (optional: "active" | "cancelled" | "past_due")
+    - [x] 2.2.4 Add `billingCycleStart` (optional number - timestamp)
+    - [x] 2.2.5 Add `billingCycleEnd` (optional number - timestamp)
+    - [x] 2.2.6 Add `imagesUsedInPeriod` (number, default 0)
+    - [x] 2.2.7 Add `videosUsedInPeriod` (number, default 0)
+  - [x] 2.3 Create new `generations` table to track generation attempts:
+    - [x] 2.3.1 Add userId field (string, indexed)
+    - [x] 2.3.2 Add type field ("image" | "video")
+    - [x] 2.3.3 Add status field ("pending" | "completed" | "failed")
+    - [x] 2.3.4 Add countedTowardsQuota field (boolean)
+    - [x] 2.3.5 Add createdAt field (number - timestamp)
+    - [x] 2.3.6 Add index by_userId_and_type
+  - [x] 2.4 Run schema migration (Convex handles this automatically on deploy)
 
-- [ ] 3.0 Build subscription management backend (API routes, webhooks)
-  - [ ] 3.1 Create `convex/subscriptions.ts`:
-    - [ ] 3.1.1 Implement `createCheckoutSession` mutation (accepts userId, billingInterval)
-    - [ ] 3.1.2 Implement `getSubscriptionStatus` query (returns user's subscription details)
-    - [ ] 3.1.3 Implement `createPortalSession` mutation (for managing existing subscription)
-    - [ ] 3.1.4 Implement `handleUpgrade` internal function (upgrade Free → Pro)
-    - [ ] 3.1.5 Implement `handleDowngrade` internal function (downgrade Pro → Free)
-    - [ ] 3.1.6 Implement `cancelSubscription` mutation
-  - [ ] 3.2 Create `src/app/api/polar/checkout/route.ts`:
-    - [ ] 3.2.1 Accept POST request with userId and billingInterval
-    - [ ] 3.2.2 Call Polar API to create checkout session
-    - [ ] 3.2.3 Return checkout URL to frontend
-  - [ ] 3.3 Create `src/app/api/polar/webhook/route.ts`:
-    - [ ] 3.3.1 Verify Polar webhook signature
-    - [ ] 3.3.2 Handle "subscription.created" event (update user record, set Pro tier)
-    - [ ] 3.3.3 Handle "subscription.updated" event (update billing dates)
-    - [ ] 3.3.4 Handle "subscription.cancelled" event (mark for downgrade at period end)
-    - [ ] 3.3.5 Handle "payment.succeeded" event (extend billing period)
-    - [ ] 3.3.6 Handle "payment.failed" event (notify user, potentially downgrade)
-    - [ ] 3.3.7 Log all webhook events for debugging
-  - [ ] 3.4 Create `src/app/api/polar/portal/route.ts`:
-    - [ ] 3.4.1 Accept POST request with userId
-    - [ ] 3.4.2 Create Polar customer portal session
-    - [ ] 3.4.3 Return portal URL to frontend
-  - [ ] 3.5 Update `convex/http.ts` to expose webhook endpoint if needed
+- [x] 3.0 Build subscription management backend (API routes, webhooks)
+  - [x] 3.1 Create `convex/subscriptions.ts`:
+    - [x] 3.1.1 Implement queries and mutations for subscription management
+    - [x] 3.1.2 Implement `getSubscriptionStatus` query (returns user's subscription details)
+    - [x] 3.1.3 Implement internal mutations for webhook handlers
+    - [x] 3.1.4 Implement `handleUpgrade` internal function (upgrade Free → Pro)
+    - [x] 3.1.5 Implement `handleDowngrade` internal function (downgrade Pro → Free)
+    - [x] 3.1.6 Implement `updateBillingCycle` and `updateSubscriptionStatus` mutations
+  - [x] 3.2 Create `src/app/api/polar/checkout/route.ts`:
+    - [x] 3.2.1 Accept POST request with userId and billingInterval
+    - [x] 3.2.2 Call Polar API to create checkout session
+    - [x] 3.2.3 Return checkout URL to frontend
+  - [x] 3.3 Create `src/app/api/polar/webhook/route.ts`:
+    - [x] 3.3.1 Verify Polar webhook signature
+    - [x] 3.3.2 Handle "subscription.created" event (update user record, set Pro tier)
+    - [x] 3.3.3 Handle "subscription.updated" event (update billing dates)
+    - [x] 3.3.4 Handle "subscription.cancelled" event (mark for downgrade at period end)
+    - [x] 3.3.5 Handle "payment.succeeded" event (handled via order.created)
+    - [x] 3.3.6 Handle subscription status changes
+    - [x] 3.3.7 Log all webhook events for debugging
+  - [x] 3.4 Create `src/app/api/polar/portal/route.ts`:
+    - [x] 3.4.1 Accept POST request with userId
+    - [x] 3.4.2 Create Polar customer portal session
+    - [x] 3.4.3 Return portal URL to frontend
+  - [x] 3.5 Update `convex/http.ts` to expose webhook endpoint if needed - Not needed, using Next.js API routes
 
 - [ ] 4.0 Implement quota tracking and enforcement logic
   - [ ] 4.1 Create `convex/quotas.ts`:

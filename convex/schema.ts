@@ -26,19 +26,48 @@ export default defineSchema({
    *
    * @property userId - Clerk user ID (unique, indexed)
    * @property email - User's email address
-   * @property tier - Subscription tier ("free" | "paid")
+   * @property tier - Subscription tier ("free" | "paid" for legacy, "pro" for Polar subscriptions)
    * @property storageUsedBytes - Total storage used by user's assets (in bytes)
+   * @property polarCustomerId - Polar customer ID (optional, for subscription management)
+   * @property polarSubscriptionId - Polar subscription ID (optional, for active subscriptions)
+   * @property subscriptionStatus - Current subscription status (optional)
+   * @property billingCycleStart - Billing cycle start timestamp (optional)
+   * @property billingCycleEnd - Billing cycle end timestamp (optional)
+   * @property imagesUsedInPeriod - Number of images generated in current billing period
+   * @property videosUsedInPeriod - Number of videos generated in current billing period
    * @property createdAt - Account creation timestamp
    * @property updatedAt - Last account update timestamp
    */
   users: defineTable({
+    billingCycleEnd: v.optional(v.number()),
+    billingCycleStart: v.optional(v.number()),
     createdAt: v.number(),
     email: v.string(),
+    imagesUsedInPeriod: v.optional(v.number()),
+    polarCustomerId: v.optional(v.string()),
+    polarSubscriptionId: v.optional(v.string()),
     storageUsedBytes: v.number(),
-    tier: v.union(v.literal("free"), v.literal("paid")),
+    subscriptionStatus: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("cancelled"),
+        v.literal("past_due"),
+        v.literal("incomplete"),
+        v.literal("trialing")
+      )
+    ),
+    tier: v.union(
+      v.literal("free"),
+      v.literal("paid"),
+      v.literal("pro")
+    ),
     updatedAt: v.number(),
     userId: v.string(),
-  }).index("by_userId", ["userId"]),
+    videosUsedInPeriod: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_polarCustomerId", ["polarCustomerId"])
+    .index("by_polarSubscriptionId", ["polarSubscriptionId"]),
 
   /**
    * Assets table
@@ -146,4 +175,38 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_and_lastSavedAt", ["userId", "lastSavedAt"]),
+
+  /**
+   * Generations table
+   *
+   * Tracks all image and video generation attempts for quota management.
+   * Used to determine if a generation should count towards user's quota.
+   *
+   * @property userId - Owner's Clerk user ID (indexed)
+   * @property type - Generation type ("image" | "video")
+   * @property status - Generation status ("pending" | "completed" | "failed")
+   * @property countedTowardsQuota - Whether this generation was counted towards user's quota
+   * @property createdAt - Generation request timestamp
+   * @property metadata - Optional metadata about the generation (prompt, model, etc.)
+   */
+  generations: defineTable({
+    countedTowardsQuota: v.boolean(),
+    createdAt: v.number(),
+    metadata: v.optional(
+      v.object({
+        model: v.optional(v.string()),
+        prompt: v.optional(v.string()),
+      })
+    ),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("completed"),
+      v.literal("failed")
+    ),
+    type: v.union(v.literal("image"), v.literal("video")),
+    userId: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_and_type", ["userId", "type"])
+    .index("by_userId_and_status", ["userId", "status"]),
 });

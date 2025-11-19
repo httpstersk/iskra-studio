@@ -22,6 +22,8 @@
     "@fal-ai/client": "^1.7.2",
     "@fal-ai/server-proxy": "^1.1.1",
     "@hookform/resolvers": "^4.1.3",
+    "@polar-sh/nextjs": "^0.7.0",
+    "@polar-sh/sdk": "^0.41.5",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-collapsible": "^1.1.12",
