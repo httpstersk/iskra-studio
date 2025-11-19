@@ -62,6 +62,48 @@ export const snapPosition = (
 };
 
 /**
+ * Snaps a value to the grid only if it's within a certain threshold distance.
+ * Otherwise returns the original value.
+ *
+ * @param value - The value to potentially snap
+ * @param gridSize - Size of grid cells (default: GRID_SIZE constant)
+ * @param threshold - Max distance to trigger snap (default: 10)
+ * @returns Snapped value if close enough, otherwise original value
+ */
+export const snapToGridWithThreshold = (
+  value: number,
+  gridSize: number = GRID_SIZE,
+  threshold: number = 10,
+): number => {
+  const snapped = Math.round(value / gridSize) * gridSize;
+  if (Math.abs(value - snapped) <= threshold) {
+    return snapped;
+  }
+  return value;
+};
+
+/**
+ * Snaps 2D coordinates to the grid with a magnetic threshold.
+ *
+ * @param x - X coordinate
+ * @param y - Y coordinate
+ * @param gridSize - Size of grid cells
+ * @param threshold - Snap threshold distance
+ * @returns Object with potentially snapped coordinates
+ */
+export const snapPositionWithThreshold = (
+  x: number,
+  y: number,
+  gridSize: number = GRID_SIZE,
+  threshold: number = 10,
+): { x: number; y: number } => {
+  return {
+    x: snapToGridWithThreshold(x, gridSize, threshold),
+    y: snapToGridWithThreshold(y, gridSize, threshold),
+  };
+};
+
+/**
  * Checks if a value is already snapped to the grid (within floating point tolerance).
  *
  * @param value - The value to check
