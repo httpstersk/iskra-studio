@@ -184,8 +184,8 @@ export function ProjectPanel({
                         "bg-card/85 text-xs text-foreground",
                         "transition-all duration-200",
                         isSelected
-                          ? "border-transparent bg-secondary text-secondary-foreground shadow-none"
-                          : "border-border/45 hover:border-border/30 hover:bg-card/90",
+                          ? "border-transparent bg-secondary text-secondary-foreground shadow-none opacity-100"
+                          : "border-border/45 hover:border-border/30 hover:bg-card/90 opacity-50 hover:opacity-100",
                       )}
                       disabled={isLoadingThisProject}
                     >
