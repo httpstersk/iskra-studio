@@ -10,6 +10,7 @@ import {
   convertImageToBlob,
 } from "@/utils/canvas-utils";
 import { uploadImageDirect } from "@/lib/utils/upload-utils";
+import { isConvexStorageUrl } from "@/features/generation/app-services/image-storage.service";
 
 interface GenerationHandlerDeps {
   images: PlacedImage[];
@@ -88,6 +89,16 @@ const handleOptimisticUpload = async (
   setImages: GenerationHandlerDeps["setImages"],
 ) => {
   if (useConvexStorage && userId) {
+    // If the image is already in Convex storage, we don't need to re-upload it
+    if (isConvexStorageUrl(imageUrl)) {
+      setImages((prev) =>
+        prev.map((img) =>
+          img.id === imageId ? { ...img, isLoading: false } : img,
+        ),
+      );
+      return;
+    }
+
     try {
       const migrationResult = await downloadAndReupload(imageUrl, {
         userId,
@@ -214,31 +225,42 @@ const processImageVariation = async (
   } = deps;
 
   try {
-    // Convert image to blob for upload
-    const blob = await convertImageToBlob(img.src);
+    let finalUrl = img.src;
 
-    const reader = new FileReader();
-    const dataUrl = await new Promise<string>((resolve) => {
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.readAsDataURL(blob);
-    });
+    // If the image is NOT already in Convex storage, upload it
+    if (!isConvexStorageUrl(img.src)) {
+      // Convert image to blob for upload
+      const blob = await convertImageToBlob(img.src);
 
-    let uploadResult;
-    try {
-      uploadResult = await uploadImageDirect(dataUrl, userId);
-    } catch (_uploadError) {
-      return false;
-    }
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve) => {
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.readAsDataURL(blob);
+      });
 
-    // Only proceed with generation if upload succeeded
-    if (!uploadResult?.url) {
-      return false;
+      let uploadResult;
+      try {
+        uploadResult = await uploadImageDirect(dataUrl, userId);
+      } catch (_uploadError) {
+        return false;
+      }
+
+      // Only proceed with generation if upload succeeded
+      if (!uploadResult?.url) {
+        return false;
+      }
+      finalUrl = uploadResult.url;
     }
 
     // Calculate output size maintaining aspect ratio
     // We can use the blob size or image dimensions
     const imgElement = new window.Image();
-    imgElement.src = dataUrl;
+    // Use the original source for dimensions if we didn't upload, or the uploaded one (doesn't matter for dimensions)
+    // But we need to load it to get dimensions.
+    // If we already have naturalWidth/Height on img, we could use that, but let's be safe and load it.
+    // Note: if it's a remote URL, we need crossOrigin.
+    imgElement.crossOrigin = "anonymous";
+    imgElement.src = finalUrl;
 
     await new Promise((resolve) => {
       imgElement.onload = resolve;
@@ -259,7 +281,7 @@ const processImageVariation = async (
     const groupId = `single-${Date.now()}-${Math.random()}`;
 
     addImageToCanvasState(
-      uploadResult.url,
+      finalUrl,
       img.x + img.width + 20,
       img.y,
       groupId,
