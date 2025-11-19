@@ -358,8 +358,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // IMAGE MODE with camera-angles: Generate camera angle variations using FIBO analysis
   // This path is taken when variationMode === "image" && imageVariationType === "camera-angles"
 
-  const handlerLogger = logger.child({ handler: "camera-angle-variation" });
-
   // Validate selection early
   const selectedImage = validateSingleImageSelection(images, selectedIds);
   if (!selectedImage) {

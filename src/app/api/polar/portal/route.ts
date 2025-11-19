@@ -5,23 +5,21 @@
  * Redirects users to Polar-hosted portal for billing management.
  */
 
-import { auth } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
 import { polar } from "@/lib/polar";
+import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
+import { NextResponse } from "next/server";
 import { api } from "../../../../../convex/_generated/api";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     // Verify authentication
     const { userId } = await auth();
+
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get user's subscription status from Convex
@@ -47,7 +45,6 @@ export async function POST(req: NextRequest) {
       expiresAt: session.expiresAt,
     });
   } catch (error) {
-    console.error("Customer portal session creation error:", error);
     return NextResponse.json(
       { error: "Failed to create portal session" },
       { status: 500 }

@@ -161,11 +161,14 @@ Generate ${count} storyline concepts now.
 
 export const POST = createAuthenticatedHandler({
   schema: generateStorylineImagesRequestSchema,
-  handler: async (input, userId) => {
+  handler: async (input) => {
     const { count, styleAnalysis, userContext } = input;
 
     // Initialize Convex client for quota operations
-    const convex = new ConvexHttpClient(requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL"));
+    const convex = new ConvexHttpClient(
+      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL")
+    );
+
     convex.setAuth(requireEnv("CONVEX_DEPLOY_KEY", "Convex deploy key"));
 
     // Check quota before generation

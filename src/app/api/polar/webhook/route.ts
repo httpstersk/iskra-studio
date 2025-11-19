@@ -81,15 +81,35 @@ export async function POST(req: NextRequest) {
   }
 }
 
+interface PolarEvent {
+  type: string;
+  data: {
+    id: string;
+    customer_id?: string;
+    current_period_start?: string;
+    current_period_end?: string;
+    metadata?: {
+      clerkUserId?: string;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  };
+}
+
 /**
  * Handle subscription.created / subscription.activated events
  */
-async function handleSubscriptionCreated(event: any) {
+async function handleSubscriptionCreated(event: PolarEvent) {
   const subscription = event.data;
   const userId = subscription.metadata?.clerkUserId;
 
   if (!userId) {
     console.error("No clerkUserId in subscription metadata");
+    return;
+  }
+
+  if (!subscription.current_period_start || !subscription.current_period_end || !subscription.customer_id) {
+    console.error("Missing billing period dates or customer ID");
     return;
   }
 
@@ -110,8 +130,13 @@ async function handleSubscriptionCreated(event: any) {
 /**
  * Handle subscription.updated events
  */
-async function handleSubscriptionUpdated(event: any) {
+async function handleSubscriptionUpdated(event: PolarEvent) {
   const subscription = event.data;
+
+  if (!subscription.current_period_start || !subscription.current_period_end) {
+    console.error("Missing billing period dates");
+    return;
+  }
 
   const currentPeriodStart = new Date(subscription.current_period_start).getTime();
   const currentPeriodEnd = new Date(subscription.current_period_end).getTime();
@@ -128,7 +153,7 @@ async function handleSubscriptionUpdated(event: any) {
 /**
  * Handle subscription.canceled / subscription.revoked events
  */
-async function handleSubscriptionCanceled(event: any) {
+async function handleSubscriptionCanceled(event: PolarEvent) {
   const subscription = event.data;
 
   // Update subscription status to cancelled
@@ -147,7 +172,7 @@ async function handleSubscriptionCanceled(event: any) {
 /**
  * Handle subscription.active events
  */
-async function handleSubscriptionActive(event: any) {
+async function handleSubscriptionActive(event: PolarEvent) {
   const subscription = event.data;
 
   await convex.action(api.subscriptions.updateSubscriptionStatus, {
@@ -161,7 +186,7 @@ async function handleSubscriptionActive(event: any) {
 /**
  * Handle order.created events (payment successful)
  */
-async function handleOrderCreated(event: any) {
+async function handleOrderCreated(event: PolarEvent) {
   const order = event.data;
   const userId = order.metadata?.clerkUserId;
 

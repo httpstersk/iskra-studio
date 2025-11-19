@@ -57,6 +57,8 @@ export function UserMenu({ className }: UserMenuProps) {
     return null;
   }
 
+  const isPaid = tier === "pro" || tier === "paid";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -86,9 +88,9 @@ export function UserMenu({ className }: UserMenuProps) {
             <div className="flex items-center gap-2 mt-1">
               <Badge
                 className="capitalize"
-                variant={tier === "paid" ? "default" : "secondary"}
+                variant={isPaid ? "default" : "secondary"}
               >
-                {tier === "paid" && <Crown className="w-3 h-3 mr-1" />}
+                {isPaid && <Crown className="w-3 h-3 mr-1" />}
                 {tier}
               </Badge>
             </div>

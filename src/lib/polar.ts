@@ -104,8 +104,8 @@ export function getProductIdForInterval(
  * @returns True if signature is valid
  */
 export async function verifyWebhookSignature(
-  payload: string,
-  signature: string
+  _payload: string,
+  _signature: string
 ): Promise<boolean> {
   try {
     // TODO: Implement webhook signature verification

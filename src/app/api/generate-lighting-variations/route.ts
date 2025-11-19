@@ -20,7 +20,7 @@ const requestSchema = z.object({
 
 export const POST = createAuthenticatedHandler({
   schema: requestSchema,
-  handler: async (input, userId) => {
+  handler: async (input, _userId) => {
     const { imageUrl, lightingScenarios, userContext } = input;
 
     // Initialize Convex client for quota operations

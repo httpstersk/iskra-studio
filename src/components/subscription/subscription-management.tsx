@@ -48,15 +48,11 @@ interface SubscriptionManagementProps {
  * }
  * ```
  */
-export function SubscriptionManagement({ className }: SubscriptionManagementProps) {
-  const {
-    subscription,
-    isPro,
-    isFree,
-    openCustomerPortal,
-    isLoading,
-    error,
-  } = useSubscription();
+export function SubscriptionManagement({
+  className,
+}: SubscriptionManagementProps) {
+  const { subscription, isPro, openCustomerPortal, isLoading, error } =
+    useSubscription();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   if (isLoading) {
@@ -119,7 +115,9 @@ export function SubscriptionManagement({ className }: SubscriptionManagementProp
                   <div className="space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-medium text-foreground">Pro Plan</h4>
+                        <h4 className="font-medium text-foreground">
+                          Pro Plan
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           {subscription?.billingInterval === "year"
                             ? "Billed annually"
@@ -148,9 +146,7 @@ export function SubscriptionManagement({ className }: SubscriptionManagementProp
                       {subscription?.polarSubscriptionId && (
                         <div className="flex items-center gap-2 text-sm">
                           <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">
-                            Status:
-                          </span>
+                          <span className="text-muted-foreground">Status:</span>
                           <span className="font-medium capitalize text-foreground">
                             {subscription.status?.replace("_", " ") ?? "Active"}
                           </span>
@@ -161,8 +157,9 @@ export function SubscriptionManagement({ className }: SubscriptionManagementProp
                     {isCancelled && (
                       <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
                         <p className="text-sm text-foreground">
-                          Your subscription will not renew. You'll have access to Pro
-                          features until {formatDate(nextBillingDate ?? null)}.
+                          Your subscription will not renew. You'll have access
+                          to Pro features until{" "}
+                          {formatDate(nextBillingDate ?? null)}.
                         </p>
                       </div>
                     )}
@@ -212,7 +209,8 @@ export function SubscriptionManagement({ className }: SubscriptionManagementProp
                           Upgrade to Pro
                         </h4>
                         <p className="text-sm text-muted-foreground">
-                          Get 20x more images, 24x more videos, and priority support
+                          Get 20x more images, 24x more videos, and priority
+                          support
                         </p>
                       </div>
                     </div>
