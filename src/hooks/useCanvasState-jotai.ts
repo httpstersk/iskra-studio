@@ -3,7 +3,7 @@
  * Provides access to canvas state atoms and manages window resize effects
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useAtom } from "jotai";
 import {
   canvasSizeAtom,
@@ -14,6 +14,7 @@ import {
   viewportAtom,
   type Viewport,
 } from "@/store/canvas-atoms";
+import { useWindowDimensions } from "./useWindowDimensions";
 
 /**
  * Hook to manage canvas state using Jotai atoms
@@ -27,26 +28,17 @@ export function useCanvasState() {
   const [videos, setVideos] = useAtom(videosAtom);
   const [viewport, setViewport] = useAtom(viewportAtom);
 
-  const hasInitialized = useRef(false);
+  // Get window dimensions from external store
+  // Single shared subscription for all components using this hook
+  const windowDimensions = useWindowDimensions();
 
-  // Update canvas size on window resize
+  // Sync window dimensions to canvas size atom
   useEffect(() => {
-    const updateCanvasSize = () => {
-      setCanvasSize({
-        height: window.innerHeight,
-        width: window.innerWidth,
-      });
-    };
-
-    // Set initial size on mount
-    if (!hasInitialized.current) {
-      updateCanvasSize();
-      hasInitialized.current = true;
-    }
-
-    window.addEventListener("resize", updateCanvasSize);
-    return () => window.removeEventListener("resize", updateCanvasSize);
-  }, [setCanvasSize]);
+    setCanvasSize({
+      height: windowDimensions.height,
+      width: windowDimensions.width,
+    });
+  }, [windowDimensions.height, windowDimensions.width, setCanvasSize]);
 
   // Set canvas ready state after mount
   useEffect(() => {

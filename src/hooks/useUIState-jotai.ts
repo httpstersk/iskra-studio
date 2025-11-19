@@ -18,6 +18,7 @@ import {
   variationModeAtom,
   visibleIndicatorsAtom,
 } from "@/store/ui-atoms";
+import { useLocalStorage } from "./useLocalStorage";
 
 /**
  * Hook to manage UI state using Jotai atoms
@@ -46,31 +47,33 @@ export function useUIState() {
     visibleIndicatorsAtom,
   );
 
-  // Load grid setting from localStorage on mount
-  useEffect(() => {
-    const savedShowGrid = window.localStorage.getItem("showGrid");
-    if (savedShowGrid !== null) {
-      setShowGrid(savedShowGrid === "true");
-    }
-  }, [setShowGrid]);
+  // Use external store for persistent settings with cross-tab sync
+  const [showGridPersisted, setShowGridPersisted] = useLocalStorage(
+    "showGrid",
+    true,
+  );
+  const [showMinimapPersisted, setShowMinimapPersisted] = useLocalStorage(
+    "showMinimap",
+    true,
+  );
 
-  // Load minimap setting from localStorage on mount
+  // Sync external store to Jotai atoms on mount and when external store changes
   useEffect(() => {
-    const savedShowMinimap = window.localStorage.getItem("showMinimap");
-    if (savedShowMinimap !== null) {
-      setShowMinimap(savedShowMinimap === "true");
-    }
-  }, [setShowMinimap]);
+    setShowGrid(showGridPersisted);
+  }, [showGridPersisted, setShowGrid]);
 
-  // Save grid setting to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem("showGrid", showGrid.toString());
-  }, [showGrid]);
+    setShowMinimap(showMinimapPersisted);
+  }, [showMinimapPersisted, setShowMinimap]);
 
-  // Save minimap setting to localStorage when it changes
+  // Sync Jotai atoms back to external store when they change
   useEffect(() => {
-    localStorage.setItem("showMinimap", showMinimap.toString());
-  }, [showMinimap]);
+    setShowGridPersisted(showGrid);
+  }, [showGrid, setShowGridPersisted]);
+
+  useEffect(() => {
+    setShowMinimapPersisted(showMinimap);
+  }, [showMinimap, setShowMinimapPersisted]);
 
   return {
     generationCount,
