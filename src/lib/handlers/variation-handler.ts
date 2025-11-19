@@ -51,7 +51,7 @@ interface LightingVariationsResponse {
 async function generateCameraAngleVariations(
   imageUrl: string,
   cameraAngles: string[],
-  userContext?: string,
+  userContext?: string
 ): Promise<CameraAngleVariationsResponse> {
   const response = await fetch("/api/generate-camera-angle-variations", {
     method: "POST",
@@ -69,7 +69,7 @@ async function generateCameraAngleVariations(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `Camera angle variations generation failed with status ${response.status}`,
+        `Camera angle variations generation failed with status ${response.status}`
     );
   }
 
@@ -82,7 +82,7 @@ async function generateCameraAngleVariations(
 async function generateLightingVariations(
   imageUrl: string,
   lightingScenarios: string[],
-  userContext?: string,
+  userContext?: string
 ): Promise<LightingVariationsResponse> {
   const response = await fetch("/api/generate-lighting-variations", {
     method: "POST",
@@ -100,7 +100,7 @@ async function generateLightingVariations(
     const error = await response.json().catch(() => null);
     throw new Error(
       error?.error ||
-        `Lighting variations generation failed with status ${response.status}`,
+        `Lighting variations generation failed with status ${response.status}`
     );
   }
 
@@ -125,7 +125,9 @@ interface VariationHandlerDeps {
   >;
   /** Setter for active video generation states */
   setActiveVideoGenerations?: React.Dispatch<
-    React.SetStateAction<Map<string, import("@/types/canvas").ActiveVideoGeneration>>
+    React.SetStateAction<
+      Map<string, import("@/types/canvas").ActiveVideoGeneration>
+    >
   >;
   /** Setter for images state */
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
@@ -186,7 +188,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     if (!setVideos || !setActiveVideoGenerations) {
       showError(
         "Configuration error",
-        "Video generation handlers not available",
+        "Video generation handlers not available"
       );
       return;
     }
@@ -265,7 +267,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
       // Create placeholders IMMEDIATELY with lightingScenario metadata (BEFORE upload)
       placeholderImages = variationsToGenerate.map((lightingScenario, index) =>
-        makePlaceholder({ lightingScenario }, index),
+        makePlaceholder({ lightingScenario }, index)
       );
 
       setImages((prev) => [...prev, ...placeholderImages]);
@@ -291,11 +293,10 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       });
 
       // Stage 2: Call API to get FIBO analysis + refined lighting prompts
-      handlerLogger.info("Calling lighting variations API");
       const { refinedPrompts } = await generateLightingVariations(
         signedImageUrl,
         variationsToGenerate,
-        variationPrompt,
+        variationPrompt
       );
 
       // Remove analyzing status
@@ -311,7 +312,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
           // Convert refined FIBO JSON (with lighting baked in) to text prompt
           const finalPrompt = fiboStructuredToText(
-            item.refinedStructuredPrompt,
+            item.refinedStructuredPrompt
           );
 
           newMap.set(placeholderId, {
@@ -347,7 +348,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       showErrorFromException(
         "Generation failed",
         error,
-        "Failed to generate lighting variations",
+        "Failed to generate lighting variations"
       );
     }
 
@@ -393,7 +394,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
     // Create placeholders IMMEDIATELY with cameraAngle metadata (BEFORE upload)
     placeholderImages = variationsToGenerate.map((cameraDirective, index) =>
-      makePlaceholder({ cameraAngle: cameraDirective }, index),
+      makePlaceholder({ cameraAngle: cameraDirective }, index)
     );
 
     setImages((prev) => [...prev, ...placeholderImages]);
@@ -419,11 +420,10 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     });
 
     // Stage 2: Call API to get FIBO analysis + refined camera angle prompts
-    handlerLogger.info("Calling camera angle variations API");
     const { refinedPrompts } = await generateCameraAngleVariations(
       signedImageUrl,
       variationsToGenerate,
-      variationPrompt,
+      variationPrompt
     );
 
     // Remove analyzing status
@@ -455,17 +455,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       return newMap;
     });
 
-    handlerLogger.info("Camera angle variations setup complete", {
-      cameraAngleCount: refinedPrompts.length,
-    });
-
     setIsGenerating(false);
   } catch (error) {
-    handlerLogger.error(
-      "Camera angle variation handler failed",
-      error as Error,
-    );
-
     await handleVariationError({
       error,
       selectedImage,
@@ -478,7 +469,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     showErrorFromException(
       "Generation failed",
       error,
-      "Failed to generate camera angle variations",
+      "Failed to generate camera angle variations"
     );
   }
 };

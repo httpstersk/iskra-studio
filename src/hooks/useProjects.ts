@@ -11,14 +11,13 @@ import {
   currentProjectAtom,
   isAutoSavingAtom,
   lastSavedAtAtom,
-  optimisticProjectIdAtom,
   projectListAtom,
   projectLoadingAtom,
 } from "@/store/project-atoms";
 import type { CanvasState, Project, ProjectMetadata } from "@/types/project";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useOptimistic, startTransition } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "./useAuth";
@@ -107,15 +106,17 @@ export function useProjects(): UseProjectsReturn {
   const [isLoading, setIsLoading] = useAtom(projectLoadingAtom);
   const [isSaving, setIsSaving] = useAtom(isAutoSavingAtom);
   const [lastSavedAt, setLastSavedAt] = useAtom(lastSavedAtAtom);
-  const [, setOptimisticProjectId] = useAtom(optimisticProjectIdAtom);
 
   // Auth check
   const { isAuthenticated } = useAuth();
   const convex = useConvex();
 
-  // Use a ref to track the latest load request sequence number
-  // This prevents race conditions when rapidly switching projects
-  const loadSequenceRef = useRef(0);
+  // Use useOptimistic for instant UI feedback during project switching
+  // Automatically reverts on error without manual cleanup
+  const [optimisticProject, setOptimisticProject] = useOptimistic(
+    currentProject,
+    (_, newProject: Project | null) => newProject,
+  );
 
   // Convex mutations
   const createProjectMutation = useMutation(api.projects.createProject);
@@ -178,34 +179,18 @@ export function useProjects(): UseProjectsReturn {
   /**
    * Loads a project by ID.
    *
-   * Uses request sequencing to prevent race conditions when rapidly switching projects.
-   * Only the most recent load request will update the state.
+   * Uses React's useOptimistic hook for instant UI feedback without manual cleanup.
+   * Automatically reverts optimistic state if the load fails.
    */
   const loadProject = useCallback(
     async (projectId: Id<"projects">): Promise<void> => {
-      // Increment sequence counter for this load request
-      const currentSequence = ++loadSequenceRef.current;
-
-      // Set optimistic ID immediately for instant UI feedback
-      // This must happen BEFORE setIsLoading to prevent the UI from briefly
-      // showing the wrong project as loading
-      setOptimisticProjectId(projectId);
-
       try {
         setIsLoading(true);
 
-        // Pre-fetch project data asynchronously
-        const projectPromise = convex.query(api.projects.getProject, {
+        // Fetch project data
+        const project = await convex.query(api.projects.getProject, {
           projectId,
         });
-
-        const project = await projectPromise;
-
-        // Check if this is still the latest request
-        // If not, ignore this response (a newer request is in progress)
-        if (currentSequence !== loadSequenceRef.current) {
-          return;
-        }
 
         if (!project) {
           throw new Error("Project not found");
@@ -216,12 +201,15 @@ export function useProjects(): UseProjectsReturn {
           id: project._id,
         };
 
-        // Update state immediately for instant UI feedback
+        // Apply optimistic update within a transition
+        // This will automatically revert if an error is thrown
+        startTransition(() => {
+          setOptimisticProject(normalizedProject);
+        });
+
+        // Commit to actual state
         setCurrentProject(normalizedProject);
         setLastSavedAt(normalizedProject.lastSavedAt ?? null);
-
-        // Clear optimistic state now that real project is loaded
-        setOptimisticProjectId(null);
 
         // Update project list with loaded project data
         setProjectList((prev) => {
@@ -233,11 +221,17 @@ export function useProjects(): UseProjectsReturn {
             thumbnailUrl: project.thumbnailUrl,
             imageCount: project.canvasState.elements.filter(
               (el) =>
-                typeof el === "object" && el !== null && "type" in el && el.type === "image"
+                typeof el === "object" &&
+                el !== null &&
+                "type" in el &&
+                el.type === "image",
             ).length,
             videoCount: project.canvasState.elements.filter(
               (el) =>
-                typeof el === "object" && el !== null && "type" in el && el.type === "video"
+                typeof el === "object" &&
+                el !== null &&
+                "type" in el &&
+                el.type === "video",
             ).length,
           };
 
@@ -252,19 +246,12 @@ export function useProjects(): UseProjectsReturn {
           return updated;
         });
       } catch (error) {
-        // Only clear optimistic state if this is still the latest request
-        if (currentSequence === loadSequenceRef.current) {
-          setOptimisticProjectId(null);
-        }
+        // useOptimistic automatically reverts on error - no manual cleanup needed
         throw new Error(
-          `Project load failed: ${error instanceof Error ? error.message : "Unknown error"
-          }`,
+          `Project load failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
       } finally {
-        // Only clear loading state if this is still the latest request
-        if (currentSequence === loadSequenceRef.current) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     },
     [
@@ -273,7 +260,7 @@ export function useProjects(): UseProjectsReturn {
       setIsLoading,
       setLastSavedAt,
       setProjectList,
-      setOptimisticProjectId,
+      setOptimisticProject,
     ],
   );
 
@@ -327,13 +314,28 @@ export function useProjects(): UseProjectsReturn {
 
   /**
    * Renames a project.
+   *
+   * Uses useOptimistic for instant UI feedback with automatic rollback on error.
    */
   const renameProject = useCallback(
     async (projectId: Id<"projects">, name: string): Promise<void> => {
       try {
+        // Apply optimistic update if this is the current project
+        if (currentProject?._id === projectId) {
+          const optimisticUpdate: Project = {
+            ...currentProject,
+            name,
+            updatedAt: Date.now(),
+          };
+          startTransition(() => {
+            setOptimisticProject(optimisticUpdate);
+          });
+        }
+
+        // Perform the actual mutation
         await renameProjectMutation({ projectId, name });
 
-        // Update current project if it's the one being renamed
+        // Commit to actual state
         if (currentProject?._id === projectId) {
           setCurrentProject({
             ...currentProject,
@@ -344,17 +346,23 @@ export function useProjects(): UseProjectsReturn {
 
         // Project list will update automatically via query
       } catch (error) {
+        // useOptimistic automatically reverts on error
         throw new Error(
           `Project rename failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
       }
     },
-    [renameProjectMutation, currentProject, setCurrentProject],
+    [
+      renameProjectMutation,
+      currentProject,
+      setCurrentProject,
+      setOptimisticProject,
+    ],
   );
 
   return {
     createProject,
-    currentProject,
+    currentProject: optimisticProject,
     isLoading,
     isSaving,
     lastSavedAt,
