@@ -10,11 +10,14 @@
  * - Battery status detection (reduces FPS on low battery)
  * - Hardware concurrency detection (adjusts for low-core devices)
  *
+ * Now uses useSyncExternalStore for battery monitoring.
+ *
  * @module hooks/useAdaptiveVideoPerformance
  */
 
 import { useVideoPerformanceMode } from "@/hooks/useSharedVideoAnimation";
 import { useEffect, useRef, useState } from "react";
+import { useBatteryStatus } from "./useBatteryStatus";
 
 /**
  * Performance thresholds for automatic quality adjustment
@@ -50,68 +53,6 @@ function detectDeviceCapabilities(): "high" | "medium" | "low" {
   }
 }
 
-/**
- * Monitor battery status and adjust performance
- */
-function useBatteryMonitoring(
-  onBatteryLow: () => void,
-  onBatteryRecovered: () => void,
-) {
-  useEffect(() => {
-    if (typeof navigator === "undefined" || !("getBattery" in navigator)) {
-      return;
-    }
-
-    let isLowBattery = false;
-
-    interface BatteryManager extends EventTarget {
-      charging: boolean;
-      chargingTime: number;
-      dischargingTime: number;
-      level: number;
-      addEventListener(type: "chargingchange" | "levelchange", listener: () => void): void;
-      removeEventListener(type: "chargingchange" | "levelchange", listener: () => void): void;
-    }
-
-    interface NavigatorWithBattery extends Navigator {
-      getBattery(): Promise<BatteryManager>;
-    }
-
-    (navigator as NavigatorWithBattery).getBattery().then((battery: BatteryManager) => {
-      const checkBattery = () => {
-        const level = battery.level;
-        const charging = battery.charging;
-
-        // Low battery and not charging
-        if (
-          level < PERFORMANCE_THRESHOLDS.LOW_BATTERY_THRESHOLD &&
-          !charging &&
-          !isLowBattery
-        ) {
-          isLowBattery = true;
-          onBatteryLow();
-        }
-        // Battery recovered or charging
-        else if (
-          (level >= PERFORMANCE_THRESHOLDS.LOW_BATTERY_THRESHOLD || charging) &&
-          isLowBattery
-        ) {
-          isLowBattery = false;
-          onBatteryRecovered();
-        }
-      };
-
-      checkBattery();
-      battery.addEventListener("levelchange", checkBattery);
-      battery.addEventListener("chargingchange", checkBattery);
-
-      return () => {
-        battery.removeEventListener("levelchange", checkBattery);
-        battery.removeEventListener("chargingchange", checkBattery);
-      };
-    });
-  }, [onBatteryLow, onBatteryRecovered]);
-}
 
 /**
  * Monitor frame performance and adjust quality
@@ -209,14 +150,16 @@ export function useAdaptiveVideoPerformance(
   const [currentMode, setCurrentMode] = useState<"high" | "medium" | "low">(
     () => detectDeviceCapabilities(),
   );
-  const [isLowPowerMode, setIsLowPowerMode] = useState(false);
   const baselineMode = useRef(detectDeviceCapabilities());
 
-  // Battery monitoring
-  useBatteryMonitoring(
-    () => setIsLowPowerMode(true),
-    () => setIsLowPowerMode(false),
-  );
+  // Use external store for battery monitoring (single shared subscription)
+  const battery = useBatteryStatus();
+
+  // Determine if device is in low power mode
+  const isLowPowerMode =
+    battery.supported &&
+    battery.level < PERFORMANCE_THRESHOLDS.LOW_BATTERY_THRESHOLD &&
+    !battery.charging;
 
   // Frame performance monitoring
   useFramePerformanceMonitoring(

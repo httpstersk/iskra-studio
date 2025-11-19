@@ -3,6 +3,8 @@
  *
  * Provides real-time online/offline status and handles sync operations
  * when network connectivity changes.
+ *
+ * Now uses useSyncExternalStore for optimal performance.
  */
 
 "use client";
@@ -11,7 +13,8 @@ import { createLogger } from "@/lib/logger";
 import { showError, showInfo } from "@/lib/toast";
 import { isOnlineAtom } from "@/store/ui-atoms";
 import { useAtom } from "jotai";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useOnlineStatus } from "./useOnlineStatus";
 
 const log = createLogger("NetworkStatus");
 
@@ -62,55 +65,52 @@ interface UseNetworkStatusOptions {
 export function useNetworkStatus(options: UseNetworkStatusOptions = {}) {
   const { showNotifications = false, onOnline, onOffline } = options;
 
-  const [isOnline, setIsOnline] = useAtom(isOnlineAtom);
+  // Use external store for online status (single shared subscription)
+  const isOnlineExternal = useOnlineStatus();
 
+  // Sync with Jotai atom for backward compatibility
+  const [, setIsOnline] = useAtom(isOnlineAtom);
+
+  // Track previous status to detect changes
+  const prevOnlineRef = useRef(isOnlineExternal);
+
+  // Sync external store status to Jotai atom and trigger callbacks
   useEffect(() => {
-    // Initialize with current status
-    setIsOnline(navigator.onLine);
+    // Update atom
+    setIsOnline(isOnlineExternal);
 
-    /**
-     * Handles online event.
-     */
-    const handleOnline = () => {
-      log.success("Network connection restored");
-      setIsOnline(true);
+    // Detect status change
+    const hasChanged = prevOnlineRef.current !== isOnlineExternal;
 
-      if (showNotifications) {
-        showInfo(
-          "Back online",
-          "Network connection restored. Syncing changes...",
-        );
+    if (hasChanged) {
+      if (isOnlineExternal) {
+        // Went online
+        log.success("Network connection restored");
+
+        if (showNotifications) {
+          showInfo(
+            "Back online",
+            "Network connection restored. Syncing changes...",
+          );
+        }
+
+        onOnline?.();
+      } else {
+        // Went offline
+        log.warn("Network connection lost");
+
+        if (showNotifications) {
+          showError("You're offline", "Changes will sync when reconnected.");
+        }
+
+        onOffline?.();
       }
 
-      onOnline?.();
-    };
-
-    /**
-     * Handles offline event.
-     */
-    const handleOffline = () => {
-      log.warn("Network connection lost");
-      setIsOnline(false);
-
-      if (showNotifications) {
-        showError("You're offline", "Changes will sync when reconnected.");
-      }
-
-      onOffline?.();
-    };
-
-    // Add event listeners
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, [setIsOnline, showNotifications, onOnline, onOffline]);
+      prevOnlineRef.current = isOnlineExternal;
+    }
+  }, [isOnlineExternal, setIsOnline, showNotifications, onOnline, onOffline]);
 
   return {
-    isOnline,
+    isOnline: isOnlineExternal,
   };
 }
