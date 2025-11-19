@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
     // Handle different event types
     switch (event.type) {
       case "subscription.created":
-      case "subscription.activated":
         await handleSubscriptionCreated(event);
         break;
 
@@ -97,7 +96,7 @@ async function handleSubscriptionCreated(event: any) {
   const currentPeriodStart = new Date(subscription.current_period_start).getTime();
   const currentPeriodEnd = new Date(subscription.current_period_end).getTime();
 
-  await convex.mutation(api.subscriptions.handleUpgrade, {
+  await convex.action(api.subscriptions.handleUpgrade, {
     userId,
     polarCustomerId: subscription.customer_id,
     polarSubscriptionId: subscription.id,
@@ -117,7 +116,7 @@ async function handleSubscriptionUpdated(event: any) {
   const currentPeriodStart = new Date(subscription.current_period_start).getTime();
   const currentPeriodEnd = new Date(subscription.current_period_end).getTime();
 
-  await convex.mutation(api.subscriptions.updateBillingCycle, {
+  await convex.action(api.subscriptions.updateBillingCycle, {
     polarSubscriptionId: subscription.id,
     billingCycleStart: currentPeriodStart,
     billingCycleEnd: currentPeriodEnd,
@@ -133,7 +132,7 @@ async function handleSubscriptionCanceled(event: any) {
   const subscription = event.data;
 
   // Update subscription status to cancelled
-  await convex.mutation(api.subscriptions.updateSubscriptionStatus, {
+  await convex.action(api.subscriptions.updateSubscriptionStatus, {
     polarSubscriptionId: subscription.id,
     status: "cancelled",
   });
@@ -151,7 +150,7 @@ async function handleSubscriptionCanceled(event: any) {
 async function handleSubscriptionActive(event: any) {
   const subscription = event.data;
 
-  await convex.mutation(api.subscriptions.updateSubscriptionStatus, {
+  await convex.action(api.subscriptions.updateSubscriptionStatus, {
     polarSubscriptionId: subscription.id,
     status: "active",
   });

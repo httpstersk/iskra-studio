@@ -4,8 +4,9 @@
  * Handles Polar subscription creation, status checks, and tier management.
  */
 
-import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
+import { action, internalMutation, query } from "./_generated/server";
 
 /**
  * Gets current user's subscription status
@@ -73,7 +74,7 @@ export const getSubscriptionStatus = query({
  * @param billingCycleStart - Billing cycle start timestamp
  * @param billingCycleEnd - Billing cycle end timestamp
  */
-export const handleUpgrade = internalMutation({
+export const handleUpgradeInternal = internalMutation({
   args: {
     userId: v.string(),
     polarCustomerId: v.string(),
@@ -105,6 +106,22 @@ export const handleUpgrade = internalMutation({
     });
 
     return { success: true };
+  },
+});
+
+/**
+ * Action wrapper to upgrade user to Pro tier
+ */
+export const handleUpgrade = action({
+  args: {
+    userId: v.string(),
+    polarCustomerId: v.string(),
+    polarSubscriptionId: v.string(),
+    billingCycleStart: v.number(),
+    billingCycleEnd: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runMutation((internal as any).subscriptions.handleUpgradeInternal, args);
   },
 });
 
@@ -178,7 +195,7 @@ export const handleDowngrade = internalMutation({
  * @param billingCycleStart - New billing cycle start timestamp
  * @param billingCycleEnd - New billing cycle end timestamp
  */
-export const updateBillingCycle = internalMutation({
+export const updateBillingCycleInternal = internalMutation({
   args: {
     polarSubscriptionId: v.string(),
     billingCycleStart: v.number(),
@@ -212,6 +229,20 @@ export const updateBillingCycle = internalMutation({
 });
 
 /**
+ * Action wrapper to update subscription billing dates
+ */
+export const updateBillingCycle = action({
+  args: {
+    polarSubscriptionId: v.string(),
+    billingCycleStart: v.number(),
+    billingCycleEnd: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runMutation((internal as any).subscriptions.updateBillingCycleInternal, args);
+  },
+});
+
+/**
  * Internal mutation to update subscription status
  *
  * Called by webhook handlers when subscription status changes.
@@ -219,7 +250,7 @@ export const updateBillingCycle = internalMutation({
  * @param polarSubscriptionId - Polar subscription ID
  * @param status - New subscription status
  */
-export const updateSubscriptionStatus = internalMutation({
+export const updateSubscriptionStatusInternal = internalMutation({
   args: {
     polarSubscriptionId: v.string(),
     status: v.union(
@@ -254,6 +285,25 @@ export const updateSubscriptionStatus = internalMutation({
 });
 
 /**
+ * Action wrapper to update subscription status
+ */
+export const updateSubscriptionStatus = action({
+  args: {
+    polarSubscriptionId: v.string(),
+    status: v.union(
+      v.literal("active"),
+      v.literal("cancelled"),
+      v.literal("past_due"),
+      v.literal("incomplete"),
+      v.literal("trialing")
+    ),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runMutation((internal as any).subscriptions.updateSubscriptionStatusInternal, args);
+  },
+});
+
+/**
  * Internal mutation to link Polar customer ID to user
  *
  * Called when creating a customer in Polar for the first time.
@@ -261,7 +311,7 @@ export const updateSubscriptionStatus = internalMutation({
  * @param userId - Clerk user ID
  * @param polarCustomerId - Polar customer ID
  */
-export const linkPolarCustomer = internalMutation({
+export const linkPolarCustomerInternal = internalMutation({
   args: {
     userId: v.string(),
     polarCustomerId: v.string(),
@@ -282,6 +332,19 @@ export const linkPolarCustomer = internalMutation({
     });
 
     return { success: true };
+  },
+});
+
+/**
+ * Action wrapper to link Polar customer ID to user
+ */
+export const linkPolarCustomer = action({
+  args: {
+    userId: v.string(),
+    polarCustomerId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.runMutation((internal as any).subscriptions.linkPolarCustomerInternal, args);
   },
 });
 

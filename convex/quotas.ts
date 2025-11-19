@@ -45,16 +45,14 @@ export const checkQuota = query({
     const videoLimit = plan?.videosPerPeriod ?? (planKey === "pro" ? 96 : 4);
     const limit = args.type === "image" ? imageLimit : videoLimit;
 
-    // Check if billing period has ended and reset if needed
+    // Check if billing period has ended
+    // Note: Quota reset is handled by scheduled job (resetExpiredQuotas)
+    // We don't reset here to avoid side effects in queries
     const now = Date.now();
-    if (user.billingCycleEnd && now > user.billingCycleEnd) {
-      // Billing period ended, quota should be reset
-      // This will be handled by the scheduled job, but we can do it here too
-      await ctx.runMutation(api.quotas.resetQuotaForUser, {
-        userId,
-      });
-
-      // Return fresh quota after reset
+    const needsReset = user.billingCycleEnd && now > user.billingCycleEnd;
+    
+    if (needsReset) {
+      // Return fresh quota status - scheduled job will handle actual reset
       return {
         hasQuota: true,
         limit,
@@ -262,9 +260,30 @@ export const resetExpiredQuotas = internalMutation({
 
     for (const user of allUsers) {
       if (user.billingCycleEnd && now > user.billingCycleEnd) {
-        await ctx.runMutation(api.quotas.resetQuotaForUser, {
-          userId: user.userId,
+        // Directly reset quota here since this is already an internal mutation
+        const signupDate = new Date(user.billingCycleStart ?? user.createdAt);
+        const currentDate = new Date(now);
+
+        const newBillingStart = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          signupDate.getDate()
+        ).getTime();
+
+        const newBillingEnd = new Date(
+          new Date(newBillingStart).getFullYear(),
+          new Date(newBillingStart).getMonth() + 1,
+          signupDate.getDate()
+        ).getTime();
+
+        await ctx.db.patch(user._id, {
+          imagesUsedInPeriod: 0,
+          videosUsedInPeriod: 0,
+          billingCycleStart: newBillingStart,
+          billingCycleEnd: newBillingEnd,
+          updatedAt: now,
         });
+        
         resetCount++;
       }
     }

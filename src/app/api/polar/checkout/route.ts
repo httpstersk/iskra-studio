@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
         polarCustomerId = customer.id;
 
         // Link Polar customer ID to user in Convex
-        await convex.mutation(api.subscriptions.linkPolarCustomer, {
+        await convex.action(api.subscriptions.linkPolarCustomer, {
           userId,
           polarCustomerId,
         });
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
 
     // Create checkout session
     const checkoutSession = await polar.checkouts.create({
-      productId,
+      products: [productId],
       customerId: polarCustomerId,
       successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/subscription/success`,
       metadata: {

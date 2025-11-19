@@ -3,9 +3,9 @@
  *
  * @remarks
  * - "free": Default tier with limited storage and rate limits
- * - "paid": Premium tier with increased storage and higher rate limits
+ * - "pro": Premium tier with increased storage and higher rate limits
  */
-export type UserTier = "free" | "paid";
+export type UserTier = "free" | "pro";
 
 /**
  * User record from Convex database.

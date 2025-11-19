@@ -1,7 +1,7 @@
 /**
  * Subscription tier types
  */
-export type SubscriptionTier = "free" | "pro";
+export type SubscriptionTier = "free" | "paid" | "pro";
 
 /**
  * Subscription status from Polar
