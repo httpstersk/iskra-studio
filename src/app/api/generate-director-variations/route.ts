@@ -50,7 +50,9 @@ export const POST = createAuthenticatedHandler({
         throw error;
       }
 
-      throw new Error("Failed to reserve quota for generation");
+      throw new Error(
+        `Failed to reserve quota for generation: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
 
     // Quota has been reserved, proceed with generation
