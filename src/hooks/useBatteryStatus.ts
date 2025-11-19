@@ -51,6 +51,14 @@ let cachedBatteryStatus: BatteryStatus = {
   supported: false,
 };
 
+// Cache for server-side snapshot (SSR)
+// IMPORTANT: Must be a stable reference to prevent infinite loops
+const cachedServerSnapshot: BatteryStatus = {
+  level: 1,
+  charging: false,
+  supported: false,
+};
+
 // Reference to battery manager for event cleanup
 let batteryManager: BatteryManager | null = null;
 
@@ -142,10 +150,10 @@ function getSnapshot(): BatteryStatus {
 
 /**
  * Get server-side snapshot (for SSR compatibility)
- * Returns default battery status for server rendering
+ * Returns cached default battery status to prevent infinite loops
  */
 function getServerSnapshot(): BatteryStatus {
-  return { level: 1, charging: false, supported: false };
+  return cachedServerSnapshot;
 }
 
 /**

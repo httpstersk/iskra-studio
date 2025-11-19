@@ -4,7 +4,7 @@
  * Automatically subscribes to storage events for multi-tab support
  */
 
-import { useSyncExternalStore, useCallback } from "react";
+import { useSyncExternalStore, useCallback, useMemo } from "react";
 
 // Module-level cache for localStorage values
 // Prevents infinite loops by maintaining stable snapshot references
@@ -107,9 +107,17 @@ export function useLocalStorage<T>(
   key: string,
   defaultValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void] {
-  // Subscribe to storage events for cross-tab synchronization
-  const subscribe = useCallback(
-    (callback: () => void) => {
+  // Initialize cache for this key if not exists
+  // This happens once per key to establish the cached value
+  if (!storageCache.has(key)) {
+    updateCache(key, defaultValue);
+  }
+
+  // Create stable store configuration using useMemo
+  // This prevents infinite loops by ensuring functions don't change on every render
+  const storeConfig = useMemo(() => {
+    // Subscribe to storage events for cross-tab synchronization
+    const subscribe = (callback: () => void) => {
       // Listen for storage events from other tabs
       const handleStorageChange = (e: StorageEvent) => {
         if (e.key === key || e.key === null) {
@@ -121,22 +129,30 @@ export function useLocalStorage<T>(
 
       window.addEventListener("storage", handleStorageChange);
       return () => window.removeEventListener("storage", handleStorageChange);
-    },
-    [key, defaultValue],
-  );
+    };
 
-  // Get current snapshot from cache
-  // This returns the cached value to prevent infinite loops
-  const getSnapshot = useCallback(
-    () => getCachedValue(key, defaultValue),
-    [key, defaultValue],
-  );
+    // Get current snapshot from cache
+    // This returns the cached value to prevent infinite loops
+    const getSnapshot = () => getCachedValue(key, defaultValue);
 
-  // Get server snapshot (for SSR)
-  const getServerSnapshot = useCallback(() => defaultValue, [defaultValue]);
+    // Get server snapshot (for SSR)
+    // IMPORTANT: Returns cached value, not defaultValue directly
+    // This prevents infinite loops if defaultValue is a new object/array reference
+    const getServerSnapshot = () => getCachedValue(key, defaultValue);
+
+    return { subscribe, getSnapshot, getServerSnapshot };
+    // Only depend on key, not defaultValue, to keep functions stable
+    // defaultValue is captured in closure and used to initialize cache
+    // This prevents infinite loops when defaultValue is a new object/array reference
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   // Subscribe to external store
-  const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const value = useSyncExternalStore(
+    storeConfig.subscribe,
+    storeConfig.getSnapshot,
+    storeConfig.getServerSnapshot,
+  );
 
   // Setter function with support for functional updates
   const setValue = useCallback(

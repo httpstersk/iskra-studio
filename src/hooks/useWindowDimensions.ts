@@ -18,6 +18,13 @@ let cachedDimensions: WindowDimensions = {
   height: typeof window !== "undefined" ? window.innerHeight : 800,
 };
 
+// Cache for server-side snapshot (SSR)
+// IMPORTANT: Must be a stable reference to prevent infinite loops
+const cachedServerSnapshot: WindowDimensions = {
+  width: 1200,
+  height: 800,
+};
+
 /**
  * Subscribe to window resize events
  * This function is shared across all hook instances for optimal performance
@@ -47,13 +54,10 @@ function getSnapshot(): WindowDimensions {
 
 /**
  * Get server-side snapshot (for SSR compatibility)
- * Returns default dimensions when window is not available
+ * Returns cached default dimensions to prevent infinite loops
  */
 function getServerSnapshot(): WindowDimensions {
-  return {
-    width: 1200,
-    height: 800,
-  };
+  return cachedServerSnapshot;
 }
 
 /**
