@@ -25,7 +25,7 @@ const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
 
   const [loadedImg] = useImage(
     pixelatedSrc && !cachedImage ? pixelatedSrc : "",
-    "anonymous",
+    "anonymous"
   );
 
   if (!pixelatedSrc) return undefined;
@@ -81,16 +81,17 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
 
     const startTime = performance.now();
     const duration = 1500;
+    let animationId: number;
 
     const animate = () => {
       const elapsed = (performance.now() - startTime) % duration;
       const progress = elapsed / duration;
       const opacity = 0.15 + Math.sin(progress * Math.PI * 2) * 0.05;
       setShimmerOpacity(opacity);
-      requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     };
 
-    const animationId = requestAnimationFrame(animate);
+    animationId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationId);
   }, [video.isSkeleton]);
 
@@ -118,7 +119,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
     },
     (currentTime) => {
       onChange({ currentTime });
-    },
+    }
   );
 
   // Animation coordinator for pixelated overlay transition
@@ -156,7 +157,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
       onChange({
         currentTime: Math.min(
           video.duration,
-          Math.max(0, video.currentTime + delta),
+          Math.max(0, video.currentTime + delta)
         ),
       }),
     volumeBy: (delta) => {
@@ -174,7 +175,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
       selfId: video.id,
     },
     setVideos,
-    onChange,
+    onChange
   );
 
   /**
@@ -190,7 +191,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
         onSelect(e);
       }
     },
-    [isSelected, onChange, onSelect, video.isPlaying],
+    [isSelected, onChange, onSelect, video.isPlaying]
   );
 
   const handleDragStart = useCallback(
@@ -203,7 +204,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
 
       onDragStart();
     },
-    [isSelected, onDragStart, onSelect],
+    [isSelected, onDragStart, onSelect]
   );
 
   const handleDragEnd = useCallback(() => {
@@ -220,7 +221,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
         return;
       }
     },
-    [],
+    []
   );
 
   const handleMouseUp = useCallback(() => {

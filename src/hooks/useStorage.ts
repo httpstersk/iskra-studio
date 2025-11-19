@@ -40,6 +40,10 @@ export function useStorage(
   // Track the last loaded project ID to prevent race conditions
   const lastLoadedProjectIdRef = useRef<string | null>(null);
 
+  // Track the CURRENT project ID (not the one being loaded) to detect project switches during async operations
+  // This ref is updated immediately when currentProject changes, allowing async operations to check if they should abort
+  const currentProjectIdRef = useRef<string | null>(currentProject?._id ?? null);
+
   const saveToStorage = useCallback(async () => {
     try {
       setIsSaving(true);
@@ -120,7 +124,8 @@ export function useStorage(
       }
 
       // Verify we're still loading the same project (not switched again)
-      if (projectIdToLoad !== (currentProject?._id ?? null)) {
+      // Check against the ref which holds the CURRENT project ID, not the stale closure value
+      if (projectIdToLoad !== currentProjectIdRef.current) {
         return; // Project changed during load, abort
       }
 
@@ -218,6 +223,12 @@ export function useStorage(
         if (element.type === "image") {
           const imageData = await canvasStorage.getImage(element.id);
 
+          // Verify we're still loading the same project after async operation
+          // Check against the ref which holds the CURRENT project ID, not the stale closure value
+          if (projectIdToLoad !== currentProjectIdRef.current) {
+            return; // Project changed during load, abort
+          }
+
           if (imageData) {
             const metadata = element.assetId
               ? assetMetadata.get(element.assetId)
@@ -250,6 +261,12 @@ export function useStorage(
           }
         } else if (element.type === "video") {
           const videoData = await canvasStorage.getVideo(element.id);
+
+          // Verify we're still loading the same project after async operation
+          // Check against the ref which holds the CURRENT project ID, not the stale closure value
+          if (projectIdToLoad !== currentProjectIdRef.current) {
+            return; // Project changed during load, abort
+          }
 
           if (videoData) {
             const loadedVideo: PlacedVideo = {
@@ -289,6 +306,12 @@ export function useStorage(
       setIsStorageLoaded(true);
     }
   }, [convexClient, currentProject?._id, setImages, setVideos, setViewport]);
+
+  // Keep the current project ID ref in sync with the atom value
+  // This allows async operations to check the CURRENT project (not their closure's stale value)
+  useEffect(() => {
+    currentProjectIdRef.current = currentProject?._id ?? null;
+  }, [currentProject?._id]);
 
   // Load from storage when project changes
   useEffect(() => {

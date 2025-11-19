@@ -191,24 +191,26 @@ const getDirectiveLabelText = (image: PlacedImage): string | undefined => {
  */
 const useSkeletonShimmer = () => {
   const [shimmerOpacity, setShimmerOpacity] = React.useState(0.15);
+  const animationRef = React.useRef<number | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const startTime = performance.now();
     const duration = 1500; // 1.5 second cycle
 
     const animate = () => {
       const elapsed = (performance.now() - startTime) % duration;
       const progress = elapsed / duration;
-
-      // Sine wave for smooth pulsing: 0.15 to 0.25
       const opacity = 0.15 + Math.sin(progress * Math.PI * 2) * 0.05;
       setShimmerOpacity(opacity);
-
-      requestAnimationFrame(animate);
+      animationRef.current = requestAnimationFrame(animate);
     };
 
-    const animationId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationId);
+    animationRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, []);
 
   return shimmerOpacity;
@@ -427,7 +429,6 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
         {/* Base skeleton rectangle */}
         <Rect
           {...getImageDimensions(image)}
-          cornerRadius={8}
           fill="#1a1a1a"
           opacity={0.5}
           rotation={image.rotation}
@@ -435,7 +436,6 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
         {/* Shimmer overlay for animation */}
         <Rect
           {...getImageDimensions(image)}
-          cornerRadius={8}
           fill="#2a2a2a"
           opacity={shimmerOpacity}
           rotation={image.rotation}
