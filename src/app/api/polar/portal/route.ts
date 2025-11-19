@@ -45,6 +45,7 @@ export async function POST() {
       expiresAt: session.expiresAt,
     });
   } catch (error) {
+    console.error("Customer portal session creation error:", error);
     return NextResponse.json(
       { error: "Failed to create portal session" },
       { status: 500 }
