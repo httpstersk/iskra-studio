@@ -96,11 +96,18 @@ export async function generateFiboVariations<T = string>(
   } = config;
 
   // Step 1: Analyze image with FIBO to get baseline structured prompt
-  const fiboAnalysis = await analyzeFiboImageWithRetry({
+  const fiboAnalysisResult = await analyzeFiboImageWithRetry({
     imageUrl,
     seed,
     timeout,
   });
+
+  // Check if result is an error (has payload property)
+  if ('payload' in fiboAnalysisResult) {
+    throw new Error(`FIBO analysis failed: ${fiboAnalysisResult.payload.message || 'Unknown error'}`);
+  }
+
+  const fiboAnalysis = fiboAnalysisResult;
 
   const refinementPromises = variations.map(async (variationPrompt) => {
     // Call Bria API to refine structured prompt with variation text prompt
@@ -115,6 +122,11 @@ export async function generateFiboVariations<T = string>(
       },
       timeout
     );
+
+    // Check if result is an error (has payload property)
+    if ('payload' in result) {
+      throw new Error(`FIBO refinement failed: ${result.payload.message || 'Unknown error'}`);
+    }
 
     // Parse the refined structured prompt
     const refinedStructuredPrompt: FiboStructuredPrompt = JSON.parse(

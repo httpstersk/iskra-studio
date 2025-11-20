@@ -23,7 +23,7 @@ export interface HttpErrPayload {
 }
 
 export class HttpErr extends st.Err<HttpErrPayload> {
-  [httpErrSymbol]: null;
+  [httpErrSymbol]: null = null;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface BriaApiErrPayload {
 }
 
 export class BriaApiErr extends st.Err<BriaApiErrPayload> {
-  [briaApiErrSymbol]: null;
+  [briaApiErrSymbol]: null = null;
 }
 
 /**
@@ -52,7 +52,7 @@ export interface BriaTokenErrPayload {
 }
 
 export class BriaTokenErr extends st.Err<BriaTokenErrPayload> {
-  [briaTokenErrSymbol]: null;
+  [briaTokenErrSymbol]: null = null;
 }
 
 /**
@@ -67,7 +67,7 @@ export interface StorageErrPayload {
 }
 
 export class StorageErr extends st.Err<StorageErrPayload> {
-  [storageErrSymbol]: null;
+  [storageErrSymbol]: null = null;
 }
 
 /**
@@ -82,7 +82,7 @@ export interface QuotaErrPayload {
 }
 
 export class QuotaErr extends st.Err<QuotaErrPayload> {
-  [quotaErrSymbol]: null;
+  [quotaErrSymbol]: null = null;
 }
 
 /**
@@ -96,7 +96,7 @@ export interface ValidationErrPayload {
 }
 
 export class ValidationErr extends st.Err<ValidationErrPayload> {
-  [validationErrSymbol]: null;
+  [validationErrSymbol]: null = null;
 }
 
 /**
@@ -110,7 +110,7 @@ export interface FiboAnalysisErrPayload {
 }
 
 export class FiboAnalysisErr extends st.Err<FiboAnalysisErrPayload> {
-  [fiboAnalysisErrSymbol]: null;
+  [fiboAnalysisErrSymbol]: null = null;
 }
 
 // ============================================================================

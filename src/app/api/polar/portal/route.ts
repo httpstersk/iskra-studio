@@ -25,7 +25,7 @@ const portalRateLimiter = {
   perDay: createRateLimiter(50, "1 d"), // 50 requests per day
 };
 
-export async function POST(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   // Verify authentication
   const { userId } = await auth();
 

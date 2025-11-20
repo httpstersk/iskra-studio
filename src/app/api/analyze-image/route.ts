@@ -28,6 +28,12 @@ export const POST = createAuthenticatedHandler({
   handler: async (input) => {
     const result = await analyzeImageCore(input.imageUrl);
 
+    // Check if result is an error (FiboAnalysisErr or ValidationErr)
+    if ("payload" in result) {
+      // This is an error type, throw it so the handler can catch it
+      throw new Error(result.payload.message || "Image analysis failed");
+    }
+
     return {
       analysis: result.analysis,
     };

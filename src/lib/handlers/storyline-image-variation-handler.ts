@@ -154,9 +154,9 @@ export const handleStorylineImageVariations = async (
   const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
   const imageUrl = await ensureImageInConvex(sourceImageUrl);
 
-  if (imageUrl instanceof Error) {
-    handlerLogger.error("Image upload failed", imageUrl);
-    handleError(imageUrl, {
+  if (imageUrl && typeof imageUrl === 'object' && 'message' in imageUrl) {
+    handlerLogger.error("Image upload failed", imageUrl as Error);
+    handleError(imageUrl as Error, {
       operation: "Storyline variation upload",
       context: { variationCount, selectedImageId: selectedImage?.id },
     });
@@ -164,7 +164,7 @@ export const handleStorylineImageVariations = async (
     removeGenerationStatus(setActiveGenerations, uploadId);
 
     await handleVariationError({
-      error: imageUrl,
+      error: imageUrl as Error,
       selectedImage,
       setActiveGenerations,
       setImages,
@@ -176,17 +176,17 @@ export const handleStorylineImageVariations = async (
 
   removeGenerationStatus(setActiveGenerations, uploadId);
 
-  const signedImageUrl = toSignedUrl(imageUrl);
+  const signedImageUrl = toSignedUrl(imageUrl as string);
 
-  if (signedImageUrl instanceof Error) {
-    handlerLogger.error("URL conversion failed", signedImageUrl);
-    handleError(signedImageUrl, {
+  if (signedImageUrl && typeof signedImageUrl === 'object' && 'message' in signedImageUrl) {
+    handlerLogger.error("URL conversion failed", signedImageUrl as Error);
+    handleError(signedImageUrl as Error, {
       operation: "Storyline variation URL conversion",
       context: { variationCount, selectedImageId: selectedImage?.id },
     });
 
     await handleVariationError({
-      error: signedImageUrl,
+      error: signedImageUrl as Error,
       selectedImage,
       setActiveGenerations,
       setImages,

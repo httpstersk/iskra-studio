@@ -3,7 +3,7 @@
  * Uses errors-as-values pattern with @safe-std/error
  */
 
-import { HttpErr, isErr, type HttpErrPayload } from '@/lib/errors/safe-errors';
+import { HttpErr, isErr } from '@/lib/errors/safe-errors';
 
 export interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';

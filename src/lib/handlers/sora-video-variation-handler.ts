@@ -20,7 +20,6 @@ import type {
 } from "@/types/canvas";
 import {
   createVideoPlaceholder,
-  handleVariationError,
   performEarlyPreparation,
   VARIATION_STATUS,
 } from "./variation-shared-utils";

@@ -9,7 +9,7 @@
 
 import { CanvasHeader } from "@/components/layout/canvas-header";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function SubscriptionSuccessPage() {

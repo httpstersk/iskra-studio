@@ -212,6 +212,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     viewport,
   } = deps;
 
+  const handlerLogger = logger.child({ handler: "variation" });
+
   // Route to appropriate handler based on variation mode:
   // - Video mode: Uses Sora 2 with AI analysis (image analysis + storyline generation)
   // - Image mode with director: Uses Seedream/Nano Banana with FIBO analysis + director style refinement
@@ -262,8 +264,6 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
   // IMAGE MODE with lighting: Generate lighting variations using FIBO analysis
   if (variationMode === "image" && imageVariationType === "lighting") {
-    const handlerLogger = logger.child({ handler: "lighting-variation" });
-
     // Validate selection early
     const selectedImage = validateSingleImageSelection(images, selectedIds);
     if (!selectedImage) {
@@ -588,26 +588,26 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
   // Stage 4: Set up active generations for Seedream/Nano Banana
   // Convert refined FIBO structured JSON to text prompts for Seedream/Nano Banana
   setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
+    const newMap = new Map(prev);
 
-      refinedPrompts.forEach((item, index) => {
-        const placeholderId = `variation-${timestamp}-${index}`;
+    refinedPrompts.forEach((item, index) => {
+      const placeholderId = `variation-${timestamp}-${index}`;
 
-        // Convert refined FIBO JSON (with camera angle baked in) to text prompt
-        const finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
+      // Convert refined FIBO JSON (with camera angle baked in) to text prompt
+      const finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
 
-        newMap.set(placeholderId, {
-          imageSize: imageSizeDimensions,
-          imageUrl: signedImageUrl,
-          isVariation: true,
-          model: imageModel, // Use selected model (seedream or nano-banana)
-          prompt: finalPrompt, // Text prompt from refined FIBO JSON
-          status: VARIATION_STATUS.GENERATING,
-        });
+      newMap.set(placeholderId, {
+        imageSize: imageSizeDimensions,
+        imageUrl: signedImageUrl,
+        isVariation: true,
+        model: imageModel, // Use selected model (seedream or nano-banana)
+        prompt: finalPrompt, // Text prompt from refined FIBO JSON
+        status: VARIATION_STATUS.GENERATING,
       });
-
-      return newMap;
     });
 
-    setIsGenerating(false);
+    return newMap;
+  });
+
+  setIsGenerating(false);
 };

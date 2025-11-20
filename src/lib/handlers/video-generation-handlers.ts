@@ -46,6 +46,11 @@ export async function uploadMediaIfNeeded(
       metadata: {},
     });
 
+    // Check if result is an error (has payload property)
+    if ('payload' in result) {
+      throw new Error(`Upload failed: ${result.payload.message || 'Unknown error'}`);
+    }
+
     return result.url;
   }
   return url;

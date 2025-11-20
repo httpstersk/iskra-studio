@@ -10,10 +10,7 @@
 
 import { FIBO_ANALYSIS, getFiboSeed } from "@/constants/fibo";
 import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
-import {
-  BriaApiError,
-  generateStructuredPrompt,
-} from "@/lib/services/bria-client";
+import { generateStructuredPrompt } from "@/lib/services/bria-client";
 import {
   FiboAnalysisErr,
   ValidationErr,
@@ -35,17 +32,6 @@ export interface FiboAnalysisOptions {
 }
 
 /**
- * @deprecated Use FiboAnalysisErr from @/lib/errors/safe-errors instead
- * Kept for backward compatibility during migration
- */
-export class FiboAnalysisError extends Error {
-  constructor(
-    message: string,
-    public readonly cause?: unknown,
-    public readonly statusCode?: number
-  ) {
-    super(message);
-    this.name = "FiboAnalysisError";
   }
 }
 

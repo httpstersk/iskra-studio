@@ -11,7 +11,6 @@ import { adaptFiboToAnalysis } from "@/lib/adapters/fibo-to-analysis-adapter";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import {
   analyzeFiboImageWithRetry,
-  FiboAnalysisError,
 } from "@/lib/services/fibo-image-analyzer";
 import {
   FiboAnalysisErr,
@@ -19,7 +18,6 @@ import {
   isErr,
   isFiboAnalysisErr,
   isValidationErr,
-  err,
 } from "@/lib/errors/safe-errors";
 
 export interface ImageAnalysisResult {

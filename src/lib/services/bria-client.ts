@@ -8,15 +8,12 @@
  * @see https://docs.bria.ai/image-generation/v2-endpoints
  */
 
-import { httpClient, HttpError } from "@/lib/api/http-client";
+import { httpClient } from "@/lib/api/http-client";
 import {
   BriaApiErr,
   BriaTokenErr,
-  HttpErr,
   isErr,
   isHttpErr,
-  type BriaApiErrPayload,
-  type BriaTokenErrPayload,
 } from "@/lib/errors/safe-errors";
 
 /**
@@ -101,14 +98,14 @@ interface BriaStatusResponse<T> {
   request_id: string;
   result?: T;
   status:
-    | "PENDING"
-    | "IN_PROGRESS"
-    | "COMPLETED"
-    | "FAILED"
-    | "pending"
-    | "processing"
-    | "completed"
-    | "failed";
+  | "PENDING"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "FAILED"
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed";
   warning?: string;
 }
 
@@ -251,7 +248,7 @@ async function briaRequest<T>(
 
     // Handle other error types
     return new BriaApiErr({
-      message: `Bria API request failed: ${result.payload}`,
+      message: `Bria API request failed: ${String(result)}`,
       cause: result,
     });
   }

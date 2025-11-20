@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { SignInButton } from "./sign-in-button";
-import { Sparkles, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 
 /**
  * Props for the SignInPromptDialog component.

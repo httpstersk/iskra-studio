@@ -115,12 +115,12 @@ function validateFile(file: File | Blob): void {
  * Uploads file to Convex HTTP endpoint.
  *
  * @param options - Upload options
- * @returns Upload response with storage IDs and URLs
+ * @returns Upload response with storage IDs and URLs, or HttpErr on failure
  * @throws Error if upload fails or times out
  */
 async function uploadToConvexEndpoint(
   options: UploadFileOptions,
-): Promise<ConvexUploadResponse> {
+): Promise<ConvexUploadResponse | import("@/lib/errors/safe-errors").HttpErr> {
   const { file, thumbnail, authToken } = options;
 
   // Create multipart form data for Convex HTTP endpoint
@@ -231,8 +231,14 @@ export async function uploadFileToConvex(
   validateFile(file);
 
   // Upload to Convex HTTP endpoint
-  const { storageId, thumbnailStorageId, url, thumbnailUrl } =
-    await uploadToConvexEndpoint(options);
+  const uploadResult = await uploadToConvexEndpoint(options);
+
+  // Check if result is an error (has payload property)
+  if ('payload' in uploadResult) {
+    throw new Error(`Upload to Convex failed: ${uploadResult.payload.message || 'Unknown error'}`);
+  }
+
+  const { storageId, thumbnailStorageId, url, thumbnailUrl } = uploadResult;
 
   // Create asset record in database
   const assetId = await createAssetRecord(

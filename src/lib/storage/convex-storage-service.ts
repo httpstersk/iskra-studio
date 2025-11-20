@@ -62,10 +62,10 @@ export class ConvexStorageService implements StorageService {
    * @param userId - User ID for authorization
    * @returns Error if deletion fails or user is not authorized
    */
-  async delete(_storageId: string, _userId: string): Promise<void | StorageErr> {
+  async delete(_storageId: string, _userId: string): Promise<void> {
     // TODO: Implement using Convex mutation when client is available
     // This will be called via the API client from the frontend
-    return new StorageErr({
+    throw new StorageErr({
       message: "Delete operation not yet implemented",
       operation: "delete",
     });
@@ -82,7 +82,7 @@ export class ConvexStorageService implements StorageService {
    * @param options - Download options (timeout, retries)
    * @returns Blob containing the downloaded file or error
    */
-  async download(url: string, options?: DownloadOptions): Promise<Blob | StorageErr> {
+  async download(url: string, options?: DownloadOptions): Promise<Blob> {
     const timeout = options?.timeout ?? 30000;
     const maxRetries = options?.maxRetries ?? this.maxRetries;
 
@@ -93,7 +93,7 @@ export class ConvexStorageService implements StorageService {
     });
 
     if (isErr(response)) {
-      return new StorageErr({
+      throw new StorageErr({
         message: `Failed to download file after ${maxRetries + 1} attempts: ${getErrorMessage(response)}`,
         operation: "download",
         cause: response,
@@ -133,7 +133,7 @@ export class ConvexStorageService implements StorageService {
    * @param options - Upload options (userId, type, metadata)
    * @returns Upload result with storageId, URL, assetId, and optional thumbnailStorageId or error
    */
-  async upload(file: Blob, options: UploadOptions): Promise<AssetUploadResult | StorageErr> {
+  async upload(file: Blob, options: UploadOptions): Promise<AssetUploadResult> {
     // SECURITY: userId should NOT be sent from client - it's derived from auth on backend
     // Remove userId from the formData - backend will get it from authenticated session
 
@@ -155,7 +155,7 @@ export class ConvexStorageService implements StorageService {
     });
 
     if (isErr(result)) {
-      return new StorageErr({
+      throw new StorageErr({
         message: `Failed to upload file after ${this.maxRetries + 1} attempts: ${getErrorMessage(result)}`,
         operation: "upload",
         cause: result,

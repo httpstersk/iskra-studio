@@ -10,7 +10,6 @@ import { SignInButton } from "@/components/auth/sign-in-button";
 import { UserMenu } from "@/components/auth/user-menu";
 import { QuotaIndicator } from "@/components/subscription/quota-indicator";
 import { useAuth } from "@/hooks/useAuth";
-import { Sparkles } from "lucide-react";
 
 /**
  * Props for the CanvasHeader component.

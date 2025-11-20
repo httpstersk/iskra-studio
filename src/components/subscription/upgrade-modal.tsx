@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { SUBSCRIPTION_CONSTANTS } from "@/constants/subscription";
-import { Check, Loader2, Sparkles } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
 interface UpgradeModalProps {
   onOpenChange: (open: boolean) => void;

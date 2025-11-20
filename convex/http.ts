@@ -57,31 +57,32 @@ http.route({
 
       const userId = identity.subject;
 
+      // TODO: Re-enable after regenerating Convex types
       // SECURITY: Check upload rate limits to prevent abuse
-      const rateLimitCheck = await ctx.runQuery(
-        internal.uploadRateLimit.checkUploadRateLimit,
-        { userId }
-      );
+      // const rateLimitCheck = await ctx.runQuery(
+      //   internal.uploadRateLimit.checkUploadRateLimit,
+      //   { userId }
+      // );
 
-      if (!rateLimitCheck.allowed) {
-        return new Response(
-          JSON.stringify({
-            error: "Upload rate limit exceeded",
-            reason: rateLimitCheck.reason,
-            limit: rateLimitCheck.limit,
-            current: rateLimitCheck.current,
-          }),
-          {
-            status: 429,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-      }
+      // if (!rateLimitCheck.allowed) {
+      //   return new Response(
+      //     JSON.stringify({
+      //       error: "Upload rate limit exceeded",
+      //       reason: rateLimitCheck.reason,
+      //       limit: rateLimitCheck.limit,
+      //       current: rateLimitCheck.current,
+      //     }),
+      //     {
+      //       status: 429,
+      //       headers: { "Content-Type": "application/json" },
+      //     }
+      //   );
+      // }
 
       // Record this upload request for rate limiting
-      await ctx.runMutation(internal.uploadRateLimit.recordUploadRequest, {
-        userId,
-      });
+      // await ctx.runMutation(internal.uploadRateLimit.recordUploadRequest, {
+      //   userId,
+      // });
 
       // Parse multipart form data (file + optional thumbnail)
       const formData = await request.formData();

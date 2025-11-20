@@ -4,8 +4,6 @@
  * Helpers for quota calculations, formatting, and display logic.
  */
 
-import { QUOTA_LIMITS } from "@/constants/subscription";
-
 export type SubscriptionTier = "free" | "pro" | "paid";
 export type GenerationType = "image" | "video";
 
@@ -24,19 +22,6 @@ export function calculateDaysUntilReset(billingCycleEnd: number): number {
   }
 
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
-}
-
-/**
- * Get quota limits for a specific tier
- *
- * @param tier - Subscription tier
- * @returns Object with image and video limits
- */
-export function getQuotaLimits(tier: SubscriptionTier) {
-  if (tier === "paid" || tier === "pro") {
-    return QUOTA_LIMITS.pro;
-  }
-  return QUOTA_LIMITS.free;
 }
 
 /**
