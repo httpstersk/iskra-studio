@@ -1,7 +1,7 @@
 /**
- * Film Directors List for Visual Style Application
+ * Visual Stylists List (Directors & Cinematographers)
  *
- * Curated list of influential directors with distinct visual signatures
+ * Curated list of influential directors and cinematographers with distinct visual signatures
  * used for applying cinematic styles to generated images via FIBO refinement.
  */
 
@@ -50,31 +50,59 @@ export const DIRECTORS = [
   "Yorgos Lanthimos",
 ] as const;
 
-export type Director = (typeof DIRECTORS)[number];
+export const CINEMATOGRAPHERS = [
+  "Bill Pope",
+  "Bradford Young",
+  "Bruno Delbonnel",
+  "Christopher Doyle",
+  "Claudio Miranda",
+  "Conrad Hall",
+  "Darius Khondji",
+  "Emmanuel Lubezki",
+  "Gordon Willis",
+  "Gregg Toland",
+  "Hoyte van Hoytema",
+  "Janusz Kamiński",
+  "Jeff Cronenweth",
+  "Linus Sandgren",
+  "Matthew Libatique",
+  "Rachel Morrison",
+  "Robert Richardson",
+  "Robert Yeoman",
+  "Rodrigo Prieto",
+  "Roger Deakins",
+  "Sven Nykvist",
+  "Vittorio Storaro",
+  "Wally Pfister",
+] as const;
+
+export const VISUAL_STYLISTS = [...DIRECTORS, ...CINEMATOGRAPHERS] as const;
+
+export type VisualStylist = (typeof VISUAL_STYLISTS)[number];
 
 /**
- * Randomly selects N unique directors from the list
+ * Randomly selects N unique visual stylists (directors or cinematographers) from the list
  *
- * @param count - Number of directors to select
- * @returns Array of randomly selected director names
+ * @param count - Number of stylists to select
+ * @returns Array of randomly selected stylist names
  *
  * @example
  * ```typescript
- * const directors = selectRandomDirectors(4);
- * // ["Stanley Kubrick", "Wes Anderson", "Denis Villeneuve"]
+ * const stylists = selectRandomVisualStylists(4);
+ * // ["Stanley Kubrick", "Roger Deakins", "Denis Villeneuve"]
  * ```
  */
-export function selectRandomDirectors(count: number): string[] {
+export function selectRandomVisualStylists(count: number): string[] {
   if (count <= 0) {
     return [];
   }
 
-  if (count >= DIRECTORS.length) {
-    return [...DIRECTORS];
+  if (count >= VISUAL_STYLISTS.length) {
+    return [...VISUAL_STYLISTS];
   }
 
   // Fisher-Yates shuffle for unbiased random selection
-  const shuffled = [...DIRECTORS];
+  const shuffled = [...VISUAL_STYLISTS];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];

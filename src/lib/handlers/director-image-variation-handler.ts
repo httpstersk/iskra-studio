@@ -5,7 +5,7 @@
  * @module lib/handlers/director-image-variation-handler
  */
 
-import { selectRandomDirectors } from "@/constants/directors";
+import { selectRandomVisualStylists } from "@/constants/visual-stylists";
 import { fiboStructuredToText } from "@/lib/utils/fibo-to-text";
 import {
   config,
@@ -165,8 +165,8 @@ export const handleDirectorImageVariations = async (
       timestamp,
     });
 
-    // Stage 2: Select random directors
-    const selectedDirectors = selectRandomDirectors(variationCount);
+    // Stage 2: Select random visual stylists (directors or cinematographers)
+    const selectedDirectors = selectRandomVisualStylists(variationCount);
 
     const { refinedPrompts } = await generateDirectorVariations(
       signedImageUrl,
