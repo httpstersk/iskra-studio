@@ -38,17 +38,6 @@ export default function SubscriptionSuccessPage() {
               </p>
             </div>
 
-            {/* Processing Note */}
-            <div className="bg-muted/50 rounded-lg p-6 space-y-3">
-              <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <p className="text-sm">Processing your subscription...</p>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Your Pro features will be available in a few moments.
-              </p>
-            </div>
-
             <div className="space-y-4">
               <div className="flex gap-3 justify-center">
                 <Button onClick={() => router.push("/subscription")} size="lg">
