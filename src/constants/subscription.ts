@@ -1,84 +1,58 @@
 /**
- * Subscription and Quota Constants
+ * Subscription related constants.
  *
- * Defines the quota limits for Free and Pro subscription tiers,
- * as well as other subscription-related configuration.
+ * Contains all static text and configuration for subscription management.
  */
 
-/**
- * Subscription tier quotas
- */
-export const QUOTA_LIMITS = {
-  free: {
-    images: 24,
-    videos: 4,
+export const SUBSCRIPTION_CONSTANTS = {
+  BENEFITS: {
+    EDITING: "Advanced editing features",
+    GENERATION_QUEUE: "Priority generation queue",
+    IMAGES: "480 images per month (20x more)",
+    RESOLUTION: "Higher resolution outputs",
+    SUPPORT: "Email support",
+    VIDEOS: "96 videos per month (24x more)",
   },
-  pro: {
-    images: 480,
-    videos: 96,
+  BILLING: {
+    ANNUAL: "Annual",
+    ANNUAL_BADGE: "Save 20%",
+    ANNUAL_SUBTEXT: "Billed annually",
+    MONTHLY: "Monthly",
+    MONTHLY_SUBTEXT: "Billed monthly",
+    PER_MONTH: "/month",
+    PER_YEAR: "/year",
   },
-} as const;
-
-/**
- * Subscription tier names
- */
-export const SUBSCRIPTION_TIERS = {
-  FREE: "free",
-  PRO: "pro",
-} as const;
-
-/**
- * Billing intervals
- */
-export const BILLING_INTERVALS = {
-  MONTHLY: "month",
-  ANNUAL: "year",
-} as const;
-
-/**
- * Subscription pricing (in USD cents)
- * TODO: Update these values to match your Polar product pricing
- */
-export const PRICING = {
-  pro: {
-    monthly: 1900, // $19.00/month
-    annual: 17100, // $171.00/year (10% discount)
+  CTA: {
+    CANCEL_ANYTIME: "Cancel anytime. No hidden fees.",
+    MANAGE: "Manage Subscription",
+    PROCESSING: "Processing...",
+    UPGRADE: "Upgrade to Pro",
   },
-} as const;
-
-/**
- * Get quota limits for a specific tier
- */
-export function getQuotaLimits(tier: "free" | "pro") {
-  return QUOTA_LIMITS[tier];
-}
-
-/**
- * Calculate quota percentage used
- */
-export function calculateQuotaPercentage(used: number, limit: number): number {
-  if (limit === 0) return 100;
-  return Math.min(100, Math.round((used / limit) * 100));
-}
-
-/**
- * Check if quota is exceeded
- */
-export function isQuotaExceeded(used: number, limit: number): boolean {
-  return used >= limit;
-}
-
-/**
- * Check if quota warning threshold is reached (80%)
- */
-export function isQuotaWarning(used: number, limit: number): boolean {
-  return calculateQuotaPercentage(used, limit) >= 80;
-}
-
-/**
- * Quota notification thresholds
- */
-export const QUOTA_THRESHOLDS = {
-  WARNING: 80, // Percentage threshold for warning notification
-  CRITICAL: 100, // Percentage threshold for critical notification
+  FREE_PLAN: {
+    DESCRIPTION: (images: number, videos: number) =>
+      `Limited to ${images} images and ${videos} videos per month`,
+    QUOTA_RESET: "Quota resets:",
+    TITLE: "Free Plan",
+  },
+  LINKS: {
+    SUPPORT_EMAIL: "support@example.com",
+  },
+  PRO_PLAN: {
+    ACCESS_UNTIL: "Access until:",
+    CANCELLING: "Cancelling",
+    NEXT_BILLING: "Next billing:",
+    STATUS: "Status:",
+    TITLE: "Pro Plan",
+    WILL_NOT_RENEW: (date: string) =>
+      `Your subscription will not renew. You'll have access to Pro features until ${date}.`,
+  },
+  TITLES: {
+    CHOOSE_CYCLE: "Choose billing cycle:",
+    DESCRIPTION: "Manage your subscription and billing",
+    MAIN: "Subscription Plan",
+    MODAL_DESCRIPTION: "Unlock unlimited creative potential with our Pro plan",
+    MODAL_TITLE: "Upgrade to Pro",
+    NEED_HELP: "Need help? Contact us at ",
+    WHATS_INCLUDED: "What's included:",
+  },
 } as const;
