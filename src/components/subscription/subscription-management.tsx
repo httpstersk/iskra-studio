@@ -99,7 +99,6 @@ export function SubscriptionManagement({
               variant={isPro ? "default" : "secondary"}
               className="flex items-center gap-1"
             >
-              {isPro && <Sparkles className="h-3 w-3" />}
               {isPro ? "Pro" : "Free"}
             </Badge>
           </div>
@@ -203,7 +202,6 @@ export function SubscriptionManagement({
                 <div className="rounded-lg border border-primary/50 bg-primary/5 p-4">
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <Sparkles className="h-5 w-5 text-primary" />
                       <div>
                         <h4 className="font-medium text-foreground">
                           Upgrade to Pro
@@ -219,7 +217,6 @@ export function SubscriptionManagement({
                       variant="primary"
                       className="w-full"
                     >
-                      <Sparkles className="h-4 w-4" />
                       Upgrade to Pro
                     </Button>
                   </div>

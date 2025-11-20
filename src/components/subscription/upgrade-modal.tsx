@@ -46,7 +46,8 @@ interface UpgradeModalProps {
  */
 export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   const { upgrade, isUpgrading } = useSubscription();
-  const [selectedInterval, setSelectedInterval] = useState<BillingInterval>("month");
+  const [selectedInterval, setSelectedInterval] =
+    useState<BillingInterval>("month");
 
   const handleUpgrade = async () => {
     await upgrade(selectedInterval);
@@ -55,18 +56,18 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
   // Pricing
   const monthlyPrice = 29;
   const annualPrice = 290; // ~$24/month
-  const annualSavings = Math.round(((monthlyPrice * 12 - annualPrice) / (monthlyPrice * 12)) * 100);
+  const annualSavings = Math.round(
+    ((monthlyPrice * 12 - annualPrice) / (monthlyPrice * 12)) * 100
+  );
 
-  const pricePerMonth = selectedInterval === "month"
-    ? monthlyPrice
-    : Math.round(annualPrice / 12);
+  const pricePerMonth =
+    selectedInterval === "month" ? monthlyPrice : Math.round(annualPrice / 12);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
             <DialogTitle>Upgrade to Pro</DialogTitle>
           </div>
           <DialogDescription>
@@ -77,7 +78,9 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
         <div className="space-y-6 py-4">
           {/* Benefits */}
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-foreground">What's included:</h4>
+            <h4 className="text-sm font-medium text-foreground">
+              What's included:
+            </h4>
             <div className="grid gap-3">
               <Benefit>480 images per month (20x more)</Benefit>
               <Benefit>96 videos per month (24x more)</Benefit>
@@ -90,7 +93,9 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
 
           {/* Billing Interval Selection */}
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-foreground">Choose billing cycle:</h4>
+            <h4 className="text-sm font-medium text-foreground">
+              Choose billing cycle:
+            </h4>
             <div className="grid gap-3">
               <BillingOption
                 interval="month"
@@ -115,13 +120,17 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
             <div className="flex items-baseline justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">
-                  {selectedInterval === "year" ? "Billed annually" : "Billed monthly"}
+                  {selectedInterval === "year"
+                    ? "Billed annually"
+                    : "Billed monthly"}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-foreground">
                   ${pricePerMonth}
-                  <span className="text-sm font-normal text-muted-foreground">/month</span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    /month
+                  </span>
                 </p>
                 {selectedInterval === "year" && (
                   <p className="text-xs text-muted-foreground">
@@ -139,14 +148,9 @@ export function UpgradeModal({ open, onOpenChange }: UpgradeModalProps) {
               className="w-full"
             >
               {isUpgrading ? (
-                <>
-                  <span className="animate-pulse">Processing...</span>
-                </>
+                <span className="animate-pulse">Processing...</span>
               ) : (
-                <>
-                  <Sparkles className="h-5 w-5" />
-                  Upgrade to Pro
-                </>
+                <>Upgrade to Pro</>
               )}
             </Button>
 

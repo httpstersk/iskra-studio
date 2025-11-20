@@ -53,9 +53,7 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
       className={`fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 ${className || ""}`}
     >
       <div className="flex items-center justify-between h-14 px-4">
-        <div className="flex items-center gap-3">
-          <Sparkles className="h-4 w-4 text-foreground" />
-        </div>
+        <div className="flex items-center"></div>
 
         <div className="flex items-center gap-3">
           {!isLoading && (

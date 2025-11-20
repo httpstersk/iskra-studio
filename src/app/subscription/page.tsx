@@ -18,7 +18,6 @@ export default function SubscriptionPage() {
           {/* Page Header */}
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
-              <Sparkles className="h-8 w-8 text-primary" />
               <h1 className="text-3xl font-bold text-foreground">
                 Subscription & Usage
               </h1>

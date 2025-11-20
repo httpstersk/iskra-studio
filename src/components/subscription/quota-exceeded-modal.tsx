@@ -113,7 +113,9 @@ export function QuotaExceededModal({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">
-                    {quotaLabelPlural.charAt(0).toUpperCase() + quotaLabelPlural.slice(1)} Used
+                    {quotaLabelPlural.charAt(0).toUpperCase() +
+                      quotaLabelPlural.slice(1)}{" "}
+                    Used
                   </span>
                   <Badge variant="destructive">
                     {quotaUsed} / {quotaLimit}
@@ -126,8 +128,8 @@ export function QuotaExceededModal({
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  You've used all {quotaLimit} {quotaLabelPlural} included in your{" "}
-                  {isFree ? "Free" : "Pro"} plan this period.
+                  You've used all {quotaLimit} {quotaLabelPlural} included in
+                  your {isFree ? "Free" : "Pro"} plan this period.
                 </p>
               </div>
             </div>
@@ -140,13 +142,13 @@ export function QuotaExceededModal({
                   <div className="rounded-lg border border-primary/50 bg-primary/5 p-4">
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
-                        <Sparkles className="h-5 w-5 text-primary" />
                         <div className="flex-1">
                           <h4 className="font-medium text-foreground">
                             Upgrade to Pro
                           </h4>
                           <p className="text-sm text-muted-foreground">
-                            Get {isImageQuota ? "480 images" : "96 videos"} per month
+                            Get {isImageQuota ? "480 images" : "96 videos"} per
+                            month
                             {isImageQuota ? " (20x more)" : " (24x more)"}
                           </p>
                         </div>
@@ -156,7 +158,6 @@ export function QuotaExceededModal({
                         variant="primary"
                         className="w-full"
                       >
-                        <Sparkles className="h-4 w-4" />
                         Upgrade Now
                       </Button>
                     </div>
@@ -186,7 +187,9 @@ export function QuotaExceededModal({
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-muted-foreground" />
-                    <h4 className="font-medium text-foreground">Quota Resets</h4>
+                    <h4 className="font-medium text-foreground">
+                      Quota Resets
+                    </h4>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Your quota will reset in{" "}

@@ -101,19 +101,15 @@ export function SignInPromptDialog({
               </p>
               <ul className="space-y-1.5 ml-4">
                 <li className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
                   <span>Generate AI images and videos</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
                   <span>Save your work across devices</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
                   <span>Create and manage multiple projects</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Sparkles className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
                   <span>Track your storage usage</span>
                 </li>
               </ul>
