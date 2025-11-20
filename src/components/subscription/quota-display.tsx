@@ -48,8 +48,8 @@ export function QuotaDisplay({ className, compact = false }: QuotaDisplayProps) 
 
   if (isLoading) {
     return (
-      <Card className={cn("w-full", className)} compact={compact}>
-        <CardContent className="p-4">
+      <Card className={cn("w-full", className)}>
+        <CardContent className={cn("p-4", compact && "p-3")}>
           <div className="space-y-3">
             <div className="h-4 w-24 animate-pulse rounded bg-muted" />
             <div className="h-2 w-full animate-pulse rounded bg-muted" />
@@ -62,7 +62,7 @@ export function QuotaDisplay({ className, compact = false }: QuotaDisplayProps) 
   }
 
   return (
-    <Card className={cn("w-full", className)} compact={compact}>
+    <Card className={cn("w-full", className)}>
       <CardContent className={cn("p-4", compact && "p-3")}>
         <div className="space-y-4">
           {/* Header */}

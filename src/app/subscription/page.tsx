@@ -7,7 +7,6 @@
 import { SubscriptionManagement } from "@/components/subscription/subscription-management";
 import { QuotaDisplay } from "@/components/subscription/quota-display";
 import { CanvasHeader } from "@/components/layout/canvas-header";
-import { Sparkles } from "lucide-react";
 
 export default function SubscriptionPage() {
   return (
@@ -15,35 +14,29 @@ export default function SubscriptionPage() {
       <CanvasHeader />
       <div className="min-h-screen bg-background pt-14">
         <div className="container mx-auto max-w-4xl px-4 py-8">
-          {/* Page Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-foreground">
-                Subscription & Usage
-              </h1>
-            </div>
+          <header className="mb-8">
+            <h1 className="mb-2 text-3xl font-bold text-foreground">
+              Subscription & Usage
+            </h1>
             <p className="text-muted-foreground">
               Manage your subscription plan and track your usage
             </p>
-          </div>
+          </header>
 
-          {/* Content */}
-          <div className="space-y-6">
-            {/* Quota Display */}
-            <div>
+          <div className="space-y-8">
+            <section>
               <h2 className="mb-4 text-xl font-semibold text-foreground">
                 Current Usage
               </h2>
               <QuotaDisplay />
-            </div>
+            </section>
 
-            {/* Subscription Management */}
-            <div>
+            <section>
               <h2 className="mb-4 text-xl font-semibold text-foreground">
                 Plan Details
               </h2>
               <SubscriptionManagement />
-            </div>
+            </section>
           </div>
         </div>
       </div>

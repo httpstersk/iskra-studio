@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, ExternalLink, Calendar, CreditCard } from "lucide-react";
+import { ExternalLink, Calendar, CreditCard } from "lucide-react";
 import { UpgradeModal } from "./upgrade-modal";
 
 interface SubscriptionManagementProps {
@@ -87,27 +87,20 @@ export function SubscriptionManagement({
   return (
     <>
       <Card className={cn("w-full", className)}>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Subscription Plan</CardTitle>
-              <CardDescription>
-                Manage your subscription and billing
-              </CardDescription>
-            </div>
-            <Badge
-              variant={isPro ? "default" : "secondary"}
-              className="flex items-center gap-1"
-            >
-              {isPro ? "Pro" : "Free"}
-            </Badge>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div>
+            <CardTitle>Subscription Plan</CardTitle>
+            <CardDescription>
+              Manage your subscription and billing
+            </CardDescription>
           </div>
+          <Badge variant={isPro ? "default" : "secondary"}>
+            {isPro ? "Pro" : "Free"}
+          </Badge>
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Current Plan Info */}
-          <div className="space-y-4">
-            {isPro ? (
+          {isPro ? (
               <>
                 {/* Pro Plan Details */}
                 <div className="rounded-lg border border-border/50 bg-accent/20 p-4">
@@ -223,7 +216,6 @@ export function SubscriptionManagement({
                 </div>
               </>
             )}
-          </div>
 
           {/* Error Message */}
           {error && (

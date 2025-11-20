@@ -11,6 +11,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/sign-up",
   "/api/webhooks(.*)",
+  "/api/polar(.*)",
   "/_next(.*)",
   "/favicon.ico",
 ]);

@@ -6,11 +6,8 @@
 
 "use client";
 
-import { useState } from "react";
-import { useSubscription } from "@/hooks/use-subscription";
-import { useQuota } from "@/hooks/use-quota";
-import type { GenerationType } from "@/types/subscription";
-import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -18,9 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Calendar, Sparkles } from "lucide-react";
+import { useQuota } from "@/hooks/use-quota";
+import { useSubscription } from "@/hooks/use-subscription";
+import { cn } from "@/lib/utils";
+import type { GenerationType } from "@/types/subscription";
+import { AlertCircle, Calendar } from "lucide-react";
+import { useState } from "react";
 import { UpgradeModal } from "./upgrade-modal";
 
 interface QuotaExceededModalProps {

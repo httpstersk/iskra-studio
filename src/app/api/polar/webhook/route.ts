@@ -66,13 +66,17 @@ const subscriptionUpdatedSchema = z.object({
   }),
 });
 
-// Subscription canceled/revoked event
+// Subscription canceled event
 const subscriptionCanceledSchema = z.object({
   id: z.string(),
-  type: z.union([
-    z.literal("subscription.canceled"),
-    z.literal("subscription.revoked"),
-  ]),
+  type: z.literal("subscription.canceled"),
+  data: subscriptionDataSchema,
+});
+
+// Subscription revoked event
+const subscriptionRevokedSchema = z.object({
+  id: z.string(),
+  type: z.literal("subscription.revoked"),
   data: subscriptionDataSchema,
 });
 
@@ -100,6 +104,7 @@ const polarWebhookEventSchema = z.discriminatedUnion("type", [
   subscriptionCreatedSchema,
   subscriptionUpdatedSchema,
   subscriptionCanceledSchema,
+  subscriptionRevokedSchema,
   subscriptionActiveSchema,
   orderCreatedSchema,
 ]);
