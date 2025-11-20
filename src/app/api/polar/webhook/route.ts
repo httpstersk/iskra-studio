@@ -34,9 +34,9 @@ const webhookRateLimiter = {
 // Base subscription data schema
 const subscriptionDataSchema = z.object({
   id: z.string(),
-  customer_id: z.string().optional(),
-  current_period_start: z.string().datetime().optional(),
-  current_period_end: z.string().datetime().optional(),
+  customerId: z.string().optional(),
+  currentPeriodStart: z.string().datetime().optional(),
+  currentPeriodEnd: z.string().datetime().optional(),
   metadata: z.object({
     clerkUserId: z.string().optional(),
   }).optional(),
@@ -44,12 +44,11 @@ const subscriptionDataSchema = z.object({
 
 // Subscription created event
 const subscriptionCreatedSchema = z.object({
-  id: z.string(),
   type: z.literal("subscription.created"),
   data: subscriptionDataSchema.extend({
-    customer_id: z.string(),
-    current_period_start: z.string().datetime(),
-    current_period_end: z.string().datetime(),
+    customerId: z.string(),
+    currentPeriodStart: z.string().datetime(),
+    currentPeriodEnd: z.string().datetime(),
     metadata: z.object({
       clerkUserId: z.string(),
     }),
@@ -58,38 +57,33 @@ const subscriptionCreatedSchema = z.object({
 
 // Subscription updated event
 const subscriptionUpdatedSchema = z.object({
-  id: z.string(),
   type: z.literal("subscription.updated"),
   data: subscriptionDataSchema.extend({
-    current_period_start: z.string().datetime(),
-    current_period_end: z.string().datetime(),
+    currentPeriodStart: z.string().datetime(),
+    currentPeriodEnd: z.string().datetime(),
   }),
 });
 
 // Subscription canceled event
 const subscriptionCanceledSchema = z.object({
-  id: z.string(),
   type: z.literal("subscription.canceled"),
   data: subscriptionDataSchema,
 });
 
 // Subscription revoked event
 const subscriptionRevokedSchema = z.object({
-  id: z.string(),
   type: z.literal("subscription.revoked"),
   data: subscriptionDataSchema,
 });
 
 // Subscription active event
 const subscriptionActiveSchema = z.object({
-  id: z.string(),
   type: z.literal("subscription.active"),
   data: subscriptionDataSchema,
 });
 
 // Order created event
 const orderCreatedSchema = z.object({
-  id: z.string(),
   type: z.literal("order.created"),
   data: z.object({
     id: z.string(),
@@ -154,16 +148,7 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("Received Polar webhook event:", event.type);
-
-    // Check for replay attacks - verify event hasn't been processed before
-    const alreadyProcessed = await convex.query(internal.webhooks.isEventProcessed, {
-      eventId: event.id,
-    });
-
-    if (alreadyProcessed) {
-      console.log(`Event ${event.id} already processed, skipping (replay protection)`);
-      return NextResponse.json({ received: true }, { status: 200 });
-    }
+    console.log("Full event structure:", JSON.stringify(event, null, 2));
 
     // Validate event structure using Zod schemas
     const validationResult = polarWebhookEventSchema.safeParse(event);
@@ -176,6 +161,23 @@ export async function POST(req: NextRequest) {
     }
 
     const validatedEvent = validationResult.data;
+
+    // Check for replay attacks - verify event hasn't been processed before
+    // Note: We use the subscription ID (or order ID) as the event ID because
+    // the Polar webhook event itself doesn't seem to have a unique ID in the root.
+    // This means we are deduping by "subscription ID + event type" which might be too aggressive
+    // if multiple updates happen to the same subscription.
+    // Ideally we should use a unique webhook delivery ID from headers if available.
+    const eventId = validatedEvent.data.id;
+
+    const alreadyProcessed = await convex.query(api.webhooks.isEventProcessed, {
+      eventId,
+    });
+
+    if (alreadyProcessed) {
+      console.log(`Event ${eventId} already processed, skipping (replay protection)`);
+      return NextResponse.json({ received: true }, { status: 200 });
+    }
 
     // Handle different event types
     switch (validatedEvent.type) {
@@ -208,8 +210,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Mark event as processed to prevent replay attacks
-    await convex.mutation(internal.webhooks.markEventProcessed, {
-      eventId: validatedEvent.id,
+    await convex.mutation(api.webhooks.markEventProcessed, {
+      eventId,
       eventType: validatedEvent.type,
       source: "polar",
     });
@@ -229,14 +231,14 @@ export async function POST(req: NextRequest) {
 type PolarWebhookEvent = z.infer<typeof polarWebhookEventSchema>;
 
 // Legacy interface for backward compatibility with existing handler functions
+// Legacy interface for backward compatibility with existing handler functions
 interface PolarEvent {
-  id: string;
   type: string;
   data: {
     id: string;
-    customer_id?: string;
-    current_period_start?: string;
-    current_period_end?: string;
+    customerId?: string;
+    currentPeriodStart?: string;
+    currentPeriodEnd?: string;
     metadata?: {
       clerkUserId?: string;
     };
@@ -257,17 +259,17 @@ async function handleSubscriptionCreated(event: PolarEvent) {
     return;
   }
 
-  if (!subscription.current_period_start || !subscription.current_period_end || !subscription.customer_id) {
+  if (!subscription.currentPeriodStart || !subscription.currentPeriodEnd || !subscription.customerId) {
     console.error("Missing billing period dates or customer ID");
     return;
   }
 
-  const currentPeriodStart = new Date(subscription.current_period_start).getTime();
-  const currentPeriodEnd = new Date(subscription.current_period_end).getTime();
+  const currentPeriodStart = new Date(subscription.currentPeriodStart).getTime();
+  const currentPeriodEnd = new Date(subscription.currentPeriodEnd).getTime();
 
   await convex.action(api.subscriptions.handleUpgrade, {
     userId,
-    polarCustomerId: subscription.customer_id,
+    polarCustomerId: subscription.customerId,
     polarSubscriptionId: subscription.id,
     billingCycleStart: currentPeriodStart,
     billingCycleEnd: currentPeriodEnd,
@@ -282,13 +284,13 @@ async function handleSubscriptionCreated(event: PolarEvent) {
 async function handleSubscriptionUpdated(event: PolarEvent) {
   const subscription = event.data;
 
-  if (!subscription.current_period_start || !subscription.current_period_end) {
+  if (!subscription.currentPeriodStart || !subscription.currentPeriodEnd) {
     console.error("Missing billing period dates");
     return;
   }
 
-  const currentPeriodStart = new Date(subscription.current_period_start).getTime();
-  const currentPeriodEnd = new Date(subscription.current_period_end).getTime();
+  const currentPeriodStart = new Date(subscription.currentPeriodStart).getTime();
+  const currentPeriodEnd = new Date(subscription.currentPeriodEnd).getTime();
 
   await convex.action(api.subscriptions.updateBillingCycle, {
     polarSubscriptionId: subscription.id,

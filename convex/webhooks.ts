@@ -5,7 +5,7 @@
  * Tracks processed events and automatically cleans up old records.
  */
 
-import { internalMutation, internalQuery } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
@@ -19,7 +19,7 @@ import { v } from "convex/values";
  * already processed this event before. Should be called before processing
  * any webhook event.
  */
-export const isEventProcessed = internalQuery({
+export const isEventProcessed = query({
   args: {
     eventId: v.string(),
   },
@@ -44,7 +44,7 @@ export const isEventProcessed = internalQuery({
  * Should be called after successfully processing a webhook event to prevent
  * duplicate processing. Events are automatically cleaned up after 30 days.
  */
-export const markEventProcessed = internalMutation({
+export const markEventProcessed = mutation({
   args: {
     eventId: v.string(),
     eventType: v.string(),
