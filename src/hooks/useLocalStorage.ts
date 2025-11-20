@@ -4,7 +4,8 @@
  * Automatically subscribes to storage events for multi-tab support
  */
 
-import { useSyncExternalStore, useCallback, useMemo } from "react";
+import { isErr, trySync } from "@/lib/errors/safe-errors";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 
 // Module-level cache for localStorage values
 // Prevents infinite loops by maintaining stable snapshot references
@@ -18,34 +19,43 @@ function parseStoredValue<T>(key: string, defaultValue: T): T {
     return defaultValue;
   }
 
-  try {
-    const item = window.localStorage.getItem(key);
-    if (item === null) {
-      return defaultValue;
-    }
-
-    // Handle boolean strings
-    if (typeof defaultValue === "boolean") {
-      return (item === "true") as T;
-    }
-
-    // Handle numbers
-    if (typeof defaultValue === "number") {
-      const parsed = parseFloat(item);
-      return (isNaN(parsed) ? defaultValue : parsed) as T;
-    }
-
-    // Handle JSON objects/arrays
-    if (typeof defaultValue === "object") {
-      return JSON.parse(item) as T;
-    }
-
-    // Handle strings
-    return item as T;
-  } catch (error) {
-    console.warn(`Error reading localStorage key "${key}":`, error);
+  const itemResult = trySync(() => window.localStorage.getItem(key));
+  if (isErr(itemResult)) {
+    console.warn(
+      `Error reading localStorage key "${key}":`,
+      itemResult.payload
+    );
     return defaultValue;
   }
+  const item = itemResult;
+
+  if (item === null) {
+    return defaultValue;
+  }
+
+  // Handle boolean strings
+  if (typeof defaultValue === "boolean") {
+    return (item === "true") as T;
+  }
+
+  // Handle numbers
+  if (typeof defaultValue === "number") {
+    const parsed = parseFloat(item);
+    return (isNaN(parsed) ? defaultValue : parsed) as T;
+  }
+
+  // Handle JSON objects/arrays
+  if (typeof defaultValue === "object") {
+    const jsonResult = trySync(() => JSON.parse(item));
+    if (isErr(jsonResult)) {
+      console.warn(`Error parsing JSON for key "${key}":`, jsonResult.payload);
+      return defaultValue;
+    }
+    return jsonResult as T;
+  }
+
+  // Handle strings
+  return item as T;
 }
 
 /**
@@ -105,7 +115,7 @@ function getCachedValue<T>(key: string, defaultValue: T): T {
  */
 export function useLocalStorage<T>(
   key: string,
-  defaultValue: T,
+  defaultValue: T
 ): [T, (value: T | ((prev: T) => T)) => void] {
   // Initialize cache for this key if not exists
   // This happens once per key to establish the cached value
@@ -151,13 +161,13 @@ export function useLocalStorage<T>(
   const value = useSyncExternalStore(
     storeConfig.subscribe,
     storeConfig.getSnapshot,
-    storeConfig.getServerSnapshot,
+    storeConfig.getServerSnapshot
   );
 
   // Setter function with support for functional updates
   const setValue = useCallback(
     (newValue: T | ((prev: T) => T)) => {
-      try {
+      const result = trySync(() => {
         // Handle functional updates
         const currentValue = getCachedValue(key, defaultValue);
         const valueToStore =
@@ -176,13 +186,18 @@ export function useLocalStorage<T>(
             key,
             newValue: serializeValue(valueToStore),
             storageArea: window.localStorage,
-          }),
+          })
         );
-      } catch (error) {
-        console.warn(`Error setting localStorage key "${key}":`, error);
+      });
+
+      if (isErr(result)) {
+        console.warn(
+          `Error setting localStorage key "${key}":`,
+          result.payload
+        );
       }
     },
-    [key, defaultValue],
+    [key, defaultValue]
   );
 
   return [value, setValue];

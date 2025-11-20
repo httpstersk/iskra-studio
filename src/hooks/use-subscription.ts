@@ -7,14 +7,15 @@
 
 "use client";
 
-import { useQuery } from "convex/react";
-import { useCallback, useMemo, useState } from "react";
-import { api } from "../../convex/_generated/api";
+import { getErrorMessage, isErr, tryPromise } from "@/lib/errors/safe-errors";
 import type {
   BillingInterval,
   SubscriptionInfo,
   SubscriptionTier,
 } from "@/types/subscription";
+import { useQuery } from "convex/react";
+import { useCallback, useMemo, useState } from "react";
+import { api } from "../../convex/_generated/api";
 import { useAuth } from "./useAuth";
 
 /**
@@ -132,36 +133,53 @@ export function useSubscription(): UseSubscriptionReturn {
    */
   const upgrade = useCallback(
     async (billingInterval: BillingInterval): Promise<void> => {
-      try {
-        setIsUpgrading(true);
-        setError(null);
+      setIsUpgrading(true);
+      setError(null);
 
-        // Call API route to create Polar checkout session
-        const response = await fetch("/api/polar/checkout", {
+      // Call API route to create Polar checkout session
+      const responseResult = await tryPromise(
+        fetch("/api/polar/checkout", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ billingInterval }),
-        });
+        })
+      );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to create checkout session");
-        }
-
-        const { checkoutUrl } = await response.json();
-
-        // Redirect to Polar checkout
-        window.location.href = checkoutUrl;
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to upgrade subscription";
+      if (isErr(responseResult)) {
+        const errorMessage = getErrorMessage(responseResult);
         setError(errorMessage);
-        console.error("Upgrade error:", err);
-      } finally {
+        console.error("Upgrade error:", responseResult.payload);
         setIsUpgrading(false);
+        return;
       }
+      const response = responseResult;
+
+      if (!response.ok) {
+        const errorDataResult = await tryPromise(response.json());
+        const errorData = isErr(errorDataResult)
+          ? { error: "Failed to create checkout session" }
+          : errorDataResult;
+        const errorMessage =
+          errorData.error || "Failed to create checkout session";
+        setError(errorMessage);
+        setIsUpgrading(false);
+        return;
+      }
+
+      const checkoutDataResult = await tryPromise(response.json());
+      if (isErr(checkoutDataResult)) {
+        setError("Failed to parse checkout response");
+        console.error("Checkout parse error:", checkoutDataResult.payload);
+        setIsUpgrading(false);
+        return;
+      }
+      const { checkoutUrl } = checkoutDataResult;
+
+      // Redirect to Polar checkout
+      window.location.href = checkoutUrl;
+      setIsUpgrading(false);
     },
     []
   );
@@ -170,32 +188,46 @@ export function useSubscription(): UseSubscriptionReturn {
    * Opens Polar customer portal for subscription management.
    */
   const openCustomerPortal = useCallback(async (): Promise<void> => {
-    try {
-      setError(null);
+    setError(null);
 
-      // Call API route to create customer portal session
-      const response = await fetch("/api/polar/portal", {
+    // Call API route to create customer portal session
+    const responseResult = await tryPromise(
+      fetch("/api/polar/portal", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-      });
+      })
+    );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to open customer portal");
-      }
-
-      const { portalUrl } = await response.json();
-
-      // Redirect to Polar customer portal
-      window.location.href = portalUrl;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to open customer portal";
+    if (isErr(responseResult)) {
+      const errorMessage = getErrorMessage(responseResult);
       setError(errorMessage);
-      console.error("Customer portal error:", err);
+      console.error("Customer portal error:", responseResult.payload);
+      return;
     }
+    const response = responseResult;
+
+    if (!response.ok) {
+      const errorDataResult = await tryPromise(response.json());
+      const errorData = isErr(errorDataResult)
+        ? { error: "Failed to open customer portal" }
+        : errorDataResult;
+      const errorMessage = errorData.error || "Failed to open customer portal";
+      setError(errorMessage);
+      return;
+    }
+
+    const portalDataResult = await tryPromise(response.json());
+    if (isErr(portalDataResult)) {
+      setError("Failed to parse portal response");
+      console.error("Portal parse error:", portalDataResult.payload);
+      return;
+    }
+    const { portalUrl } = portalDataResult;
+
+    // Redirect to Polar customer portal
+    window.location.href = portalUrl;
   }, []);
 
   return {

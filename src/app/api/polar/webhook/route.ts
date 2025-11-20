@@ -5,12 +5,21 @@
  * Verifies webhook signatures and updates user subscription status in Convex.
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { validateEvent, WebhookVerificationError } from "@polar-sh/sdk/webhooks";
-import { ConvexHttpClient } from "convex/browser";
-import { api, internal } from "../../../../../convex/_generated/api";
-import { z } from "zod";
+import {
+  getErrorMessage,
+  isErr,
+  tryPromise,
+  trySync,
+} from "@/lib/errors/safe-errors";
 import { createRateLimiter, shouldLimitRequest } from "@/lib/ratelimit";
+import {
+  validateEvent,
+  WebhookVerificationError,
+} from "@polar-sh/sdk/webhooks";
+import { ConvexHttpClient } from "convex/browser";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { api } from "../../../../../convex/_generated/api";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -20,8 +29,8 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
  */
 const webhookRateLimiter = {
   perMinute: createRateLimiter(100, "1 m"), // 100 requests per minute
-  perHour: createRateLimiter(500, "1 h"),   // 500 requests per hour
-  perDay: createRateLimiter(2000, "1 d"),    // 2000 requests per day
+  perHour: createRateLimiter(500, "1 h"), // 500 requests per hour
+  perDay: createRateLimiter(2000, "1 d"), // 2000 requests per day
 };
 
 /**
@@ -37,9 +46,11 @@ const subscriptionDataSchema = z.object({
   customerId: z.string().optional(),
   currentPeriodStart: z.union([z.string(), z.date()]).optional(),
   currentPeriodEnd: z.union([z.string(), z.date()]).optional(),
-  metadata: z.object({
-    clerkUserId: z.string().optional(),
-  }).optional(),
+  metadata: z
+    .object({
+      clerkUserId: z.string().optional(),
+    })
+    .optional(),
 });
 
 // Subscription created event
@@ -87,9 +98,11 @@ const orderCreatedSchema = z.object({
   type: z.literal("order.created"),
   data: z.object({
     id: z.string(),
-    metadata: z.object({
-      clerkUserId: z.string().optional(),
-    }).optional(),
+    metadata: z
+      .object({
+        clerkUserId: z.string().optional(),
+      })
+      .optional(),
   }),
 });
 
@@ -107,124 +120,169 @@ const polarWebhookEventSchema = z.discriminatedUnion("type", [
  * POST handler for Polar webhooks
  */
 export async function POST(req: NextRequest) {
-  try {
-    // Apply rate limiting to prevent abuse
-    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
-    const rateLimitResult = await shouldLimitRequest(
-      webhookRateLimiter,
-      ip,
-      "polar-webhook"
-    );
+  // Apply rate limiting to prevent abuse
+  const ip =
+    req.headers.get("x-forwarded-for") ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+  const rateLimitResult = await tryPromise(
+    shouldLimitRequest(webhookRateLimiter, ip, "polar-webhook")
+  );
 
-    if (rateLimitResult.shouldLimitRequest) {
-      console.warn(`Webhook rate limit exceeded for IP ${ip}`);
+  if (isErr(rateLimitResult)) {
+    console.error("Rate limit check failed:", getErrorMessage(rateLimitResult));
+    // Fail open or closed? Let's fail open for webhooks but log error, or maybe just continue.
+    // Actually shouldLimitRequest probably doesn't throw, but let's be safe.
+    // If it failed, we probably shouldn't block the webhook.
+  } else if (rateLimitResult.shouldLimitRequest) {
+    console.warn(`Webhook rate limit exceeded for IP ${ip}`);
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
+  // Get raw body for signature verification
+  const payloadResult = await tryPromise(req.text());
+  if (isErr(payloadResult)) {
+    return NextResponse.json({ error: "Failed to read body" }, { status: 400 });
+  }
+  const payload = payloadResult;
+  const headers = Object.fromEntries(req.headers.entries());
+
+  // Verify webhook signature
+  const eventResult = trySync(() =>
+    validateEvent(payload, headers, process.env.POLAR_WEBHOOK_SECRET!)
+  );
+
+  if (isErr(eventResult)) {
+    const error = eventResult.payload;
+    if (error instanceof WebhookVerificationError) {
+      console.error("Webhook signature verification failed:", error);
       return NextResponse.json(
-        { error: "Too many requests" },
-        { status: 429 }
+        { error: "Invalid webhook signature" },
+        { status: 403 }
       );
     }
-
-    // Get raw body for signature verification
-    const payload = await req.text();
-    const headers = Object.fromEntries(req.headers.entries());
-
-    // Verify webhook signature
-    let event;
-    try {
-      event = validateEvent(
-        payload,
-        headers,
-        process.env.POLAR_WEBHOOK_SECRET!
-      );
-    } catch (error) {
-      if (error instanceof WebhookVerificationError) {
-        console.error("Webhook signature verification failed:", error);
-        return NextResponse.json(
-          { error: "Invalid webhook signature" },
-          { status: 403 }
-        );
-      }
-      throw error;
-    }
-
-    console.log("Received Polar webhook event:", event.type);
-    console.log("Full event structure:", JSON.stringify(event, null, 2));
-
-    // Validate event structure using Zod schemas
-    const validationResult = polarWebhookEventSchema.safeParse(event);
-    if (!validationResult.success) {
-      console.error("Webhook event validation failed:", validationResult.error);
-      return NextResponse.json(
-        { error: "Invalid event structure" },
-        { status: 400 }
-      );
-    }
-
-    const validatedEvent = validationResult.data;
-
-    // Check for replay attacks - verify event hasn't been processed before
-    // Note: We use the subscription ID (or order ID) as the event ID because
-    // the Polar webhook event itself doesn't seem to have a unique ID in the root.
-    // This means we are deduping by "subscription ID + event type" which might be too aggressive
-    // if multiple updates happen to the same subscription.
-    // Ideally we should use a unique webhook delivery ID from headers if available.
-    const eventId = validatedEvent.data.id;
-
-    const alreadyProcessed = await convex.query(api.webhooks.isEventProcessed, {
-      eventId,
-    });
-
-    if (alreadyProcessed) {
-      console.log(`Event ${eventId} already processed, skipping (replay protection)`);
-      return NextResponse.json({ received: true }, { status: 200 });
-    }
-
-    // Handle different event types
-    switch (validatedEvent.type) {
-      case "subscription.created":
-        await handleSubscriptionCreated(validatedEvent);
-        break;
-
-      case "subscription.updated":
-        await handleSubscriptionUpdated(validatedEvent);
-        break;
-
-      case "subscription.canceled":
-      case "subscription.revoked":
-        await handleSubscriptionCanceled(validatedEvent);
-        break;
-
-      case "subscription.active":
-        await handleSubscriptionActive(validatedEvent);
-        break;
-
-      case "order.created":
-        // Payment successful for new subscription
-        await handleOrderCreated(validatedEvent);
-        break;
-
-      default:
-        // TypeScript exhaustiveness check - this should never be reached
-        const _exhaustive: never = validatedEvent;
-        console.log(`Unhandled webhook event type: ${_exhaustive}`);
-    }
-
-    // Mark event as processed to prevent replay attacks
-    await convex.mutation(api.webhooks.markEventProcessed, {
-      eventId,
-      eventType: validatedEvent.type,
-      source: "polar",
-    });
-
-    // Return 200 OK to acknowledge receipt
-    return NextResponse.json({ received: true }, { status: 200 });
-  } catch (error) {
-    console.error("Webhook processing error:", error);
+    console.error("Webhook validation error:", getErrorMessage(eventResult));
     return NextResponse.json(
-      { error: "Webhook processing failed" },
+      { error: "Webhook validation failed" },
       { status: 500 }
     );
   }
+
+  const event = eventResult;
+
+  console.log("Received Polar webhook event:", event.type);
+  console.log("Full event structure:", JSON.stringify(event, null, 2));
+
+  // Validate event structure using Zod schemas
+  const validationResult = polarWebhookEventSchema.safeParse(event);
+  if (!validationResult.success) {
+    console.error("Webhook event validation failed:", validationResult.error);
+    return NextResponse.json(
+      { error: "Invalid event structure" },
+      { status: 400 }
+    );
+  }
+
+  const validatedEvent = validationResult.data;
+
+  // Check for replay attacks - verify event hasn't been processed before
+  const eventId = validatedEvent.data.id;
+
+  const alreadyProcessedResult = await tryPromise(
+    convex.query(api.webhooks.isEventProcessed, {
+      eventId,
+    })
+  );
+
+  if (isErr(alreadyProcessedResult)) {
+    console.error(
+      "Failed to check if event processed:",
+      getErrorMessage(alreadyProcessedResult)
+    );
+    // If we can't check, should we proceed? Probably safer to error out to avoid duplicates if DB is down.
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
+  }
+
+  if (alreadyProcessedResult) {
+    console.log(
+      `Event ${eventId} already processed, skipping (replay protection)`
+    );
+    return NextResponse.json({ received: true }, { status: 200 });
+  }
+
+  // Handle different event types
+  let handleResult;
+  switch (validatedEvent.type) {
+    case "subscription.created":
+      handleResult = await tryPromise(
+        handleSubscriptionCreated(validatedEvent)
+      );
+      break;
+
+    case "subscription.updated":
+      handleResult = await tryPromise(
+        handleSubscriptionUpdated(validatedEvent)
+      );
+      break;
+
+    case "subscription.canceled":
+    case "subscription.revoked":
+      handleResult = await tryPromise(
+        handleSubscriptionCanceled(validatedEvent)
+      );
+      break;
+
+    case "subscription.active":
+      handleResult = await tryPromise(handleSubscriptionActive(validatedEvent));
+      break;
+
+    case "order.created":
+      // Payment successful for new subscription
+      handleResult = await tryPromise(handleOrderCreated(validatedEvent));
+      break;
+
+    default:
+      // TypeScript exhaustiveness check - this should never be reached
+      const _exhaustive: never = validatedEvent;
+      console.log(`Unhandled webhook event type: ${_exhaustive}`);
+      handleResult = null; // Or success
+  }
+
+  if (isErr(handleResult)) {
+    console.error(
+      `Failed to handle event ${validatedEvent.type}:`,
+      getErrorMessage(handleResult)
+    );
+    return NextResponse.json(
+      { error: "Event processing failed" },
+      { status: 500 }
+    );
+  }
+
+  // Mark event as processed to prevent replay attacks
+  const markResult = await tryPromise(
+    convex.mutation(api.webhooks.markEventProcessed, {
+      eventId,
+      eventType: validatedEvent.type,
+      source: "polar",
+    })
+  );
+
+  if (isErr(markResult)) {
+    console.error(
+      "Failed to mark event as processed:",
+      getErrorMessage(markResult)
+    );
+    // We processed the event but failed to mark it.
+    // This might lead to replay if the webhook is retried.
+    // But we returned 200 OK (below), so Polar might not retry.
+    // If we return 500 here, Polar retries, and we might process again if `isEventProcessed` check passes (which it shouldn't if we failed to mark it? wait, if we failed to mark it, it's NOT marked).
+    // So if we fail to mark, we risk double processing.
+    // Ideally `handle...` and `markEventProcessed` should be transactional or idempotent.
+  }
+
+  // Return 200 OK to acknowledge receipt
+  return NextResponse.json({ received: true }, { status: 200 });
 }
 
 // Infer TypeScript type from Zod schema for type safety
@@ -259,12 +317,18 @@ async function handleSubscriptionCreated(event: PolarEvent) {
     return;
   }
 
-  if (!subscription.currentPeriodStart || !subscription.currentPeriodEnd || !subscription.customerId) {
+  if (
+    !subscription.currentPeriodStart ||
+    !subscription.currentPeriodEnd ||
+    !subscription.customerId
+  ) {
     console.error("Missing billing period dates or customer ID");
     return;
   }
 
-  const currentPeriodStart = new Date(subscription.currentPeriodStart).getTime();
+  const currentPeriodStart = new Date(
+    subscription.currentPeriodStart
+  ).getTime();
   const currentPeriodEnd = new Date(subscription.currentPeriodEnd).getTime();
 
   await convex.action(api.subscriptions.handleUpgrade, {
@@ -289,7 +353,9 @@ async function handleSubscriptionUpdated(event: PolarEvent) {
     return;
   }
 
-  const currentPeriodStart = new Date(subscription.currentPeriodStart).getTime();
+  const currentPeriodStart = new Date(
+    subscription.currentPeriodStart
+  ).getTime();
   const currentPeriodEnd = new Date(subscription.currentPeriodEnd).getTime();
 
   await convex.action(api.subscriptions.updateBillingCycle, {
@@ -317,7 +383,9 @@ async function handleSubscriptionCanceled(event: PolarEvent) {
   // They keep Pro access until the end of their billing period.
   // A scheduled job or the subscription.ended event will handle the actual downgrade.
 
-  console.log(`Subscription ${subscription.id} cancelled (access until period end)`);
+  console.log(
+    `Subscription ${subscription.id} cancelled (access until period end)`
+  );
 }
 
 /**

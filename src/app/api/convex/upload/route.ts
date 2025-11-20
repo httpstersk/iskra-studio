@@ -6,12 +6,16 @@
  * Accepts optional thumbnail blob for bandwidth optimization.
  */
 
+import { requireAuth } from "@/lib/api/auth-middleware";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+} from "@/lib/api/error-response";
+import { isErr, tryPromise } from "@/lib/errors/safe-errors";
 import {
   uploadFileToConvex,
   type UploadMetadata,
 } from "@/lib/server/upload-service";
-import { requireAuth } from "@/lib/api/auth-middleware";
-import { createErrorResponse, createSuccessResponse } from "@/lib/api/error-response";
 import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60;
@@ -50,34 +54,48 @@ export const config = {
  * ```
  */
 export async function POST(req: NextRequest) {
-  try {
-    // Authenticate user and get Convex token
-    const { convexToken } = await requireAuth();
+  // Authenticate user and get Convex token
+  const authResult = await tryPromise(requireAuth());
 
-    // Parse form data
-    const formData = await req.formData();
-    const file = formData.get("file");
-    const thumbnail = formData.get("thumbnail");
+  if (isErr(authResult)) {
+    return createErrorResponse(authResult, "Authentication failed");
+  }
 
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
+  const { convexToken } = authResult;
 
-    // Extract metadata from form data
-    const metadata = extractMetadata(formData);
+  // Parse form data
+  const formDataResult = await tryPromise(req.formData());
 
-    // Upload file using service layer
-    const result = await uploadFileToConvex({
+  if (isErr(formDataResult)) {
+    return createErrorResponse(formDataResult, "Failed to parse form data");
+  }
+
+  const formData = formDataResult;
+  const file = formData.get("file");
+  const thumbnail = formData.get("thumbnail");
+
+  if (!(file instanceof File)) {
+    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
+
+  // Extract metadata from form data
+  const metadata = extractMetadata(formData);
+
+  // Upload file using service layer
+  const result = await tryPromise(
+    uploadFileToConvex({
       authToken: convexToken,
       file,
       metadata,
       thumbnail: thumbnail instanceof Blob ? thumbnail : undefined,
-    });
+    })
+  );
 
-    return createSuccessResponse(result);
-  } catch (error) {
-    return createErrorResponse(error, "Upload failed");
+  if (isErr(result)) {
+    return createErrorResponse(result, "Upload failed");
   }
+
+  return createSuccessResponse(result);
 }
 
 /**

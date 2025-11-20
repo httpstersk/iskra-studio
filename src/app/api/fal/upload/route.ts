@@ -1,3 +1,4 @@
+import { getErrorMessage, isErr, tryPromise } from "@/lib/errors/safe-errors";
 import {
   buildRateLimitHeaders,
   checkRateLimit,
@@ -34,151 +35,221 @@ const ALLOWED_MIME_TYPES = [
  * Redirects to the Convex upload endpoint for consistency
  */
 export async function POST(req: NextRequest) {
-  try {
-    // Check for bot activity first
-    const verification = await checkBotId();
-    if (verification.isBot) {
-      return new Response("Access denied", { status: 403 });
-    }
+  // Check for bot activity first
+  const verificationResult = await tryPromise(checkBotId());
 
-    // Disallow user-provided FAL API keys via Authorization header
-    const authHeader = req.headers.get("authorization");
-    if (authHeader) {
-      return NextResponse.json(
-        { error: "Custom FAL API keys are not accepted." },
-        { status: 400 }
-      );
-    }
+  if (isErr(verificationResult)) {
+    // Fail closed if bot check fails? Or open?
+    // Assuming fail closed for security.
+    return new Response("Access denied", { status: 403 });
+  }
 
-    // Get userId from Clerk for per-user rate limiting
-    const { userId } = await auth();
+  const verification = verificationResult;
 
-    // Require authentication for uploads
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+  if (verification.isBot) {
+    return new Response("Access denied", { status: 403 });
+  }
 
-    // Always apply rate limiting (per-user if authenticated, per-IP otherwise)
-    const limiterResult = await checkRateLimit({
+  // Disallow user-provided FAL API keys via Authorization header
+  const authHeader = req.headers.get("authorization");
+
+  if (authHeader) {
+    return NextResponse.json(
+      { error: "Custom FAL API keys are not accepted." },
+      { status: 400 }
+    );
+  }
+
+  // Get userId from Clerk for per-user rate limiting
+  const authResult = await tryPromise(auth());
+
+  if (isErr(authResult)) {
+    return NextResponse.json(
+      { error: "Authentication failed" },
+      { status: 401 }
+    );
+  }
+
+  const { userId } = authResult;
+
+  // Require authentication for uploads
+  if (!userId) {
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 }
+    );
+  }
+
+  // Always apply rate limiting (per-user if authenticated, per-IP otherwise)
+  const limiterResult = await tryPromise(
+    checkRateLimit({
       limiter: standardRateLimiter,
       headers: req.headers,
       userId: userId ?? undefined,
       limitType: "standard",
-    });
+    })
+  );
 
-    if (limiterResult.shouldLimitRequest) {
-      return new Response(
-        `Rate limit exceeded per ${limiterResult.period}. Please try again later.`,
-        {
-          status: 429,
-          headers: buildRateLimitHeaders(
-            limiterResult.period,
-            standardLimitHeaders
-          ),
-        }
-      );
-    }
-
-    // Get the file from the request body
-    const formData = await req.formData();
-    const file = formData.get("file");
-
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    }
-
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      return NextResponse.json({ error: "File too large" }, { status: 413 });
-    }
-
-    // First check: MIME type from client (basic filter)
-    const mimeType = (file.type || "").toLowerCase();
-    const isAllowedType = ALLOWED_MIME_PREFIXES.some((prefix) =>
-      mimeType.startsWith(prefix)
+  if (isErr(limiterResult)) {
+    console.error("Rate limit check failed:", getErrorMessage(limiterResult));
+    // Fail open?
+  } else if (limiterResult.shouldLimitRequest) {
+    return new Response(
+      `Rate limit exceeded per ${limiterResult.period}. Please try again later.`,
+      {
+        status: 429,
+        headers: buildRateLimitHeaders(
+          limiterResult.period,
+          standardLimitHeaders
+        ),
+      }
     );
+  }
 
-    if (!isAllowedType) {
-      return NextResponse.json(
-        { error: "Unsupported file type" },
-        { status: 415 }
-      );
-    }
+  // Get the file from the request body
+  const formDataResult = await tryPromise(req.formData());
 
-    // Second check: Magic number validation (verify actual file content)
-    // This prevents file type spoofing attacks
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
+  if (isErr(formDataResult)) {
+    return NextResponse.json(
+      { error: "Failed to parse form data" },
+      { status: 400 }
+    );
+  }
 
-    // Verify file type by reading magic numbers from file header
-    const detectedType = await fileTypeFromBuffer(buffer);
+  const formData = formDataResult;
+  const file = formData.get("file");
 
-    if (!detectedType) {
-      return NextResponse.json(
-        {
-          error:
-            "Unable to determine file type. File may be corrupted or invalid.",
-        },
-        { status: 415 }
-      );
-    }
+  if (!(file instanceof File)) {
+    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
 
-    // Check if detected type matches allowed types
-    if (!ALLOWED_MIME_TYPES.includes(detectedType.mime)) {
-      return NextResponse.json(
-        {
-          error: `Invalid file type detected. Expected image or video, got ${detectedType.mime}`,
-        },
-        { status: 415 }
-      );
-    }
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return NextResponse.json({ error: "File too large" }, { status: 413 });
+  }
 
-    // Additional check: verify claimed MIME type roughly matches detected type
-    const detectedCategory = detectedType.mime.split("/")[0]; // "image" or "video"
-    const claimedCategory = mimeType.split("/")[0]; // "image" or "video"
+  // First check: MIME type from client (basic filter)
+  const mimeType = (file.type || "").toLowerCase();
+  const isAllowedType = ALLOWED_MIME_PREFIXES.some((prefix) =>
+    mimeType.startsWith(prefix)
+  );
 
-    if (detectedCategory !== claimedCategory) {
-      return NextResponse.json(
-        {
-          error: `File type mismatch. Claimed type: ${mimeType}, detected type: ${detectedType.mime}`,
-        },
-        { status: 415 }
-      );
-    }
+  if (!isAllowedType) {
+    return NextResponse.json(
+      { error: "Unsupported file type" },
+      { status: 415 }
+    );
+  }
 
-    // Reject SVG files to prevent XSS attacks
-    if (detectedType.mime === "image/svg+xml" || file.name.endsWith(".svg")) {
-      return NextResponse.json(
-        { error: "SVG files are not allowed for security reasons" },
-        { status: 415 }
-      );
-    }
+  // Second check: Magic number validation (verify actual file content)
+  // This prevents file type spoofing attacks
+  const arrayBufferResult = await tryPromise(file.arrayBuffer());
 
-    // Create blob from the already-read buffer
-    const blob: Blob = new Blob([buffer], { type: detectedType.mime });
+  if (isErr(arrayBufferResult)) {
+    return NextResponse.json({ error: "Failed to read file" }, { status: 500 });
+  }
 
-    // Get auth token
-    const authData = await auth();
-    const token = await authData.getToken({ template: "convex" });
+  const arrayBuffer = arrayBufferResult;
+  const buffer = new Uint8Array(arrayBuffer);
 
-    if (!token) {
-      return NextResponse.json(
-        { error: "Failed to get auth token" },
-        { status: 401 }
-      );
-    }
+  // Verify file type by reading magic numbers from file header
+  const detectedTypeResult = await tryPromise(fileTypeFromBuffer(buffer));
 
-    // Upload to Convex storage using upload service
-    const uploadResult = await uploadFileToConvex({
+  if (isErr(detectedTypeResult)) {
+    return NextResponse.json(
+      { error: "Failed to detect file type" },
+      { status: 500 }
+    );
+  }
+
+  const detectedType = detectedTypeResult;
+
+  if (!detectedType) {
+    return NextResponse.json(
+      {
+        error:
+          "Unable to determine file type. File may be corrupted or invalid.",
+      },
+      { status: 415 }
+    );
+  }
+
+  // Check if detected type matches allowed types
+  if (!ALLOWED_MIME_TYPES.includes(detectedType.mime)) {
+    return NextResponse.json(
+      {
+        error: `Invalid file type detected. Expected image or video, got ${detectedType.mime}`,
+      },
+      { status: 415 }
+    );
+  }
+
+  // Additional check: verify claimed MIME type roughly matches detected type
+  const detectedCategory = detectedType.mime.split("/")[0]; // "image" or "video"
+  const claimedCategory = mimeType.split("/")[0]; // "image" or "video"
+
+  if (detectedCategory !== claimedCategory) {
+    return NextResponse.json(
+      {
+        error: `File type mismatch. Claimed type: ${mimeType}, detected type: ${detectedType.mime}`,
+      },
+      { status: 415 }
+    );
+  }
+
+  // Reject SVG files to prevent XSS attacks
+  if (detectedType.mime === "image/svg+xml" || file.name.endsWith(".svg")) {
+    return NextResponse.json(
+      { error: "SVG files are not allowed for security reasons" },
+      { status: 415 }
+    );
+  }
+
+  // Create blob from the already-read buffer
+  const blob: Blob = new Blob([buffer], { type: detectedType.mime });
+
+  // Get auth token
+  const authDataResult = await tryPromise(auth());
+
+  if (isErr(authDataResult)) {
+    return NextResponse.json(
+      { error: "Authentication failed" },
+      { status: 401 }
+    );
+  }
+
+  const authData = authDataResult;
+
+  const tokenResult = await tryPromise(
+    authData.getToken({ template: "convex" })
+  );
+
+  if (isErr(tokenResult)) {
+    return NextResponse.json(
+      { error: "Failed to get auth token" },
+      { status: 401 }
+    );
+  }
+
+  const token = tokenResult;
+
+  if (!token) {
+    return NextResponse.json(
+      { error: "Failed to get auth token" },
+      { status: 401 }
+    );
+  }
+
+  // Upload to Convex storage using upload service
+  const uploadResult = await tryPromise(
+    uploadFileToConvex({
       authToken: token,
       file: blob,
       metadata: {},
-    });
+    })
+  );
 
-    return NextResponse.json({ url: uploadResult.url });
-  } catch (error) {
+  if (isErr(uploadResult)) {
+    const error = uploadResult.payload;
     // Check for rate limit error
     const isRateLimit =
       (error as { status?: number; message?: string }).status === 429 ||
@@ -199,9 +270,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: "Upload failed",
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: getErrorMessage(uploadResult),
       },
       { status: 500 }
     );
   }
+
+  return NextResponse.json({ url: uploadResult.url });
 }

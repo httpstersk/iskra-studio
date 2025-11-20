@@ -7,6 +7,7 @@
 
 "use client";
 
+import { getErrorMessage, isErr, tryPromise } from "@/lib/errors/safe-errors";
 import {
   currentProjectAtom,
   isAutoSavingAtom,
@@ -17,7 +18,13 @@ import {
 import type { CanvasState, Project, ProjectMetadata } from "@/types/project";
 import { useConvex, useMutation, useQuery } from "convex/react";
 import { useAtom } from "jotai";
-import { useCallback, useEffect, useMemo, useOptimistic, startTransition } from "react";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useMemo,
+  useOptimistic,
+} from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useAuth } from "./useAuth";
@@ -54,7 +61,7 @@ interface UseProjectsReturn {
   saveProject: (
     projectId: Id<"projects">,
     canvasState: CanvasState,
-    thumbnailStorageId?: string,
+    thumbnailStorageId?: string
   ) => Promise<void>;
 }
 
@@ -115,7 +122,7 @@ export function useProjects(): UseProjectsReturn {
   // Automatically reverts on error without manual cleanup
   const [_optimisticProject, setOptimisticProject] = useOptimistic(
     currentProject,
-    (_, newProject: Project | null) => newProject,
+    (_, newProject: Project | null) => newProject
   );
 
   // Convex mutations
@@ -126,7 +133,7 @@ export function useProjects(): UseProjectsReturn {
   // Convex queries - only run when authenticated
   const projectsQuery = useQuery(
     api.projects.listProjects,
-    isAuthenticated ? { limit: 50 } : "skip",
+    isAuthenticated ? { limit: 50 } : "skip"
   );
 
   // Memoize project list to avoid unnecessary recalculations
@@ -141,11 +148,17 @@ export function useProjects(): UseProjectsReturn {
       thumbnailUrl: project.thumbnailUrl,
       imageCount: project.canvasState.elements.filter(
         (el) =>
-          typeof el === "object" && el !== null && "type" in el && el.type === "image"
+          typeof el === "object" &&
+          el !== null &&
+          "type" in el &&
+          el.type === "image"
       ).length,
       videoCount: project.canvasState.elements.filter(
         (el) =>
-          typeof el === "object" && el !== null && "type" in el && el.type === "video"
+          typeof el === "object" &&
+          el !== null &&
+          "type" in el &&
+          el.type === "video"
       ).length,
     }));
   }, [projectsQuery]);
@@ -162,18 +175,18 @@ export function useProjects(): UseProjectsReturn {
    */
   const createProject = useCallback(
     async (name?: string): Promise<Id<"projects">> => {
-      try {
-        const projectId = await createProjectMutation({ name });
+      const projectIdResult = await tryPromise(createProjectMutation({ name }));
 
-        // Refresh project list (will happen automatically via query)
-        return projectId;
-      } catch (error) {
+      if (isErr(projectIdResult)) {
         throw new Error(
-          `Project creation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          `Project creation failed: ${getErrorMessage(projectIdResult)}`
         );
       }
+
+      // Refresh project list (will happen automatically via query)
+      return projectIdResult;
     },
-    [createProjectMutation],
+    [createProjectMutation]
   );
 
   /**
@@ -184,74 +197,82 @@ export function useProjects(): UseProjectsReturn {
    */
   const loadProject = useCallback(
     async (projectId: Id<"projects">): Promise<void> => {
-      try {
-        setIsLoading(true);
+      setIsLoading(true);
 
-        // Fetch project data
-        const project = await convex.query(api.projects.getProject, {
+      // Fetch project data
+      const projectResult = await tryPromise(
+        convex.query(api.projects.getProject, {
           projectId,
-        });
+        })
+      );
 
-        if (!project) {
-          throw new Error("Project not found");
-        }
+      if (isErr(projectResult)) {
+        setIsLoading(false);
+        throw new Error(
+          `Project load failed: ${getErrorMessage(projectResult)}`
+        );
+      }
+      const project = projectResult;
 
-        const normalizedProject: Project = {
-          ...project,
+      if (!project) {
+        setIsLoading(false);
+        throw new Error("Project not found");
+      }
+
+      const normalizedProject: Project = {
+        ...project,
+        id: project._id,
+      };
+
+      // Commit to actual state
+      // Note: We don't use optimistic updates for project loading because
+      // other hooks (useStorage) need to coordinate based on the committed state
+      setCurrentProject(normalizedProject);
+      setLastSavedAt(normalizedProject.lastSavedAt ?? null);
+
+      // Update project list with loaded project data
+      setProjectList((prev) => {
+        const metadata: ProjectMetadata = {
           id: project._id,
+          name: project.name,
+          createdAt: project.createdAt,
+          lastSavedAt: project.lastSavedAt,
+          thumbnailUrl: project.thumbnailUrl,
+          imageCount: project.canvasState.elements.filter(
+            (el) =>
+              typeof el === "object" &&
+              el !== null &&
+              "type" in el &&
+              el.type === "image"
+          ).length,
+          videoCount: project.canvasState.elements.filter(
+            (el) =>
+              typeof el === "object" &&
+              el !== null &&
+              "type" in el &&
+              el.type === "video"
+          ).length,
         };
 
-        // Commit to actual state
-        // Note: We don't use optimistic updates for project loading because
-        // other hooks (useStorage) need to coordinate based on the committed state
-        setCurrentProject(normalizedProject);
-        setLastSavedAt(normalizedProject.lastSavedAt ?? null);
+        const existingIndex = prev.findIndex((p) => p.id === project._id);
 
-        // Update project list with loaded project data
-        setProjectList((prev) => {
-          const metadata: ProjectMetadata = {
-            id: project._id,
-            name: project.name,
-            createdAt: project.createdAt,
-            lastSavedAt: project.lastSavedAt,
-            thumbnailUrl: project.thumbnailUrl,
-            imageCount: project.canvasState.elements.filter(
-              (el) =>
-                typeof el === "object" &&
-                el !== null &&
-                "type" in el &&
-                el.type === "image",
-            ).length,
-            videoCount: project.canvasState.elements.filter(
-              (el) =>
-                typeof el === "object" &&
-                el !== null &&
-                "type" in el &&
-                el.type === "video",
-            ).length,
-          };
+        if (existingIndex === -1) {
+          return [metadata, ...prev];
+        }
 
-          const existingIndex = prev.findIndex((p) => p.id === project._id);
+        const updated = [...prev];
+        updated[existingIndex] = metadata;
+        return updated;
+      });
 
-          if (existingIndex === -1) {
-            return [metadata, ...prev];
-          }
-
-          const updated = [...prev];
-          updated[existingIndex] = metadata;
-          return updated;
-        });
-      } catch (error) {
-        throw new Error(
-          `Project load failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      } finally {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     },
-    [convex, setCurrentProject, setIsLoading, setLastSavedAt, setProjectList],
+    [convex, setCurrentProject, setIsLoading, setLastSavedAt, setProjectList]
   );
 
+  /**
+   * Saves project canvas state.
+   */
   /**
    * Saves project canvas state.
    */
@@ -259,37 +280,38 @@ export function useProjects(): UseProjectsReturn {
     async (
       projectId: Id<"projects">,
       canvasState: CanvasState,
-      thumbnailStorageId?: string,
+      thumbnailStorageId?: string
     ): Promise<void> => {
-      try {
-        setIsSaving(true);
+      setIsSaving(true);
 
-        await saveProjectMutation({
+      const saveResult = await tryPromise(
+        saveProjectMutation({
           projectId,
           canvasState,
           thumbnailStorageId,
-        });
+        })
+      );
 
-        const now = Date.now();
-        setLastSavedAt(now);
-
-        // Update current project if it's the one being saved
-        if (currentProject?._id === projectId) {
-          setCurrentProject({
-            ...currentProject,
-            canvasState,
-            lastSavedAt: now,
-            updatedAt: now,
-            thumbnailStorageId,
-          });
-        }
-      } catch (error) {
-        throw new Error(
-          `Project save failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      } finally {
+      if (isErr(saveResult)) {
         setIsSaving(false);
+        throw new Error(`Project save failed: ${getErrorMessage(saveResult)}`);
       }
+
+      const now = Date.now();
+      setLastSavedAt(now);
+
+      // Update current project if it's the one being saved
+      if (currentProject?._id === projectId) {
+        setCurrentProject({
+          ...currentProject,
+          canvasState,
+          lastSavedAt: now,
+          updatedAt: now,
+          thumbnailStorageId,
+        });
+      }
+
+      setIsSaving(false);
     },
     [
       saveProjectMutation,
@@ -297,7 +319,7 @@ export function useProjects(): UseProjectsReturn {
       setIsSaving,
       setLastSavedAt,
       setCurrentProject,
-    ],
+    ]
   );
 
   /**
@@ -307,45 +329,48 @@ export function useProjects(): UseProjectsReturn {
    */
   const renameProject = useCallback(
     async (projectId: Id<"projects">, name: string): Promise<void> => {
-      try {
-        // Apply optimistic update if this is the current project
-        if (currentProject?._id === projectId) {
-          const optimisticUpdate: Project = {
-            ...currentProject,
-            name,
-            updatedAt: Date.now(),
-          };
-          startTransition(() => {
-            setOptimisticProject(optimisticUpdate);
-          });
-        }
+      // Apply optimistic update if this is the current project
+      if (currentProject?._id === projectId) {
+        const optimisticUpdate: Project = {
+          ...currentProject,
+          name,
+          updatedAt: Date.now(),
+        };
+        startTransition(() => {
+          setOptimisticProject(optimisticUpdate);
+        });
+      }
 
-        // Perform the actual mutation
-        await renameProjectMutation({ projectId, name });
+      // Perform the actual mutation
+      const renameResult = await tryPromise(
+        renameProjectMutation({ projectId, name })
+      );
 
-        // Commit to actual state
-        if (currentProject?._id === projectId) {
-          setCurrentProject({
-            ...currentProject,
-            name,
-            updatedAt: Date.now(),
-          });
-        }
-
-        // Project list will update automatically via query
-      } catch (error) {
-        // useOptimistic automatically reverts on error
+      if (isErr(renameResult)) {
+        // useOptimistic automatically reverts on error (when component re-renders with original state)
+        // but we should throw to let caller know
         throw new Error(
-          `Project rename failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          `Project rename failed: ${getErrorMessage(renameResult)}`
         );
       }
+
+      // Commit to actual state
+      if (currentProject?._id === projectId) {
+        setCurrentProject({
+          ...currentProject,
+          name,
+          updatedAt: Date.now(),
+        });
+      }
+
+      // Project list will update automatically via query
     },
     [
       renameProjectMutation,
       currentProject,
       setCurrentProject,
       setOptimisticProject,
-    ],
+    ]
   );
 
   return {

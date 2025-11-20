@@ -4,6 +4,7 @@
  * Single shared subscription regardless of component count
  */
 
+import { isErr, tryPromise } from "@/lib/errors/safe-errors";
 import { useSyncExternalStore } from "react";
 
 /**
@@ -28,11 +29,11 @@ interface BatteryManager extends EventTarget {
   level: number;
   addEventListener(
     type: "chargingchange" | "levelchange",
-    listener: () => void,
+    listener: () => void
   ): void;
   removeEventListener(
     type: "chargingchange" | "levelchange",
-    listener: () => void,
+    listener: () => void
   ): void;
 }
 
@@ -85,15 +86,18 @@ async function initializeBattery(): Promise<void> {
     return;
   }
 
-  try {
-    batteryManager = await (
-      navigator as NavigatorWithBattery
-    ).getBattery();
-    updateBatteryCache(batteryManager);
-  } catch (error) {
-    console.warn("Battery API not available:", error);
+  const batteryResult = await tryPromise(
+    (navigator as NavigatorWithBattery).getBattery()
+  );
+
+  if (isErr(batteryResult)) {
+    console.warn("Battery API not available:", batteryResult.payload);
     cachedBatteryStatus = { level: 1, charging: false, supported: false };
+    return;
   }
+
+  batteryManager = batteryResult;
+  updateBatteryCache(batteryManager);
 }
 
 /**

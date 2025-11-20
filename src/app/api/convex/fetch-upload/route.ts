@@ -1,34 +1,52 @@
-import { uploadRemoteAsset } from "@/lib/server/remote-asset-uploader";
-import type { GeneratedAssetUploadPayload } from "@/types/generated-asset";
 import { requireAuth } from "@/lib/api/auth-middleware";
 import { createErrorResponse, createSuccessResponse } from "@/lib/api/error-response";
+import { isErr, tryPromise } from "@/lib/errors/safe-errors";
+import { uploadRemoteAsset } from "@/lib/server/remote-asset-uploader";
+import type { GeneratedAssetUploadPayload } from "@/types/generated-asset";
 import { NextResponse, type NextRequest } from "next/server";
+} from "@/lib/api/error-response";
+import { NextResponse, type NextRequest } from "next/server";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 export const maxDuration = 60;
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  try {
-    // Authenticate user and get Convex token
-    const { convexToken } = await requireAuth();
+  // Authenticate user and get Convex token
+  const authResult = await tryPromise(requireAuth());
+  
+  if (isErr(authResult)) {
+    return createErrorResponse(authResult, "Authentication failed");
+  }
 
-    const payload = (await req.json()) as GeneratedAssetUploadPayload;
+  const { convexToken } = authResult;
 
-    if (!payload?.sourceUrl || !payload.assetType) {
-      return NextResponse.json(
-        { error: "sourceUrl and assetType are required" },
-        { status: 400 },
-      );
-    }
+  const payloadResult = await tryPromise(req.json());
+  
+  if (isErr(payloadResult)) {
+    return createErrorResponse(payloadResult, "Invalid JSON body");
+  }
+  
+  const payload = payloadResult as GeneratedAssetUploadPayload;
 
-    const uploadResult = await uploadRemoteAsset({
+  if (!payload?.sourceUrl || !payload.assetType) {
+    return NextResponse.json(
+      { error: "sourceUrl and assetType are required" },
+      { status: 400 }
+    );
+  }
+
+  const uploadResult = await tryPromise(
+    uploadRemoteAsset({
       authToken: convexToken,
       origin: req.nextUrl.origin,
       payload,
-    });
+    })
+  );
 
-    return createSuccessResponse(uploadResult);
-  } catch (error) {
-    return createErrorResponse(error, "Upload failed");
+  if (isErr(uploadResult)) {
+    return createErrorResponse(uploadResult, "Upload failed");
   }
+
+  return createSuccessResponse(uploadResult);
 }
