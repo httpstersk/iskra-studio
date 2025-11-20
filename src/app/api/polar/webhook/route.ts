@@ -35,8 +35,8 @@ const webhookRateLimiter = {
 const subscriptionDataSchema = z.object({
   id: z.string(),
   customerId: z.string().optional(),
-  currentPeriodStart: z.string().datetime().optional(),
-  currentPeriodEnd: z.string().datetime().optional(),
+  currentPeriodStart: z.union([z.string(), z.date()]).optional(),
+  currentPeriodEnd: z.union([z.string(), z.date()]).optional(),
   metadata: z.object({
     clerkUserId: z.string().optional(),
   }).optional(),
@@ -47,8 +47,8 @@ const subscriptionCreatedSchema = z.object({
   type: z.literal("subscription.created"),
   data: subscriptionDataSchema.extend({
     customerId: z.string(),
-    currentPeriodStart: z.string().datetime(),
-    currentPeriodEnd: z.string().datetime(),
+    currentPeriodStart: z.union([z.string(), z.date()]),
+    currentPeriodEnd: z.union([z.string(), z.date()]),
     metadata: z.object({
       clerkUserId: z.string(),
     }),
@@ -59,8 +59,8 @@ const subscriptionCreatedSchema = z.object({
 const subscriptionUpdatedSchema = z.object({
   type: z.literal("subscription.updated"),
   data: subscriptionDataSchema.extend({
-    currentPeriodStart: z.string().datetime(),
-    currentPeriodEnd: z.string().datetime(),
+    currentPeriodStart: z.union([z.string(), z.date()]),
+    currentPeriodEnd: z.union([z.string(), z.date()]),
   }),
 });
 
@@ -237,8 +237,8 @@ interface PolarEvent {
   data: {
     id: string;
     customerId?: string;
-    currentPeriodStart?: string;
-    currentPeriodEnd?: string;
+    currentPeriodStart?: string | Date;
+    currentPeriodEnd?: string | Date;
     metadata?: {
       clerkUserId?: string;
     };
