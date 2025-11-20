@@ -3,11 +3,21 @@
  *
  * Official client for Bria's FIBO platform API.
  * Handles authentication, request/response types, and polling for async operations.
+ * Uses errors-as-values pattern with @safe-std/error
  *
  * @see https://docs.bria.ai/image-generation/v2-endpoints
  */
 
 import { httpClient, HttpError } from "@/lib/api/http-client";
+import {
+  BriaApiErr,
+  BriaTokenErr,
+  HttpErr,
+  isErr,
+  isHttpErr,
+  type BriaApiErrPayload,
+  type BriaTokenErrPayload,
+} from "@/lib/errors/safe-errors";
 
 /**
  * Base URL for Bria API
@@ -37,7 +47,8 @@ export const BRIA_ENDPOINTS = {
 } as const;
 
 /**
- * Error thrown when Bria API token is not configured
+ * @deprecated Use BriaTokenErr from @/lib/errors/safe-errors instead
+ * Kept for backward compatibility during migration
  */
 export class BriaTokenError extends Error {
   constructor(
@@ -49,7 +60,8 @@ export class BriaTokenError extends Error {
 }
 
 /**
- * Error thrown when Bria API request fails
+ * @deprecated Use BriaApiErr from @/lib/errors/safe-errors instead
+ * Kept for backward compatibility during migration
  */
 export class BriaApiError extends Error {
   constructor(
@@ -157,17 +169,17 @@ export interface BriaImageGenerationRequest {
 
 /**
  * Retrieves and validates Bria API token from environment
+ * Returns errors as values instead of throwing
  *
- * @returns Bria API token
- * @throws BriaTokenError if token is not configured
+ * @returns Bria API token or error
  */
-export function getBriaApiToken(): string {
+export function getBriaApiToken(): string | BriaTokenErr {
   const token = process.env.BRIA_API_TOKEN;
 
   if (!token || !token.trim()) {
-    throw new BriaTokenError(
-      "BRIA_API_TOKEN environment variable is not configured. Get your API token from https://platform.bria.ai/console/account/api-keys"
-    );
+    return new BriaTokenErr({
+      message: "BRIA_API_TOKEN environment variable is not configured. Get your API token from https://platform.bria.ai/console/account/api-keys"
+    });
   }
 
   return token;
@@ -175,36 +187,40 @@ export function getBriaApiToken(): string {
 
 /**
  * Makes an authenticated request to Bria API
+ * Returns errors as values instead of throwing
  *
  * @param endpoint - API endpoint URL
  * @param body - Request body
  * @param timeout - Request timeout in milliseconds (optional)
- * @returns API response
- * @throws BriaApiError if request fails
+ * @returns API response or error
  */
 async function briaRequest<T>(
   endpoint: string,
   body: Record<string, unknown>,
   timeout = 30000
-): Promise<T> {
+): Promise<T | BriaApiErr | BriaTokenErr> {
   const token = getBriaApiToken();
 
-  try {
-    return await httpClient.fetchJson<T>(endpoint, {
-      method: "POST",
-      headers: {
-        api_token: token,
-      },
-      body,
-      timeout,
-    });
-  } catch (error) {
-    // Convert HttpError to BriaApiError
-    if (error instanceof HttpError) {
-      let errorMessage = `HTTP ${error.status}`;
+  if (isErr(token)) {
+    return token;
+  }
+
+  const result = await httpClient.fetchJson<T>(endpoint, {
+    method: "POST",
+    headers: {
+      api_token: token,
+    },
+    body,
+    timeout,
+  });
+
+  if (isErr(result)) {
+    // Convert HttpErr to BriaApiErr
+    if (isHttpErr(result)) {
+      let errorMessage = `HTTP ${result.payload.status}`;
 
       // Try to extract detailed error message
-      const response = error.response as { error?: unknown; message?: unknown; detail?: unknown; request_id?: string } | undefined;
+      const response = result.payload.response as { error?: unknown; message?: unknown; detail?: unknown; request_id?: string } | undefined;
       if (response?.error) {
         errorMessage =
           typeof response.error === "string"
@@ -222,38 +238,41 @@ async function briaRequest<T>(
             ? response.detail
             : JSON.stringify(response.detail);
       } else {
-        errorMessage = error.message;
+        errorMessage = result.payload.message;
       }
 
-      throw new BriaApiError(
-        `Bria API error: ${errorMessage}`,
-        error.status,
-        response?.request_id,
-        error
-      );
+      return new BriaApiErr({
+        message: `Bria API error: ${errorMessage}`,
+        statusCode: result.payload.status,
+        requestId: response?.request_id,
+        cause: result,
+      });
     }
 
-    // Handle other errors
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    throw new BriaApiError(
-      `Bria API request failed: ${errorMessage}`,
-      undefined,
-      undefined,
-      error
-    );
+    // Handle other error types
+    return new BriaApiErr({
+      message: `Bria API request failed: ${result.payload}`,
+      cause: result,
+    });
   }
+
+  return result;
 }
 
 /**
  * Polls status URL until completion or timeout
+ * Returns errors as values instead of throwing
  *
  * @param statusUrl - Status URL to poll
- * @returns Final result
- * @throws BriaApiError if polling fails or times out
+ * @returns Final result or error
  */
-async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
+async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T> | BriaApiErr | BriaTokenErr> {
   const token = getBriaApiToken();
+
+  if (isErr(token)) {
+    return token;
+  }
+
   let attempts = 0;
 
   // Initial delay before first poll
@@ -264,90 +283,83 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
   while (attempts < POLLING_CONFIG.MAX_ATTEMPTS) {
     attempts++;
 
-    try {
-      const data = await httpClient.fetchJson<BriaStatusResponse<T>>(
-        statusUrl,
-        {
-          method: "GET",
-          headers: {
-            api_token: token,
-          },
-          timeout: 10000, // 10 second timeout for polling requests
-        }
-      );
-
-      // Check status (case-insensitive)
-      const status = data.status?.toLowerCase();
-
-      if (status === "completed") {
-        if (!data.result) {
-          throw new BriaApiError(
-            "Bria API completed but returned no result",
-            undefined,
-            data.request_id
-          );
-        }
-
-        return {
-          request_id: data.request_id,
-          result: data.result,
-          warning: data.warning,
-        };
+    const data = await httpClient.fetchJson<BriaStatusResponse<T>>(
+      statusUrl,
+      {
+        method: "GET",
+        headers: {
+          api_token: token,
+        },
+        timeout: 10000, // 10 second timeout for polling requests
       }
+    );
 
-      if (status === "failed") {
-        const errorDetail = data.error
-          ? typeof data.error === "string"
-            ? data.error
-            : JSON.stringify(data.error)
-          : "Unknown error";
-        throw new BriaApiError(
-          `Bria API request failed: ${errorDetail}`,
-          undefined,
-          data.request_id
-        );
-      }
-
-      // Still pending/processing, wait before next poll
-      await new Promise((resolve) =>
-        setTimeout(resolve, POLLING_CONFIG.INTERVAL_MS)
-      );
-    } catch (error) {
-      if (error instanceof BriaApiError) {
-        throw error;
-      }
-
-      console.warn(`[Bria] Network error on attempt ${attempts}:`, error);
+    if (isErr(data)) {
+      console.warn(`[Bria] Network error on attempt ${attempts}:`, data);
 
       // Handle network errors - retry
       if (attempts >= POLLING_CONFIG.MAX_ATTEMPTS) {
-        throw new BriaApiError(
-          "Bria API polling max attempts reached",
-          undefined,
-          undefined,
-          error
-        );
+        return new BriaApiErr({
+          message: "Bria API polling max attempts reached",
+          cause: data,
+        });
       }
 
       // Wait before retry
       await new Promise((resolve) =>
         setTimeout(resolve, POLLING_CONFIG.INTERVAL_MS)
       );
+      continue;
     }
+
+    // Check status (case-insensitive)
+    const status = data.status?.toLowerCase();
+
+    if (status === "completed") {
+      if (!data.result) {
+        return new BriaApiErr({
+          message: "Bria API completed but returned no result",
+          requestId: data.request_id,
+        });
+      }
+
+      return {
+        request_id: data.request_id,
+        result: data.result,
+        warning: data.warning,
+      };
+    }
+
+    if (status === "failed") {
+      const errorDetail = data.error
+        ? typeof data.error === "string"
+          ? data.error
+          : JSON.stringify(data.error)
+        : "Unknown error";
+      return new BriaApiErr({
+        message: `Bria API request failed: ${errorDetail}`,
+        requestId: data.request_id,
+      });
+    }
+
+    // Still pending/processing, wait before next poll
+    await new Promise((resolve) =>
+      setTimeout(resolve, POLLING_CONFIG.INTERVAL_MS)
+    );
   }
 
-  throw new BriaApiError(
-    `Bria API polling timed out after ${POLLING_CONFIG.MAX_ATTEMPTS} attempts (${(POLLING_CONFIG.MAX_ATTEMPTS * POLLING_CONFIG.INTERVAL_MS) / 1000}s)`
-  );
+  return new BriaApiErr({
+    message: `Bria API polling timed out after ${POLLING_CONFIG.MAX_ATTEMPTS} attempts (${(POLLING_CONFIG.MAX_ATTEMPTS * POLLING_CONFIG.INTERVAL_MS) / 1000}s)`,
+  });
 }
 
 /**
  * Generates a structured prompt from image or text input
+ * Returns errors as values instead of throwing
  *
  * @param request - Request options
  * @param timeout - Request timeout in milliseconds (optional)
- * @returns Structured prompt result
- * @throws BriaApiError if generation fails
+ * @returns Structured prompt result or error
  *
  * @example
  * ```typescript
@@ -356,12 +368,20 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
  *   images: ["https://example.com/image.jpg"],
  *   seed: 42
  * });
+ * if (isErr(result)) {
+ *   console.error('Failed:', getErrorMessage(result));
+ *   return;
+ * }
  *
  * // From text
  * const result = await generateStructuredPrompt({
  *   prompt: "A red balloon",
  *   seed: 42
  * });
+ * if (isErr(result)) {
+ *   console.error('Failed:', getErrorMessage(result));
+ *   return;
+ * }
  *
  * // Refine existing structured prompt
  * const result = await generateStructuredPrompt({
@@ -369,12 +389,16 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T>> {
  *   prompt: "Add sunlight",
  *   seed: 42
  * });
+ * if (isErr(result)) {
+ *   console.error('Failed:', getErrorMessage(result));
+ *   return;
+ * }
  * ```
  */
 export async function generateStructuredPrompt(
   request: BriaStructuredPromptRequest,
   timeout = 30000
-): Promise<BriaStructuredPromptResult> {
+): Promise<BriaStructuredPromptResult | BriaApiErr | BriaTokenErr> {
   const { sync = false, ...body } = request;
 
   // If sync mode, make synchronous request
@@ -387,12 +411,15 @@ export async function generateStructuredPrompt(
       timeout
     );
 
+    if (isErr(response)) {
+      return response;
+    }
+
     if (!response.result) {
-      throw new BriaApiError(
-        "Bria API returned no result",
-        undefined,
-        response.request_id
-      );
+      return new BriaApiErr({
+        message: "Bria API returned no result",
+        requestId: response.request_id,
+      });
     }
 
     return response.result;
@@ -405,16 +432,23 @@ export async function generateStructuredPrompt(
     timeout
   );
 
+  if (isErr(asyncResponse)) {
+    return asyncResponse;
+  }
+
   const finalResponse = await pollStatus<BriaStructuredPromptResult>(
     asyncResponse.status_url
   );
 
+  if (isErr(finalResponse)) {
+    return finalResponse;
+  }
+
   if (!finalResponse.result) {
-    throw new BriaApiError(
-      "Bria API returned no result",
-      undefined,
-      finalResponse.request_id
-    );
+    return new BriaApiErr({
+      message: "Bria API returned no result",
+      requestId: finalResponse.request_id,
+    });
   }
 
   return finalResponse.result;
@@ -422,11 +456,11 @@ export async function generateStructuredPrompt(
 
 /**
  * Generates an image from structured prompt or text input
+ * Returns errors as values instead of throwing
  *
  * @param request - Request options
  * @param timeout - Request timeout in milliseconds (optional)
- * @returns Image generation result
- * @throws BriaApiError if generation fails
+ * @returns Image generation result or error
  *
  * @example
  * ```typescript
@@ -436,6 +470,10 @@ export async function generateStructuredPrompt(
  *   aspect_ratio: "16:9",
  *   seed: 42
  * });
+ * if (isErr(result)) {
+ *   console.error('Failed:', getErrorMessage(result));
+ *   return;
+ * }
  *
  * // From text prompt
  * const result = await generateImage({
@@ -443,6 +481,10 @@ export async function generateStructuredPrompt(
  *   aspect_ratio: "16:9",
  *   seed: 42
  * });
+ * if (isErr(result)) {
+ *   console.error('Failed:', getErrorMessage(result));
+ *   return;
+ * }
  *
  * // Refine with reference image
  * const result = await generateImage({
@@ -451,12 +493,16 @@ export async function generateStructuredPrompt(
  *   prompt: "Inspired by this image",
  *   seed: 42
  * });
+ * if (isErr(result)) {
+ *   console.error('Failed:', getErrorMessage(result));
+ *   return;
+ * }
  * ```
  */
 export async function generateImage(
   request: BriaImageGenerationRequest,
   timeout = 30000
-): Promise<BriaImageGenerationResult> {
+): Promise<BriaImageGenerationResult | BriaApiErr | BriaTokenErr> {
   const { sync = false, ...body } = request;
 
   // If sync mode, make synchronous request
@@ -465,12 +511,15 @@ export async function generateImage(
       BriaBaseResponse<BriaImageGenerationResult>
     >(BRIA_ENDPOINTS.IMAGE_GENERATE, { ...body, sync: true }, timeout);
 
+    if (isErr(response)) {
+      return response;
+    }
+
     if (!response.result) {
-      throw new BriaApiError(
-        "Bria API returned no result",
-        undefined,
-        response.request_id
-      );
+      return new BriaApiErr({
+        message: "Bria API returned no result",
+        requestId: response.request_id,
+      });
     }
 
     return response.result;
@@ -483,16 +532,23 @@ export async function generateImage(
     timeout
   );
 
+  if (isErr(asyncResponse)) {
+    return asyncResponse;
+  }
+
   const finalResponse = await pollStatus<BriaImageGenerationResult>(
     asyncResponse.status_url
   );
 
+  if (isErr(finalResponse)) {
+    return finalResponse;
+  }
+
   if (!finalResponse.result) {
-    throw new BriaApiError(
-      "Bria API returned no result",
-      undefined,
-      finalResponse.request_id
-    );
+    return new BriaApiErr({
+      message: "Bria API returned no result",
+      requestId: finalResponse.request_id,
+    });
   }
 
   return finalResponse.result;

@@ -1,6 +1,9 @@
 /**
  * Unified HTTP client with timeout, retry, and error handling
+ * Uses errors-as-values pattern with @safe-std/error
  */
+
+import { HttpErr, isErr, type HttpErrPayload } from '@/lib/errors/safe-errors';
 
 export interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
@@ -18,6 +21,10 @@ export interface FetchResponse<T> {
   headers: Headers;
 }
 
+/**
+ * @deprecated Use HttpErr from @/lib/errors/safe-errors instead
+ * Kept for backward compatibility during migration
+ */
 export class HttpError extends Error {
   constructor(
     message: string,
@@ -35,16 +42,21 @@ class HttpClient {
 
   /**
    * Fetch JSON data with automatic retry, timeout, and error handling
+   * Returns errors as values instead of throwing
    */
-  async fetchJson<T>(url: string, config: RequestConfig = {}): Promise<T> {
+  async fetchJson<T>(url: string, config: RequestConfig = {}): Promise<T | HttpErr> {
     const response = await this.fetch<T>(url, config);
+    if (isErr(response)) {
+      return response;
+    }
     return response.data;
   }
 
   /**
    * Fetch with full response details
+   * Returns errors as values instead of throwing
    */
-  async fetch<T>(url: string, config: RequestConfig = {}): Promise<FetchResponse<T>> {
+  async fetch<T>(url: string, config: RequestConfig = {}): Promise<FetchResponse<T> | HttpErr> {
     const {
       method = 'GET',
       headers = {},
@@ -73,12 +85,13 @@ class HttpClient {
 
   /**
    * Fetch with FormData (for file uploads)
+   * Returns errors as values instead of throwing
    */
   async fetchFormData<T>(
     url: string,
     formData: FormData,
     config: Omit<RequestConfig, 'body'> = {}
-  ): Promise<T> {
+  ): Promise<T | HttpErr> {
     const {
       method = 'POST',
       headers = {},
@@ -95,68 +108,90 @@ class HttpClient {
     };
 
     const response = await this.fetchWithRetry<T>(url, fetchOptions, timeout, retries);
+    if (isErr(response)) {
+      return response;
+    }
     return response.data;
   }
 
   /**
    * Fetch with retry logic
+   * Returns errors as values instead of throwing
    */
   private async fetchWithRetry<T>(
     url: string,
     init: RequestInit,
     timeout: number,
     maxRetries: number
-  ): Promise<FetchResponse<T>> {
-    let lastError: Error | null = null;
+  ): Promise<FetchResponse<T> | HttpErr> {
+    let lastError: HttpErr | null = null;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        const response = await this.fetchWithTimeout(url, init, timeout);
-        const data = await this.parseResponse<T>(response);
+      const response = await this.fetchWithTimeout(url, init, timeout);
 
-        return {
-          data,
-          status: response.status,
-          headers: response.headers,
-        };
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
+      if (isErr(response)) {
+        lastError = response;
 
         const isLastAttempt = attempt === maxRetries;
         if (isLastAttempt) {
-          throw lastError;
+          return lastError;
         }
 
         // Don't retry on client errors (4xx) except 408, 429
-        if (error instanceof HttpError) {
-          const shouldRetry =
-            error.status === 408 || // Request Timeout
-            error.status === 429 || // Too Many Requests
-            error.status >= 500;    // Server errors
+        const shouldRetry =
+          response.payload.status === 408 || // Request Timeout
+          response.payload.status === 429 || // Too Many Requests
+          response.payload.status >= 500;    // Server errors
 
-          if (!shouldRetry) {
-            throw error;
-          }
+        if (!shouldRetry) {
+          return response;
         }
 
         // Exponential backoff with jitter
         const baseDelay = Math.pow(2, attempt) * 1000;
         const jitter = Math.random() * 500;
         await this.delay(baseDelay + jitter);
+        continue;
       }
+
+      const data = await this.parseResponse<T>(response);
+      if (isErr(data)) {
+        lastError = data;
+
+        const isLastAttempt = attempt === maxRetries;
+        if (isLastAttempt) {
+          return lastError;
+        }
+
+        // Exponential backoff with jitter
+        const baseDelay = Math.pow(2, attempt) * 1000;
+        const jitter = Math.random() * 500;
+        await this.delay(baseDelay + jitter);
+        continue;
+      }
+
+      return {
+        data,
+        status: response.status,
+        headers: response.headers,
+      };
     }
 
-    throw lastError || new Error('Fetch failed');
+    return lastError || new HttpErr({
+      status: 0,
+      message: 'Fetch failed after all retries',
+    });
   }
 
   /**
    * Fetch with timeout using AbortController
+   * Returns errors as values instead of throwing
    */
   private async fetchWithTimeout(
     url: string,
     init: RequestInit,
     timeout: number
-  ): Promise<Response> {
+  ): Promise<Response | HttpErr> {
     // Use provided signal or create new abort controller
     const controller = init.signal ? null : new AbortController();
     const timeoutId = setTimeout(
@@ -176,22 +211,26 @@ class HttpClient {
       clearTimeout(timeoutId);
 
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new HttpError(
-          `Request timed out after ${timeout}ms`,
-          408
-        );
+        return new HttpErr({
+          status: 408,
+          message: `Request timed out after ${timeout}ms`,
+        });
       }
 
-      throw error;
+      return new HttpErr({
+        status: 0,
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
   /**
    * Parse and validate response
+   * Returns errors as values instead of throwing
    */
-  private async parseResponse<T>(response: Response): Promise<T> {
+  private async parseResponse<T>(response: Response): Promise<T | HttpErr> {
     if (!response.ok) {
-      await this.handleErrorResponse(response);
+      return this.handleErrorResponse(response);
     }
 
     // Handle empty responses
@@ -202,17 +241,32 @@ class HttpClient {
 
     // Parse JSON responses
     if (contentType.includes('application/json')) {
-      return response.json();
+      try {
+        return await response.json();
+      } catch (error) {
+        return new HttpErr({
+          status: response.status,
+          message: `Failed to parse JSON response: ${error instanceof Error ? error.message : String(error)}`,
+        });
+      }
     }
 
     // Return text for other content types
-    return response.text() as T;
+    try {
+      return (await response.text()) as T;
+    } catch (error) {
+      return new HttpErr({
+        status: response.status,
+        message: `Failed to read response: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
   }
 
   /**
    * Handle error responses
+   * Returns errors as values instead of throwing
    */
-  private async handleErrorResponse(response: Response): Promise<never> {
+  private async handleErrorResponse(response: Response): Promise<HttpErr> {
     let errorMessage: string;
     let errorDetails: unknown;
 
@@ -234,7 +288,11 @@ class HttpClient {
       errorMessage = `Request failed with status ${response.status}`;
     }
 
-    throw new HttpError(errorMessage, response.status, errorDetails);
+    return new HttpErr({
+      status: response.status,
+      message: errorMessage,
+      response: errorDetails,
+    });
   }
 
   /**
@@ -259,6 +317,9 @@ class HttpClient {
     return client;
   }
 }
+
+// Re-export for convenience
+export { HttpErr, isErr } from '@/lib/errors/safe-errors';
 
 // Export singleton instance
 export const httpClient = new HttpClient();

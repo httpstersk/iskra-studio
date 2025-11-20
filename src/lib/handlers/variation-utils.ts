@@ -1,9 +1,13 @@
 /**
  * Shared utilities for variation handlers (image and video)
+ * Uses errors-as-values pattern with @safe-std/error
+ *
+ * @module lib/handlers/variation-utils
  */
 
 import type { PlacedImage } from "@/types/canvas";
 import { showError } from "@/lib/toast";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Checks if a URL is a Convex storage URL
@@ -59,18 +63,25 @@ export function extractSignedUrlFromProxy(proxyUrl: string): string | null {
 
 /**
  * Converts an image source to a Blob
+ * Returns errors as values instead of throwing
  */
-export async function imageToBlob(imageSrc: string): Promise<Blob> {
+export async function imageToBlob(imageSrc: string): Promise<Blob | Error> {
   const img = new window.Image();
   img.crossOrigin = "anonymous";
   img.src = imageSrc;
 
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = (_error) => {
-      reject(new Error(`Failed to load image: ${imageSrc.substring(0, 100)}`));
-    };
-  });
+  const loadResult = await tryPromise(
+    new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = (_error) => {
+        reject(new Error(`Failed to load image: ${imageSrc.substring(0, 100)}`));
+      };
+    })
+  );
+
+  if (isErr(loadResult)) {
+    return new Error(`Image load failed: ${getErrorMessage(loadResult)}`);
+  }
 
   const canvas = document.createElement("canvas");
   canvas.width = img.naturalWidth;
@@ -78,72 +89,96 @@ export async function imageToBlob(imageSrc: string): Promise<Blob> {
 
   const ctx = canvas.getContext("2d");
   if (!ctx) {
-    throw new Error("Failed to get canvas context");
+    return new Error("Failed to get canvas context");
   }
 
   ctx.drawImage(img, 0, 0);
 
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error("Failed to create blob from canvas"));
-        }
-      },
-      "image/png",
-      0.95,
-    );
-  });
+  const blobResult = await tryPromise(
+    new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error("Failed to create blob from canvas"));
+          }
+        },
+        "image/png",
+        0.95,
+      );
+    })
+  );
+
+  if (isErr(blobResult)) {
+    return new Error(`Blob creation failed: ${getErrorMessage(blobResult)}`);
+  }
+
+  return blobResult;
 }
 
 /**
  * Uploads a blob to Convex storage
+ * Returns errors as values instead of throwing
  */
-export async function uploadToConvex(blob: Blob): Promise<string> {
-  try {
-    const formData = new FormData();
-    formData.append("file", blob, "image.png");
+export async function uploadToConvex(blob: Blob): Promise<string | Error> {
+  const formData = new FormData();
+  formData.append("file", blob, "image.png");
 
-    const response = await fetch("/api/convex/upload", {
+  const fetchResult = await tryPromise(
+    fetch("/api/convex/upload", {
       method: "POST",
       body: formData,
-    });
+    })
+  );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(
-        errorData?.message || `Upload failed with status ${response.status}`,
-      );
-    }
+  if (isErr(fetchResult)) {
+    const errorMsg = `Upload fetch failed: ${getErrorMessage(fetchResult)}`;
+    showError("Upload failed", errorMsg);
+    return new Error(errorMsg);
+  }
 
-    const result = await response.json();
-    // Return proxy URL for client-side display (includes thumbnails)
-    return result.url;
-  } catch (error: unknown) {
+  const response = fetchResult;
+
+  if (!response.ok) {
+    const errorResult = await tryPromise(response.json());
+    const errorMsg = !isErr(errorResult) && errorResult?.message
+      ? errorResult.message
+      : `Upload failed with status ${response.status}`;
+
+    // Check for rate limit
     const isRateLimit =
-      (error as { status?: number; message?: string }).status === 429 ||
-      (error as { message?: string }).message?.includes("429") ||
-      (error as { message?: string }).message?.includes("rate limit");
+      response.status === 429 ||
+      errorMsg.includes("429") ||
+      errorMsg.includes("rate limit");
 
     if (isRateLimit) {
       showError("Rate limit exceeded", "Please try again later.");
     } else {
-      showError(
-        "Upload failed",
-        error instanceof Error ? error.message : "Unknown error",
-      );
+      showError("Upload failed", errorMsg);
     }
-    throw error;
+
+    return new Error(errorMsg);
   }
+
+  const jsonResult = await tryPromise(response.json());
+
+  if (isErr(jsonResult)) {
+    const errorMsg = `Upload response parse failed: ${getErrorMessage(jsonResult)}`;
+    showError("Upload failed", errorMsg);
+    return new Error(errorMsg);
+  }
+
+  // Return proxy URL for client-side display (includes thumbnails)
+  return jsonResult.url;
 }
 
 /**
  * Ensures an image is stored in Convex, uploading if necessary
  * Returns a URL (either proxy or full, depending on input)
+ * Returns errors as values instead of throwing
  */
-export async function ensureImageInConvex(imageSrc: string): Promise<string> {
+export async function ensureImageInConvex(imageSrc: string): Promise<string | Error> {
   // If already in Convex, return as-is (could be proxy or signed URL)
   if (isConvexStorageUrl(imageSrc)) {
     return imageSrc;
@@ -151,22 +186,32 @@ export async function ensureImageInConvex(imageSrc: string): Promise<string> {
 
   // Otherwise, convert and upload
   const blob = await imageToBlob(imageSrc);
-  return await uploadToConvex(blob);
+  if (blob instanceof Error) {
+    return new Error(`Image conversion failed: ${blob.message}`);
+  }
+
+  const uploadResult = await uploadToConvex(blob);
+  if (uploadResult instanceof Error) {
+    return new Error(`Upload failed: ${uploadResult.message}`);
+  }
+
+  return uploadResult;
 }
 
 /**
  * Converts a proxy URL or Convex URL to a signed URL suitable for tRPC
  * Extracts signed URL from proxy URLs, returns full URLs as-is
+ * Returns errors as values instead of throwing
  */
-export function toSignedUrl(imageUrl: string): string {
+export function toSignedUrl(imageUrl: string): string | Error {
   // Validate input
   if (!imageUrl || typeof imageUrl !== "string") {
-    throw new Error("Invalid image URL: empty or non-string");
+    return new Error("Invalid image URL: empty or non-string");
   }
 
   const trimmedUrl = imageUrl.trim();
   if (!trimmedUrl) {
-    throw new Error("Invalid image URL: empty after trimming");
+    return new Error("Invalid image URL: empty after trimming");
   }
 
   // Check if it's a proxy URL (more robust check)
@@ -176,7 +221,7 @@ export function toSignedUrl(imageUrl: string): string {
     const signedUrl = extractSignedUrlFromProxy(trimmedUrl);
 
     if (!signedUrl) {
-      throw new Error(
+      return new Error(
         `Failed to extract signed URL from proxy URL: ${trimmedUrl.substring(0, 100)}`,
       );
     }
@@ -185,14 +230,14 @@ export function toSignedUrl(imageUrl: string): string {
 
   // Handle data URLs (valid but not suitable for server-side APIs)
   if (trimmedUrl.startsWith("data:")) {
-    throw new Error(
+    return new Error(
       "Data URLs are not supported for server-side processing. Please upload the image first.",
     );
   }
 
   // If it's a relative URL that's not a proxy, it's invalid
   if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
-    throw new Error(
+    return new Error(
       `Invalid image URL format: must be a full URL or proxy URL, got: ${trimmedUrl.substring(0, 100)}`,
     );
   }
@@ -201,7 +246,7 @@ export function toSignedUrl(imageUrl: string): string {
   try {
     new URL(trimmedUrl);
   } catch {
-    throw new Error(`Malformed URL structure: ${trimmedUrl.substring(0, 100)}`);
+    return new Error(`Malformed URL structure: ${trimmedUrl.substring(0, 100)}`);
   }
 
   // Otherwise return as-is (already a full URL)

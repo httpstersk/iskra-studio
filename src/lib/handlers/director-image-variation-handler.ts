@@ -1,6 +1,7 @@
 /**
  * Director Image Variation Handler
  * Orchestrates director-style image generation using FIBO + director refinement
+ * Uses errors-as-values pattern with @safe-std/error
  *
  * @module lib/handlers/director-image-variation-handler
  */
@@ -25,6 +26,7 @@ import {
   VARIATION_STATUS,
 } from "./variation-shared-utils";
 import { validateSingleImageSelection } from "./variation-utils";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Dependencies for director image variation handler
@@ -55,33 +57,48 @@ interface DirectorVariationsResponse {
 
 /**
  * Generates director variations (FIBO analysis + director refinement on server)
+ * Returns errors as values instead of throwing
  */
 async function generateDirectorVariations(
   imageUrl: string,
   directors: string[],
   userContext?: string,
-): Promise<DirectorVariationsResponse> {
-  const response = await fetch("/api/generate-director-variations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      imageUrl,
-      directors,
-      userContext,
-    }),
-  });
+): Promise<DirectorVariationsResponse | Error> {
+  const fetchResult = await tryPromise(
+    fetch("/api/generate-director-variations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        imageUrl,
+        directors,
+        userContext,
+      }),
+    })
+  );
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => null);
-    throw new Error(
-      error?.error ||
-        `Director variations generation failed with status ${response.status}`,
-    );
+  if (isErr(fetchResult)) {
+    return new Error(`Failed to call director variations API: ${getErrorMessage(fetchResult)}`);
   }
 
-  return response.json();
+  const response = fetchResult;
+
+  if (!response.ok) {
+    const errorResult = await tryPromise(response.json());
+    const errorMsg = !isErr(errorResult) && errorResult?.error
+      ? errorResult.error
+      : `Director variations generation failed with status ${response.status}`;
+    return new Error(errorMsg);
+  }
+
+  const jsonResult = await tryPromise(response.json());
+
+  if (isErr(jsonResult)) {
+    return new Error(`Failed to parse director variations response: ${getErrorMessage(jsonResult)}`);
+  }
+
+  return jsonResult;
 }
 
 /**
@@ -118,123 +135,170 @@ export const handleDirectorImageVariations = async (
   setIsGenerating(true);
   const timestamp = Date.now();
 
-  try {
-    // OPTIMIZATION: Perform early preparation BEFORE async operations
-    const {
-      imageSizeDimensions,
-      pixelatedSrc,
-      positionIndices,
-      snappedSource,
-    } = await performEarlyPreparation(selectedImage, variationCount);
+  // OPTIMIZATION: Perform early preparation BEFORE async operations
+  const preparationResult = await tryPromise(
+    performEarlyPreparation(selectedImage, variationCount)
+  );
 
-    // Create factory function with shared configuration for all placeholders
-    const makePlaceholder = createPlaceholderFactory({
-      imageSizeDimensions,
-      pixelatedSrc,
-      positionIndices,
-      selectedImage,
-      snappedSource,
-      timestamp,
-    });
-
-    // Create placeholders IMMEDIATELY for optimistic UI (BEFORE any async operations that can fail)
-    const placeholderImages: PlacedImage[] = Array.from(
-      { length: variationCount },
-      (_, index) => makePlaceholder({}, index),
-    );
-
-    setImages((prev) => [...prev, ...placeholderImages]);
-
-    // Stage 0: Upload image to ensure it's in Convex
-    const { signedImageUrl } = await performImageUploadWorkflow({
-      selectedImage,
-      setActiveGenerations,
-      timestamp,
-    });
-
-    // Stage 1: Apply pixelated overlay to reference image during analysis
-    applyPixelatedOverlayToReferenceImage({
-      pixelatedSrc,
-      selectedImage,
-      setImages,
-    });
-
-    const processId = setAnalyzingStatus({
-      signedImageUrl,
-      setActiveGenerations,
-      timestamp,
-    });
-
-    // Stage 2: Select random visual stylists (directors or cinematographers)
-    const selectedDirectors = selectRandomVisualStylists(variationCount);
-
-    const { refinedPrompts } = await generateDirectorVariations(
-      signedImageUrl,
-      selectedDirectors,
-      variationPrompt,
-    );
-
-    // Remove analyzing status
-    removeAnalyzingStatus(processId, setActiveGenerations);
-
-    // Stage 4: Update existing placeholders with director metadata
-    setImages((prev) =>
-      prev.map((img) => {
-        // Check if this is one of our variation placeholders
-        const match = img.id.match(/^variation-(\d+)-(\d+)$/);
-        if (match && parseInt(match[1]) === timestamp) {
-          const index = parseInt(match[2]);
-          const directorData = refinedPrompts[index];
-          if (directorData) {
-            return {
-              ...img,
-              directorName: directorData.director,
-              isDirector: true,
-            };
-          }
-        }
-        return img;
-      }),
-    );
-
-    // Stage 5: Set up active generations for Seedream/Nano Banana
-    // Convert refined FIBO structured JSON to concise text prompts
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-
-      refinedPrompts.forEach((item, index) => {
-        const placeholderId = `variation-${timestamp}-${index}`;
-
-        // Convert refined FIBO JSON (with director's style) to text prompt
-        const finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
-
-        newMap.set(placeholderId, {
-          imageSize: imageSizeDimensions,
-          imageUrl: signedImageUrl,
-          isVariation: true,
-          model: imageModel,
-          prompt: finalPrompt,
-          status: VARIATION_STATUS.GENERATING,
-        });
-      });
-
-      return newMap;
-    });
-
-    setIsGenerating(false);
-  } catch (error) {
-    handleError(error, {
-      operation: "Director variation generation",
+  if (isErr(preparationResult)) {
+    handleError(preparationResult.payload, {
+      operation: "Director variation preparation",
       context: { variationCount, selectedImageId: selectedImage?.id },
     });
 
     await handleVariationError({
-      error,
+      error: preparationResult.payload,
       selectedImage,
       setActiveGenerations,
       setImages,
       setIsGenerating,
       timestamp,
     });
+    return;
   }
+
+  const {
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    snappedSource,
+  } = preparationResult;
+
+  // Create factory function with shared configuration for all placeholders
+  const makePlaceholder = createPlaceholderFactory({
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    selectedImage,
+    snappedSource,
+    timestamp,
+  });
+
+  // Create placeholders IMMEDIATELY for optimistic UI (BEFORE any async operations that can fail)
+  const placeholderImages: PlacedImage[] = Array.from(
+    { length: variationCount },
+    (_, index) => makePlaceholder({}, index),
+  );
+
+  setImages((prev) => [...prev, ...placeholderImages]);
+
+  // Stage 0: Upload image to ensure it's in Convex
+  const uploadResult = await tryPromise(
+    performImageUploadWorkflow({
+      selectedImage,
+      setActiveGenerations,
+      timestamp,
+    })
+  );
+
+  if (isErr(uploadResult)) {
+    handleError(uploadResult.payload, {
+      operation: "Director variation upload",
+      context: { variationCount, selectedImageId: selectedImage?.id },
+    });
+
+    await handleVariationError({
+      error: uploadResult.payload,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
+    return;
+  }
+
+  const { signedImageUrl } = uploadResult;
+
+  // Stage 1: Apply pixelated overlay to reference image during analysis
+  applyPixelatedOverlayToReferenceImage({
+    pixelatedSrc,
+    selectedImage,
+    setImages,
+  });
+
+  const processId = setAnalyzingStatus({
+    signedImageUrl,
+    setActiveGenerations,
+    timestamp,
+  });
+
+  // Stage 2: Select random visual stylists (directors or cinematographers)
+  const selectedDirectors = selectRandomVisualStylists(variationCount);
+
+  const variationsResult = await generateDirectorVariations(
+    signedImageUrl,
+    selectedDirectors,
+    variationPrompt,
+  );
+
+  if (variationsResult instanceof Error) {
+    removeAnalyzingStatus(processId, setActiveGenerations);
+
+    handleError(variationsResult, {
+      operation: "Director variation generation",
+      context: { variationCount, selectedImageId: selectedImage?.id },
+    });
+
+    await handleVariationError({
+      error: variationsResult,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
+    return;
+  }
+
+  const { refinedPrompts } = variationsResult;
+
+  // Remove analyzing status
+  removeAnalyzingStatus(processId, setActiveGenerations);
+
+  // Stage 4: Update existing placeholders with director metadata
+  setImages((prev) =>
+    prev.map((img) => {
+      // Check if this is one of our variation placeholders
+      const match = img.id.match(/^variation-(\d+)-(\d+)$/);
+      if (match && parseInt(match[1]) === timestamp) {
+        const index = parseInt(match[2]);
+        const directorData = refinedPrompts[index];
+        if (directorData) {
+          return {
+            ...img,
+            directorName: directorData.director,
+            isDirector: true,
+          };
+        }
+      }
+      return img;
+    }),
+  );
+
+  // Stage 5: Set up active generations for Seedream/Nano Banana
+  // Convert refined FIBO structured JSON to concise text prompts
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+
+    refinedPrompts.forEach((item, index) => {
+      const placeholderId = `variation-${timestamp}-${index}`;
+
+      // Convert refined FIBO JSON (with director's style) to text prompt
+      const finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
+
+      newMap.set(placeholderId, {
+        imageSize: imageSizeDimensions,
+        imageUrl: signedImageUrl,
+        isVariation: true,
+        model: imageModel,
+        prompt: finalPrompt,
+        status: VARIATION_STATUS.GENERATING,
+      });
+    });
+
+    return newMap;
+  });
+
+  setIsGenerating(false);
 };

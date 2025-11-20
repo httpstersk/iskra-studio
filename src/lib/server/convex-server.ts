@@ -5,6 +5,7 @@
  * - Pre-fetching user data in Server Components
  * - Loading initial project lists
  * - Reducing client-side waterfall requests
+ * Uses errors-as-values pattern with @safe-std/error
  *
  * @remarks
  * This module uses `server-only` to ensure it's never bundled client-side.
@@ -14,6 +15,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import "server-only";
 import { api } from "../../../convex/_generated/api";
+import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 
 /**
  * Gets the Convex deployment URL.
@@ -77,33 +79,51 @@ export function createConvexClientWithToken(token: string): ConvexHttpClient {
 
 /**
  * Server-side: Gets current user data from Convex.
+ * Uses errors-as-values pattern for silent failures.
  *
- * @returns User record or null if not authenticated
+ * @returns User record or null if not authenticated or on error
  */
 export async function getCurrentUser() {
-  try {
-    const client = await getAuthenticatedConvexClient();
-    const user = await client.query(api.users.getCurrentUser);
-    return user;
-  } catch (_error) {
+  const clientResult = await tryPromise(getAuthenticatedConvexClient());
+
+  if (isErr(clientResult)) {
     return null;
   }
+
+  const client = clientResult;
+  const userResult = await tryPromise(client.query(api.users.getCurrentUser));
+
+  if (isErr(userResult)) {
+    return null;
+  }
+
+  return userResult;
 }
 
 /**
  * Server-side: Lists user's projects with optional limit.
+ * Uses errors-as-values pattern for silent failures.
  *
  * @param limit - Maximum number of projects to fetch (default: 10)
  * @returns Array of projects or empty array if not available
  */
 export async function listProjects(limit = 10) {
-  try {
-    const client = await getAuthenticatedConvexClient();
-    const projects = await client.query(api.projects.listProjects, { limit });
-    return projects;
-  } catch (_error) {
+  const clientResult = await tryPromise(getAuthenticatedConvexClient());
+
+  if (isErr(clientResult)) {
     return [];
   }
+
+  const client = clientResult;
+  const projectsResult = await tryPromise(
+    client.query(api.projects.listProjects, { limit })
+  );
+
+  if (isErr(projectsResult)) {
+    return [];
+  }
+
+  return projectsResult;
 }
 
 /**

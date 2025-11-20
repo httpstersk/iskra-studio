@@ -2,6 +2,7 @@
  * B-roll Image Variation Handler
  * Generates B-roll image variations from a reference image
  * Uses OpenAI vision analysis to match the reference style
+ * Uses errors-as-values pattern with @safe-std/error
  *
  * @module lib/handlers/b-roll-image-variation-handler
  */
@@ -21,6 +22,7 @@ import {
   toSignedUrl,
   validateSingleImageSelection,
 } from "./variation-utils";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * API endpoints for B-roll generation
@@ -77,32 +79,45 @@ interface BrollImageVariationHandlerDeps {
 
 /**
  * Analyzes an image using OpenAI's vision model with structured output.
+ * Returns errors as values instead of throwing
  *
  * @param imageUrl - URL of the image to analyze
- * @returns Promise resolving to image style and mood analysis
- * @throws Error if analysis fails
+ * @returns Promise resolving to image style and mood analysis or Error
  */
 async function analyzeImageStyle(
   imageUrl: string,
-): Promise<ImageStyleMoodAnalysis> {
-  const response = await fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
-    body: JSON.stringify({ imageUrl }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  });
+): Promise<ImageStyleMoodAnalysis | Error> {
+  const fetchResult = await tryPromise(
+    fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
+      body: JSON.stringify({ imageUrl }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    })
+  );
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => null);
-    throw new Error(
-      error?.error ||
-        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`,
-    );
+  if (isErr(fetchResult)) {
+    return new Error(`Failed to call image analysis API: ${getErrorMessage(fetchResult)}`);
   }
 
-  const result = await response.json();
-  return result.analysis;
+  const response = fetchResult;
+
+  if (!response.ok) {
+    const errorResult = await tryPromise(response.json());
+    const errorMsg = !isErr(errorResult) && errorResult?.error
+      ? errorResult.error
+      : `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
+    return new Error(errorMsg);
+  }
+
+  const jsonResult = await tryPromise(response.json());
+
+  if (isErr(jsonResult)) {
+    return new Error(`Failed to parse image analysis response: ${getErrorMessage(jsonResult)}`);
+  }
+
+  return jsonResult.analysis;
 }
 
 /**
@@ -144,50 +159,78 @@ export const handleBrollImageVariations = async (
 
   const timestamp = Date.now();
 
-  try {
-    // OPTIMIZATION: Perform early preparation BEFORE async operations
-    // This generates pixelated overlay immediately for instant visual feedback
-    const {
-      imageSizeDimensions,
-      pixelatedSrc,
-      positionIndices,
-      snappedSource,
-    } = await performEarlyPreparation(selectedImage, variationCount);
+  // OPTIMIZATION: Perform early preparation BEFORE async operations
+  // This generates pixelated overlay immediately for instant visual feedback
+  const preparationResult = await tryPromise(
+    performEarlyPreparation(selectedImage, variationCount)
+  );
 
-    // Create factory function with shared configuration for all placeholders
-    const makePlaceholder = createPlaceholderFactory({
-      imageSizeDimensions,
-      pixelatedSrc,
-      positionIndices,
-      selectedImage,
-      snappedSource,
-      timestamp,
-    });
-
-    // Create placeholders IMMEDIATELY (optimistic UI) BEFORE async operations
-    const placeholderImages: PlacedImage[] = Array.from(
-      { length: variationCount },
-      (_, index) => makePlaceholder({}, index),
+  if (isErr(preparationResult)) {
+    showErrorFromException(
+      "Generation failed",
+      preparationResult.payload,
+      "Failed to prepare for B-roll variations",
     );
 
-    setImages((prev) => [...prev, ...placeholderImages]);
-
-    // Stage 0: Upload image to ensure it's in Convex
-    const uploadId = `variation-${timestamp}-upload`;
-
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-      newMap.set(uploadId, {
-        imageUrl: "",
-        isVariation: true,
-        prompt: "",
-        status: VARIATION_STATUS.UPLOADING,
-      });
-      return newMap;
+    await handleVariationError({
+      error: preparationResult.payload,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
     });
+    return;
+  }
 
-    const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
-    const imageUrl = await ensureImageInConvex(sourceImageUrl);
+  const {
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    snappedSource,
+  } = preparationResult;
+
+  // Create factory function with shared configuration for all placeholders
+  const makePlaceholder = createPlaceholderFactory({
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    selectedImage,
+    snappedSource,
+    timestamp,
+  });
+
+  // Create placeholders IMMEDIATELY (optimistic UI) BEFORE async operations
+  const placeholderImages: PlacedImage[] = Array.from(
+    { length: variationCount },
+    (_, index) => makePlaceholder({}, index),
+  );
+
+  setImages((prev) => [...prev, ...placeholderImages]);
+
+  // Stage 0: Upload image to ensure it's in Convex
+  const uploadId = `variation-${timestamp}-upload`;
+
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.set(uploadId, {
+      imageUrl: "",
+      isVariation: true,
+      prompt: "",
+      status: VARIATION_STATUS.UPLOADING,
+    });
+    return newMap;
+  });
+
+  const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
+  const imageUrl = await ensureImageInConvex(sourceImageUrl);
+
+  if (imageUrl instanceof Error) {
+    showErrorFromException(
+      "Upload failed",
+      imageUrl,
+      "Failed to upload image for B-roll variations",
+    );
 
     // Remove upload placeholder
     setActiveGenerations((prev) => {
@@ -196,24 +239,67 @@ export const handleBrollImageVariations = async (
       return newMap;
     });
 
-    // Convert to signed URL for API calls (handles proxy URLs)
-    const signedImageUrl = toSignedUrl(imageUrl);
-
-    // Stage 1: Analyze image style/mood
-    const analyzeId = `variation-${timestamp}-analyze`;
-
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-      newMap.set(analyzeId, {
-        imageUrl: signedImageUrl,
-        isVariation: true,
-        prompt: "",
-        status: VARIATION_STATUS.ANALYZING,
-      });
-      return newMap;
+    await handleVariationError({
+      error: imageUrl,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
     });
+    return;
+  }
 
-    const imageAnalysis = await analyzeImageStyle(signedImageUrl);
+  // Remove upload placeholder
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.delete(uploadId);
+    return newMap;
+  });
+
+  // Convert to signed URL for API calls (handles proxy URLs)
+  const signedImageUrl = toSignedUrl(imageUrl);
+
+  if (signedImageUrl instanceof Error) {
+    showErrorFromException(
+      "URL conversion failed",
+      signedImageUrl,
+      "Failed to convert image URL for B-roll variations",
+    );
+
+    await handleVariationError({
+      error: signedImageUrl,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
+    return;
+  }
+
+  // Stage 1: Analyze image style/mood
+  const analyzeId = `variation-${timestamp}-analyze`;
+
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.set(analyzeId, {
+      imageUrl: signedImageUrl,
+      isVariation: true,
+      prompt: "",
+      status: VARIATION_STATUS.ANALYZING,
+    });
+    return newMap;
+  });
+
+  const imageAnalysis = await analyzeImageStyle(signedImageUrl);
+
+  if (imageAnalysis instanceof Error) {
+    showErrorFromException(
+      "Analysis failed",
+      imageAnalysis,
+      "Failed to analyze image for B-roll variations",
+    );
 
     // Remove analyze placeholder
     setActiveGenerations((prev) => {
@@ -222,50 +308,75 @@ export const handleBrollImageVariations = async (
       return newMap;
     });
 
-    // Stage 2: Generate B-roll concepts dynamically based on analysis
-    const brollConcepts = await generateBRollConcepts({
-      count: variationCount,
-      styleAnalysis: imageAnalysis,
-      userContext: variationPrompt,
-    });
-
-    // Stage 3: Use generated prompts directly (they're already formatted)
-    const formattedPrompts = brollConcepts.concepts;
-
-    // Batch all activeGeneration updates into single state update
-    setActiveGenerations((prev) => {
-      const newMap = new Map(prev);
-      formattedPrompts.forEach((formattedPrompt, index) => {
-        const placeholderId = `variation-${timestamp}-${index}`;
-
-        newMap.set(placeholderId, {
-          imageSize: imageSizeDimensions,
-          imageUrl: signedImageUrl,
-          isVariation: true,
-          model: imageModel,
-          prompt: formattedPrompt,
-          status: VARIATION_STATUS.GENERATING,
-        });
-      });
-
-      return newMap;
-    });
-
-    // Setup complete - StreamingImage components will handle generation
-    setIsGenerating(false);
-  } catch (error) {
-    showErrorFromException(
-      "Generation failed",
-      error,
-      ERROR_MESSAGES.BROLL_GENERATION_FAILED,
-    );
-
     await handleVariationError({
-      error,
+      error: imageAnalysis,
+      selectedImage,
       setActiveGenerations,
       setImages,
       setIsGenerating,
       timestamp,
     });
+    return;
   }
+
+  // Remove analyze placeholder
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.delete(analyzeId);
+    return newMap;
+  });
+
+  // Stage 2: Generate B-roll concepts dynamically based on analysis
+  const brollResult = await tryPromise(
+    generateBRollConcepts({
+      count: variationCount,
+      styleAnalysis: imageAnalysis,
+      userContext: variationPrompt,
+    })
+  );
+
+  if (isErr(brollResult)) {
+    showErrorFromException(
+      "Generation failed",
+      brollResult.payload,
+      ERROR_MESSAGES.BROLL_GENERATION_FAILED,
+    );
+
+    await handleVariationError({
+      error: brollResult.payload,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
+    return;
+  }
+
+  const brollConcepts = brollResult;
+
+  // Stage 3: Use generated prompts directly (they're already formatted)
+  const formattedPrompts = brollConcepts.concepts;
+
+  // Batch all activeGeneration updates into single state update
+  setActiveGenerations((prev) => {
+    const newMap = new Map(prev);
+    formattedPrompts.forEach((formattedPrompt, index) => {
+      const placeholderId = `variation-${timestamp}-${index}`;
+
+      newMap.set(placeholderId, {
+        imageSize: imageSizeDimensions,
+        imageUrl: signedImageUrl,
+        isVariation: true,
+        model: imageModel,
+        prompt: formattedPrompt,
+        status: VARIATION_STATUS.GENERATING,
+      });
+    });
+
+    return newMap;
+  });
+
+  // Setup complete - StreamingImage components will handle generation
+  setIsGenerating(false);
 };

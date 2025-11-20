@@ -3,6 +3,7 @@
  *
  * Implements the StorageService interface using Convex backend for file storage.
  * Handles uploads via HTTP actions, quota validation, and retry logic.
+ * Uses errors-as-values pattern with @safe-std/error
  */
 
 import type { AssetUploadResult } from "@/types/asset";
@@ -14,6 +15,7 @@ import type {
 import { generateThumbnail } from "@/lib/utils/generate-thumbnail";
 import { httpClient } from "@/lib/api/http-client";
 import { uploadClient } from "./upload-client";
+import { StorageErr, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Convex storage service implementation.
@@ -58,12 +60,15 @@ export class ConvexStorageService implements StorageService {
    *
    * @param storageId - Convex storage ID of the file
    * @param userId - User ID for authorization
-   * @throws Error if deletion fails or user is not authorized
+   * @returns Error if deletion fails or user is not authorized
    */
-  async delete(_storageId: string, _userId: string): Promise<void> {
+  async delete(_storageId: string, _userId: string): Promise<void | StorageErr> {
     // TODO: Implement using Convex mutation when client is available
     // This will be called via the API client from the frontend
-    throw new Error("Delete operation not yet implemented");
+    return new StorageErr({
+      message: "Delete operation not yet implemented",
+      operation: "delete",
+    });
   }
 
   /**
@@ -71,29 +76,31 @@ export class ConvexStorageService implements StorageService {
    *
    * Fetches a file from the provided URL and returns it as a Blob.
    * Automatically retries on failure with exponential backoff.
+   * Returns errors as values instead of throwing.
    *
    * @param url - URL of the file to download
    * @param options - Download options (timeout, retries)
-   * @returns Blob containing the downloaded file
-   * @throws Error if download fails after all retries
+   * @returns Blob containing the downloaded file or error
    */
-  async download(url: string, options?: DownloadOptions): Promise<Blob> {
+  async download(url: string, options?: DownloadOptions): Promise<Blob | StorageErr> {
     const timeout = options?.timeout ?? 30000;
     const maxRetries = options?.maxRetries ?? this.maxRetries;
 
-    try {
-      const response = await httpClient.fetch<Blob>(url, {
-        method: "GET",
-        timeout,
-        retries: maxRetries,
-      });
+    const response = await httpClient.fetch<Blob>(url, {
+      method: "GET",
+      timeout,
+      retries: maxRetries,
+    });
 
-      return response.data;
-    } catch (error) {
-      throw new Error(
-        `Failed to download file after ${maxRetries + 1} attempts: ${error}`,
-      );
+    if (isErr(response)) {
+      return new StorageErr({
+        message: `Failed to download file after ${maxRetries + 1} attempts: ${getErrorMessage(response)}`,
+        operation: "download",
+        cause: response,
+      });
     }
+
+    return response.data;
   }
 
   /**
@@ -120,33 +127,41 @@ export class ConvexStorageService implements StorageService {
    *
    * Includes automatic retry logic for failed uploads.
    * Thumbnail generation failures don't block the upload.
+   * Returns errors as values instead of throwing.
    *
    * @param file - File blob to upload
    * @param options - Upload options (userId, type, metadata)
-   * @returns Upload result with storageId, URL, assetId, and optional thumbnailStorageId
-   * @throws Error if upload fails or quota is exceeded
+   * @returns Upload result with storageId, URL, assetId, and optional thumbnailStorageId or error
    */
-  async upload(file: Blob, options: UploadOptions): Promise<AssetUploadResult> {
+  async upload(file: Blob, options: UploadOptions): Promise<AssetUploadResult | StorageErr> {
     // SECURITY: userId should NOT be sent from client - it's derived from auth on backend
     // Remove userId from the formData - backend will get it from authenticated session
 
-    try {
-      // Generate thumbnail for images on client-side (bandwidth optimization)
-      let thumbnailBlob: Blob | undefined;
-      if (file.type.startsWith("image/")) {
-        thumbnailBlob = await generateThumbnail(file);
+    // Generate thumbnail for images on client-side (bandwidth optimization)
+    let thumbnailBlob: Blob | undefined;
+    if (file.type.startsWith("image/")) {
+      const thumbnailResult = await generateThumbnail(file);
+      // Thumbnail generation is optional - don't fail if it doesn't work
+      if (!isErr(thumbnailResult)) {
+        thumbnailBlob = thumbnailResult;
       }
-
-      // Use upload client with retry logic
-      return await uploadClient.upload({
-        file,
-        thumbnail: thumbnailBlob,
-        metadata: options.metadata,
-      });
-    } catch (error) {
-      throw new Error(
-        `Failed to upload file after ${this.maxRetries + 1} attempts: ${error}`,
-      );
     }
+
+    // Use upload client with retry logic
+    const result = await uploadClient.upload({
+      file,
+      thumbnail: thumbnailBlob,
+      metadata: options.metadata,
+    });
+
+    if (isErr(result)) {
+      return new StorageErr({
+        message: `Failed to upload file after ${this.maxRetries + 1} attempts: ${getErrorMessage(result)}`,
+        operation: "upload",
+        cause: result,
+      });
+    }
+
+    return result;
   }
 }

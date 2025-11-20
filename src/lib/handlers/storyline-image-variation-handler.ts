@@ -2,6 +2,7 @@
  * Storyline Image Variation Handler (Refactored)
  * Orchestrates storyline image generation using service layer
  * Separated state management from business logic
+ * Uses errors-as-values pattern with @safe-std/error
  *
  * @module lib/handlers/storyline-image-variation-handler
  */
@@ -33,6 +34,7 @@ import {
   updateGenerationStatus,
 } from "./variation-state-helpers";
 import { validateSingleImageSelection } from "./variation-utils";
+import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 
 const handlerLogger = logger.child({ handler: "storyline-image-variation" });
 
@@ -87,147 +89,214 @@ export const handleStorylineImageVariations = async (
   setIsGenerating(true);
   const timestamp = Date.now();
 
-  try {
-    handlerLogger.info("Starting storyline image variations", {
-      variationCount,
-      hasPrompt: !!variationPrompt,
-    });
+  handlerLogger.info("Starting storyline image variations", {
+    variationCount,
+    hasPrompt: !!variationPrompt,
+  });
 
-    // OPTIMIZATION: Perform early preparation BEFORE async operations
-    const {
-      imageSizeDimensions,
-      pixelatedSrc,
-      positionIndices,
-      snappedSource,
-    } = await performEarlyPreparation(selectedImage, variationCount);
+  // OPTIMIZATION: Perform early preparation BEFORE async operations
+  const preparationResult = await tryPromise(
+    performEarlyPreparation(selectedImage, variationCount)
+  );
 
-    // Create factory function with shared configuration for all placeholders
-    const makePlaceholder = createPlaceholderFactory({
-      imageSizeDimensions,
-      pixelatedSrc,
-      positionIndices,
-      selectedImage,
-      snappedSource,
-      timestamp,
-    });
-
-    // Create placeholders IMMEDIATELY for optimistic UI (BEFORE upload)
-    const placeholderImages: PlacedImage[] = Array.from(
-      { length: variationCount },
-      (_, index) => makePlaceholder({}, index),
-    );
-
-    setImages((prev) => [...prev, ...placeholderImages]);
-
-    // Stage 0: Upload image to ensure it's in Convex
-    const uploadId = createVariationId(timestamp, "upload");
-
-    updateGenerationStatus(setActiveGenerations, {
-      generationId: uploadId,
-      imageUrl: "",
-      status: VARIATION_STATUS.UPLOADING,
-    });
-
-    const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
-    const imageUrl = await ensureImageInConvex(sourceImageUrl);
-
-    removeGenerationStatus(setActiveGenerations, uploadId);
-
-    const signedImageUrl = toSignedUrl(imageUrl);
-
-    // Stage 1: Apply pixelated overlay to reference image during analysis
-    const analyzeId = createVariationId(timestamp, "analyze");
-
-    applyPixelatedOverlay(setImages, {
-      pixelatedSrc,
-      selectedImageId: selectedImage.id,
-    });
-
-    updateGenerationStatus(setActiveGenerations, {
-      generationId: analyzeId,
-      imageUrl: signedImageUrl,
-      status: VARIATION_STATUS.ANALYZING,
-    });
-
-    // DELEGATE TO SERVICE LAYER
-    handlerLogger.info("Delegating to storyline generation service");
-
-    // Stage 2: Transition to storyline creation
-    const storylineId = createVariationId(timestamp, "storyline");
-
-    transitionGenerationStatus(setActiveGenerations, analyzeId, {
-      generationId: storylineId,
-      imageUrl: signedImageUrl,
-      status: VARIATION_STATUS.CREATING_STORYLINE,
-    });
-
-    const concepts = await generateStorylineConcepts({
-      count: variationCount,
-      imageUrl: signedImageUrl,
-      userContext: variationPrompt,
-    });
-
-    removeGenerationStatus(setActiveGenerations, storylineId);
-
-    // Stage 3: Update existing placeholders with storyline metadata and set up active generations
-    const activeGenerations = new Map<string, ActiveGeneration>();
-
-    setImages((prev) =>
-      prev.map((img) => {
-        // Check if this is one of our variation placeholders
-        const match = img.id.match(/^variation-(\d+)-(\d+)$/);
-        if (match && parseInt(match[1]) === timestamp) {
-          const index = parseInt(match[2]);
-          const concept = concepts[index];
-          if (concept) {
-            // Set up active generation for this placeholder
-            const placeholderId = createVariationId(
-              timestamp,
-              index.toString(),
-            );
-            activeGenerations.set(placeholderId, {
-              imageSize: imageSizeDimensions,
-              imageUrl: signedImageUrl,
-              isVariation: true,
-              model: imageModel,
-              prompt: concept.prompt,
-              status: VARIATION_STATUS.GENERATING,
-            });
-
-            // Return updated placeholder with storyline metadata
-            return {
-              ...img,
-              isStoryline: true,
-              narrativeNote: concept.narrativeNote,
-              timeLabel: concept.timeLabel,
-            };
-          }
-        }
-        return img;
-      }),
-    );
-
-    setActiveGenerations((prev) => new Map([...prev, ...activeGenerations]));
-
-    handlerLogger.info("Storyline variations setup complete", {
-      conceptCount: concepts.length,
-    });
-
-    setIsGenerating(false);
-  } catch (error) {
-    handlerLogger.error("Storyline variation handler failed", error as Error);
-    handleError(error, {
-      operation: "Storyline variation generation",
+  if (isErr(preparationResult)) {
+    handlerLogger.error("Early preparation failed", preparationResult.payload as Error);
+    handleError(preparationResult.payload, {
+      operation: "Storyline variation preparation",
       context: { variationCount, selectedImageId: selectedImage?.id },
     });
 
     await handleVariationError({
-      error,
+      error: preparationResult.payload,
       selectedImage,
       setActiveGenerations,
       setImages,
       setIsGenerating,
       timestamp,
     });
+    return;
   }
+
+  const {
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    snappedSource,
+  } = preparationResult;
+
+  // Create factory function with shared configuration for all placeholders
+  const makePlaceholder = createPlaceholderFactory({
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    selectedImage,
+    snappedSource,
+    timestamp,
+  });
+
+  // Create placeholders IMMEDIATELY for optimistic UI (BEFORE upload)
+  const placeholderImages: PlacedImage[] = Array.from(
+    { length: variationCount },
+    (_, index) => makePlaceholder({}, index),
+  );
+
+  setImages((prev) => [...prev, ...placeholderImages]);
+
+  // Stage 0: Upload image to ensure it's in Convex
+  const uploadId = createVariationId(timestamp, "upload");
+
+  updateGenerationStatus(setActiveGenerations, {
+    generationId: uploadId,
+    imageUrl: "",
+    status: VARIATION_STATUS.UPLOADING,
+  });
+
+  const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
+  const imageUrl = await ensureImageInConvex(sourceImageUrl);
+
+  if (imageUrl instanceof Error) {
+    handlerLogger.error("Image upload failed", imageUrl);
+    handleError(imageUrl, {
+      operation: "Storyline variation upload",
+      context: { variationCount, selectedImageId: selectedImage?.id },
+    });
+
+    removeGenerationStatus(setActiveGenerations, uploadId);
+
+    await handleVariationError({
+      error: imageUrl,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
+    return;
+  }
+
+  removeGenerationStatus(setActiveGenerations, uploadId);
+
+  const signedImageUrl = toSignedUrl(imageUrl);
+
+  if (signedImageUrl instanceof Error) {
+    handlerLogger.error("URL conversion failed", signedImageUrl);
+    handleError(signedImageUrl, {
+      operation: "Storyline variation URL conversion",
+      context: { variationCount, selectedImageId: selectedImage?.id },
+    });
+
+    await handleVariationError({
+      error: signedImageUrl,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
+    return;
+  }
+
+  // Stage 1: Apply pixelated overlay to reference image during analysis
+  const analyzeId = createVariationId(timestamp, "analyze");
+
+  applyPixelatedOverlay(setImages, {
+    pixelatedSrc,
+    selectedImageId: selectedImage.id,
+  });
+
+  updateGenerationStatus(setActiveGenerations, {
+    generationId: analyzeId,
+    imageUrl: signedImageUrl,
+    status: VARIATION_STATUS.ANALYZING,
+  });
+
+  // DELEGATE TO SERVICE LAYER
+  handlerLogger.info("Delegating to storyline generation service");
+
+  // Stage 2: Transition to storyline creation
+  const storylineId = createVariationId(timestamp, "storyline");
+
+  transitionGenerationStatus(setActiveGenerations, analyzeId, {
+    generationId: storylineId,
+    imageUrl: signedImageUrl,
+    status: VARIATION_STATUS.CREATING_STORYLINE,
+  });
+
+  const conceptsResult = await tryPromise(
+    generateStorylineConcepts({
+      count: variationCount,
+      imageUrl: signedImageUrl,
+      userContext: variationPrompt,
+    })
+  );
+
+  if (isErr(conceptsResult)) {
+    handlerLogger.error("Storyline concept generation failed", conceptsResult.payload as Error);
+    handleError(conceptsResult.payload, {
+      operation: "Storyline variation generation",
+      context: { variationCount, selectedImageId: selectedImage?.id },
+    });
+
+    removeGenerationStatus(setActiveGenerations, storylineId);
+
+    await handleVariationError({
+      error: conceptsResult.payload,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
+    return;
+  }
+
+  const concepts = conceptsResult;
+
+  removeGenerationStatus(setActiveGenerations, storylineId);
+
+  // Stage 3: Update existing placeholders with storyline metadata and set up active generations
+  const activeGenerations = new Map<string, ActiveGeneration>();
+
+  setImages((prev) =>
+    prev.map((img) => {
+      // Check if this is one of our variation placeholders
+      const match = img.id.match(/^variation-(\d+)-(\d+)$/);
+      if (match && parseInt(match[1]) === timestamp) {
+        const index = parseInt(match[2]);
+        const concept = concepts[index];
+        if (concept) {
+          // Set up active generation for this placeholder
+          const placeholderId = createVariationId(
+            timestamp,
+            index.toString(),
+          );
+          activeGenerations.set(placeholderId, {
+            imageSize: imageSizeDimensions,
+            imageUrl: signedImageUrl,
+            isVariation: true,
+            model: imageModel,
+            prompt: concept.prompt,
+            status: VARIATION_STATUS.GENERATING,
+          });
+
+          // Return updated placeholder with storyline metadata
+          return {
+            ...img,
+            isStoryline: true,
+            narrativeNote: concept.narrativeNote,
+            timeLabel: concept.timeLabel,
+          };
+        }
+      }
+      return img;
+    }),
+  );
+
+  setActiveGenerations((prev) => new Map([...prev, ...activeGenerations]));
+
+  handlerLogger.info("Storyline variations setup complete", {
+    conceptCount: concepts.length,
+  });
+
+  setIsGenerating(false);
 };

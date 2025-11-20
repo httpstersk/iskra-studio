@@ -5,6 +5,7 @@ import {
 import type { GeneratedAssetUploadPayload } from "@/types/generated-asset";
 import { Buffer } from "node:buffer";
 import sharp from "sharp";
+import { trySync, tryPromise, isErr } from "@/lib/errors/safe-errors";
 
 const PROXY_PATH = "/api/storage/proxy";
 
@@ -54,17 +55,25 @@ function unwrapProxyUrl(maybeProxyUrl: URL): string | null {
 }
 
 export function resolveSourceUrl(sourceUrl: string, origin: string): string {
-  try {
-    if (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://")) {
-      const asUrl = new URL(sourceUrl);
-      return unwrapProxyUrl(asUrl) ?? asUrl.toString();
+  // Try to parse as absolute URL
+  if (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://")) {
+    const urlResult = trySync(() => new URL(sourceUrl));
+
+    if (isErr(urlResult)) {
+      return sourceUrl;
     }
 
-    const absolute = new URL(sourceUrl, origin);
-    return unwrapProxyUrl(absolute) ?? absolute.toString();
-  } catch {
+    return unwrapProxyUrl(urlResult) ?? urlResult.toString();
+  }
+
+  // Try to parse as relative URL
+  const absoluteResult = trySync(() => new URL(sourceUrl, origin));
+
+  if (isErr(absoluteResult)) {
     return sourceUrl;
   }
+
+  return unwrapProxyUrl(absoluteResult) ?? absoluteResult.toString();
 }
 
 async function downloadRemoteAsset(
@@ -92,17 +101,19 @@ async function downloadRemoteAsset(
 async function generateThumbnailBlob(
   buffer: Buffer
 ): Promise<Blob | undefined> {
-  try {
-    const thumbnailBuffer = await sharp(buffer)
+  const thumbnailResult = await tryPromise(
+    sharp(buffer)
       .resize(400, 400, {
         fit: "inside",
         withoutEnlargement: true,
       })
       .webp({ quality: 75 })
-      .toBuffer();
+      .toBuffer()
+  );
 
-    return new Blob([new Uint8Array(thumbnailBuffer)], { type: "image/webp" });
-  } catch (_error) {
+  if (isErr(thumbnailResult)) {
     return undefined;
   }
+
+  return new Blob([new Uint8Array(thumbnailResult)], { type: "image/webp" });
 }

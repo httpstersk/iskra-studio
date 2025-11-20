@@ -2,6 +2,9 @@
  * Sora 2 Video Variation Handler
  * Generates 4 cinematic video variations from a reference image using Sora 2 model
  * with AI-generated prompts based on image analysis
+ * Uses errors-as-values pattern with @safe-std/error
+ *
+ * @module lib/handlers/sora-video-variation-handler
  */
 
 import { VIDEO_DEFAULTS } from "@/constants/canvas";
@@ -17,6 +20,7 @@ import type {
 } from "@/types/canvas";
 import {
   createVideoPlaceholder,
+  handleVariationError,
   performEarlyPreparation,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
@@ -25,6 +29,7 @@ import {
   toSignedUrl,
   validateSingleImageSelection,
 } from "./variation-utils";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 // Constants
 const API_ENDPOINTS = {
@@ -63,40 +68,54 @@ interface SoraVideoVariationHandlerDeps {
 
 /**
  * Analyzes an image using OpenAI's vision model with structured output
+ * Returns errors as values instead of throwing
  * @param imageUrl - URL of the image to analyze
- * @returns Promise resolving to image style and mood analysis
- * @throws Error if analysis fails
+ * @returns Promise resolving to image style and mood analysis or Error
  */
-async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis> {
+async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis | Error> {
   // Validate URL before sending to API
   if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
-    throw new Error(
+    return new Error(
       `Invalid image URL for analysis: must be a full URL, got: ${imageUrl.substring(0, 100)}`,
     );
   }
 
-  const response = await fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
-    body: JSON.stringify({ imageUrl }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  });
+  const fetchResult = await tryPromise(
+    fetch(API_ENDPOINTS.ANALYZE_IMAGE, {
+      body: JSON.stringify({ imageUrl }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    })
+  );
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => null);
-
-    // Include validation details in the error message
-    const errorMsg = error?.details
-      ? `${error.error}: ${JSON.stringify(error.details)} (URL: ${imageUrl.substring(0, 100)})`
-      : error?.error ||
-        `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
-
-    throw new Error(errorMsg);
+  if (isErr(fetchResult)) {
+    return new Error(`Failed to call image analysis API: ${getErrorMessage(fetchResult)}`);
   }
 
-  const result = await response.json();
-  return result.analysis;
+  const response = fetchResult;
+
+  if (!response.ok) {
+    const errorResult = await tryPromise(response.json());
+
+    // Include validation details in the error message
+    const errorMsg = !isErr(errorResult) && errorResult?.details
+      ? `${errorResult.error}: ${JSON.stringify(errorResult.details)} (URL: ${imageUrl.substring(0, 100)})`
+      : !isErr(errorResult) && errorResult?.error
+        ? errorResult.error
+        : `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
+
+    return new Error(errorMsg);
+  }
+
+  const jsonResult = await tryPromise(response.json());
+
+  if (isErr(jsonResult)) {
+    return new Error(`Failed to parse image analysis response: ${getErrorMessage(jsonResult)}`);
+  }
+
+  return jsonResult.analysis;
 }
 
 /**
@@ -182,165 +201,232 @@ export const handleSoraVideoVariations = async (
 
   const timestamp = Date.now();
 
-  try {
-    // Check if user is authenticated
-    if (!userId) {
-      showError(
-        "Authentication required",
-        "Please sign in to generate video variations",
-      );
-      setIsGenerating(false);
-      return;
-    }
+  // Check if user is authenticated
+  if (!userId) {
+    showError(
+      "Authentication required",
+      "Please sign in to generate video variations",
+    );
+    setIsGenerating(false);
+    return;
+  }
 
-    // OPTIMIZATION: Perform early preparation BEFORE async operations
-    // This generates pixelated overlay immediately for instant visual feedback
-    const { pixelatedSrc, snappedSource, positionIndices } =
-      await performEarlyPreparation(selectedImage, VARIATION_COUNT);
+  // OPTIMIZATION: Perform early preparation BEFORE async operations
+  // This generates pixelated overlay immediately for instant visual feedback
+  const preparationResult = await tryPromise(
+    performEarlyPreparation(selectedImage, VARIATION_COUNT)
+  );
 
-    // Stage 0: Uploading image to ensure it's in Convex
-    const uploadId = `video-${timestamp}-upload`;
+  if (isErr(preparationResult)) {
+    showErrorFromException(
+      "Generation failed",
+      preparationResult.payload,
+      "Failed to prepare for video variations",
+    );
+    setIsGenerating(false);
+    return;
+  }
 
-    setActiveVideoGenerations((prev) => {
-      const newMap = new Map(prev);
-      newMap.set(uploadId, {
-        imageUrl: "",
-        prompt: "",
-        status: VARIATION_STATUS.UPLOADING,
-        isVariation: true,
-        duration: parseDuration(videoSettings.duration),
-        modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
-        sourceImageId: selectedIds[0],
-      });
-      return newMap;
+  const { pixelatedSrc, snappedSource, positionIndices } = preparationResult;
+
+  // Stage 0: Uploading image to ensure it's in Convex
+  const uploadId = `video-${timestamp}-upload`;
+
+  setActiveVideoGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.set(uploadId, {
+      imageUrl: "",
+      prompt: "",
+      status: VARIATION_STATUS.UPLOADING,
+      isVariation: true,
+      duration: parseDuration(videoSettings.duration),
+      modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
+      sourceImageId: selectedIds[0],
     });
+    return newMap;
+  });
 
-    const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
+  const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
 
-    // Validate source URL before processing
-    if (!sourceImageUrl || sourceImageUrl.length === 0) {
-      throw new Error("Source image URL is missing or empty");
-    }
-
-    const imageUrl = await ensureImageInConvex(sourceImageUrl);
-
-    // Remove upload placeholder
+  // Validate source URL before processing
+  if (!sourceImageUrl || sourceImageUrl.length === 0) {
+    showError("Invalid image", "Source image URL is missing or empty");
     setActiveVideoGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.delete(uploadId);
       return newMap;
     });
+    setIsGenerating(false);
+    return;
+  }
 
-    // Convert proxy URL to signed URL for API
-    const signedImageUrl = toSignedUrl(imageUrl);
+  const imageUrl = await ensureImageInConvex(sourceImageUrl);
 
-    // Validate the signed URL before making API calls
-    if (
-      !signedImageUrl.startsWith("http://") &&
-      !signedImageUrl.startsWith("https://")
-    ) {
-      throw new Error(
-        `Invalid signed URL format: Expected full URL but got: ${signedImageUrl.substring(0, 100)}`,
-      );
-    }
-
-    // Stage 1: Analyze image style/mood
-    const analyzeId = `video-${timestamp}-analyze`;
-
+  if (imageUrl instanceof Error) {
+    showErrorFromException(
+      "Upload failed",
+      imageUrl,
+      "Failed to upload image to storage",
+    );
     setActiveVideoGenerations((prev) => {
       const newMap = new Map(prev);
-      newMap.set(analyzeId, {
-        imageUrl: signedImageUrl,
-        prompt: "",
-        status: VARIATION_STATUS.ANALYZING,
-        isVariation: true,
-        duration: parseDuration(videoSettings.duration),
-        modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
-        sourceImageId: selectedIds[0],
-      });
+      newMap.delete(uploadId);
       return newMap;
     });
+    setIsGenerating(false);
+    return;
+  }
 
-    const imageAnalysis = await analyzeImage(signedImageUrl);
+  // Remove upload placeholder
+  setActiveVideoGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.delete(uploadId);
+    return newMap;
+  });
 
-    // Remove analyze placeholder
+  // Convert proxy URL to signed URL for API
+  const signedImageUrl = toSignedUrl(imageUrl);
+
+  if (signedImageUrl instanceof Error) {
+    showErrorFromException(
+      "URL conversion failed",
+      signedImageUrl,
+      "Failed to convert image URL",
+    );
+    setIsGenerating(false);
+    return;
+  }
+
+  // Validate the signed URL before making API calls
+  if (
+    !signedImageUrl.startsWith("http://") &&
+    !signedImageUrl.startsWith("https://")
+  ) {
+    showError(
+      "Invalid URL",
+      `Invalid signed URL format: Expected full URL but got: ${signedImageUrl.substring(0, 100)}`,
+    );
+    setIsGenerating(false);
+    return;
+  }
+
+  // Stage 1: Analyze image style/mood
+  const analyzeId = `video-${timestamp}-analyze`;
+
+  setActiveVideoGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.set(analyzeId, {
+      imageUrl: signedImageUrl,
+      prompt: "",
+      status: VARIATION_STATUS.ANALYZING,
+      isVariation: true,
+      duration: parseDuration(videoSettings.duration),
+      modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
+      sourceImageId: selectedIds[0],
+    });
+    return newMap;
+  });
+
+  const imageAnalysis = await analyzeImage(signedImageUrl);
+
+  if (imageAnalysis instanceof Error) {
+    showErrorFromException(
+      "Analysis failed",
+      imageAnalysis,
+      "Failed to analyze image",
+    );
     setActiveVideoGenerations((prev) => {
       const newMap = new Map(prev);
       newMap.delete(analyzeId);
       return newMap;
     });
+    setIsGenerating(false);
+    return;
+  }
 
-    // Stage 2: Generate storyline concepts using AI
-    const duration = parseDuration(videoSettings.duration);
+  // Remove analyze placeholder
+  setActiveVideoGenerations((prev) => {
+    const newMap = new Map(prev);
+    newMap.delete(analyzeId);
+    return newMap;
+  });
 
-    const storylineSet = await generateStorylines({
+  // Stage 2: Generate storyline concepts using AI
+  const duration = parseDuration(videoSettings.duration);
+
+  const storylineResult = await tryPromise(
+    generateStorylines({
       duration,
       styleAnalysis: imageAnalysis,
       userPrompt: deps.basePrompt,
-    });
+    })
+  );
 
-    // Stage 3: Expand storylines into full Sora prompts
-    const videoPrompts = expandStorylinesToPrompts(
-      storylineSet.storylines,
-      imageAnalysis,
+  if (isErr(storylineResult)) {
+    showErrorFromException(
+      "Storyline generation failed",
+      storylineResult.payload,
+      "Failed to generate storylines",
+    );
+    setIsGenerating(false);
+    return;
+  }
+
+  const storylineSet = storylineResult;
+
+  // Stage 3: Expand storylines into full Sora prompts
+  const videoPrompts = expandStorylinesToPrompts(
+    storylineSet.storylines,
+    imageAnalysis,
+    duration,
+  );
+
+  // Create video placeholders immediately for optimistic UI
+  const videoPlaceholders = videoPrompts.map((_, index) =>
+    createVideoPlaceholder({
       duration,
-    );
+      pixelatedSrc,
+      positionIndex: positionIndices[index],
+      sourceHeight: selectedImage.height,
+      sourceImageId: selectedIds[0],
+      sourceWidth: selectedImage.width,
+      sourceX: snappedSource.x,
+      sourceY: snappedSource.y,
+      timestamp,
+      variationIndex: index,
+    }),
+  );
 
-    // Create video placeholders immediately for optimistic UI
-    const videoPlaceholders = videoPrompts.map((_, index) =>
-      createVideoPlaceholder({
+  // Add placeholders to canvas
+  setVideos((prev) => [...prev, ...videoPlaceholders]);
+
+  // Determine model ID based on Pro setting
+  const modelId = videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID;
+
+  // Set up active video generations
+  setActiveVideoGenerations((prev) => {
+    const newMap = new Map(prev);
+
+    videoPrompts.forEach((variationPrompt, index) => {
+      const videoId = `sora-video-${timestamp}-${index}`;
+
+      const config = createVideoGenerationConfig({
         duration,
-        pixelatedSrc,
-        positionIndex: positionIndices[index],
-        sourceHeight: selectedImage.height,
+        imageUrl: signedImageUrl,
+        modelId,
+        prompt: variationPrompt,
         sourceImageId: selectedIds[0],
-        sourceWidth: selectedImage.width,
-        sourceX: snappedSource.x,
-        sourceY: snappedSource.y,
-        timestamp,
-        variationIndex: index,
-      }),
-    );
-
-    // Add placeholders to canvas
-    setVideos((prev) => [...prev, ...videoPlaceholders]);
-
-    // Determine model ID based on Pro setting
-    const modelId = videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID;
-
-    // Set up active video generations
-    setActiveVideoGenerations((prev) => {
-      const newMap = new Map(prev);
-
-      videoPrompts.forEach((variationPrompt, index) => {
-        const videoId = `sora-video-${timestamp}-${index}`;
-
-        const config = createVideoGenerationConfig({
-          duration,
-          imageUrl: signedImageUrl,
-          modelId,
-          prompt: variationPrompt,
-          sourceImageId: selectedIds[0],
-          videoSettings,
-        });
-
-        newMap.set(videoId, {
-          ...config,
-          status: VARIATION_STATUS.GENERATING,
-        });
+        videoSettings,
       });
 
-      return newMap;
+      newMap.set(videoId, {
+        ...config,
+        status: VARIATION_STATUS.GENERATING,
+      });
     });
 
-    setIsGenerating(false);
-  } catch (error) {
-    showErrorFromException(
-      "Generation failed",
-      error,
-      "Failed to generate video variations",
-    );
+    return newMap;
+  });
 
-    setIsGenerating(false);
-  }
+  setIsGenerating(false);
 };

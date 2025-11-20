@@ -3,6 +3,7 @@
  *
  * Generates narrative-driven image sequences with exponential time progression.
  * Each image shows how the subject/scene evolves: +1min, +5min, +25min, +2h5m, etc.
+ * Uses errors-as-values pattern with @safe-std/error
  */
 
 import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
@@ -22,6 +23,7 @@ import { generateObject } from "ai";
 import { ConvexHttpClient } from "convex/browser";
 import { z } from "zod";
 import { api } from "../../../../convex/_generated/api";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 export const maxDuration = 30;
 
@@ -176,19 +178,21 @@ export const POST = createAuthenticatedHandler({
 
     // Atomically check and reserve quota before generation
     // This prevents race conditions where parallel requests could exceed quota limits
-    try {
-      await convex.mutation(api.quotas.checkAndReserveQuota, {
+    const quotaResult = await tryPromise(
+      convex.mutation(api.quotas.checkAndReserveQuota, {
         type: "image",
         count: count,
-      });
-    } catch (error) {
-      if (error instanceof Error && error.message.includes("Quota exceeded")) {
-        throw error;
+      })
+    );
+
+    if (isErr(quotaResult)) {
+      const errorMsg = getErrorMessage(quotaResult);
+      // Preserve quota exceeded errors for proper client handling
+      if (errorMsg.includes("Quota exceeded")) {
+        throw new Error(errorMsg);
       }
 
-      throw new Error(
-        `Failed to reserve quota for generation: ${error instanceof Error ? error.message : String(error)}`
-      );
+      throw new Error(`Failed to reserve quota for generation: ${errorMsg}`);
     }
 
     // Validate API key
@@ -197,8 +201,8 @@ export const POST = createAuthenticatedHandler({
     const userPrompt = buildUserPrompt(styleAnalysis, count, userContext);
 
     // Quota has been reserved, proceed with generation
-    try {
-      const result = await generateObject({
+    const generationResult = await tryPromise(
+      generateObject({
         model: openai("gpt-5"),
         schema: storylineImageConceptSetSchema,
         messages: [
@@ -211,18 +215,28 @@ export const POST = createAuthenticatedHandler({
             content: userPrompt,
           },
         ],
-      });
+      })
+    );
 
-      return {
-        concepts: result.object.concepts,
-      };
-    } catch (error) {
+    if (isErr(generationResult)) {
       // Refund quota if generation fails
-      await convex.mutation(api.quotas.refundQuota, {
-        type: "image",
-        count: count,
-      });
-      throw error;
+      const refundResult = await tryPromise(
+        convex.mutation(api.quotas.refundQuota, {
+          type: "image",
+          count: count,
+        })
+      );
+
+      if (isErr(refundResult)) {
+        // Log refund failure but prioritize the generation error
+        console.error("Failed to refund quota:", getErrorMessage(refundResult));
+      }
+
+      throw new Error(`Storyline image generation failed: ${getErrorMessage(generationResult)}`);
     }
+
+    return {
+      concepts: generationResult.object.concepts,
+    };
   },
 });

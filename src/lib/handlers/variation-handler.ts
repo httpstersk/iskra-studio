@@ -1,6 +1,7 @@
 /**
  * Camera Angles Image Variation Handler
  * Generates image variations with different camera angles and perspectives
+ * Uses errors-as-values pattern with @safe-std/error
  *
  * @module lib/handlers/variation-handler
  */
@@ -22,6 +23,7 @@ import {
   VARIATION_STATUS,
 } from "./variation-shared-utils";
 import { validateSingleImageSelection } from "./variation-utils";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Response from camera angle variations API
@@ -47,64 +49,94 @@ interface LightingVariationsResponse {
 
 /**
  * Generates camera angle variations (FIBO analysis + camera angle refinement on server)
+ * Returns errors as values instead of throwing
  */
 async function generateCameraAngleVariations(
   imageUrl: string,
   cameraAngles: string[],
   userContext?: string
-): Promise<CameraAngleVariationsResponse> {
-  const response = await fetch("/api/generate-camera-angle-variations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      imageUrl,
-      cameraAngles,
-      userContext,
-    }),
-  });
+): Promise<CameraAngleVariationsResponse | Error> {
+  const fetchResult = await tryPromise(
+    fetch("/api/generate-camera-angle-variations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        imageUrl,
+        cameraAngles,
+        userContext,
+      }),
+    })
+  );
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => null);
-    throw new Error(
-      error?.error ||
-        `Camera angle variations generation failed with status ${response.status}`
-    );
+  if (isErr(fetchResult)) {
+    return new Error(`Failed to call camera angle variations API: ${getErrorMessage(fetchResult)}`);
   }
 
-  return response.json();
+  const response = fetchResult;
+
+  if (!response.ok) {
+    const errorResult = await tryPromise(response.json());
+    const errorMsg = !isErr(errorResult) && errorResult?.error
+      ? errorResult.error
+      : `Camera angle variations generation failed with status ${response.status}`;
+    return new Error(errorMsg);
+  }
+
+  const jsonResult = await tryPromise(response.json());
+
+  if (isErr(jsonResult)) {
+    return new Error(`Failed to parse camera angle variations response: ${getErrorMessage(jsonResult)}`);
+  }
+
+  return jsonResult;
 }
 
 /**
  * Generates lighting variations (FIBO analysis + lighting refinement on server)
+ * Returns errors as values instead of throwing
  */
 async function generateLightingVariations(
   imageUrl: string,
   lightingScenarios: string[],
   userContext?: string
-): Promise<LightingVariationsResponse> {
-  const response = await fetch("/api/generate-lighting-variations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      imageUrl,
-      lightingScenarios,
-      userContext,
-    }),
-  });
+): Promise<LightingVariationsResponse | Error> {
+  const fetchResult = await tryPromise(
+    fetch("/api/generate-lighting-variations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        imageUrl,
+        lightingScenarios,
+        userContext,
+      }),
+    })
+  );
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => null);
-    throw new Error(
-      error?.error ||
-        `Lighting variations generation failed with status ${response.status}`
-    );
+  if (isErr(fetchResult)) {
+    return new Error(`Failed to call lighting variations API: ${getErrorMessage(fetchResult)}`);
   }
 
-  return response.json();
+  const response = fetchResult;
+
+  if (!response.ok) {
+    const errorResult = await tryPromise(response.json());
+    const errorMsg = !isErr(errorResult) && errorResult?.error
+      ? errorResult.error
+      : `Lighting variations generation failed with status ${response.status}`;
+    return new Error(errorMsg);
+  }
+
+  const jsonResult = await tryPromise(response.json());
+
+  if (isErr(jsonResult)) {
+    return new Error(`Failed to parse lighting variations response: ${getErrorMessage(jsonResult)}`);
+  }
+
+  return jsonResult;
 }
 
 /**
@@ -242,102 +274,16 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     const timestamp = Date.now();
     let placeholderImages: PlacedImage[] = [];
 
-    try {
-      // OPTIMIZATION: Perform early preparation BEFORE async operations
-      const {
-        imageSizeDimensions,
-        pixelatedSrc,
-        positionIndices,
-        snappedSource,
-      } = await performEarlyPreparation(selectedImage, variationCount);
+    // OPTIMIZATION: Perform early preparation BEFORE async operations
+    const preparationResult = await tryPromise(
+      performEarlyPreparation(selectedImage, variationCount)
+    );
 
-      // Randomly select lighting scenarios (no duplicates via Fisher-Yates)
-      const variationsToGenerate =
-        selectRandomLightingVariations(variationCount);
-
-      // Create factory function with shared configuration for all placeholders
-      const makePlaceholder = createPlaceholderFactory({
-        imageSizeDimensions,
-        pixelatedSrc,
-        positionIndices,
-        selectedImage,
-        snappedSource,
-        timestamp,
-      });
-
-      // Create placeholders IMMEDIATELY with lightingScenario metadata (BEFORE upload)
-      placeholderImages = variationsToGenerate.map((lightingScenario, index) =>
-        makePlaceholder({ lightingScenario }, index)
-      );
-
-      setImages((prev) => [...prev, ...placeholderImages]);
-
-      // Stage 0: Upload image to Convex
-      const { signedImageUrl } = await performImageUploadWorkflow({
-        selectedImage,
-        setActiveGenerations,
-        timestamp,
-      });
-
-      // Stage 1: Apply pixelated overlay during analysis
-      applyPixelatedOverlayToReferenceImage({
-        pixelatedSrc,
-        selectedImage,
-        setImages,
-      });
-
-      const processId = setAnalyzingStatus({
-        signedImageUrl,
-        setActiveGenerations,
-        timestamp,
-      });
-
-      // Stage 2: Call API to get FIBO analysis + refined lighting prompts
-      const { refinedPrompts } = await generateLightingVariations(
-        signedImageUrl,
-        variationsToGenerate,
-        variationPrompt
-      );
-
-      // Remove analyzing status
-      removeAnalyzingStatus(processId, setActiveGenerations);
-
-      // Stage 3: Set up active generations for Seedream/Nano Banana
-      // Convert refined FIBO structured JSON to text prompts for Seedream/Nano Banana
-      setActiveGenerations((prev) => {
-        const newMap = new Map(prev);
-
-        refinedPrompts.forEach((item, index) => {
-          const placeholderId = `variation-${timestamp}-${index}`;
-
-          // Convert refined FIBO JSON (with lighting baked in) to text prompt
-          const finalPrompt = fiboStructuredToText(
-            item.refinedStructuredPrompt
-          );
-
-          newMap.set(placeholderId, {
-            imageSize: imageSizeDimensions,
-            imageUrl: signedImageUrl,
-            isVariation: true,
-            model: imageModel,
-            prompt: finalPrompt,
-            status: VARIATION_STATUS.GENERATING,
-          });
-        });
-
-        return newMap;
-      });
-
-      handlerLogger.info("Lighting variations setup complete", {
-        lightingCount: refinedPrompts.length,
-      });
-
-      setIsGenerating(false);
-    } catch (error) {
-      handlerLogger.error("Lighting variation handler failed", error as Error);
+    if (isErr(preparationResult)) {
+      handlerLogger.error("Early preparation failed", preparationResult.payload as Error);
 
       await handleVariationError({
-        error,
+        error: preparationResult.payload,
         selectedImage,
         setActiveGenerations,
         setImages,
@@ -347,10 +293,149 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
       showErrorFromException(
         "Generation failed",
-        error,
+        preparationResult.payload,
+        "Failed to prepare for lighting variations"
+      );
+      return;
+    }
+
+    const {
+      imageSizeDimensions,
+      pixelatedSrc,
+      positionIndices,
+      snappedSource,
+    } = preparationResult;
+
+    // Randomly select lighting scenarios (no duplicates via Fisher-Yates)
+    const variationsToGenerate =
+      selectRandomLightingVariations(variationCount);
+
+    // Create factory function with shared configuration for all placeholders
+    const makePlaceholder = createPlaceholderFactory({
+      imageSizeDimensions,
+      pixelatedSrc,
+      positionIndices,
+      selectedImage,
+      snappedSource,
+      timestamp,
+    });
+
+    // Create placeholders IMMEDIATELY with lightingScenario metadata (BEFORE upload)
+    placeholderImages = variationsToGenerate.map((lightingScenario, index) =>
+      makePlaceholder({ lightingScenario }, index)
+    );
+
+    setImages((prev) => [...prev, ...placeholderImages]);
+
+    // Stage 0: Upload image to Convex
+    const uploadResult = await tryPromise(
+      performImageUploadWorkflow({
+        selectedImage,
+        setActiveGenerations,
+        timestamp,
+      })
+    );
+
+    if (isErr(uploadResult)) {
+      handlerLogger.error("Image upload workflow failed", uploadResult.payload as Error);
+
+      await handleVariationError({
+        error: uploadResult.payload,
+        selectedImage,
+        setActiveGenerations,
+        setImages,
+        setIsGenerating,
+        timestamp,
+      });
+
+      showErrorFromException(
+        "Generation failed",
+        uploadResult.payload,
+        "Failed to upload image for lighting variations"
+      );
+      return;
+    }
+
+    const { signedImageUrl } = uploadResult;
+
+    // Stage 1: Apply pixelated overlay during analysis
+    applyPixelatedOverlayToReferenceImage({
+      pixelatedSrc,
+      selectedImage,
+      setImages,
+    });
+
+    const processId = setAnalyzingStatus({
+      signedImageUrl,
+      setActiveGenerations,
+      timestamp,
+    });
+
+    // Stage 2: Call API to get FIBO analysis + refined lighting prompts
+    const variationsResult = await generateLightingVariations(
+      signedImageUrl,
+      variationsToGenerate,
+      variationPrompt
+    );
+
+    if (variationsResult instanceof Error) {
+      handlerLogger.error("Lighting variations API failed", variationsResult);
+
+      removeAnalyzingStatus(processId, setActiveGenerations);
+
+      await handleVariationError({
+        error: variationsResult,
+        selectedImage,
+        setActiveGenerations,
+        setImages,
+        setIsGenerating,
+        timestamp,
+      });
+
+      showErrorFromException(
+        "Generation failed",
+        variationsResult,
         "Failed to generate lighting variations"
       );
+      return;
     }
+
+    const { refinedPrompts } = variationsResult;
+
+    // Remove analyzing status
+    removeAnalyzingStatus(processId, setActiveGenerations);
+
+    // Stage 3: Set up active generations for Seedream/Nano Banana
+    // Convert refined FIBO structured JSON to text prompts for Seedream/Nano Banana
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+
+      refinedPrompts.forEach((item, index) => {
+        const placeholderId = `variation-${timestamp}-${index}`;
+
+        // Convert refined FIBO JSON (with lighting baked in) to text prompt
+        const finalPrompt = fiboStructuredToText(
+          item.refinedStructuredPrompt
+        );
+
+        newMap.set(placeholderId, {
+          imageSize: imageSizeDimensions,
+          imageUrl: signedImageUrl,
+          isVariation: true,
+          model: imageModel,
+          prompt: finalPrompt,
+          status: VARIATION_STATUS.GENERATING,
+        });
+      });
+
+      return newMap;
+    });
+
+    handlerLogger.info("Lighting variations setup complete", {
+      lightingCount: refinedPrompts.length,
+    });
+
+    setIsGenerating(false);
 
     return;
   }
@@ -366,72 +451,143 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
 
   setIsGenerating(true);
   const timestamp = Date.now();
-  let placeholderImages: PlacedImage[] = []; // Define outside try block for error cleanup
+  let placeholderImages: PlacedImage[] = [];
 
-  try {
-    // OPTIMIZATION: Perform early preparation BEFORE async operations
-    const {
-      imageSizeDimensions,
-      pixelatedSrc,
-      positionIndices,
-      snappedSource,
-    } = await performEarlyPreparation(selectedImage, variationCount);
+  // OPTIMIZATION: Perform early preparation BEFORE async operations
+  const preparationResult = await tryPromise(
+    performEarlyPreparation(selectedImage, variationCount)
+  );
 
-    // Randomly select camera directives (no duplicates via Fisher-Yates)
-    const variationsToGenerate = selectRandomCameraVariations(variationCount);
+  if (isErr(preparationResult)) {
+    handlerLogger.error("Early preparation failed", preparationResult.payload as Error);
 
-    // Create factory function with shared configuration for all placeholders
-    const makePlaceholder = createPlaceholderFactory({
-      imageSizeDimensions,
-      pixelatedSrc,
-      positionIndices,
-      selectedImage,
-      snappedSource,
-      timestamp,
-    });
-
-    // Create placeholders IMMEDIATELY with cameraAngle metadata (BEFORE upload)
-    placeholderImages = variationsToGenerate.map((cameraDirective, index) =>
-      makePlaceholder({ cameraAngle: cameraDirective }, index)
-    );
-
-    setImages((prev) => [...prev, ...placeholderImages]);
-
-    // Stage 0: Upload image to Convex
-    const { signedImageUrl } = await performImageUploadWorkflow({
+    await handleVariationError({
+      error: preparationResult.payload,
       selectedImage,
       setActiveGenerations,
-      timestamp,
-    });
-
-    // Stage 1: Apply pixelated overlay during analysis
-    applyPixelatedOverlayToReferenceImage({
-      pixelatedSrc,
-      selectedImage,
       setImages,
-    });
-
-    const processId = setAnalyzingStatus({
-      signedImageUrl,
-      setActiveGenerations,
+      setIsGenerating,
       timestamp,
     });
 
-    // Stage 2: Call API to get FIBO analysis + refined camera angle prompts
-    const { refinedPrompts } = await generateCameraAngleVariations(
-      signedImageUrl,
-      variationsToGenerate,
-      variationPrompt
+    showErrorFromException(
+      "Generation failed",
+      preparationResult.payload,
+      "Failed to prepare for camera angle variations"
     );
+    return;
+  }
 
-    // Remove analyzing status
+  const {
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    snappedSource,
+  } = preparationResult;
+
+  // Randomly select camera directives (no duplicates via Fisher-Yates)
+  const variationsToGenerate = selectRandomCameraVariations(variationCount);
+
+  // Create factory function with shared configuration for all placeholders
+  const makePlaceholder = createPlaceholderFactory({
+    imageSizeDimensions,
+    pixelatedSrc,
+    positionIndices,
+    selectedImage,
+    snappedSource,
+    timestamp,
+  });
+
+  // Create placeholders IMMEDIATELY with cameraAngle metadata (BEFORE upload)
+  placeholderImages = variationsToGenerate.map((cameraDirective, index) =>
+    makePlaceholder({ cameraAngle: cameraDirective }, index)
+  );
+
+  setImages((prev) => [...prev, ...placeholderImages]);
+
+  // Stage 0: Upload image to Convex
+  const uploadResult = await tryPromise(
+    performImageUploadWorkflow({
+      selectedImage,
+      setActiveGenerations,
+      timestamp,
+    })
+  );
+
+  if (isErr(uploadResult)) {
+    handlerLogger.error("Image upload workflow failed", uploadResult.payload as Error);
+
+    await handleVariationError({
+      error: uploadResult.payload,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
+
+    showErrorFromException(
+      "Generation failed",
+      uploadResult.payload,
+      "Failed to upload image for camera angle variations"
+    );
+    return;
+  }
+
+  const { signedImageUrl } = uploadResult;
+
+  // Stage 1: Apply pixelated overlay during analysis
+  applyPixelatedOverlayToReferenceImage({
+    pixelatedSrc,
+    selectedImage,
+    setImages,
+  });
+
+  const processId = setAnalyzingStatus({
+    signedImageUrl,
+    setActiveGenerations,
+    timestamp,
+  });
+
+  // Stage 2: Call API to get FIBO analysis + refined camera angle prompts
+  const variationsResult = await generateCameraAngleVariations(
+    signedImageUrl,
+    variationsToGenerate,
+    variationPrompt
+  );
+
+  if (variationsResult instanceof Error) {
+    handlerLogger.error("Camera angle variations API failed", variationsResult);
+
     removeAnalyzingStatus(processId, setActiveGenerations);
 
-    // Stage 3: Update existing placeholders with camera angle metadata (already set during creation)
+    await handleVariationError({
+      error: variationsResult,
+      selectedImage,
+      setActiveGenerations,
+      setImages,
+      setIsGenerating,
+      timestamp,
+    });
 
-    // Stage 4: Set up active generations for Seedream/Nano Banana
-    // Convert refined FIBO structured JSON to text prompts for Seedream/Nano Banana
-    setActiveGenerations((prev) => {
+    showErrorFromException(
+      "Generation failed",
+      variationsResult,
+      "Failed to generate camera angle variations"
+    );
+    return;
+  }
+
+  const { refinedPrompts } = variationsResult;
+
+  // Remove analyzing status
+  removeAnalyzingStatus(processId, setActiveGenerations);
+
+  // Stage 3: Update existing placeholders with camera angle metadata (already set during creation)
+
+  // Stage 4: Set up active generations for Seedream/Nano Banana
+  // Convert refined FIBO structured JSON to text prompts for Seedream/Nano Banana
+  setActiveGenerations((prev) => {
       const newMap = new Map(prev);
 
       refinedPrompts.forEach((item, index) => {
@@ -454,20 +610,4 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     });
 
     setIsGenerating(false);
-  } catch (error) {
-    await handleVariationError({
-      error,
-      selectedImage,
-      setActiveGenerations,
-      setImages,
-      setIsGenerating,
-      timestamp,
-    });
-
-    showErrorFromException(
-      "Generation failed",
-      error,
-      "Failed to generate camera angle variations"
-    );
-  }
 };

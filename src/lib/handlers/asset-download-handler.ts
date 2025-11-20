@@ -3,10 +3,12 @@
  *
  * Handles downloading assets from FAL (or other sources) and
  * re-uploading them to Convex storage for long-term persistence.
+ * Uses errors-as-values pattern with @safe-std/error
  */
 
 import type { AssetMetadata, AssetUploadResult } from "@/types/asset";
 import { createStorageService } from "@/lib/storage";
+import { StorageErr, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Options for downloading and re-uploading an asset.
@@ -31,11 +33,11 @@ export interface DownloadAndReuploadOptions {
  * Used after AI generation completes to move assets from FAL's temporary
  * storage to Convex's persistent storage. Includes retry logic and timeout
  * handling for reliable asset migration.
+ * Returns errors as values instead of throwing.
  *
  * @param url - URL of the asset to download (typically a FAL URL)
  * @param options - Upload options including userId, type, and metadata
- * @returns Upload result with Convex storage URL and asset ID
- * @throws Error if download or upload fails after all retries
+ * @returns Upload result with Convex storage URL and asset ID or error
  *
  * @example
  * ```ts
@@ -54,6 +56,11 @@ export interface DownloadAndReuploadOptions {
  *   },
  * });
  *
+ * if (isErr(result)) {
+ *   console.error('Migration failed:', getErrorMessage(result));
+ *   return;
+ * }
+ *
  * // Replace FAL URL with Convex URL in canvas state
  * updateCanvasImage(result.url);
  * ```
@@ -61,33 +68,43 @@ export interface DownloadAndReuploadOptions {
 export async function downloadAndReupload(
   url: string,
   options: DownloadAndReuploadOptions,
-): Promise<AssetUploadResult> {
+): Promise<AssetUploadResult | StorageErr> {
   const storage = createStorageService();
 
-  try {
-    // Download the asset from the source URL
-    const blob = await storage.download(url, {
-      timeout: 30000, // 30 second timeout
-      maxRetries: 3,
-    });
+  // Download the asset from the source URL
+  const blob = await storage.download(url, {
+    timeout: 30000, // 30 second timeout
+    maxRetries: 3,
+  });
 
-    // Upload to Convex storage
-    const result = await storage.upload(blob, {
-      userId: options.userId,
-      type: options.type,
-      mimeType: options.mimeType,
-      metadata: {
-        ...options.metadata,
-        originalFalUrl: url, // Store original FAL URL for reference
-      },
+  if (isErr(blob)) {
+    return new StorageErr({
+      message: `Asset download failed: ${getErrorMessage(blob)}`,
+      operation: "download",
+      cause: blob,
     });
-
-    return result;
-  } catch (error) {
-    throw new Error(
-      `Asset migration failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
   }
+
+  // Upload to Convex storage
+  const result = await storage.upload(blob, {
+    userId: options.userId,
+    type: options.type,
+    mimeType: options.mimeType,
+    metadata: {
+      ...options.metadata,
+      originalFalUrl: url, // Store original FAL URL for reference
+    },
+  });
+
+  if (isErr(result)) {
+    return new StorageErr({
+      message: `Asset upload failed: ${getErrorMessage(result)}`,
+      operation: "upload",
+      cause: result,
+    });
+  }
+
+  return result;
 }
 
 /**
@@ -95,20 +112,28 @@ export async function downloadAndReupload(
  *
  * Useful for batch operations when multiple assets need to be migrated
  * at once. Failed downloads will not stop the entire batch.
+ * Returns errors as values instead of throwing.
  *
  * @param assets - Array of asset URLs and their options
- * @returns Array of upload results (null for failed uploads)
+ * @returns Array of upload results (StorageErr for failed uploads)
  *
  */
 export async function downloadAndReuploadBatch(
   assets: Array<{ url: string; options: DownloadAndReuploadOptions }>,
-): Promise<Array<AssetUploadResult | null>> {
+): Promise<Array<AssetUploadResult | StorageErr>> {
   const promises = assets.map(async ({ url, options }) => {
-    try {
-      return await downloadAndReupload(url, options);
-    } catch (_error) {
-      return null;
+    const result = await downloadAndReupload(url, options);
+
+    if (isErr(result)) {
+      // Return error wrapped in StorageErr with batch context
+      return new StorageErr({
+        message: `Batch upload failed for ${url}: ${getErrorMessage(result)}`,
+        operation: "upload",
+        cause: result,
+      });
     }
+
+    return result;
   });
 
   return Promise.all(promises);

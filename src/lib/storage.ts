@@ -1,6 +1,7 @@
 import { DBSchema, IDBPDatabase, openDB } from "idb";
 import { OBJECT_STORES, STORAGE_CONSTANTS } from "./constants";
 import type { CanvasState } from "@/types/project";
+import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 
 interface CanvasImage {
   createdAt: number;
@@ -145,6 +146,7 @@ class CanvasStorage {
 
   /**
    * Clears all stored data from IndexedDB and localStorage.
+   * Uses errors-as-values pattern for graceful degradation.
    */
   async clearAll(): Promise<void> {
     localStorage.removeItem(STORAGE_CONSTANTS.STATE_KEY);
@@ -155,14 +157,16 @@ class CanvasStorage {
     await imageTx.objectStore(OBJECT_STORES.IMAGES).clear();
     await imageTx.done;
 
-    // Clear videos
-    try {
+    // Clear videos (may not exist in older DB versions)
+    const videoTxResult = await tryPromise((async () => {
       const videoTx = this.db!.transaction(OBJECT_STORES.VIDEOS, "readwrite");
       await videoTx.objectStore(OBJECT_STORES.VIDEOS).clear();
       await videoTx.done;
-    } catch (e) {
+    })());
+
+    if (isErr(videoTxResult)) {
       // Handle case where videos store might not exist yet in older DB versions
-      console.warn("Could not clear videos store, it may not exist yet:", e);
+      console.warn("Could not clear videos store, it may not exist yet:", videoTxResult.payload);
     }
   }
 
