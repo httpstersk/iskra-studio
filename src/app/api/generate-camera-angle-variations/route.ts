@@ -55,13 +55,21 @@ export const POST = createAuthenticatedHandler({
     }
 
     // Quota has been reserved, proceed with generation
-    const result = await handleVariations(variationHandlers.cameraAngle, {
-      imageUrl,
-      items: cameraAngles,
-      userContext,
-      itemKey: "cameraAngle",
-    });
-
-    return result;
+    try {
+      const result = await handleVariations(variationHandlers.cameraAngle, {
+        imageUrl,
+        items: cameraAngles,
+        userContext,
+        itemKey: "cameraAngle",
+      });
+      return result;
+    } catch (error) {
+      // Refund quota if generation fails
+      await convex.mutation(api.quotas.refundQuota, {
+        type: "image",
+        count: cameraAngles.length,
+      });
+      throw error;
+    }
   },
 });

@@ -56,13 +56,21 @@ export const POST = createAuthenticatedHandler({
     }
 
     // Quota has been reserved, proceed with generation
-    const result = await handleVariations(variationHandlers.lighting, {
-      imageUrl,
-      items: lightingScenarios,
-      userContext,
-      itemKey: "lightingScenario",
-    });
-
-    return result;
+    try {
+      const result = await handleVariations(variationHandlers.lighting, {
+        imageUrl,
+        items: lightingScenarios,
+        userContext,
+        itemKey: "lightingScenario",
+      });
+      return result;
+    } catch (error) {
+      // Refund quota if generation fails
+      await convex.mutation(api.quotas.refundQuota, {
+        type: "image",
+        count: lightingScenarios.length,
+      });
+      throw error;
+    }
   },
 });

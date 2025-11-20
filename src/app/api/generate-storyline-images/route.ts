@@ -197,23 +197,32 @@ export const POST = createAuthenticatedHandler({
     const userPrompt = buildUserPrompt(styleAnalysis, count, userContext);
 
     // Quota has been reserved, proceed with generation
-    const result = await generateObject({
-      model: openai("gpt-5"),
-      schema: storylineImageConceptSetSchema,
-      messages: [
-        {
-          role: "system",
-          content: STORYLINE_IMAGE_GENERATION_SYSTEM_PROMPT,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
-    });
+    try {
+      const result = await generateObject({
+        model: openai("gpt-5"),
+        schema: storylineImageConceptSetSchema,
+        messages: [
+          {
+            role: "system",
+            content: STORYLINE_IMAGE_GENERATION_SYSTEM_PROMPT,
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+      });
 
-    return {
-      concepts: result.object.concepts,
-    };
+      return {
+        concepts: result.object.concepts,
+      };
+    } catch (error) {
+      // Refund quota if generation fails
+      await convex.mutation(api.quotas.refundQuota, {
+        type: "image",
+        count: count,
+      });
+      throw error;
+    }
   },
 });

@@ -240,6 +240,53 @@ export const checkAndReserveQuota = mutation({
 });
 
 /**
+ * Refund quota for failed generations
+ *
+ * @param type - Generation type ("image" or "video")
+ * @param count - Number of items to refund (default: 1)
+ */
+export const refundQuota = mutation({
+  args: {
+    type: v.union(v.literal("image"), v.literal("video")),
+    count: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const userId = identity.subject;
+    const count = args.count ?? 1;
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (args.type === "image") {
+      const currentUsed = user.imagesUsedInPeriod ?? 0;
+      await ctx.db.patch(user._id, {
+        imagesUsedInPeriod: Math.max(0, currentUsed - count),
+        updatedAt: Date.now(),
+      });
+    } else {
+      const currentUsed = user.videosUsedInPeriod ?? 0;
+      await ctx.db.patch(user._id, {
+        videosUsedInPeriod: Math.max(0, currentUsed - count),
+        updatedAt: Date.now(),
+      });
+    }
+
+    return { success: true };
+  },
+});
+
+/**
  * Increment quota usage after successful generation
  *
  * @deprecated Use checkAndReserveQuota instead for atomic operation

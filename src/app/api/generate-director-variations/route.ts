@@ -56,13 +56,24 @@ export const POST = createAuthenticatedHandler({
     }
 
     // Quota has been reserved, proceed with generation
-    const result = await handleVariations(variationHandlers.director, {
-      imageUrl,
-      items: directors,
-      userContext,
-      itemKey: "director",
-    });
+    try {
+      const result = await handleVariations(variationHandlers.director, {
+        imageUrl,
+        items: directors,
+        userContext,
+        itemKey: "director",
+      });
 
-    return result;
+      return result;
+    } catch (error) {
+      // Refund quota if generation fails
+      await convex.mutation(api.quotas.refundQuota, {
+        type: "image",
+        count: directors.length,
+      });
+      throw error;
+    }
+
+
   },
 });
