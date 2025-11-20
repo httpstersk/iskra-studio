@@ -18,8 +18,8 @@ export async function GET() {
         );
 
         return NextResponse.json({
-            monthly: monthlyProduct,
-            annual: annualProduct,
+            monthly: monthlyProduct ?? null,
+            annual: annualProduct ?? null,
         });
     } catch (error) {
         console.error("Failed to fetch Polar products:", error);
