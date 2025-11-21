@@ -86,7 +86,7 @@ export const SEEDREAM_EDIT_ENDPOINT =
 /**
  * Nano Banana Edit endpoint for image variations.
  */
-export const NANO_BANANA_EDIT_ENDPOINT = "fal-ai/nano-banana/edit" as const;
+export const NANO_BANANA_EDIT_ENDPOINT = "fal-ai/nano-banana-pro/edit" as const;
 
 /**
  * Maps model IDs to their corresponding endpoint strings.

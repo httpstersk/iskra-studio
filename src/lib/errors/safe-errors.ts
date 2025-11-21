@@ -14,7 +14,7 @@ import * as st from '@safe-std/error';
 /**
  * HTTP Error - for API requests and fetch operations
  */
-declare const httpErrSymbol: unique symbol;
+const httpErrSymbol = Symbol('httpErrSymbol');
 
 export interface HttpErrPayload {
   status: number;
@@ -29,7 +29,7 @@ export class HttpErr extends st.Err<HttpErrPayload> {
 /**
  * Bria API Error - for Bria-specific API failures
  */
-declare const briaApiErrSymbol: unique symbol;
+const briaApiErrSymbol = Symbol('briaApiErrSymbol');
 
 export interface BriaApiErrPayload {
   message: string;
@@ -45,7 +45,7 @@ export class BriaApiErr extends st.Err<BriaApiErrPayload> {
 /**
  * Bria Token Error - when API token is missing/invalid
  */
-declare const briaTokenErrSymbol: unique symbol;
+const briaTokenErrSymbol = Symbol('briaTokenErrSymbol');
 
 export interface BriaTokenErrPayload {
   message: string;
@@ -58,7 +58,7 @@ export class BriaTokenErr extends st.Err<BriaTokenErrPayload> {
 /**
  * Storage Error - for file/storage operations
  */
-declare const storageErrSymbol: unique symbol;
+const storageErrSymbol = Symbol('storageErrSymbol');
 
 export interface StorageErrPayload {
   message: string;
@@ -73,7 +73,7 @@ export class StorageErr extends st.Err<StorageErrPayload> {
 /**
  * Quota Error - for quota-related failures
  */
-declare const quotaErrSymbol: unique symbol;
+const quotaErrSymbol = Symbol('quotaErrSymbol');
 
 export interface QuotaErrPayload {
   message: string;
@@ -88,7 +88,7 @@ export class QuotaErr extends st.Err<QuotaErrPayload> {
 /**
  * Validation Error - for input validation failures
  */
-declare const validationErrSymbol: unique symbol;
+const validationErrSymbol = Symbol('validationErrSymbol');
 
 export interface ValidationErrPayload {
   message: string;
@@ -102,7 +102,7 @@ export class ValidationErr extends st.Err<ValidationErrPayload> {
 /**
  * FIBO Analysis Error - for image analysis failures
  */
-declare const fiboAnalysisErrSymbol: unique symbol;
+const fiboAnalysisErrSymbol = Symbol('fiboAnalysisErrSymbol');
 
 export interface FiboAnalysisErrPayload {
   message: string;
