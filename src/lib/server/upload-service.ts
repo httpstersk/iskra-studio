@@ -123,7 +123,7 @@ function isRateLimitError(error: unknown): boolean {
   if (typeof error === 'object' && error !== null) {
     // Check HttpErr payload
     if ('payload' in error) {
-      const payload = (error as any).payload;
+      const payload = (error as { payload?: { message?: string } }).payload;
       const message = payload?.message || '';
       return message.toLowerCase().includes('rate limit');
     }

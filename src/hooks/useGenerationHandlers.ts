@@ -205,6 +205,7 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     imageVariationType,
     images,
     isAuthenticated,
+    isFiboAnalysisEnabled,
     selectedIds,
     setActiveGenerations,
     setActiveVideoGenerations,

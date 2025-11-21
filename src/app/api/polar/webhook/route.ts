@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
   }
 
   const validatedEvent = validationResult.data;
-  const eventId = validatedEvent.data.id;
+  const _eventId = validatedEvent.data.id;
 
   // TODO: Enable replay attack protection after running `npx convex dev` to regenerate types
   // The webhooks module exists in convex/webhooks.ts but isn't included in generated api types yet.
