@@ -1,7 +1,7 @@
 /**
- * Visual Stylists List (Directors & Cinematographers)
+ * Visual Stylists List (Directors, Cinematographers & Photographers)
  *
- * Curated list of influential directors and cinematographers with distinct visual signatures
+ * Curated list of influential directors, cinematographers, and photographers with distinct visual signatures
  * used for applying cinematic styles to generated images via FIBO refinement.
  */
 
@@ -76,7 +76,38 @@ export const CINEMATOGRAPHERS = [
   "Wally Pfister",
 ] as const;
 
-export const VISUAL_STYLISTS = [...DIRECTORS, ...CINEMATOGRAPHERS] as const;
+export const PHOTOGRAPHERS = [
+  "Aidan Zamiri",
+  "Andrew Thomas Huang",
+  "Cho Gi-Seok",
+  "David LaChapelle",
+  "Diana Kunst",
+  "Emmanuel Adjei",
+  "Grace Ladoja",
+  "Harley Weir",
+  "Hiro Murai",
+  "Hugo Comte",
+  "Jesse Kanda",
+  "Jordan Hemingway",
+  "Miles Aldridge",
+  "Nabil Elderkin",
+  "Nick Knight",
+  "Nick Walker",
+  "Petra Collins",
+  "Tim Walker",
+  "Tom Beard",
+  "Tyrone Lebon",
+  "Vania & Muggia",
+  "Viviane Sassen",
+  "Yuma Burgess",
+  "Zhong Lin",
+] as const;
+
+export const VISUAL_STYLISTS = [
+  ...DIRECTORS,
+  ...CINEMATOGRAPHERS,
+  ...PHOTOGRAPHERS,
+] as const;
 
 export type VisualStylist = (typeof VISUAL_STYLISTS)[number];
 
