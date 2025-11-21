@@ -8,7 +8,7 @@
  * image analysis rather than using predefined templates.
  */
 export const CAMERA_VARIATIONS = [
-  "AMERICAN SHOT — FRAMING FROM KNEES UP; versatile composition showing body language while maintaining facial detail.",
+  "MEDIUM LONG SHOT — FRAMING FROM KNEES UP; versatile composition showing body language while maintaining facial detail.",
   "ANAMORPHIC FLARE — HORIZONTAL LENS FLARES and bokeh; creates cinematic premium look with characteristic oval bokeh.",
   "B-ROLL: ATMOSPHERIC ELEMENTS — CAPTURE of light rays, dust particles, steam, or weather effects; adds mood and cinematic quality.",
   "B-ROLL: ENVIRONMENTAL TEXTURE — DETAIL SHOT of surfaces, materials, or patterns in scene; establishes atmosphere and production value.",
@@ -23,8 +23,8 @@ export const CAMERA_VARIATIONS = [
   "CINEMATIC TELEPHOTO COMPRESSION — LONG LENS, SHALLOW DEPTH; subject isolated with beautifully blurred foreground and background.",
   "COWBOY SHOT — FRAMING FROM MID-THIGH UP; classic western composition balancing character and environment.",
   "CRAB WALK LATERAL — CAMERA MOVES SIDEWAYS perpendicular to subject; reveals parallel action or environment details.",
-  "CRASH PUSH-IN — AGGRESSIVE RAPID DOLLY toward subject; creates urgency, shock, or comedic punctuation.",
-  "CRASH ZOOM OUT — RAPID ZOOM AWAY from subject; creates jarring reveal of wider context or comedic effect.",
+  "RAPID PUSH-IN — AGGRESSIVE RAPID DOLLY toward subject; creates urgency, shock, or comedic punctuation.",
+  "RAPID ZOOM OUT — RAPID ZOOM AWAY from subject; creates jarring reveal of wider context or comedic effect.",
   "CROWD ISOLATION — TELEPHOTO LENS with shallow depth of field; sharp focus on single subject while blurring surrounding crowd into abstract shapes.",
   "DOLLY ZOOM VERTIGO — CAMERA PULLS BACK while zooming in; creates disorienting perspective shift that emphasizes emotional moment.",
   "DOUBLE EXPOSURE LAYER — TWO IMAGES SUPERIMPOSED; creates ghost-like blending of subject and environment or two distinct concepts.",
@@ -72,10 +72,10 @@ export const CAMERA_VARIATIONS = [
   "TRACKING SHOT PARALLEL — CAMERA MOVES ALONGSIDE SUBJECT at matching speed; maintains consistent framing while revealing environment.",
   "ULTRA-WIDE ESTABLISHING — EXPANSIVE FIELD OF VIEW capturing entire scene; emphasizes scale and environmental context.",
   "UNDERWATER SUBMERSION — PARTIAL OR FULL UNDERWATER view; captures distorted light refraction, bubbles, and floating weightlessness.",
-  "WHIP PAN TRANSITION — RAPID HORIZONTAL CAMERA MOVEMENT with motion blur; creates energetic connection between scenes.",
-  "WHIP TILT VERTICAL — RAPID VERTICAL CAMERA MOVEMENT with motion blur; energetic transition between vertical elements.",
+  "SWISH PAN TRANSITION — RAPID HORIZONTAL CAMERA MOVEMENT with motion blur; creates energetic connection between scenes.",
+  "SWISH TILT VERTICAL — RAPID VERTICAL CAMERA MOVEMENT with motion blur; energetic transition between vertical elements.",
   "WIDE SHOT TWO-SHOT — MEDIUM-WIDE FRAMING of two subjects in space; shows interaction and spatial relationship clearly.",
   "WIDE-ANGLE ENVIRONMENTAL SHOT — SUBJECT IN CONTEXT with surrounding space; captures relationship between subject and environment with expansive field of view.",
   "WORM'S EYE ULTRA-WIDE — EXTREME LOW ANGLE with wide lens; dramatic distortion emphasizes height and power.",
-  "ZOOM-IN PUNCH — RAPID ZOOM toward subject or detail; creates emphasis and urgency without camera movement.",
+  "RAPID ZOOM IN — RAPID ZOOM toward subject or detail; creates emphasis and urgency without camera movement.",
 ] as const;
