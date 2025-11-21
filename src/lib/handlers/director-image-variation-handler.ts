@@ -8,6 +8,7 @@
 
 import { selectRandomVisualStylists } from "@/constants/visual-stylists";
 import { fiboStructuredToText } from "@/lib/utils/fibo-to-text";
+import { variationHandlers } from "@/lib/api/variation-api-helper";
 import {
   config,
   type ImageModel,
@@ -63,7 +64,7 @@ interface DirectorVariationsResponse {
 async function generateDirectorVariations(
   imageUrl: string,
   directors: string[],
-  userContext?: string,
+  userContext?: string
 ): Promise<DirectorVariationsResponse | Error> {
   const fetchResult = await tryPromise(
     fetch("/api/generate-director-variations", {
@@ -80,23 +81,28 @@ async function generateDirectorVariations(
   );
 
   if (isErr(fetchResult)) {
-    return new Error(`Failed to call director variations API: ${getErrorMessage(fetchResult)}`);
+    return new Error(
+      `Failed to call director variations API: ${getErrorMessage(fetchResult)}`
+    );
   }
 
   const response = fetchResult;
 
   if (!response.ok) {
     const errorResult = await tryPromise(response.json());
-    const errorMsg = !isErr(errorResult) && errorResult?.error
-      ? errorResult.error
-      : `Director variations generation failed with status ${response.status}`;
+    const errorMsg =
+      !isErr(errorResult) && errorResult?.error
+        ? errorResult.error
+        : `Director variations generation failed with status ${response.status}`;
     return new Error(errorMsg);
   }
 
   const jsonResult = await tryPromise(response.json());
 
   if (isErr(jsonResult)) {
-    return new Error(`Failed to parse director variations response: ${getErrorMessage(jsonResult)}`);
+    return new Error(
+      `Failed to parse director variations response: ${getErrorMessage(jsonResult)}`
+    );
   }
 
   return jsonResult;
@@ -116,7 +122,7 @@ async function generateDirectorVariations(
  * 8. Generate images using Seedream/Nano Banana with combined text prompts
  */
 export const handleDirectorImageVariations = async (
-  deps: DirectorImageVariationHandlerDeps,
+  deps: DirectorImageVariationHandlerDeps
 ): Promise<void> => {
   const {
     imageModel = config.imageGeneration.defaultModel,
@@ -159,12 +165,8 @@ export const handleDirectorImageVariations = async (
     return;
   }
 
-  const {
-    imageSizeDimensions,
-    pixelatedSrc,
-    positionIndices,
-    snappedSource,
-  } = preparationResult;
+  const { imageSizeDimensions, pixelatedSrc, positionIndices, snappedSource } =
+    preparationResult;
 
   // Create factory function with shared configuration for all placeholders
   const makePlaceholder = createPlaceholderFactory({
@@ -179,7 +181,7 @@ export const handleDirectorImageVariations = async (
   // Create placeholders IMMEDIATELY for optimistic UI (BEFORE any async operations that can fail)
   const placeholderImages: PlacedImage[] = Array.from(
     { length: variationCount },
-    (_, index) => makePlaceholder({}, index),
+    (_, index) => makePlaceholder({}, index)
   );
 
   setImages((prev) => [...prev, ...placeholderImages]);
@@ -237,7 +239,7 @@ export const handleDirectorImageVariations = async (
     const variationsResult = await generateDirectorVariations(
       signedImageUrl,
       selectedDirectors,
-      variationPrompt,
+      variationPrompt
     );
 
     if (variationsResult instanceof Error) {
@@ -261,7 +263,7 @@ export const handleDirectorImageVariations = async (
 
     refinedPrompts = variationsResult.refinedPrompts;
   } else {
-    // Generate simple prompts locally
+    // FIBO disabled: Generate detailed text prompts locally using variation-api-helper
     refinedPrompts = selectedDirectors.map((director) => ({
       director,
       // No structured prompt when analysis is disabled
@@ -289,7 +291,7 @@ export const handleDirectorImageVariations = async (
         }
       }
       return img;
-    }),
+    })
   );
 
   // Stage 5: Set up active generations for Seedream/Nano Banana
@@ -301,17 +303,18 @@ export const handleDirectorImageVariations = async (
       const placeholderId = `variation-${timestamp}-${index}`;
 
       // Convert refined FIBO JSON (with director's style) to text prompt
-      // OR use simple text prompt if analysis was disabled
+      // OR use detailed text prompt if analysis was disabled
       let finalPrompt = "";
 
       if (item.refinedStructuredPrompt) {
+        // FIBO enabled: Use refined structured prompt as JSON
         finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
       } else {
-        // Fallback for disabled analysis: Simple prompt construction
-        finalPrompt = `Make it look as though it were shot by a film director or cinematographer: ${item.director}.`;
-        if (variationPrompt) {
-          finalPrompt += ` ${variationPrompt}`;
-        }
+        // FIBO disabled: Use detailed text prompt from variation-api-helper
+        finalPrompt = variationHandlers.director.buildPrompt(
+          item.director,
+          variationPrompt
+        );
       }
 
       newMap.set(placeholderId, {

@@ -7,6 +7,7 @@
  */
 
 import { fiboStructuredToText } from "@/lib/utils/fibo-to-text";
+import { variationHandlers } from "@/lib/api/variation-api-helper";
 import { showError, showErrorFromException } from "@/lib/toast";
 import { logger } from "@/shared/logging/logger";
 import type { PlacedImage } from "@/types/canvas";
@@ -439,11 +440,11 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
         if (item.refinedStructuredPrompt) {
           finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
         } else {
-          // Fallback for disabled analysis: Simple prompt construction
-          finalPrompt = `Apply this lighting: ${item.lightingScenario}`;
-          if (variationPrompt) {
-            finalPrompt += `\n\nContext: ${variationPrompt}`;
-          }
+          // FIBO disabled: Use detailed text prompt from variation-api-helper
+          finalPrompt = variationHandlers.lighting.buildPrompt(
+            item.lightingScenario,
+            variationPrompt
+          );
         }
 
         newMap.set(placeholderId, {
@@ -641,11 +642,11 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       if (item.refinedStructuredPrompt) {
         finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
       } else {
-        // Fallback for disabled analysis: Simple prompt construction
-        finalPrompt = `Apply this camera angle: ${item.cameraAngle}`;
-        if (variationPrompt) {
-          finalPrompt += ` Context: ${variationPrompt}`;
-        }
+        // FIBO disabled: Use detailed text prompt from variation-api-helper
+        finalPrompt = variationHandlers.cameraAngle.buildPrompt(
+          item.cameraAngle,
+          variationPrompt
+        );
       }
 
       newMap.set(placeholderId, {

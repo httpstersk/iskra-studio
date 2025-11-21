@@ -28,11 +28,13 @@ export interface VariationInput<T extends string> {
 
 export interface VariationOutput<T extends string> {
   fiboAnalysis: unknown;
-  refinedPrompts: Array<{
-    [K in T]: string;
-  } & {
-    refinedStructuredPrompt: FiboStructuredPrompt;
-  }>;
+  refinedPrompts: Array<
+    {
+      [K in T]: string;
+    } & {
+      refinedStructuredPrompt: FiboStructuredPrompt;
+    }
+  >;
 }
 
 /**
@@ -69,36 +71,112 @@ export async function handleVariations<T extends string>(
  * Pre-configured variation handlers for common types
  */
 export const variationHandlers = {
-  director: {
-    itemKey: "director" as const,
-    buildPrompt: (director: string, userContext?: string) => {
-      let prompt = `Make it look as though it were shot by a film director or cinematographer: ${director}.`;
-      if (userContext) {
-        prompt += ` ${userContext}`;
-      }
-      return prompt;
-    },
-  },
-
   cameraAngle: {
     itemKey: "cameraAngle" as const,
     buildPrompt: (cameraAngle: string, userContext?: string) => {
-      let prompt = `Apply this camera angle: ${cameraAngle}`;
+      // 1. Define the primary Angle Instruction
+      const angleInstruction = `Re-render the scene from this specific camera angle: ${cameraAngle}.`;
+
+      // 2. Define the "Vibe Lock" (The immutable style constraint)
+      const styleLock = `
+      CRITICAL STYLE CONSTRAINT (VIBE LOCK):
+      - AESTHETIC PRESERVATION: You must strictly preserve the exact color grading, lighting mood, saturation, contrast, and film grain of the original image.
+      - NO AUTO-CORRECTION: Do not "fix" or "enhance" the lighting. The result must look like a raw capture from the exact same camera session as the source.
+      - VISUAL CONTINUITY: The final image must feel indistinguishable in tone from the source.
+    `.trim();
+
       if (userContext) {
-        prompt += ` Context: ${userContext}`;
+        // MODE A: New Context + New Angle + LOCKED Vibe
+        // Challenge: "Put me in a forest (userContext) from a low angle (cameraAngle), but keep the dark/blue mood of the original."
+        return `
+        ${angleInstruction}
+        
+        COMMAND: Transfer the subject to this new context: ${userContext}.
+        
+        EXECUTION RULES:
+        1. GEOMETRY: Place the subject in the "${userContext}" at the requested angle.
+        2. AESTHETIC TRANSFER: Force the "${userContext}" environment to adopt the color palette and lighting mood of the source image. 
+        3. PROHIBITION: Do not use the "default" lighting for "${userContext}". If the source is dark, the new context must be rendered as dark.
+        
+        ${styleLock}
+      `.trim();
+      } else {
+        // MODE B: Angle Change Only + LOCKED Vibe
+        // Challenge: "Show me the side profile, but don't change the lighting."
+        return `
+        ${angleInstruction}
+        
+        INSTRUCTIONS:
+        1. PERSPECTIVE: Rotate the camera around the subject to match the requested angle.
+        2. BACKGROUND EXTENSION: If the new angle reveals new parts of the background, generate them to perfectly match the existing texture and lighting logic.
+        
+        ${styleLock}
+      `.trim();
       }
-      return prompt;
+    },
+  },
+
+  director: {
+    itemKey: "director" as const,
+    buildPrompt: (director: string, userContext?: string) => {
+      // Base instruction regarding the director's signature look
+      const styleInstruction = `Reimagine this image in the signature visual style of director/cinematographer ${director}. Apply their distinct color grading, lighting, lens choice, and compositional framing.`;
+
+      if (userContext) {
+        // MODE A: Director Style + New Context (e.g., "Wes Anderson" + "on the moon")
+        return `
+        ${styleInstruction}
+        
+        COMMAND: Transfer the subject into a new context: ${userContext}.
+        
+        EXECUTION GUIDE:
+        1. SCENE GENERATION: Create the "${userContext}" environment, but design it specifically how ${director} would visualize it (e.g., use their typical production design and atmosphere).
+        2. SUBJECT INTEGRATION: Place the subject in this new scene. The lighting on the subject must match the cinematic mood of the director.
+        3. COHERENCE: The final image should look like a still frame from a ${director} movie set in this location.
+      `.trim();
+      } else {
+        // MODE B: Director Style Transfer Only (Same Content)
+        return `
+        ${styleInstruction}
+        
+        INSTRUCTIONS:
+        1. PRESERVE SUBJECT: Keep the main subject, their pose, and the general semantic content of the scene intact.
+        2. TRANSFORM AESTHETIC: Overhaul the visual presentation (film grain, shadows, saturation, contrast) to strictly mimic the artistic direction of ${director}.
+      `.trim();
+      }
     },
   },
 
   lighting: {
     itemKey: "lightingScenario" as const,
     buildPrompt: (lightingScenario: string, userContext?: string) => {
-      let prompt = `Apply this lighting: ${lightingScenario}`;
+      const lightInstruction = `Apply this specific lighting scenario: ${lightingScenario}.`;
+
       if (userContext) {
-        prompt += `\n\nContext: ${userContext}`;
+        // MODE A: New Context + New Lighting
+        // Requirement: The new environment must be generated *around* this light source.
+        return `
+        ${lightInstruction}
+        
+        COMMAND: Transfer the subject into a new context: ${userContext}.
+        
+        EXECUTION RULES:
+        1. ATMOSPHERE GENERATION: Generate the "${userContext}" environment specifically under the influence of the requested lighting ("${lightingScenario}").
+        2. SUBJECT HARMONY: Relight the subject so their highlights, reflections, and color temperature match this new environment. 
+        3. SHADOW PHYSICS: Cast realistic shadows from the subject onto the new background, consistent with the direction of the light sources in "${lightingScenario}".
+      `.trim();
+      } else {
+        // MODE B: Relighting the Current Scene
+        // Requirement: Keep the geometry, change the pixels.
+        return `
+        ${lightInstruction}
+        
+        INSTRUCTIONS:
+        1. GEOMETRY LOCK: Preserve the physical structure of the room/environment and the subject's pose exactly as is.
+        2. GLOBAL RELIGHTING: Overhaul the global illumination, color grading, and shadows of the current scene to match "${lightingScenario}".
+        3. OVERRIDE: Discard the original lighting mood. If the original was "Day" and the request is "Night", fully commit to the new time of day.
+      `.trim();
       }
-      return prompt;
     },
   },
 };
