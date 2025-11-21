@@ -313,8 +313,6 @@ async function handleSubscriptionCreated(event: PolarEvent) {
     billingCycleStart: currentPeriodStart,
     billingCycleEnd: currentPeriodEnd,
   });
-
-  console.log(`User ${userId} upgraded to Pro tier`);
 }
 
 /**
@@ -338,8 +336,6 @@ async function handleSubscriptionUpdated(event: PolarEvent) {
     billingCycleStart: currentPeriodStart,
     billingCycleEnd: currentPeriodEnd,
   });
-
-  console.log(`Subscription ${subscription.id} updated`);
 }
 
 /**
@@ -357,10 +353,6 @@ async function handleSubscriptionCanceled(event: PolarEvent) {
   // Note: We don't immediately downgrade the user.
   // They keep Pro access until the end of their billing period.
   // A scheduled job or the subscription.ended event will handle the actual downgrade.
-
-  console.log(
-    `Subscription ${subscription.id} cancelled (access until period end)`
-  );
 }
 
 /**
@@ -373,8 +365,6 @@ async function handleSubscriptionActive(event: PolarEvent) {
     polarSubscriptionId: subscription.id,
     status: "active",
   });
-
-  console.log(`Subscription ${subscription.id} is now active`);
 }
 
 /**
@@ -388,7 +378,5 @@ async function handleOrderCreated(event: PolarEvent) {
     console.error("No clerkUserId in order metadata");
     return;
   }
-
-  console.log(`Payment successful for user ${userId}`);
   // Subscription will be handled by subscription.created event
 }
