@@ -11,6 +11,7 @@ import { logger } from "@/shared/logging/logger";
 import { ImageAnalysisError, ImageGenerationError } from "@/shared/errors";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import { generateStorylineImageConcepts } from "@/lib/storyline-image-generator";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 const serviceLogger = logger.child({ service: "storyline-generation" });
 
@@ -48,21 +49,41 @@ export async function analyzeImageStyle(
   try {
     serviceLogger.info("Analyzing image style", { imageUrl });
 
-    const response = await fetch(config.api.analyzeImage, {
-      body: JSON.stringify({ imageUrl }),
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-    });
+    const fetchResult = await tryPromise(
+      fetch(config.api.analyzeImage, {
+        body: JSON.stringify({ imageUrl }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      })
+    );
+
+    if (isErr(fetchResult)) {
+      throw new ImageAnalysisError(
+        `Failed to fetch image analysis: ${getErrorMessage(fetchResult)}`,
+        { imageUrl },
+      );
+    }
+
+    const response = fetchResult;
 
     if (!response.ok) {
-      const error = await response.json().catch(() => null);
+      const errorResult = await tryPromise(response.json());
+      const error = isErr(errorResult) ? null : errorResult;
       throw new ImageAnalysisError(
         error?.error || `Image analysis failed with status ${response.status}`,
         { imageUrl, statusCode: response.status },
       );
     }
 
-    const result = await response.json();
+    const jsonResult = await tryPromise(response.json());
+    if (isErr(jsonResult)) {
+      throw new ImageAnalysisError(
+        `Failed to parse analysis response: ${getErrorMessage(jsonResult)}`,
+        { imageUrl },
+      );
+    }
+
+    const result = jsonResult;
     serviceLogger.info("Image analysis completed");
 
     return { analysis: result.analysis };

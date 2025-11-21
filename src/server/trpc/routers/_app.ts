@@ -19,7 +19,7 @@ import { tracked } from "@trpc/server";
 import sharp from "sharp";
 import { z } from "zod";
 import { publicProcedure, router } from "../init";
-import { isErr } from "@/lib/errors/safe-errors";
+import { isErr, tryPromise, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * API response envelope from fal.ai endpoints.
@@ -202,11 +202,27 @@ async function getFalClient(
  * @throws Error when the request fails or returns a non-2xx status
  */
 async function downloadImage(url: string): Promise<Buffer> {
-  const response = await fetch(url);
+  const fetchResult = await tryPromise(fetch(url));
+
+  if (isErr(fetchResult)) {
+    throw new Error(`Failed to fetch image: ${getErrorMessage(fetchResult)}`);
+  }
+
+  const response = fetchResult;
+
   if (!response.ok) {
     throw new Error(`Failed to download image: ${response.statusText}`);
   }
-  return Buffer.from(await response.arrayBuffer());
+
+  const arrayBufferResult = await tryPromise(response.arrayBuffer());
+
+  if (isErr(arrayBufferResult)) {
+    throw new Error(
+      `Failed to read image data: ${getErrorMessage(arrayBufferResult)}`
+    );
+  }
+
+  return Buffer.from(arrayBufferResult);
 }
 
 /**

@@ -5,6 +5,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Polar product structure
@@ -43,11 +44,22 @@ export function usePolarProducts() {
     } = useQuery<PolarProducts>({
         queryKey: ["polar-products"],
         queryFn: async () => {
-            const response = await fetch("/api/polar/products");
+            const fetchResult = await tryPromise(fetch("/api/polar/products"));
+            if (isErr(fetchResult)) {
+                throw new Error(`Failed to fetch products: ${getErrorMessage(fetchResult)}`);
+            }
+
+            const response = fetchResult;
             if (!response.ok) {
                 throw new Error("Failed to fetch products");
             }
-            return response.json();
+
+            const jsonResult = await tryPromise(response.json());
+            if (isErr(jsonResult)) {
+                throw new Error(`Failed to parse products response: ${getErrorMessage(jsonResult)}`);
+            }
+
+            return jsonResult;
         },
         staleTime: 1000 * 60 * 60, // 1 hour
     });

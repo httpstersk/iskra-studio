@@ -11,6 +11,7 @@ import type {
 } from "@/types/canvas";
 import { convertImageToVideo } from "@/utils/video-utils";
 import { downloadAndReupload } from "./asset-download-handler";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Creates a unique generation ID with prefix
@@ -35,7 +36,17 @@ export async function uploadMediaIfNeeded(
       throw new Error("User ID required for upload");
     }
 
-    const blob = await (await fetch(url)).blob();
+    const fetchResult = await tryPromise(fetch(url));
+    if (isErr(fetchResult)) {
+      throw new Error(`Failed to fetch URL: ${getErrorMessage(fetchResult)}`);
+    }
+
+    const blobResult = await tryPromise(fetchResult.blob());
+    if (isErr(blobResult)) {
+      throw new Error(`Failed to convert to blob: ${getErrorMessage(blobResult)}`);
+    }
+
+    const blob = blobResult;
     const mimeType = blob.type || "image/png";
     const type = mimeType.startsWith("video/") ? "video" : "image";
 

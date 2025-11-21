@@ -1,4 +1,5 @@
 import type { GeneratedAssetUploadPayload } from "@/types/generated-asset";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Utility for uploading generated assets (images/videos) to Convex storage.
@@ -47,13 +48,21 @@ export async function uploadGeneratedAssetToConvex(
   options: UploadGeneratedAssetOptions,
 ): Promise<UploadGeneratedAssetResult> {
   try {
-    const response = await fetch("/api/convex/fetch-upload", {
-      body: JSON.stringify(options),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-    });
+    const fetchResult = await tryPromise(
+      fetch("/api/convex/fetch-upload", {
+        body: JSON.stringify(options),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      })
+    );
+
+    if (isErr(fetchResult)) {
+      throw new Error(`Failed to fetch upload endpoint: ${getErrorMessage(fetchResult)}`);
+    }
+
+    const response = fetchResult;
 
     if (!response.ok) {
       throw new Error(
@@ -63,7 +72,12 @@ export async function uploadGeneratedAssetToConvex(
       );
     }
 
-    const result = await response.json();
+    const jsonResult = await tryPromise(response.json());
+    if (isErr(jsonResult)) {
+      throw new Error(`Failed to parse upload response: ${getErrorMessage(jsonResult)}`);
+    }
+
+    const result = jsonResult;
 
     return {
       assetId: result.assetId,

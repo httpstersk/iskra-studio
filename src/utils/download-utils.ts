@@ -4,6 +4,7 @@
 
 import JSZip from "jszip";
 import type { PlacedImage } from "@/types/canvas";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Constants for download operations
@@ -38,14 +39,26 @@ const fetchImageAsBlob = async (url: string): Promise<Blob> => {
   );
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const fetchResult = await tryPromise(
+      fetch(url, { signal: controller.signal })
+    );
+
+    if (isErr(fetchResult)) {
+      throw new Error(`Failed to fetch image: ${getErrorMessage(fetchResult)}`);
+    }
+
+    const response = fetchResult;
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const blob = await response.blob();
-    return blob;
+    const blobResult = await tryPromise(response.blob());
+    if (isErr(blobResult)) {
+      throw new Error(`Failed to get image blob: ${getErrorMessage(blobResult)}`);
+    }
+
+    return blobResult;
   } finally {
     clearTimeout(timeoutId);
   }

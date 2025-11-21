@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import type { PlacedImage } from "@/types/canvas";
 import { DEFAULT_IMAGES, CANVAS_DIMENSIONS } from "@/constants/canvas";
 import { snapPosition } from "@/utils/snap-utils";
+import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 
 /**
  * Hook to load default images when canvas is empty
@@ -25,8 +26,17 @@ export function useDefaultImages(
       for (let i = 0; i < defaultImagePaths.length; i++) {
         const path = defaultImagePaths[i];
         try {
-          const response = await fetch(path);
-          const blob = await response.blob();
+          const fetchResult = await tryPromise(fetch(path));
+          if (isErr(fetchResult)) {
+            continue; // Skip this image on error
+          }
+
+          const blobResult = await tryPromise(fetchResult.blob());
+          if (isErr(blobResult)) {
+            continue; // Skip this image on error
+          }
+
+          const blob = blobResult;
           const reader = new FileReader();
 
           reader.onload = async (e) => {

@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import React, { useCallback } from "react";
 import { ShortcutBadge } from "./ShortcutBadge";
+import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 
 /**
  * Props for the canvas context menu component
@@ -90,8 +91,17 @@ export const CanvasContextMenu = React.memo<CanvasContextMenuProps>(
           link.click();
         } else if (video) {
           try {
-            const response = await fetch(video.src);
-            const blob = await response.blob();
+            const fetchResult = await tryPromise(fetch(video.src));
+            if (isErr(fetchResult)) {
+              throw new Error("Failed to fetch video");
+            }
+
+            const blobResult = await tryPromise(fetchResult.blob());
+            if (isErr(blobResult)) {
+              throw new Error("Failed to convert to blob");
+            }
+
+            const blob = blobResult;
             const blobUrl = URL.createObjectURL(blob);
 
             const link = document.createElement("a");

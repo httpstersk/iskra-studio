@@ -3,7 +3,7 @@
  * Uses errors-as-values pattern with @safe-std/error
  */
 
-import { HttpErr, isErr } from '@/lib/errors/safe-errors';
+import { HttpErr, isErr, tryPromise } from '@/lib/errors/safe-errors';
 
 export interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
@@ -199,16 +199,17 @@ class HttpClient {
       timeout
     );
 
-    try {
-      const response = await fetch(url, {
+    const fetchResult = await tryPromise(
+      fetch(url, {
         ...init,
         signal: init.signal || controller?.signal,
-      });
+      })
+    );
 
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
+    clearTimeout(timeoutId);
+
+    if (isErr(fetchResult)) {
+      const error = fetchResult.payload;
 
       if (error instanceof Error && error.name === 'AbortError') {
         return new HttpErr({
@@ -222,6 +223,8 @@ class HttpClient {
         message: error instanceof Error ? error.message : String(error),
       });
     }
+
+    return fetchResult;
   }
 
   /**

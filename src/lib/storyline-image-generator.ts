@@ -7,6 +7,7 @@
  */
 
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * System prompt for storyline image generation.
@@ -237,28 +238,41 @@ export async function generateStorylineImageConcepts(
 ): Promise<StorylineImageConceptSet> {
   const { count, styleAnalysis, userContext } = options;
 
-  const response = await fetch("/api/generate-storyline-images", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      count,
-      styleAnalysis,
-      userContext,
-    }),
-  });
+  const fetchResult = await tryPromise(
+    fetch("/api/generate-storyline-images", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        count,
+        styleAnalysis,
+        userContext,
+      }),
+    })
+  );
+
+  if (isErr(fetchResult)) {
+    throw new Error(`Failed to fetch storyline images: ${getErrorMessage(fetchResult)}`);
+  }
+
+  const response = fetchResult;
 
   if (!response.ok) {
-    const error = await response.json().catch(() => null);
+    const errorResult = await tryPromise(response.json());
+    const error = isErr(errorResult) ? null : errorResult;
     throw new Error(
       error?.error ||
         `Storyline image generation failed with status ${response.status}`,
     );
   }
 
-  const result = await response.json();
-  return result;
+  const jsonResult = await tryPromise(response.json());
+  if (isErr(jsonResult)) {
+    throw new Error(`Failed to parse storyline images response: ${getErrorMessage(jsonResult)}`);
+  }
+
+  return jsonResult;
 }
 
 /**

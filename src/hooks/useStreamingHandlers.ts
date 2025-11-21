@@ -14,6 +14,7 @@ import type {
   PlacedVideo,
 } from "@/types/canvas";
 import { useCallback } from "react";
+import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 
 const log = createLogger("StreamingHandler");
 
@@ -369,8 +370,17 @@ export function useStreamingHandlers(
         const croppedResult = await cropImageUrlToAspectRatio(url);
 
         // Download and generate thumbnail for streaming update
-        const response = await fetch(croppedResult.croppedSrc);
-        const blob = await response.blob();
+        const fetchResult = await tryPromise(fetch(croppedResult.croppedSrc));
+        if (isErr(fetchResult)) {
+          throw new Error("Failed to fetch cropped image");
+        }
+
+        const blobResult = await tryPromise(fetchResult.blob());
+        if (isErr(blobResult)) {
+          throw new Error("Failed to convert to blob");
+        }
+
+        const blob = blobResult;
         const thumbnailBlob = await generateThumbnail(blob);
 
         if (thumbnailBlob) {

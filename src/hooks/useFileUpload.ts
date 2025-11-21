@@ -9,6 +9,7 @@ import {
 import { useCallback } from "react";
 import type { Viewport } from "./useCanvasState";
 import { useProjectGuard } from "./useProjectGuard";
+import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 
 export function useFileUpload(
   setImages: (fn: (prev: PlacedImage[]) => PlacedImage[]) => void,
@@ -115,8 +116,17 @@ export function useFileUpload(
                   (async () => {
                     try {
                       // Convert cropped image data URL to blob
-                      const response = await fetch(croppedImageSrc);
-                      const blob = await response.blob();
+                      const fetchResult = await tryPromise(fetch(croppedImageSrc));
+                      if (isErr(fetchResult)) {
+                        throw new Error("Failed to fetch cropped image");
+                      }
+
+                      const blobResult = await tryPromise(fetchResult.blob());
+                      if (isErr(blobResult)) {
+                        throw new Error("Failed to convert to blob");
+                      }
+
+                      const blob = blobResult;
 
                       // Compress image to JPEG with max 1920x1080 resolution
                       const compressedBlob = await compressImage(blob);

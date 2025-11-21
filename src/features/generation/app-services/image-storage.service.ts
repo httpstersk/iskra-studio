@@ -7,6 +7,7 @@
 
 import { logger } from "@/shared/logging/logger";
 import { StorageError, ValidationError } from "@/shared/errors";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 const serviceLogger = logger.child({ service: "image-storage" });
 
@@ -97,14 +98,25 @@ export async function uploadToConvex(blob: Blob): Promise<string> {
     const formData = new FormData();
     formData.append("file", blob, "image.png");
 
-    const response = await fetch("/api/convex/upload", {
-      body: formData,
-      credentials: "include",
-      method: "POST",
-    });
+    const fetchResult = await tryPromise(
+      fetch("/api/convex/upload", {
+        body: formData,
+        credentials: "include",
+        method: "POST",
+      })
+    );
+
+    if (isErr(fetchResult)) {
+      throw new StorageError(
+        `Failed to upload to Convex: ${getErrorMessage(fetchResult)}`
+      );
+    }
+
+    const response = fetchResult;
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
+      const errorResult = await tryPromise(response.json());
+      const errorData = isErr(errorResult) ? null : errorResult;
 
       if (response.status === 429) {
         throw new StorageError("Rate limit exceeded. Please try again later.", {
@@ -118,7 +130,14 @@ export async function uploadToConvex(blob: Blob): Promise<string> {
       );
     }
 
-    const result = await response.json();
+    const jsonResult = await tryPromise(response.json());
+    if (isErr(jsonResult)) {
+      throw new StorageError(
+        `Failed to parse upload response: ${getErrorMessage(jsonResult)}`
+      );
+    }
+
+    const result = jsonResult;
     serviceLogger.info("Upload successful");
 
     return result.url;

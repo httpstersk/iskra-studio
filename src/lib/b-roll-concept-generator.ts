@@ -6,6 +6,7 @@
  */
 
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * System prompt for B-roll concept generation.
@@ -133,26 +134,39 @@ export async function generateBRollConcepts(
 ): Promise<BRollConceptSet> {
   const { count, styleAnalysis, userContext } = options;
 
-  const response = await fetch("/api/generate-broll-concepts", {
-    body: JSON.stringify({
-      count,
-      styleAnalysis,
-      userContext,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  });
+  const fetchResult = await tryPromise(
+    fetch("/api/generate-broll-concepts", {
+      body: JSON.stringify({
+        count,
+        styleAnalysis,
+        userContext,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    })
+  );
+
+  if (isErr(fetchResult)) {
+    throw new Error(`Failed to fetch B-roll concepts: ${getErrorMessage(fetchResult)}`);
+  }
+
+  const response = fetchResult;
 
   if (!response.ok) {
-    const error = await response.json().catch(() => null);
+    const errorResult = await tryPromise(response.json());
+    const error = isErr(errorResult) ? null : errorResult;
     throw new Error(
       error?.error ||
         `B-roll concept generation failed with status ${response.status}`,
     );
   }
 
-  const result = await response.json();
-  return result;
+  const jsonResult = await tryPromise(response.json());
+  if (isErr(jsonResult)) {
+    throw new Error(`Failed to parse B-roll concepts response: ${getErrorMessage(jsonResult)}`);
+  }
+
+  return jsonResult;
 }

@@ -5,7 +5,7 @@ import {
 import type { GeneratedAssetUploadPayload } from "@/types/generated-asset";
 import { Buffer } from "node:buffer";
 import sharp from "sharp";
-import { trySync, tryPromise, isErr } from "@/lib/errors/safe-errors";
+import { trySync, tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 const PROXY_PATH = "/api/storage/proxy";
 
@@ -80,7 +80,13 @@ async function downloadRemoteAsset(
   url: string,
   assetType: GeneratedAssetUploadPayload["assetType"]
 ): Promise<DownloadedAsset> {
-  const response = await fetch(url);
+  const fetchResult = await tryPromise(fetch(url));
+
+  if (isErr(fetchResult)) {
+    throw new Error(`Failed to fetch asset from ${url}: ${getErrorMessage(fetchResult)}`);
+  }
+
+  const response = fetchResult;
 
   if (!response.ok) {
     throw new Error(
@@ -90,10 +96,14 @@ async function downloadRemoteAsset(
 
   const fallbackType = assetType === "image" ? "image/png" : "video/mp4";
   const contentType = response.headers.get("content-type") || fallbackType;
-  const arrayBuffer = await response.arrayBuffer();
+
+  const arrayBufferResult = await tryPromise(response.arrayBuffer());
+  if (isErr(arrayBufferResult)) {
+    throw new Error(`Failed to read asset data: ${getErrorMessage(arrayBufferResult)}`);
+  }
 
   return {
-    buffer: Buffer.from(arrayBuffer),
+    buffer: Buffer.from(arrayBufferResult),
     contentType,
   };
 }

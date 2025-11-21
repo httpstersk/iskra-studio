@@ -5,6 +5,7 @@
 
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import type { StorylineSet } from "@/lib/schemas/storyline-schema";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 export const STORYLINE_GENERATION_SYSTEM_PROMPT = `
 You are an elite cinematic storyteller specializing in time-segmented narrative beats following classic story structure.
@@ -147,26 +148,39 @@ export async function generateStorylines(
 ): Promise<StorylineSet> {
   const { styleAnalysis, duration, userPrompt } = options;
 
-  const response = await fetch("/api/generate-storylines", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      styleAnalysis,
-      duration,
-      userPrompt,
-    }),
-  });
+  const fetchResult = await tryPromise(
+    fetch("/api/generate-storylines", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        styleAnalysis,
+        duration,
+        userPrompt,
+      }),
+    })
+  );
+
+  if (isErr(fetchResult)) {
+    throw new Error(`Failed to fetch storylines: ${getErrorMessage(fetchResult)}`);
+  }
+
+  const response = fetchResult;
 
   if (!response.ok) {
-    const error = await response.json().catch(() => null);
+    const errorResult = await tryPromise(response.json());
+    const error = isErr(errorResult) ? null : errorResult;
     throw new Error(
       error?.error ||
         `Storyline generation failed with status ${response.status}`,
     );
   }
 
-  const result = await response.json();
-  return result.storylines;
+  const jsonResult = await tryPromise(response.json());
+  if (isErr(jsonResult)) {
+    throw new Error(`Failed to parse storylines response: ${getErrorMessage(jsonResult)}`);
+  }
+
+  return jsonResult.storylines;
 }

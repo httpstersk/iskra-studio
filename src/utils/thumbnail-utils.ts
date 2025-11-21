@@ -6,6 +6,7 @@
  */
 
 import type Konva from "konva";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * Default thumbnail dimensions.
@@ -33,7 +34,7 @@ const THUMBNAIL_HEIGHT = 169;
 export async function generateThumbnail(
   stage: Konva.Stage | null,
   width: number = THUMBNAIL_WIDTH,
-  height: number = THUMBNAIL_HEIGHT,
+  height: number = THUMBNAIL_HEIGHT
 ): Promise<string> {
   if (!stage) {
     throw new Error("Stage is not available");
@@ -66,7 +67,7 @@ export async function generateThumbnail(
     return dataUrl;
   } catch (error) {
     throw new Error(
-      `Thumbnail generation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Thumbnail generation failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
@@ -89,29 +90,62 @@ export async function generateThumbnail(
  */
 export async function uploadThumbnail(
   dataUrl: string,
-  _userId: string,
+  _userId: string
 ): Promise<{ storageId: string; url: string }> {
   try {
     // Convert data URL to blob
-    const response = await fetch(dataUrl);
-    const blob = await response.blob();
+    const fetchResult = await tryPromise(fetch(dataUrl));
+    if (isErr(fetchResult)) {
+      throw new Error(
+        `Failed to fetch data URL: ${getErrorMessage(fetchResult)}`
+      );
+    }
+
+    const blobResult = await tryPromise(fetchResult.blob());
+    if (isErr(blobResult)) {
+      throw new Error(
+        `Failed to convert to blob: ${getErrorMessage(blobResult)}`
+      );
+    }
+
+    const blob = blobResult;
 
     // Create form data
     const formData = new FormData();
     formData.append("file", blob, "thumbnail.png");
 
     // Upload to Convex
-    const uploadResponse = await fetch("/api/convex/upload", {
-      method: "POST",
-      body: formData,
-    });
+    const uploadResult = await tryPromise(
+      fetch("/api/convex/upload", {
+        method: "POST",
+        body: formData,
+      })
+    );
+
+    if (isErr(uploadResult)) {
+      throw new Error(
+        `Failed to upload thumbnail: ${getErrorMessage(uploadResult)}`
+      );
+    }
+
+    const uploadResponse = uploadResult;
 
     if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text();
+      const errorTextResult = await tryPromise(uploadResponse.text());
+      const errorText = isErr(errorTextResult)
+        ? "Unknown error"
+        : errorTextResult;
       throw new Error(`Upload failed: ${errorText}`);
     }
 
-    const result = await uploadResponse.json();
+    const jsonResult = await tryPromise(uploadResponse.json());
+    if (isErr(jsonResult)) {
+      throw new Error(
+        `Failed to parse upload response: ${getErrorMessage(jsonResult)}`
+      );
+    }
+
+    const result = jsonResult;
 
     return {
       storageId: result.storageId,
@@ -119,7 +153,7 @@ export async function uploadThumbnail(
     };
   } catch (error) {
     throw new Error(
-      `Thumbnail upload failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Thumbnail upload failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
 }
@@ -150,7 +184,7 @@ export async function uploadThumbnail(
  */
 export async function generateAndUploadThumbnail(
   stage: Konva.Stage | null,
-  userId: string,
+  userId: string
 ): Promise<{ storageId: string; url: string }> {
   const dataUrl = await generateThumbnail(stage);
   return await uploadThumbnail(dataUrl, userId);
@@ -165,8 +199,21 @@ export async function generateAndUploadThumbnail(
  * @returns Blob containing the image data
  */
 export async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
-  const response = await fetch(dataUrl);
-  return await response.blob();
+  const fetchResult = await tryPromise(fetch(dataUrl));
+  if (isErr(fetchResult)) {
+    throw new Error(
+      `Failed to fetch data URL: ${getErrorMessage(fetchResult)}`
+    );
+  }
+
+  const blobResult = await tryPromise(fetchResult.blob());
+  if (isErr(blobResult)) {
+    throw new Error(
+      `Failed to convert to blob: ${getErrorMessage(blobResult)}`
+    );
+  }
+
+  return blobResult;
 }
 
 /**
@@ -180,7 +227,7 @@ export async function dataUrlToBlob(dataUrl: string): Promise<Blob> {
  */
 export function generatePlaceholderThumbnail(
   width: number = THUMBNAIL_WIDTH,
-  height: number = THUMBNAIL_HEIGHT,
+  height: number = THUMBNAIL_HEIGHT
 ): string {
   const canvas = document.createElement("canvas");
   canvas.width = width;
