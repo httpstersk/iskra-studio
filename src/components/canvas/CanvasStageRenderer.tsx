@@ -15,7 +15,7 @@
 "use client";
 
 import { ARIA_LABELS, CANVAS_DIMENSIONS } from "@/constants/canvas";
-import type { Viewport } from "@/hooks/useCanvasState";
+import type { Viewport } from "@/utils/viewport-utils";
 import type {
   GenerationSettings,
   PlacedImage,

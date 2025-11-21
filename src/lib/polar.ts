@@ -73,11 +73,6 @@ export const POLAR_CONFIG = {
 } as const;
 
 /**
- * Subscription tier types
- */
-export type SubscriptionTier = "free" | "pro";
-
-/**
  * Billing interval types
  */
 export type BillingInterval = "month" | "year";

@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Viewport } from "@/hooks/useCanvasState";
+import type { Viewport } from "@/utils/viewport-utils";
 import { canvasStorage } from "@/lib/storage";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 import { ImageIcon, Redo, SlidersHorizontal, Trash2, Undo } from "lucide-react";

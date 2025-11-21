@@ -4,8 +4,9 @@
  * Helpers for quota calculations, formatting, and display logic.
  */
 
-export type SubscriptionTier = "free" | "pro" | "paid";
-export type GenerationType = "image" | "video";
+import type { GenerationType, SubscriptionTier } from "@/types/subscription";
+
+export type { GenerationType, SubscriptionTier };
 
 /**
  * Calculate days until billing cycle reset

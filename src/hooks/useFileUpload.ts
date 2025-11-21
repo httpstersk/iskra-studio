@@ -6,8 +6,8 @@ import {
   cropImageToAspectRatio,
   determineAspectRatio,
 } from "@/utils/image-crop-utils";
+import type { Viewport } from "@/utils/viewport-utils";
 import { useCallback } from "react";
-import type { Viewport } from "./useCanvasState";
 import { useProjectGuard } from "./useProjectGuard";
 import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 

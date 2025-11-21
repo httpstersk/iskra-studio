@@ -3,8 +3,8 @@ import type {
   PlacedImage,
   PlacedVideo,
 } from "@/types/canvas";
+import type { Viewport } from "@/utils/viewport-utils";
 import { useEffect, useRef } from "react";
-import type { Viewport } from "./useCanvasState";
 
 interface UseKeyboardShortcutsProps {
   bringForward: () => void;

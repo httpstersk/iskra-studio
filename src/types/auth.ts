@@ -1,12 +1,16 @@
+import type { SubscriptionTier } from "@/types/subscription";
+
 /**
  * User tier types for subscription levels.
+ *
+ * Alias for SubscriptionTier to maintain backward compatibility.
  *
  * @remarks
  * - "free": Default tier with limited storage and rate limits
  * - "pro": Premium tier with increased storage and higher rate limits
- * - "paid": Legacy premium tier
+ * - "paid": Legacy premium tier (treated as "pro")
  */
-export type UserTier = "free" | "pro" | "paid";
+export type UserTier = SubscriptionTier;
 
 /**
  * User record from Convex database.

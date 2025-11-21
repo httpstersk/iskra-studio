@@ -1,7 +1,7 @@
 import type { PlacedImage, PlacedVideo, SelectionBox } from "@/types/canvas";
+import type { Viewport } from "@/utils/viewport-utils";
 import type Konva from "konva";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Viewport } from "./useCanvasState";
 
 export function useCanvasInteractions(
   viewport: Viewport,

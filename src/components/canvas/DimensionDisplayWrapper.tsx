@@ -8,7 +8,7 @@
 
 "use client";
 
-import type { Viewport } from "@/hooks/useCanvasState";
+import type { Viewport } from "@/utils/viewport-utils";
 import type { PlacedImage } from "@/types/canvas";
 import React, { useMemo } from "react";
 import { DimensionDisplay } from "./DimensionDisplay";
