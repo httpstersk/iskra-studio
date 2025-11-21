@@ -9,7 +9,10 @@
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { UserMenu } from "@/components/auth/user-menu";
 import { QuotaIndicator } from "@/components/subscription/quota-indicator";
+import { Switch } from "@/components/ui/switch";
+import { isFiboAnalysisEnabledAtom } from "@/store/ui-atoms";
 import { useAuth } from "@/hooks/useAuth";
+import { useAtom } from "jotai";
 
 /**
  * Props for the CanvasHeader component.
@@ -46,6 +49,9 @@ interface CanvasHeaderProps {
  */
 export function CanvasHeader({ className }: CanvasHeaderProps) {
   const { isAuthenticated, isLoading } = useAuth();
+  const [isFiboAnalysisEnabled, setIsFiboAnalysisEnabled] = useAtom(
+    isFiboAnalysisEnabledAtom,
+  );
 
   return (
     <header
@@ -59,6 +65,19 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
             <>
               {isAuthenticated ? (
                 <>
+                  <div className="flex items-center gap-2 mr-4">
+                    <Switch
+                      id="fibo-mode"
+                      checked={isFiboAnalysisEnabled}
+                      onCheckedChange={setIsFiboAnalysisEnabled}
+                    />
+                    <label
+                      htmlFor="fibo-mode"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      FIBO Analysis
+                    </label>
+                  </div>
                   <QuotaIndicator />
                   <UserMenu />
                 </>

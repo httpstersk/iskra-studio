@@ -4,6 +4,7 @@
  */
 
 import { atom } from "jotai";
+import { IMAGE_MODELS, type ImageModelId } from "@/lib/image-models";
 
 /**
  * Dialog visibility atoms
@@ -55,7 +56,7 @@ export const imageVariationTypeAtom = atom<
  * "seedream": Seedream v4 Edit (default)
  * "nano-banana": Nano Banana Edit
  */
-export const imageModelAtom = atom<"seedream" | "nano-banana">("seedream");
+export const imageModelAtom = atom<ImageModelId>(IMAGE_MODELS.SEEDREAM);
 
 /**
  * Network status atom - tracks online/offline state
@@ -68,3 +69,8 @@ export const imageModelAtom = atom<"seedream" | "nano-banana">("seedream");
 export const isOnlineAtom = atom<boolean>(
   typeof window !== "undefined" ? navigator.onLine : true,
 );
+
+/**
+ * FIBO Analysis atom - controls whether FIBO image analysis is enabled
+ */
+export const isFiboAnalysisEnabledAtom = atom(false);

@@ -66,7 +66,12 @@ export function resolveImageSize(
 /**
  * Image model identifiers for variation generation.
  */
-export type ImageModelId = "seedream" | "nano-banana";
+export const IMAGE_MODELS = {
+  SEEDREAM: "seedream",
+  NANO_BANANA: "nano-banana",
+} as const;
+
+export type ImageModelId = (typeof IMAGE_MODELS)[keyof typeof IMAGE_MODELS];
 
 /**
  * Seedream v4 Text-to-Image endpoint identifier.
@@ -92,8 +97,8 @@ export const NANO_BANANA_EDIT_ENDPOINT = "fal-ai/nano-banana-pro/edit" as const;
  * Maps model IDs to their corresponding endpoint strings.
  */
 export const IMAGE_MODEL_ENDPOINTS: Record<ImageModelId, string> = {
-  seedream: SEEDREAM_EDIT_ENDPOINT,
-  "nano-banana": NANO_BANANA_EDIT_ENDPOINT,
+  [IMAGE_MODELS.SEEDREAM]: SEEDREAM_EDIT_ENDPOINT,
+  [IMAGE_MODELS.NANO_BANANA]: NANO_BANANA_EDIT_ENDPOINT,
 };
 
 /**

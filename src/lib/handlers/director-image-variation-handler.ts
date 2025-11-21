@@ -33,6 +33,7 @@ import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
  */
 export interface DirectorImageVariationHandlerDeps {
   imageModel?: ImageModel;
+  isFiboAnalysisEnabled?: boolean;
   images: PlacedImage[];
   selectedIds: string[];
   setActiveGenerations: React.Dispatch<
@@ -119,6 +120,7 @@ export const handleDirectorImageVariations = async (
 ): Promise<void> => {
   const {
     imageModel = config.imageGeneration.defaultModel,
+    isFiboAnalysisEnabled = true,
     images,
     selectedIds,
     setActiveGenerations,
@@ -226,32 +228,46 @@ export const handleDirectorImageVariations = async (
   // Stage 2: Select random visual stylists (directors or cinematographers)
   const selectedDirectors = selectRandomVisualStylists(variationCount);
 
-  const variationsResult = await generateDirectorVariations(
-    signedImageUrl,
-    selectedDirectors,
-    variationPrompt,
-  );
+  let refinedPrompts: Array<{
+    director: string;
+    refinedStructuredPrompt?: Record<string, unknown>;
+  }> = [];
 
-  if (variationsResult instanceof Error) {
-    removeAnalyzingStatus(processId, setActiveGenerations);
+  if (isFiboAnalysisEnabled) {
+    const variationsResult = await generateDirectorVariations(
+      signedImageUrl,
+      selectedDirectors,
+      variationPrompt,
+    );
 
-    handleError(variationsResult, {
-      operation: "Director variation generation",
-      context: { variationCount, selectedImageId: selectedImage?.id },
-    });
+    if (variationsResult instanceof Error) {
+      removeAnalyzingStatus(processId, setActiveGenerations);
 
-    await handleVariationError({
-      error: variationsResult,
-      selectedImage,
-      setActiveGenerations,
-      setImages,
-      setIsGenerating,
-      timestamp,
-    });
-    return;
+      handleError(variationsResult, {
+        operation: "Director variation generation",
+        context: { variationCount, selectedImageId: selectedImage?.id },
+      });
+
+      await handleVariationError({
+        error: variationsResult,
+        selectedImage,
+        setActiveGenerations,
+        setImages,
+        setIsGenerating,
+        timestamp,
+      });
+      return;
+    }
+
+    refinedPrompts = variationsResult.refinedPrompts;
+  } else {
+    // Generate simple prompts locally
+    refinedPrompts = selectedDirectors.map((director) => ({
+      director,
+      // No structured prompt when analysis is disabled
+      refinedStructuredPrompt: undefined,
+    }));
   }
-
-  const { refinedPrompts } = variationsResult;
 
   // Remove analyzing status
   removeAnalyzingStatus(processId, setActiveGenerations);
@@ -285,7 +301,18 @@ export const handleDirectorImageVariations = async (
       const placeholderId = `variation-${timestamp}-${index}`;
 
       // Convert refined FIBO JSON (with director's style) to text prompt
-      const finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
+      // OR use simple text prompt if analysis was disabled
+      let finalPrompt = "";
+
+      if (item.refinedStructuredPrompt) {
+        finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
+      } else {
+        // Fallback for disabled analysis: Simple prompt construction
+        finalPrompt = `Make it look as though it were shot by a film director or cinematographer: ${item.director}.`;
+        if (variationPrompt) {
+          finalPrompt += ` ${variationPrompt}`;
+        }
+      }
 
       newMap.set(placeholderId, {
         imageSize: imageSizeDimensions,

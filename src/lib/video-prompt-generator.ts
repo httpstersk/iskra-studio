@@ -7,6 +7,7 @@
 import { analyzeImageCore } from "@/lib/image-analyzer";
 import { expandStorylineToPrompt } from "@/lib/sora-prompt-generator";
 import { generateStorylinesCore } from "@/lib/storyline-generator-core";
+import { getErrorMessage, isErr } from "@/lib/errors/safe-errors";
 
 /**
  * Generates a Sora 2 video prompt from an image URL
@@ -33,7 +34,13 @@ export async function generateVideoPrompt(
   }
 
   // Step 1: Analyze the image to get style/mood
-  const { analysis: styleAnalysis } = await analyzeImageCore(imageUrl);
+  const analysisResult = await analyzeImageCore(imageUrl);
+
+  if (isErr(analysisResult)) {
+    throw new Error(`Image analysis failed: ${getErrorMessage(analysisResult)}`);
+  }
+
+  const { analysis: styleAnalysis } = analysisResult;
 
   if (!styleAnalysis) {
     throw new Error("Image analysis returned no results");

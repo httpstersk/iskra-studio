@@ -8,6 +8,7 @@
  */
 
 import { generateBRollConcepts } from "@/lib/b-roll-concept-generator";
+import { DEFAULT_FIBO_ANALYSIS } from "@/constants/fibo";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import { showErrorFromException } from "@/lib/toast";
 import type { PlacedImage } from "@/types/canvas";
@@ -23,6 +24,7 @@ import {
   validateSingleImageSelection,
 } from "./variation-utils";
 import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
+import { IMAGE_MODELS, type ImageModelId } from "@/lib/image-models";
 
 /**
  * API endpoints for B-roll generation
@@ -56,7 +58,9 @@ interface ToastProps {
  */
 interface BrollImageVariationHandlerDeps {
   /** Model to use for image generation */
-  imageModel?: "seedream" | "nano-banana";
+  imageModel?: ImageModelId;
+  /** Whether FIBO analysis is enabled */
+  isFiboAnalysisEnabled?: boolean;
   /** Array of all placed images */
   images: PlacedImage[];
   /** IDs of selected images */
@@ -137,7 +141,8 @@ export const handleBrollImageVariations = async (
   deps: BrollImageVariationHandlerDeps,
 ): Promise<void> => {
   const {
-    imageModel = "seedream",
+    imageModel = IMAGE_MODELS.SEEDREAM,
+    isFiboAnalysisEnabled = true,
     images,
     selectedIds,
     setActiveGenerations,
@@ -278,28 +283,24 @@ export const handleBrollImageVariations = async (
     return;
   }
 
-  // Stage 1: Analyze image style/mood
-  const analyzeId = `variation-${timestamp}-analyze`;
+  // Stage 1: Analyze image style/mood (if enabled)
+  let imageAnalysis: ImageStyleMoodAnalysis | Error;
 
-  setActiveGenerations((prev) => {
-    const newMap = new Map(prev);
-    newMap.set(analyzeId, {
-      imageUrl: signedImageUrl,
-      isVariation: true,
-      prompt: "",
-      status: VARIATION_STATUS.ANALYZING,
+  if (isFiboAnalysisEnabled) {
+    const analyzeId = `variation-${timestamp}-analyze`;
+
+    setActiveGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(analyzeId, {
+        imageUrl: signedImageUrl,
+        isVariation: true,
+        prompt: "",
+        status: VARIATION_STATUS.ANALYZING,
+      });
+      return newMap;
     });
-    return newMap;
-  });
 
-  const imageAnalysis = await analyzeImageStyle(signedImageUrl);
-
-  if (imageAnalysis instanceof Error) {
-    showErrorFromException(
-      "Analysis failed",
-      imageAnalysis,
-      "Failed to analyze image for B-roll variations",
-    );
+    imageAnalysis = await analyzeImageStyle(signedImageUrl);
 
     // Remove analyze placeholder
     setActiveGenerations((prev) => {
@@ -307,6 +308,17 @@ export const handleBrollImageVariations = async (
       newMap.delete(analyzeId);
       return newMap;
     });
+  } else {
+    // Use default analysis if disabled
+    imageAnalysis = DEFAULT_FIBO_ANALYSIS as unknown as ImageStyleMoodAnalysis;
+  }
+
+  if (imageAnalysis instanceof Error) {
+    showErrorFromException(
+      "Analysis failed",
+      imageAnalysis,
+      "Failed to analyze image for B-roll variations",
+    );
 
     await handleVariationError({
       error: imageAnalysis,
@@ -318,13 +330,6 @@ export const handleBrollImageVariations = async (
     });
     return;
   }
-
-  // Remove analyze placeholder
-  setActiveGenerations((prev) => {
-    const newMap = new Map(prev);
-    newMap.delete(analyzeId);
-    return newMap;
-  });
 
   // Stage 2: Generate B-roll concepts dynamically based on analysis
   const brollResult = await tryPromise(

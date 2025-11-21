@@ -1,3 +1,5 @@
+import { ImageModelId } from "@/lib/image-models";
+
 export interface PlacedImage {
   assetId?: string;
   assetSyncedAt?: number;
@@ -83,6 +85,7 @@ export type GenerationStatus =
   | "generating"
   | "uploading";
 
+
 /**
  * Configuration for an active image generation job.
  *
@@ -103,7 +106,7 @@ export interface ActiveGeneration {
   /** Whether this is a variation of an existing image */
   isVariation?: boolean;
   /** AI model to use for generation (Seedream or Nano Banana) */
-  model?: "seedream" | "nano-banana";
+  model?: ImageModelId;
   /** Generation prompt describing the desired output */
   prompt: string;
   /** Current status of the generation process */

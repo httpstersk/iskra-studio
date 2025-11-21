@@ -11,6 +11,9 @@ import type {
 } from "@/types/canvas";
 import { useCallback } from "react";
 import { useProjectGuard } from "./useProjectGuard";
+import type { ImageModelId } from "@/lib/image-models";
+import { isFiboAnalysisEnabledAtom } from "@/store/ui-atoms";
+import { useAtomValue } from "jotai";
 
 /**
  * Generation handler dependencies
@@ -21,16 +24,16 @@ interface GenerationHandlerDeps {
     prompt: string;
     seed?: number;
     imageSize?:
-      | "square"
-      | "landscape_16_9"
-      | "portrait_16_9"
-      | "landscape_4_3"
-      | "portrait_4_3"
-      | { width: number; height: number };
+    | "square"
+    | "landscape_16_9"
+    | "portrait_16_9"
+    | "landscape_4_3"
+    | "portrait_4_3"
+    | { width: number; height: number };
   }) => Promise<{ url: string; width: number; height: number; seed: number }>;
   generationCount: number;
   generationSettings: GenerationSettings;
-  imageModel: "seedream" | "nano-banana";
+  imageModel: ImageModelId;
   imageVariationType: "camera-angles" | "director" | "lighting";
   images: PlacedImage[];
   isAuthenticated: boolean;
@@ -96,6 +99,8 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     viewport,
   } = deps;
 
+  const isFiboAnalysisEnabled = useAtomValue(isFiboAnalysisEnabledAtom);
+
   const { ensureProject } = useProjectGuard();
 
   /**
@@ -156,6 +161,7 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
         imageModel,
         imageVariationType,
         images,
+        isFiboAnalysisEnabled,
         selectedIds,
         setActiveGenerations,
         setActiveVideoGenerations,

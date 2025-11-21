@@ -7,6 +7,7 @@ import { ImageSettings } from "@/components/canvas/control-panel/ImageSettings";
 import { ModeIndicator } from "@/components/canvas/control-panel/ModeIndicator";
 import { PromptInput } from "@/components/canvas/control-panel/PromptInput";
 import { VideoSettings } from "@/components/canvas/control-panel/VideoSettings";
+import type { ImageModelId } from "@/lib/image-models";
 import { cn } from "@/lib/utils";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
 
@@ -28,14 +29,14 @@ interface CanvasControlPanelProps {
   handleFileUpload: (files: FileList | null) => void;
   handleRun: () => void;
   handleVariationModeChange: (mode: "image" | "video") => void;
-  imageModel: "seedream" | "nano-banana";
+  imageModel: ImageModelId;
   imageVariationType?: "camera-angles" | "director" | "lighting";
   images: PlacedImage[];
   isGenerating: boolean;
   redo: () => void;
   selectedIds: string[];
   setGenerationSettings: (settings: GenerationSettings) => void;
-  setImageModel: (value: "seedream" | "nano-banana") => void;
+  setImageModel: (value: ImageModelId) => void;
   setImageVariationType?: (
     type: "camera-angles" | "director" | "lighting"
   ) => void;

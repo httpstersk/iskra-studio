@@ -1,3 +1,5 @@
+import { IMAGE_MODELS } from "@/lib/image-models";
+
 /**
  * Runtime Configuration
  * Centralized configuration management with type safety and validation
@@ -51,10 +53,10 @@ export const config = {
    * Image generation defaults
    */
   imageGeneration: {
-    defaultModel: "seedream" as const,
+    defaultModel: IMAGE_MODELS.SEEDREAM,
     defaultVariationCount: 4,
     maxVariationCount: 12,
-    supportedModels: ["seedream", "nano-banana"] as const,
+    supportedModels: [IMAGE_MODELS.SEEDREAM, IMAGE_MODELS.NANO_BANANA] as const,
   },
 
   /**

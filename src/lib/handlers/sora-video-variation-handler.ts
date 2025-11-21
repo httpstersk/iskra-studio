@@ -8,6 +8,7 @@
  */
 
 import { VIDEO_DEFAULTS } from "@/constants/canvas";
+import { DEFAULT_FIBO_ANALYSIS } from "@/constants/fibo";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import { showError, showErrorFromException } from "@/lib/toast";
 import { expandStorylinesToPrompts } from "@/lib/sora-prompt-generator";
@@ -53,6 +54,7 @@ const _POSITION_INDICES = [0, 2, 4, 6] as const;
 
 interface SoraVideoVariationHandlerDeps {
   basePrompt?: string;
+  isFiboAnalysisEnabled?: boolean;
   images: PlacedImage[];
   selectedIds: string[];
   setActiveVideoGenerations: React.Dispatch<
@@ -183,6 +185,7 @@ export const handleSoraVideoVariations = async (
 ) => {
   const {
     images,
+    isFiboAnalysisEnabled = true,
     selectedIds,
     setActiveVideoGenerations,
     setIsGenerating,
@@ -309,24 +312,38 @@ export const handleSoraVideoVariations = async (
     return;
   }
 
-  // Stage 1: Analyze image style/mood
-  const analyzeId = `video-${timestamp}-analyze`;
+  // Stage 1: Analyze image style/mood (if enabled)
+  let imageAnalysis: ImageStyleMoodAnalysis | Error;
 
-  setActiveVideoGenerations((prev) => {
-    const newMap = new Map(prev);
-    newMap.set(analyzeId, {
-      imageUrl: signedImageUrl,
-      prompt: "",
-      status: VARIATION_STATUS.ANALYZING,
-      isVariation: true,
-      duration: parseDuration(videoSettings.duration),
-      modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
-      sourceImageId: selectedIds[0],
+  if (isFiboAnalysisEnabled) {
+    const analyzeId = `video-${timestamp}-analyze`;
+
+    setActiveVideoGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.set(analyzeId, {
+        imageUrl: signedImageUrl,
+        prompt: "",
+        status: VARIATION_STATUS.ANALYZING,
+        isVariation: true,
+        duration: parseDuration(videoSettings.duration),
+        modelId: videoSettings.modelId || VIDEO_DEFAULTS.MODEL_ID,
+        sourceImageId: selectedIds[0],
+      });
+      return newMap;
     });
-    return newMap;
-  });
 
-  const imageAnalysis = await analyzeImage(signedImageUrl);
+    imageAnalysis = await analyzeImage(signedImageUrl);
+
+    // Remove analyze placeholder
+    setActiveVideoGenerations((prev) => {
+      const newMap = new Map(prev);
+      newMap.delete(analyzeId);
+      return newMap;
+    });
+  } else {
+    // Use default analysis if disabled
+    imageAnalysis = DEFAULT_FIBO_ANALYSIS as unknown as ImageStyleMoodAnalysis;
+  }
 
   if (imageAnalysis instanceof Error) {
     showErrorFromException(
@@ -334,21 +351,9 @@ export const handleSoraVideoVariations = async (
       imageAnalysis,
       "Failed to analyze image",
     );
-    setActiveVideoGenerations((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(analyzeId);
-      return newMap;
-    });
     setIsGenerating(false);
     return;
   }
-
-  // Remove analyze placeholder
-  setActiveVideoGenerations((prev) => {
-    const newMap = new Map(prev);
-    newMap.delete(analyzeId);
-    return newMap;
-  });
 
   // Stage 2: Generate storyline concepts using AI
   const duration = parseDuration(videoSettings.duration);

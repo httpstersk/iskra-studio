@@ -1,13 +1,14 @@
 "use client";
 
+import { IMAGE_MODELS, type ImageModelId } from "@/lib/image-models";
 import { SegmentedControl } from "@radix-ui/themes";
 
 /**
  * Props for the ImageSettings component
  */
 interface ImageSettingsProps {
-  imageModel: "seedream" | "nano-banana";
-  setImageModel: (value: "seedream" | "nano-banana") => void;
+  imageModel: ImageModelId;
+  setImageModel: (value: ImageModelId) => void;
 }
 
 /**
@@ -22,13 +23,13 @@ export function ImageSettings({
       size="1"
       value={imageModel}
       onValueChange={(value) =>
-        setImageModel(value as "seedream" | "nano-banana")
+        setImageModel(value as ImageModelId)
       }
     >
-      <SegmentedControl.Item value="seedream">
+      <SegmentedControl.Item value={IMAGE_MODELS.SEEDREAM}>
         <span className="text-xs">Seedream</span>
       </SegmentedControl.Item>
-      <SegmentedControl.Item value="nano-banana">
+      <SegmentedControl.Item value={IMAGE_MODELS.NANO_BANANA}>
         <span className="text-xs">Nano Banana</span>
       </SegmentedControl.Item>
     </SegmentedControl.Root>

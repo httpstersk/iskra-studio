@@ -24,6 +24,7 @@ import {
 } from "./variation-shared-utils";
 import { validateSingleImageSelection } from "./variation-utils";
 import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
+import { IMAGE_MODELS, type ImageModelId } from "@/lib/image-models";
 
 /**
  * Response from camera angle variations API
@@ -144,9 +145,11 @@ async function generateLightingVariations(
  */
 interface VariationHandlerDeps {
   /** Model to use for image generation */
-  imageModel?: "seedream" | "nano-banana";
+  imageModel?: ImageModelId;
   /** Type of image variation (camera-angles, director, or lighting) */
   imageVariationType?: "camera-angles" | "director" | "lighting";
+  /** Whether FIBO analysis is enabled */
+  isFiboAnalysisEnabled?: boolean;
   /** Array of all placed images */
   images: PlacedImage[];
   /** IDs of selected images */
@@ -206,7 +209,8 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     variationCount = 4,
     variationMode = "image",
     imageVariationType = "camera-angles",
-    imageModel = "seedream",
+    imageModel = IMAGE_MODELS.SEEDREAM,
+    isFiboAnalysisEnabled = true,
     variationPrompt,
     videoSettings,
     viewport,
@@ -234,6 +238,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     return handleSoraVideoVariations({
       basePrompt: variationPrompt,
       images,
+      isFiboAnalysisEnabled,
       selectedIds,
       setActiveVideoGenerations,
       setIsGenerating,
@@ -257,6 +262,7 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       setImages,
       setIsGenerating,
       imageModel,
+      isFiboAnalysisEnabled,
       variationCount: variationCount as 4 | 8 | 12,
       variationPrompt,
     });
@@ -371,36 +377,50 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       timestamp,
     });
 
-    // Stage 2: Call API to get FIBO analysis + refined lighting prompts
-    const variationsResult = await generateLightingVariations(
-      signedImageUrl,
-      variationsToGenerate,
-      variationPrompt
-    );
+    // Stage 2: Get refined prompts (either from API or generate locally)
+    let refinedPrompts: Array<{
+      lightingScenario: string;
+      refinedStructuredPrompt?: Record<string, unknown>;
+    }> = [];
 
-    if (variationsResult instanceof Error) {
-      handlerLogger.error("Lighting variations API failed", variationsResult);
-
-      removeAnalyzingStatus(processId, setActiveGenerations);
-
-      await handleVariationError({
-        error: variationsResult,
-        selectedImage,
-        setActiveGenerations,
-        setImages,
-        setIsGenerating,
-        timestamp,
-      });
-
-      showErrorFromException(
-        "Generation failed",
-        variationsResult,
-        "Failed to generate lighting variations"
+    if (isFiboAnalysisEnabled) {
+      // Call API to get FIBO analysis + refined lighting prompts
+      const variationsResult = await generateLightingVariations(
+        signedImageUrl,
+        variationsToGenerate,
+        variationPrompt
       );
-      return;
-    }
 
-    const { refinedPrompts } = variationsResult;
+      if (variationsResult instanceof Error) {
+        handlerLogger.error("Lighting variations API failed", variationsResult);
+
+        removeAnalyzingStatus(processId, setActiveGenerations);
+
+        await handleVariationError({
+          error: variationsResult,
+          selectedImage,
+          setActiveGenerations,
+          setImages,
+          setIsGenerating,
+          timestamp,
+        });
+
+        showErrorFromException(
+          "Generation failed",
+          variationsResult,
+          "Failed to generate lighting variations"
+        );
+        return;
+      }
+
+      refinedPrompts = variationsResult.refinedPrompts;
+    } else {
+      // Generate simple prompts locally
+      refinedPrompts = variationsToGenerate.map((lightingScenario) => ({
+        lightingScenario,
+        refinedStructuredPrompt: undefined,
+      }));
+    }
 
     // Remove analyzing status
     removeAnalyzingStatus(processId, setActiveGenerations);
@@ -413,10 +433,18 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
       refinedPrompts.forEach((item, index) => {
         const placeholderId = `variation-${timestamp}-${index}`;
 
-        // Convert refined FIBO JSON (with lighting baked in) to text prompt
-        const finalPrompt = fiboStructuredToText(
-          item.refinedStructuredPrompt
-        );
+        // Convert refined FIBO JSON to text prompt OR use simple prompt
+        let finalPrompt = "";
+
+        if (item.refinedStructuredPrompt) {
+          finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
+        } else {
+          // Fallback for disabled analysis: Simple prompt construction
+          finalPrompt = `Apply this lighting: ${item.lightingScenario}`;
+          if (variationPrompt) {
+            finalPrompt += `\n\nContext: ${variationPrompt}`;
+          }
+        }
 
         newMap.set(placeholderId, {
           imageSize: imageSizeDimensions,
@@ -549,36 +577,50 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     timestamp,
   });
 
-  // Stage 2: Call API to get FIBO analysis + refined camera angle prompts
-  const variationsResult = await generateCameraAngleVariations(
-    signedImageUrl,
-    variationsToGenerate,
-    variationPrompt
-  );
+  // Stage 2: Get refined prompts (either from API or generate locally)
+  let refinedPrompts: Array<{
+    cameraAngle: string;
+    refinedStructuredPrompt?: Record<string, unknown>;
+  }> = [];
 
-  if (variationsResult instanceof Error) {
-    handlerLogger.error("Camera angle variations API failed", variationsResult);
-
-    removeAnalyzingStatus(processId, setActiveGenerations);
-
-    await handleVariationError({
-      error: variationsResult,
-      selectedImage,
-      setActiveGenerations,
-      setImages,
-      setIsGenerating,
-      timestamp,
-    });
-
-    showErrorFromException(
-      "Generation failed",
-      variationsResult,
-      "Failed to generate camera angle variations"
+  if (isFiboAnalysisEnabled) {
+    // Call API to get FIBO analysis + refined camera angle prompts
+    const variationsResult = await generateCameraAngleVariations(
+      signedImageUrl,
+      variationsToGenerate,
+      variationPrompt
     );
-    return;
-  }
 
-  const { refinedPrompts } = variationsResult;
+    if (variationsResult instanceof Error) {
+      handlerLogger.error("Camera angle variations API failed", variationsResult);
+
+      removeAnalyzingStatus(processId, setActiveGenerations);
+
+      await handleVariationError({
+        error: variationsResult,
+        selectedImage,
+        setActiveGenerations,
+        setImages,
+        setIsGenerating,
+        timestamp,
+      });
+
+      showErrorFromException(
+        "Generation failed",
+        variationsResult,
+        "Failed to generate camera angle variations"
+      );
+      return;
+    }
+
+    refinedPrompts = variationsResult.refinedPrompts;
+  } else {
+    // Generate simple prompts locally
+    refinedPrompts = variationsToGenerate.map((cameraAngle) => ({
+      cameraAngle,
+      refinedStructuredPrompt: undefined,
+    }));
+  }
 
   // Remove analyzing status
   removeAnalyzingStatus(processId, setActiveGenerations);
@@ -593,8 +635,18 @@ export const handleVariationGeneration = async (deps: VariationHandlerDeps) => {
     refinedPrompts.forEach((item, index) => {
       const placeholderId = `variation-${timestamp}-${index}`;
 
-      // Convert refined FIBO JSON (with camera angle baked in) to text prompt
-      const finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
+      // Convert refined FIBO JSON to text prompt OR use simple prompt
+      let finalPrompt = "";
+
+      if (item.refinedStructuredPrompt) {
+        finalPrompt = fiboStructuredToText(item.refinedStructuredPrompt);
+      } else {
+        // Fallback for disabled analysis: Simple prompt construction
+        finalPrompt = `Apply this camera angle: ${item.cameraAngle}`;
+        if (variationPrompt) {
+          finalPrompt += ` Context: ${variationPrompt}`;
+        }
+      }
 
       newMap.set(placeholderId, {
         imageSize: imageSizeDimensions,

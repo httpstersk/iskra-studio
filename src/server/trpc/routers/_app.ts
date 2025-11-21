@@ -7,17 +7,22 @@ import {
 import {
   DEFAULT_IMAGE_SIZE_4K_LANDSCAPE,
   getImageModelEndpoint,
+  IMAGE_MODELS,
   resolveImageSize,
   TEXT_TO_IMAGE_ENDPOINT,
 } from "@/lib/image-models";
 import { sanitizePrompt } from "@/lib/prompt-utils";
-import { BriaApiError, generateImage } from "@/lib/services/bria-client";
+import {
+  BriaApiError,
+  generateImage,
+} from "@/lib/services/bria-client";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { generateVideoPrompt } from "@/lib/video-prompt-generator";
 import { tracked } from "@trpc/server";
 import sharp from "sharp";
 import { z } from "zod";
 import { publicProcedure, router } from "../init";
+import { isErr } from "@/lib/errors/safe-errors";
 
 /**
  * API response envelope from fal.ai endpoints.
@@ -337,6 +342,7 @@ export const appRouter = router({
           yield tracked(`${generationId}_error`, {
             error: `Prompt generation failed: ${errorMessage}`,
             type: "error",
+            // No need to return here, let it fall through or handle appropriately
           });
           return;
         }
@@ -570,7 +576,9 @@ export const appRouter = router({
       z.object({
         imageUrl: z.string().url(),
         prompt: z.string(),
-        model: z.enum(["seedream", "nano-banana"]).default("seedream"),
+        model: z
+          .enum([IMAGE_MODELS.SEEDREAM, IMAGE_MODELS.NANO_BANANA])
+          .default(IMAGE_MODELS.SEEDREAM),
         imageSize: z
           .union([
             z.enum([
@@ -606,25 +614,25 @@ export const appRouter = router({
 
         // Build input based on model - Nano Banana and Seedream have different schemas
         const falInput =
-          input.model === "nano-banana"
+          input.model === IMAGE_MODELS.NANO_BANANA
             ? {
-                // Nano Banana Edit API schema
-                image_urls: [input.imageUrl],
-                prompt: compactPrompt,
-                image_size: resolvedImageSize,
-                num_images: 1,
-                output_format: "png" as const,
-                resolution: "2K", // 1K, 2K, 4K
-              }
+              // Nano Banana Edit API schema
+              image_urls: [input.imageUrl],
+              prompt: compactPrompt,
+              image_size: resolvedImageSize,
+              num_images: 1,
+              output_format: "png" as const,
+              resolution: "2K", // 1K, 2K, 4K
+            }
             : {
-                // Seedream Edit API schema
-                enable_safety_checker: false,
-                image_size: resolvedImageSize,
-                image_urls: [input.imageUrl],
-                num_images: 1,
-                prompt: compactPrompt,
-                ...(input.seed !== undefined ? { seed: input.seed } : {}),
-              };
+              // Seedream Edit API schema
+              enable_safety_checker: false,
+              image_size: resolvedImageSize,
+              image_urls: [input.imageUrl],
+              num_images: 1,
+              prompt: compactPrompt,
+              ...(input.seed !== undefined ? { seed: input.seed } : {}),
+            };
 
         // Subscribe to the model endpoint and wait for completion
         const result = await falClient.subscribe(endpoint, {
@@ -723,6 +731,10 @@ export const appRouter = router({
           },
           30000
         );
+
+        if (isErr(result)) {
+          throw result;
+        }
 
         if (signal?.aborted) {
           return;
