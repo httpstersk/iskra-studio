@@ -608,21 +608,22 @@ export const appRouter = router({
         const falInput =
           input.model === "nano-banana"
             ? {
-                // Nano Banana Edit API schema
-                image_urls: [input.imageUrl],
-                prompt: compactPrompt,
-                num_images: 1,
-                output_format: "png" as const,
-              }
+              // Nano Banana Edit API schema
+              image_urls: [input.imageUrl],
+              prompt: compactPrompt,
+              image_size: resolvedImageSize,
+              num_images: 1,
+              output_format: "png" as const,
+            }
             : {
-                // Seedream Edit API schema
-                enable_safety_checker: false,
-                image_size: resolvedImageSize,
-                image_urls: [input.imageUrl],
-                num_images: 1,
-                prompt: compactPrompt,
-                ...(input.seed !== undefined ? { seed: input.seed } : {}),
-              };
+              // Seedream Edit API schema
+              enable_safety_checker: false,
+              image_size: resolvedImageSize,
+              image_urls: [input.imageUrl],
+              num_images: 1,
+              prompt: compactPrompt,
+              ...(input.seed !== undefined ? { seed: input.seed } : {}),
+            };
 
         // Subscribe to the model endpoint and wait for completion
         const result = await falClient.subscribe(endpoint, {
