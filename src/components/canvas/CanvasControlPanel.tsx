@@ -10,6 +10,7 @@ import { VideoSettings } from "@/components/canvas/control-panel/VideoSettings";
 import type { ImageModelId } from "@/lib/image-models";
 import { cn } from "@/lib/utils";
 import type { GenerationSettings, PlacedImage } from "@/types/canvas";
+import React from "react";
 
 /**
  * Props for the canvas control panel component.
@@ -56,8 +57,9 @@ interface CanvasControlPanelProps {
 
 /**
  * Control panel that surfaces primary generation controls and status indicators.
+ * Memoized to prevent unnecessary rerenders when parent state changes.
  */
-export function CanvasControlPanel({
+export const CanvasControlPanel = React.memo(function CanvasControlPanel({
   activeGenerations,
   activeGenerationsSize,
   activeVideoGenerations,
@@ -175,4 +177,4 @@ export function CanvasControlPanel({
       </div>
     </div>
   );
-}
+});

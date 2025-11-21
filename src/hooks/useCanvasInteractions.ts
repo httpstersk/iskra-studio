@@ -42,6 +42,8 @@ export function useCanvasInteractions(
   const viewportRef = useRef(viewport);
   const pendingViewportRef = useRef<Viewport | null>(null);
   const viewportRafIdRef = useRef<number | null>(null);
+  // Touch move throttle ref for ~60fps limit
+  const touchMoveThrottleRef = useRef(0);
 
   useEffect(() => {
     viewportRef.current = viewport;
@@ -328,6 +330,13 @@ export function useCanvasInteractions(
 
   const handleTouchMove = useCallback(
     (e: Konva.KonvaEventObject<TouchEvent>) => {
+      // Throttle touch move to ~60fps to prevent excessive calculations
+      const now = performance.now();
+      if (now - touchMoveThrottleRef.current < 16) {
+        return;
+      }
+      touchMoveThrottleRef.current = now;
+
       const touches = e.evt.touches;
 
       if (touches.length === 2 && lastTouchDistance && lastTouchCenter) {

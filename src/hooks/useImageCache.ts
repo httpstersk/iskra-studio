@@ -1,13 +1,47 @@
 /**
  * Global image cache to prevent duplicate network requests
  * Images are cached by URL and reused across all components
+ *
+ * Features:
+ * - LRU eviction to prevent memory bloat
+ * - Configurable max cache size
+ * - Access tracking for efficient eviction
  */
 
 import { useEffect, useState, useRef } from "react";
 
+// LRU cache configuration
+const MAX_CACHE_SIZE = 150; // Maximum number of images to keep in cache
+
 // Global cache shared across all component instances
 const imageCache = new Map<string, HTMLImageElement>();
 const loadingPromises = new Map<string, Promise<HTMLImageElement>>();
+// Track access order for LRU eviction (most recent at end)
+const accessOrder: string[] = [];
+
+/**
+ * Update access order for LRU tracking
+ * Moves the accessed key to the end (most recently used)
+ */
+function touchLRU(src: string) {
+  const index = accessOrder.indexOf(src);
+  if (index !== -1) {
+    accessOrder.splice(index, 1);
+  }
+  accessOrder.push(src);
+}
+
+/**
+ * Evict oldest entries if cache exceeds max size
+ */
+function evictIfNeeded() {
+  while (accessOrder.length > MAX_CACHE_SIZE) {
+    const oldest = accessOrder.shift();
+    if (oldest) {
+      imageCache.delete(oldest);
+    }
+  }
+}
 
 /**
  * Load an image with caching to prevent duplicate network requests
@@ -17,10 +51,11 @@ const loadingPromises = new Map<string, Promise<HTMLImageElement>>();
  */
 function loadImage(
   src: string,
-  crossOrigin: string = "anonymous",
+  crossOrigin: string = "anonymous"
 ): Promise<HTMLImageElement> {
   // Return cached image if available
   if (imageCache.has(src)) {
+    touchLRU(src); // Update access order
     return Promise.resolve(imageCache.get(src)!);
   }
 
@@ -36,6 +71,8 @@ function loadImage(
 
     img.onload = () => {
       imageCache.set(src, img);
+      touchLRU(src); // Add to LRU tracking
+      evictIfNeeded(); // Evict old entries if needed
       loadingPromises.delete(src);
       resolve(img);
     };
@@ -62,7 +99,7 @@ function loadImage(
  */
 export function useImageCache(
   src: string,
-  crossOrigin: string = "anonymous",
+  crossOrigin: string = "anonymous"
 ): [HTMLImageElement | undefined, "loading" | "loaded" | "error"] {
   const [image, setImage] = useState<HTMLImageElement | undefined>(() => {
     // Check cache immediately for synchronous return
@@ -86,6 +123,7 @@ export function useImageCache(
 
     // If already in cache, set immediately
     if (imageCache.has(src)) {
+      touchLRU(src); // Update LRU access order
       setImage(imageCache.get(src));
       setStatus("loaded");
       return;
@@ -121,6 +159,7 @@ export function useImageCache(
 export function clearImageCache() {
   imageCache.clear();
   loadingPromises.clear();
+  accessOrder.length = 0;
 }
 
 /**
@@ -128,6 +167,10 @@ export function clearImageCache() {
  */
 export function removeFromCache(src: string) {
   imageCache.delete(src);
+  const index = accessOrder.indexOf(src);
+  if (index !== -1) {
+    accessOrder.splice(index, 1);
+  }
 }
 
 /**
@@ -137,5 +180,7 @@ export function getCacheStats() {
   return {
     cachedImages: imageCache.size,
     loadingImages: loadingPromises.size,
+    lruOrder: accessOrder.length,
+    maxCacheSize: MAX_CACHE_SIZE,
   };
 }

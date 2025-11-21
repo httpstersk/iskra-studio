@@ -160,6 +160,12 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
 }: CanvasStageRendererProps) {
   const selectedIdsSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
+  // Get device pixel ratio for crisp rendering on retina displays
+  const pixelRatio = useMemo(
+    () => (typeof window !== "undefined" ? window.devicePixelRatio : 1),
+    []
+  );
+
   /**
    * Handles right-click context menu on canvas elements
    * Selects the topmost element under cursor for context operations
@@ -335,15 +341,19 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
     [images, isVariationMode, selectedIds],
   );
 
-  const visibleImages = useMemo(() => {
+  // First, filter out images that are video sources (only recalculates when images/videos change)
+  const renderableImages = useMemo(() => {
     const videoSourceImageIds = new Set(
       videos.map((v) => v.sourceImageId).filter(Boolean),
     );
-    const imagesToRender = images.filter(
-      (img) => !videoSourceImageIds.has(img.id),
-    );
-    return getVisibleItems(imagesToRender, roundedViewport, canvasSize);
-  }, [canvasSize, images, roundedViewport, videos]);
+    return images.filter((img) => !videoSourceImageIds.has(img.id));
+  }, [images, videos]);
+
+  // Then apply viewport culling (recalculates on viewport change)
+  const visibleImages = useMemo(
+    () => getVisibleItems(renderableImages, roundedViewport, canvasSize),
+    [canvasSize, renderableImages, roundedViewport],
+  );
 
   const visibleVideos = useMemo(
     () => getVisibleItems(videos, roundedViewport, canvasSize),
@@ -367,6 +377,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
         onTouchMove={interactions.handleTouchMove}
         onTouchStart={interactions.handleTouchStart}
         onWheel={interactions.handleWheel}
+        pixelRatio={pixelRatio}
         ref={stageRef}
         scaleX={viewport.scale}
         scaleY={viewport.scale}
@@ -404,6 +415,8 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
               <Line
                 dash={[4, 4]}
                 key={i}
+                listening={false}
+                perfectDrawEnabled={false}
                 points={
                   line.orientation === "vertical"
                     ? [line.x!, line.start, line.x!, line.end]
