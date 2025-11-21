@@ -4,7 +4,6 @@
 
 import { NextResponse } from "next/server";
 import { AuthError } from "./auth-middleware";
-import { HttpError } from "./http-client";
 
 const IS_DEVELOPMENT = process.env.NODE_ENV === "development";
 
@@ -53,11 +52,6 @@ function sanitizeErrorMessage(
     return { message: error.message };
   }
 
-  if (error instanceof HttpError) {
-    // Generic HTTP error message for production
-    return { message: "An error occurred while processing your request" };
-  }
-
   // Generic fallback for unknown errors
   return { message: fallbackMessage };
 }
@@ -93,14 +87,6 @@ export function createErrorResponse(
     return NextResponse.json(
       { error: error.message },
       { status: error.statusCode }
-    );
-  }
-
-  if (error instanceof HttpError) {
-    const sanitized = sanitizeErrorMessage(error, fallbackMessage);
-    return NextResponse.json(
-      { error: sanitized.message },
-      { status: error.status }
     );
   }
 

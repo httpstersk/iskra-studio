@@ -44,19 +44,6 @@ export const BRIA_ENDPOINTS = {
 } as const;
 
 /**
- * @deprecated Use BriaTokenErr from @/lib/errors/safe-errors instead
- * Kept for backward compatibility during migration
- */
-export class BriaTokenError extends Error {
-  constructor(
-    message = "BRIA_API_TOKEN environment variable is not configured"
-  ) {
-    super(message);
-    this.name = "BriaTokenError";
-  }
-}
-
-/**
  * Base response from Bria API
  */
 interface BriaBaseResponse<T> {

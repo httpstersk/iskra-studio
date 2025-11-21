@@ -21,21 +21,6 @@ export interface FetchResponse<T> {
   headers: Headers;
 }
 
-/**
- * @deprecated Use HttpErr from @/lib/errors/safe-errors instead
- * Kept for backward compatibility during migration
- */
-export class HttpError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public response?: unknown
-  ) {
-    super(message);
-    this.name = 'HttpError';
-  }
-}
-
 class HttpClient {
   private defaultTimeout = 30000;
   private defaultRetries = 0;
