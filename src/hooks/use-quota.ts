@@ -11,11 +11,11 @@ import { useQuery } from "convex/react";
 import { useMemo } from "react";
 import { api } from "../../convex/_generated/api";
 import type { QuotaStatus, GenerationType } from "@/types/subscription";
+import { getQuotaLimits } from "@/types/subscription";
 import {
-  getQuotaLimits,
   calculateQuotaPercentage,
   calculateDaysUntilReset,
-} from "@/types/subscription";
+} from "@/lib/quota-utils";
 import { useAuth } from "./useAuth";
 
 /**
@@ -131,7 +131,9 @@ export function useQuota(): UseQuotaReturn {
       videosUsed: subscriptionData.videosUsedInPeriod ?? 0,
       videosLimit: limits.videos,
       resetDate,
-      daysUntilReset: calculateDaysUntilReset(resetDate),
+      daysUntilReset: subscriptionData.billingCycleEnd
+        ? calculateDaysUntilReset(subscriptionData.billingCycleEnd)
+        : 30,
     };
   }, [subscriptionData]);
 

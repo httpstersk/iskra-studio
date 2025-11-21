@@ -79,22 +79,3 @@ export function getQuotaLimits(tier: SubscriptionTier): {
     videos: QUOTA_LIMITS.FREE_VIDEO_QUOTA,
   };
 }
-
-/**
- * Calculate quota percentage used
- */
-export function calculateQuotaPercentage(used: number, limit: number): number {
-  if (limit === 0) return 0;
-  return Math.min(Math.round((used / limit) * 100), 100);
-}
-
-/**
- * Calculate days until quota reset
- */
-export function calculateDaysUntilReset(resetDate: Date | null): number {
-  if (!resetDate) return 30; // Default to 30 days for free tier
-  const now = new Date();
-  const diffTime = resetDate.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return Math.max(0, diffDays);
-}

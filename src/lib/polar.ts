@@ -91,31 +91,3 @@ export function getProductIdForInterval(
   }
   return null;
 }
-
-/**
- * Helper function to verify webhook signatures
- * @param payload - Raw webhook payload
- * @param signature - Signature from webhook headers
- * @returns True if signature is valid
- */
-export async function verifyWebhookSignature(
-  _payload: string,
-  _signature: string
-): Promise<boolean> {
-  try {
-    // TODO: Implement webhook signature verification
-    // Polar provides webhook verification utilities
-    // For now, we'll add a placeholder
-    if (!POLAR_CONFIG.webhookSecret) {
-      console.error("POLAR_WEBHOOK_SECRET is not configured");
-      return false;
-    }
-
-    // Polar's webhook verification will be implemented here
-    // using their provided utilities from the SDK
-    return true;
-  } catch (error) {
-    console.error("Webhook signature verification failed:", error);
-    return false;
-  }
-}

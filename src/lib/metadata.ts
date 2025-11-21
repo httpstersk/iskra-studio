@@ -67,17 +67,3 @@ export function generateBaseMetadata(): Metadata {
     },
   };
 }
-
-/**
- * Generates metadata for project pages (if needed in the future)
- */
-export function generateProjectMetadata(projectName: string): Metadata {
-  return {
-    title: projectName,
-    description: `Edit ${projectName} in ${APP_NAME}`,
-    openGraph: {
-      title: `${projectName} | ${APP_NAME}`,
-      description: `Edit ${projectName} in ${APP_NAME}`,
-    },
-  };
-}
