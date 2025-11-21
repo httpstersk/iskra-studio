@@ -57,22 +57,6 @@ export class BriaTokenError extends Error {
 }
 
 /**
- * @deprecated Use BriaApiErr from @/lib/errors/safe-errors instead
- * Kept for backward compatibility during migration
- */
-export class BriaApiError extends Error {
-  constructor(
-    message: string,
-    public readonly statusCode?: number,
-    public readonly requestId?: string,
-    public readonly cause?: unknown
-  ) {
-    super(message);
-    this.name = "BriaApiError";
-  }
-}
-
-/**
  * Base response from Bria API
  */
 interface BriaBaseResponse<T> {

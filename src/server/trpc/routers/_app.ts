@@ -12,7 +12,7 @@ import {
   TEXT_TO_IMAGE_ENDPOINT,
 } from "@/lib/image-models";
 import { sanitizePrompt } from "@/lib/prompt-utils";
-import { BriaApiError, generateImage } from "@/lib/services/bria-client";
+import { generateImage } from "@/lib/services/bria-client";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { generateVideoPrompt } from "@/lib/video-prompt-generator";
 import { tracked } from "@trpc/server";
@@ -613,23 +613,23 @@ export const appRouter = router({
         const falInput =
           input.model === IMAGE_MODELS.NANO_BANANA
             ? {
-                // Nano Banana Edit API schema
-                image_urls: [input.imageUrl],
-                prompt: compactPrompt,
-                image_size: resolvedImageSize,
-                num_images: 1,
-                output_format: "png" as const,
-                resolution: "1K", // 1K, 2K, 4K
-              }
+              // Nano Banana Edit API schema
+              image_urls: [input.imageUrl],
+              prompt: compactPrompt,
+              image_size: resolvedImageSize,
+              num_images: 1,
+              output_format: "png" as const,
+              resolution: "1K", // 1K, 2K, 4K
+            }
             : {
-                // Seedream Edit API schema
-                enable_safety_checker: false,
-                image_size: resolvedImageSize,
-                image_urls: [input.imageUrl],
-                num_images: 1,
-                prompt: compactPrompt,
-                ...(input.seed !== undefined ? { seed: input.seed } : {}),
-              };
+              // Seedream Edit API schema
+              enable_safety_checker: false,
+              image_size: resolvedImageSize,
+              image_urls: [input.imageUrl],
+              num_images: 1,
+              prompt: compactPrompt,
+              ...(input.seed !== undefined ? { seed: input.seed } : {}),
+            };
 
         // Subscribe to the model endpoint and wait for completion
         const result = await falClient.subscribe(endpoint, {
@@ -750,12 +750,10 @@ export const appRouter = router({
         });
       } catch (error) {
         const errorMessage =
-          error instanceof BriaApiError
+          error instanceof Error
             ? error.message
-            : error instanceof Error
-              ? error.message
-              : "Failed to generate FIBO image variation";
-
+            : "Failed to generate FIBO image variation";
+        la
         yield tracked(`error_${Date.now()}`, {
           type: "error",
           error: errorMessage,
