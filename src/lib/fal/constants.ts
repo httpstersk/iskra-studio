@@ -2,9 +2,9 @@ export const FAL_PROXY_PATH = "/api/fal";
 export const FAL_UPLOAD_PATH = `${FAL_PROXY_PATH}/upload`;
 
 export const STANDARD_RATE_LIMITS = {
-  perMinute: { tokens: 5, window: "60 s", header: "5" },
-  perHour: { tokens: 15, window: "60 m", header: "15" },
-  perDay: { tokens: 50, window: "24 h", header: "50" },
+  perMinute: { tokens: 10, window: "60 s", header: "10" },
+  perHour: { tokens: 30, window: "60 m", header: "30" },
+  perDay: { tokens: 100, window: "24 h", header: "100" },
 } as const;
 
 export const VIDEO_RATE_LIMITS = {

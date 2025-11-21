@@ -10,6 +10,7 @@ export interface PlacedImage {
   lightingScenario?: string;
   fullSizeSrc?: string;
   hasContentError?: boolean;
+  hasGenerationError?: boolean;
   height: number;
   id: string;
   isDirector?: boolean;

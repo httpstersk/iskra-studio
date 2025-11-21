@@ -280,82 +280,72 @@ export function useStreamingHandlers(
     async (id: string, error: string, isContentError?: boolean) => {
       const errorMessage = error?.trim() || "Unknown error";
 
-      // If it's a content validation error, show error overlay instead of removing image
-      if (isContentError) {
-        const image = images.find((img) => img.id === id);
+      // Always show error overlay for all generation failures (content errors and regular errors)
+      const image = images.find((img) => img.id === id);
 
-        if (image) {
-          try {
-            // Generate error overlay from pixelated source or original source
-            const { createErrorOverlayFromUrl } = await import(
-              "@/utils/image-error-overlay"
+      if (image) {
+        try {
+          // Generate error overlay from pixelated source or original source
+          const { createErrorOverlayFromUrl } = await import(
+            "@/utils/image-error-overlay"
+          );
+
+          const sourceUrl = image.pixelatedSrc || image.src;
+          const errorOverlayUrl = await createErrorOverlayFromUrl(
+            sourceUrl,
+            image.width,
+            image.height
+          );
+
+          if (errorOverlayUrl) {
+            // Update image with error overlay
+            setImages((prev) =>
+              prev.map((img) =>
+                img.id === id
+                  ? {
+                      ...img,
+                      hasContentError: isContentError || false,
+                      hasGenerationError: !isContentError,
+                      isLoading: false,
+                      opacity: 1.0,
+                      pixelatedSrc: undefined,
+                      src: errorOverlayUrl,
+                    }
+                  : img
+              )
             );
-
-            const sourceUrl = image.pixelatedSrc || image.src;
-            const errorOverlayUrl = await createErrorOverlayFromUrl(
-              sourceUrl,
-              image.width,
-              image.height
-            );
-
-            if (errorOverlayUrl) {
-              // Update image with error overlay
-              setImages((prev) =>
-                prev.map((img) =>
-                  img.id === id
-                    ? {
-                        ...img,
-                        hasContentError: true,
-                        isLoading: false,
-                        opacity: 1.0,
-                        pixelatedSrc: undefined,
-                        src: errorOverlayUrl,
-                      }
-                    : img
-                )
-              );
-            } else {
-              // Fallback: remove image if overlay generation fails
-              setImages((prev) => prev.filter((img) => img.id !== id));
-            }
-          } catch (overlayError) {
-            log.warn("Failed to create error overlay", { data: overlayError });
-            // Fallback: remove image
+          } else {
+            // Fallback: remove image if overlay generation fails
             setImages((prev) => prev.filter((img) => img.id !== id));
           }
+        } catch (overlayError) {
+          log.warn("Failed to create error overlay", { data: overlayError });
+          // Fallback: remove image
+          setImages((prev) => prev.filter((img) => img.id !== id));
+        }
+      } else {
+        // If image not found, just remove it from active generations
+        setImages((prev) => prev.filter((img) => img.id !== id));
+      }
+
+      setActiveGenerations((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(id);
+
+        if (newMap.size === 0) {
+          setIsGenerating(false);
         }
 
-        setActiveGenerations((prev) => {
-          const newMap = new Map(prev);
-          newMap.delete(id);
+        return newMap;
+      });
 
-          if (newMap.size === 0) {
-            setIsGenerating(false);
-          }
-
-          return newMap;
-        });
-
-        // Show error message for content validation
+      // Show appropriate error message
+      if (isContentError) {
         showError(
           "Content validation failed",
           "The generated content was flagged by content moderation and cannot be displayed."
         );
       } else {
-        // Regular error handling: remove the image
-        setImages((prev) => prev.filter((img) => img.id !== id));
-
-        setActiveGenerations((prev) => {
-          const newMap = new Map(prev);
-          newMap.delete(id);
-
-          if (newMap.size === 0) {
-            setIsGenerating(false);
-          }
-
-          return newMap;
-        });
-
         const isVariation = id.startsWith("variation-");
 
         showError(
