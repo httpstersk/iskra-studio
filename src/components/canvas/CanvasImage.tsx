@@ -16,6 +16,7 @@ import { useAnimationCoordinator } from "@/hooks/useAnimationCoordinator";
 import { useImageCache } from "@/hooks/useImageCache";
 import { useImageDrag } from "@/hooks/useImageDrag";
 import { useImageInteraction } from "@/hooks/useImageInteraction";
+import { useSharedSkeletonAnimation } from "@/hooks/useSharedSkeletonAnimation";
 import { useStreamingImage } from "@/hooks/useStreamingImage";
 import type { PlacedImage } from "@/types/canvas";
 import { abbreviateCameraDirective } from "@/utils/camera-abbreviation-utils";
@@ -183,38 +184,6 @@ const getDirectiveLabelText = (image: PlacedImage): string | undefined => {
   return undefined;
 };
 
-/**
- * Custom hook for skeleton shimmer animation.
- * Creates a pulsing opacity effect for skeleton placeholders.
- *
- * @returns Current shimmer opacity value
- */
-const useSkeletonShimmer = () => {
-  const [shimmerOpacity, setShimmerOpacity] = React.useState(0.15);
-  const animationRef = React.useRef<number | null>(null);
-
-  React.useEffect(() => {
-    const startTime = performance.now();
-    const duration = 1500; // 1.5 second cycle
-
-    const animate = () => {
-      const elapsed = (performance.now() - startTime) % duration;
-      const progress = elapsed / duration;
-      const opacity = 0.15 + Math.sin(progress * Math.PI * 2) * 0.05;
-      setShimmerOpacity(opacity);
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animationRef.current !== null) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, []);
-
-  return shimmerOpacity;
-};
 
 /**
  * CanvasImage component renders an image on the Konva canvas with full interaction support.
@@ -263,8 +232,8 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   const shapeRef = useRef<Konva.Image>(null);
   const throttleFrame = useFrameThrottle();
 
-  // Skeleton shimmer animation
-  const shimmerOpacity = useSkeletonShimmer();
+  // Skeleton shimmer animation - uses shared coordinator for performance
+  const shimmerOpacity = useSharedSkeletonAnimation(!!image.isSkeleton);
 
   // Get image source (thumbnail first, then full-size)
   // Skip loading for error placeholders and skeletons to save resources
@@ -425,13 +394,15 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
   // Skeleton placeholder rendering - shows before real image loads
   if (image.isSkeleton) {
     return (
-      <Group>
+      <Group listening={false}>
         {/* Base skeleton rectangle */}
         <Rect
           {...getImageDimensions(image)}
           fill="#1a1a1a"
           opacity={0.5}
           rotation={image.rotation}
+          listening={false}
+          perfectDrawEnabled={false}
         />
         {/* Shimmer overlay for animation */}
         <Rect
@@ -439,6 +410,8 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
           fill="#2a2a2a"
           opacity={shimmerOpacity}
           rotation={image.rotation}
+          listening={false}
+          perfectDrawEnabled={false}
         />
       </Group>
     );

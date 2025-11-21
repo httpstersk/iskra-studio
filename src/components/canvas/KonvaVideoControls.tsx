@@ -110,6 +110,8 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
         cornerRadius={8}
         filters={[Konva.Filters.Blur]}
         blurRadius={20}
+        listening={false}
+        perfectDrawEnabled={false}
       />
 
       {/* Controls background */}
@@ -121,6 +123,8 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
         shadowColor="rgba(0, 0, 0, 0.25)"
         shadowBlur={20}
         shadowOffsetY={2}
+        listening={false}
+        perfectDrawEnabled={false}
       />
 
       {/* Play/Pause button background */}
@@ -137,6 +141,8 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
         cornerRadius={100}
         onClick={handlePlayPauseClick}
         onTap={handlePlayPauseClick}
+        perfectDrawEnabled={false}
+        shadowForStrokeEnabled={false}
       />
 
       {/* Play/Pause icon */}
@@ -155,6 +161,8 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
             height={14}
             fill="white"
             cornerRadius={1}
+            listening={false}
+            perfectDrawEnabled={false}
           />
           <Rect
             x={PLAY_BUTTON_SIZE / 2 + 1.5}
@@ -163,6 +171,8 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
             height={14}
             fill="white"
             cornerRadius={1}
+            listening={false}
+            perfectDrawEnabled={false}
           />
         </Group>
       ) : (
@@ -182,6 +192,7 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
           fill="white"
           onClick={handlePlayPauseClick}
           onTap={handlePlayPauseClick}
+          perfectDrawEnabled={false}
         />
       )}
 
@@ -199,6 +210,7 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
         onMouseDown={handleTimelineDragStart}
         onMouseMove={isDraggingTimeline ? handleTimelineDragMove : undefined}
         onMouseUp={handleTimelineDragEnd}
+        perfectDrawEnabled={false}
       />
 
       {/* Timeline progress */}
@@ -210,6 +222,7 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
         fill="white"
         cornerRadius={3}
         listening={false}
+        perfectDrawEnabled={false}
       />
 
       {/* Remaining time display */}
@@ -222,6 +235,7 @@ export const KonvaVideoControls: React.FC<KonvaVideoControlsProps> = ({
         fill="rgba(255, 255, 255, 0.7)"
         fontStyle="500"
         listening={false}
+        perfectDrawEnabled={false}
       />
     </Group>
   );

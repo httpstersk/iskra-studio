@@ -1,4 +1,5 @@
 import { useAnimationCoordinator } from "@/hooks/useAnimationCoordinator";
+import { useSharedSkeletonAnimation } from "@/hooks/useSharedSkeletonAnimation";
 import { useSharedVideoAnimation } from "@/hooks/useSharedVideoAnimation";
 import { useVideoDragWithSnap } from "@/hooks/useVideoDragWithSnap";
 import { useVideoElement } from "@/hooks/useVideoElement";
@@ -73,27 +74,8 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(true);
 
-  // Skeleton shimmer animation
-  const [shimmerOpacity, setShimmerOpacity] = useState(0.15);
-
-  useEffect(() => {
-    if (!video.isSkeleton) return;
-
-    const startTime = performance.now();
-    const duration = 1500;
-    let animationId: number;
-
-    const animate = () => {
-      const elapsed = (performance.now() - startTime) % duration;
-      const progress = elapsed / duration;
-      const opacity = 0.15 + Math.sin(progress * Math.PI * 2) * 0.05;
-      setShimmerOpacity(opacity);
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animationId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationId);
-  }, [video.isSkeleton]);
+  // Skeleton shimmer animation - uses shared coordinator for performance
+  const shimmerOpacity = useSharedSkeletonAnimation(!!video.isSkeleton);
 
   // Get pixelated overlay if available (skip for skeletons)
   const pixelatedImg = usePixelatedOverlay(
@@ -264,13 +246,15 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   // Skeleton placeholder rendering - shows before real video loads
   if (video.isSkeleton) {
     return (
-      <Group x={video.x} y={video.y} rotation={video.rotation}>
+      <Group x={video.x} y={video.y} rotation={video.rotation} listening={false}>
         <Rect
           width={video.width}
           height={video.height}
           cornerRadius={8}
           fill="#1a1a1a"
           opacity={0.5}
+          listening={false}
+          perfectDrawEnabled={false}
         />
         <Rect
           width={video.width}
@@ -278,6 +262,8 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
           cornerRadius={8}
           fill="#2a2a2a"
           opacity={shimmerOpacity}
+          listening={false}
+          perfectDrawEnabled={false}
         />
       </Group>
     );
