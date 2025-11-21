@@ -166,11 +166,6 @@ export function useStreamingHandlers(
         }
       }
 
-      let convexUrl = croppedUrl;
-      let thumbnailUrl: string | undefined = croppedThumbnailUrl;
-      let assetId: string | undefined;
-      let assetSyncedAt: number | undefined;
-
       // Get directorName, cameraAngle, and lightingScenario from the latest image state
       // Use a synchronous state read to ensure we have the latest value
       let directorName: string | undefined;
@@ -185,60 +180,90 @@ export function useStreamingHandlers(
         return prevImages; // No state change, just reading
       });
 
-      if (isAuthenticated) {
-        try {
-          const { uploadGeneratedAssetToConvex } = await import(
-            "@/lib/storage/upload-generated-asset"
-          );
-
-          const uploadResult = await uploadGeneratedAssetToConvex({
-            assetType: "image",
-            metadata: {
-              cameraAngle,
-              directorName,
-              height: naturalHeight,
-              lightingScenario,
-              prompt: generation?.prompt,
-              width: naturalWidth,
-            },
-            sourceUrl: croppedUrl,
-          });
-
-          convexUrl = uploadResult.url;
-          thumbnailUrl = uploadResult.thumbnailUrl || croppedThumbnailUrl;
-          assetId = uploadResult.assetId;
-          assetSyncedAt = Date.now();
-        } catch (error) {
-          log.error("Failed to upload image to Convex", { data: error });
-        }
-      }
-
-      const shouldDisplayThumbnail = Boolean(thumbnailUrl);
-      const displaySrc =
-        shouldDisplayThumbnail && thumbnailUrl ? thumbnailUrl : convexUrl;
+      // UX IMPROVEMENT: Update canvas IMMEDIATELY with generated image (non-blocking)
+      const shouldDisplayInitialThumbnail = Boolean(croppedThumbnailUrl);
+      const initialDisplaySrc = shouldDisplayInitialThumbnail && croppedThumbnailUrl
+        ? croppedThumbnailUrl
+        : croppedUrl;
 
       setImages((prev) =>
         prev.map((img) =>
           img.id === id
             ? {
-                ...img,
-                assetId,
-                assetSyncedAt,
-                cameraAngle, // Preserve from earlier lookup
-                directorName, // Preserve from earlier lookup
-                lightingScenario, // Preserve from earlier lookup
-                displayAsThumbnail: shouldDisplayThumbnail,
-                fullSizeSrc: convexUrl,
-                isLoading: false,
-                naturalHeight,
-                naturalWidth,
-                opacity: 1.0,
-                src: displaySrc,
-                thumbnailSrc: shouldDisplayThumbnail ? thumbnailUrl : undefined,
-              }
+              ...img,
+              cameraAngle,
+              directorName,
+              lightingScenario,
+              displayAsThumbnail: shouldDisplayInitialThumbnail,
+              isLoading: false,
+              naturalHeight,
+              naturalWidth,
+              opacity: 1.0,
+              src: initialDisplaySrc,
+              thumbnailSrc: shouldDisplayInitialThumbnail ? croppedThumbnailUrl : undefined,
+              // Keep fullSizeSrc as croppedUrl temporarily until Convex upload completes
+              fullSizeSrc: croppedUrl,
+            }
             : img
         )
       );
+
+      // Upload to Convex in background (non-blocking for UX)
+      if (isAuthenticated) {
+        (async () => {
+          try {
+            const { uploadGeneratedAssetToConvex } = await import(
+              "@/lib/storage/upload-generated-asset"
+            );
+
+            const uploadResult = await uploadGeneratedAssetToConvex({
+              assetType: "image",
+              metadata: {
+                cameraAngle,
+                directorName,
+                height: naturalHeight,
+                lightingScenario,
+                prompt: generation?.prompt,
+                width: naturalWidth,
+              },
+              sourceUrl: croppedUrl,
+            });
+
+            // Update canvas with permanent Convex URLs after upload completes
+            const convexUrl = uploadResult.url;
+            const convexThumbnailUrl = uploadResult.thumbnailUrl || croppedThumbnailUrl;
+            const assetId = uploadResult.assetId;
+            const assetSyncedAt = Date.now();
+
+            const shouldDisplayThumbnail = Boolean(convexThumbnailUrl);
+            const displaySrc = shouldDisplayThumbnail && convexThumbnailUrl
+              ? convexThumbnailUrl
+              : convexUrl;
+
+            setImages((prev) =>
+              prev.map((img) =>
+                img.id === id
+                  ? {
+                    ...img,
+                    assetId,
+                    assetSyncedAt,
+                    displayAsThumbnail: shouldDisplayThumbnail,
+                    fullSizeSrc: convexUrl,
+                    src: displaySrc,
+                    thumbnailSrc: shouldDisplayThumbnail ? convexThumbnailUrl : undefined,
+                  }
+                  : img
+              )
+            );
+
+            // Save to storage after Convex upload completes
+            setTimeout(() => saveToStorage(), ANIMATION.SAVE_DELAY);
+          } catch (error) {
+            log.error("Failed to upload image to Convex", { data: error });
+            // Even if upload fails, the image is already on canvas with FAL URL
+          }
+        })();
+      }
 
       setActiveGenerations((prev) => {
         const newMap = new Map(prev);
@@ -304,14 +329,14 @@ export function useStreamingHandlers(
               prev.map((img) =>
                 img.id === id
                   ? {
-                      ...img,
-                      hasContentError: isContentError || false,
-                      hasGenerationError: !isContentError,
-                      isLoading: false,
-                      opacity: 1.0,
-                      pixelatedSrc: undefined,
-                      src: errorOverlayUrl,
-                    }
+                    ...img,
+                    hasContentError: isContentError || false,
+                    hasGenerationError: !isContentError,
+                    isLoading: false,
+                    opacity: 1.0,
+                    pixelatedSrc: undefined,
+                    src: errorOverlayUrl,
+                  }
                   : img
               )
             );
@@ -389,10 +414,10 @@ export function useStreamingHandlers(
             prev.map((img) =>
               img.id === id
                 ? {
-                    ...img,
-                    displayAsThumbnail: true,
-                    src: thumbnailDataUrl,
-                  }
+                  ...img,
+                  displayAsThumbnail: true,
+                  src: thumbnailDataUrl,
+                }
                 : img
             )
           );
@@ -402,10 +427,10 @@ export function useStreamingHandlers(
             prev.map((img) =>
               img.id === id
                 ? {
-                    ...img,
-                    displayAsThumbnail: true,
-                    src: croppedResult.croppedSrc,
-                  }
+                  ...img,
+                  displayAsThumbnail: true,
+                  src: croppedResult.croppedSrc,
+                }
                 : img
             )
           );
@@ -419,10 +444,10 @@ export function useStreamingHandlers(
           prev.map((img) =>
             img.id === id
               ? {
-                  ...img,
-                  displayAsThumbnail: true,
-                  src: url,
-                }
+                ...img,
+                displayAsThumbnail: true,
+                src: url,
+              }
               : img
           )
         );
@@ -487,11 +512,11 @@ export function useStreamingHandlers(
             return prev.map((video) =>
               video.id === videoId
                 ? {
-                    ...video,
-                    duration,
-                    isLoading: false,
-                    src: convexUrl,
-                  }
+                  ...video,
+                  duration,
+                  isLoading: false,
+                  src: convexUrl,
+                }
                 : video
             );
           });
