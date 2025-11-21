@@ -635,7 +635,7 @@ export const appRouter = router({
                 image_size: resolvedImageSize,
                 num_images: 1,
                 output_format: "png" as const,
-                resolution: "1K", // 1K, 2K, 4K
+                resolution: "2K", // 1K, 2K, 4K
               }
             : {
                 // Seedream Edit API schema

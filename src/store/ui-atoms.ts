@@ -53,10 +53,10 @@ export const imageVariationTypeAtom = atom<
 
 /**
  * Image model atom - controls which model to use for image variations
- * "seedream": Seedream v4 Edit (default)
- * "nano-banana": Nano Banana Edit
+ * "seedream": Seedream v4 Edit
+ * "nano-banana": Nano Banana Edit (default)
  */
-export const imageModelAtom = atom<ImageModelId>(IMAGE_MODELS.SEEDREAM);
+export const imageModelAtom = atom<ImageModelId>(IMAGE_MODELS.NANO_BANANA);
 
 /**
  * Network status atom - tracks online/offline state
