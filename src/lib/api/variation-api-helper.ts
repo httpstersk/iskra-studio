@@ -1,10 +1,18 @@
 /**
  * Generic helper for creating variation API handlers
  * Reduces duplication across director, camera angle, and lighting variation routes
+ *
+ * This module provides:
+ * - Server-side: `handleVariations()` for API route handlers
+ * - Client-side: `variationClientConfigs` for unified handler orchestration
  */
 
+import { selectRandomVisualStylists } from "@/constants/visual-stylists";
 import { generateFiboVariations } from "@/lib/services/fibo-variation-service";
 import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
+import type { PlacedImage } from "@/types/canvas";
+import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
+import { selectRandomLightingVariations } from "@/utils/lighting-variation-utils";
 
 export interface VariationConfig<T extends string> {
   /**
@@ -157,12 +165,12 @@ export const variationHandlers = {
         // Requirement: The new environment must be generated *around* this light source.
         return `
         ${lightInstruction}
-        
+
         COMMAND: Transfer the subject into a new context: ${userContext}.
-        
+
         EXECUTION RULES:
         1. ATMOSPHERE GENERATION: Generate the "${userContext}" environment specifically under the influence of the requested lighting ("${lightingScenario}").
-        2. SUBJECT HARMONY: Relight the subject so their highlights, reflections, and color temperature match this new environment. 
+        2. SUBJECT HARMONY: Relight the subject so their highlights, reflections, and color temperature match this new environment.
         3. SHADOW PHYSICS: Cast realistic shadows from the subject onto the new background, consistent with the direction of the light sources in "${lightingScenario}".
       `.trim();
       } else {
@@ -170,7 +178,7 @@ export const variationHandlers = {
         // Requirement: Keep the geometry, change the pixels.
         return `
         ${lightInstruction}
-        
+
         INSTRUCTIONS:
         1. GEOMETRY LOCK: Preserve the physical structure of the room/environment and the subject's pose exactly as is.
         2. GLOBAL RELIGHTING: Overhaul the global illumination, color grading, and shadows of the current scene to match "${lightingScenario}".
@@ -180,3 +188,103 @@ export const variationHandlers = {
     },
   },
 };
+
+// =============================================================================
+// CLIENT-SIDE CONFIGURATION
+// =============================================================================
+
+/**
+ * Supported variation types for image generation
+ */
+export type VariationType = "director" | "cameraAngle" | "lighting";
+
+/**
+ * Maps the UI variation type to our internal variation type
+ */
+export type ImageVariationType = "camera-angles" | "director" | "lighting";
+
+/**
+ * Client-side configuration for a variation type
+ * Used by the unified variation handler for orchestration
+ */
+export interface VariationClientConfig {
+  /** Display name for logging and error messages */
+  displayName: string;
+
+  /** API endpoint for generating variations */
+  apiEndpoint: string;
+
+  /** Key name for items array in API request body */
+  apiRequestKey: string;
+
+  /** Key name for the item in API response (matches server itemKey) */
+  responseItemKey: string;
+
+  /** Function to select random items for variation */
+  selectRandomItems: (count: number) => string[];
+
+  /** Function to build prompt when FIBO analysis is disabled */
+  buildPrompt: (item: string, userContext?: string) => string;
+
+  /** Function to get metadata for placeholder images */
+  getPlaceholderMeta: (item: string) => Partial<PlacedImage>;
+
+  /** Optional function to get additional metadata after API response */
+  getImageMeta?: (item: string) => Partial<PlacedImage>;
+}
+
+/**
+ * Client-side configuration for all variation types
+ * Single source of truth for variation behavior
+ */
+export const variationClientConfigs: Record<VariationType, VariationClientConfig> = {
+  director: {
+    displayName: "Director",
+    apiEndpoint: "/api/generate-director-variations",
+    apiRequestKey: "directors",
+    responseItemKey: "director",
+    selectRandomItems: selectRandomVisualStylists,
+    buildPrompt: variationHandlers.director.buildPrompt,
+    getPlaceholderMeta: () => ({}),
+    getImageMeta: (director: string) => ({
+      directorName: director,
+      isDirector: true,
+    }),
+  },
+
+  cameraAngle: {
+    displayName: "Camera angle",
+    apiEndpoint: "/api/generate-camera-angle-variations",
+    apiRequestKey: "cameraAngles",
+    responseItemKey: "cameraAngle",
+    selectRandomItems: selectRandomCameraVariations,
+    buildPrompt: variationHandlers.cameraAngle.buildPrompt,
+    getPlaceholderMeta: (cameraAngle: string) => ({ cameraAngle }),
+  },
+
+  lighting: {
+    displayName: "Lighting",
+    apiEndpoint: "/api/generate-lighting-variations",
+    apiRequestKey: "lightingScenarios",
+    responseItemKey: "lightingScenario",
+    selectRandomItems: selectRandomLightingVariations,
+    buildPrompt: variationHandlers.lighting.buildPrompt,
+    getPlaceholderMeta: (lightingScenario: string) => ({ lightingScenario }),
+  },
+};
+
+/**
+ * Maps UI variation type to internal variation type
+ */
+export function mapImageVariationType(
+  imageVariationType: ImageVariationType
+): VariationType {
+  switch (imageVariationType) {
+    case "camera-angles":
+      return "cameraAngle";
+    case "director":
+      return "director";
+    case "lighting":
+      return "lighting";
+  }
+}
