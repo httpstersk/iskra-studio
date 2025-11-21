@@ -8,77 +8,6 @@ import { mutation, query, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 /**
- * Check if user has available quota for a generation
- *
- * @param type - Generation type ("image" or "video")
- * @returns Object with hasQuota, used, limit, and remaining
- */
-export const checkQuota = query({
-  args: {
-    type: v.union(v.literal("image"), v.literal("video")),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const userId = identity.subject;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Fetch plan details
-    const planKey = user.tier === "paid" ? "pro" : user.tier;
-    const plan = await ctx.db
-      .query("plans")
-      .withIndex("by_key", (q) => q.eq("key", planKey))
-      .first();
-
-    const imageLimit = plan?.imagesPerPeriod ?? (planKey === "pro" ? 480 : 24);
-    const videoLimit = plan?.videosPerPeriod ?? (planKey === "pro" ? 96 : 4);
-    const limit = args.type === "image" ? imageLimit : videoLimit;
-
-    // Check if billing period has ended
-    // Note: Quota reset is handled by scheduled job (resetExpiredQuotas)
-    // We don't reset here to avoid side effects in queries
-    const now = Date.now();
-    const needsReset = user.billingCycleEnd && now > user.billingCycleEnd;
-
-    if (needsReset) {
-      // Return fresh quota status - scheduled job will handle actual reset
-      return {
-        hasQuota: true,
-        limit,
-        remaining: limit,
-        used: 0,
-      };
-    }
-
-    const used =
-      args.type === "image"
-        ? (user.imagesUsedInPeriod ?? 0)
-        : (user.videosUsedInPeriod ?? 0);
-
-    const remaining = Math.max(0, limit - used);
-    const hasQuota = remaining > 0;
-
-    return {
-      hasQuota,
-      limit,
-      remaining,
-      used,
-    };
-  },
-});
-
-/**
  * Get quota status for current user
  *
  * Returns usage and limits for both images and videos
@@ -287,59 +216,6 @@ export const refundQuota = mutation({
 });
 
 /**
- * Increment quota usage after successful generation
- *
- * @deprecated Use checkAndReserveQuota instead for atomic operation
- * @param type - Generation type ("image" or "video")
- * @param generationId - ID of the generation record (optional, for tracking)
- */
-export const incrementQuota = mutation({
-  args: {
-    type: v.union(v.literal("image"), v.literal("video")),
-    generationId: v.optional(v.id("generations")),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    const userId = identity.subject;
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .first();
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Increment the appropriate counter
-    if (args.type === "image") {
-      await ctx.db.patch(user._id, {
-        imagesUsedInPeriod: (user.imagesUsedInPeriod ?? 0) + 1,
-        updatedAt: Date.now(),
-      });
-    } else {
-      await ctx.db.patch(user._id, {
-        videosUsedInPeriod: (user.videosUsedInPeriod ?? 0) + 1,
-        updatedAt: Date.now(),
-      });
-    }
-
-    // Update generation record if provided
-    if (args.generationId) {
-      await ctx.db.patch(args.generationId, {
-        countedTowardsQuota: true,
-      });
-    }
-
-    return { success: true };
-  },
-});
-
-/**
  * Reset quota counters for a user
  *
  * Internal mutation called when billing period renews
@@ -433,7 +309,6 @@ export const resetExpiredQuotas = internalMutation({
       }
     }
 
-    console.log(`Reset quotas for ${resetCount} users`);
     return { resetCount };
   },
 });

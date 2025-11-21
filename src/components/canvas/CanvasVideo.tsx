@@ -6,33 +6,11 @@ import { useVideoElement } from "@/hooks/useVideoElement";
 import { useVideoKeyboardShortcuts } from "@/hooks/useVideoKeyboardShortcuts";
 import { useVideoPlayback } from "@/hooks/useVideoPlayback";
 import type { PlacedVideo } from "@/types/canvas";
-import { getCachedPixelatedImage } from "@/utils/image-cache";
 import Konva from "konva";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Group, Image as KonvaImage, Rect } from "react-konva";
-import useImage from "use-image";
+import { useVideoPixelatedOverlay } from "./canvas-video-hooks";
 import { KonvaVideoControls } from "./KonvaVideoControls";
-
-/**
- * Custom hook to load pixelated overlay image if available.
- *
- * @param pixelatedSrc - Optional pixelated overlay source URL
- * @returns Loaded pixelated image element or undefined
- */
-const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
-  const cachedImage = pixelatedSrc
-    ? getCachedPixelatedImage(pixelatedSrc)
-    : undefined;
-
-  const [loadedImg] = useImage(
-    pixelatedSrc && !cachedImage ? pixelatedSrc : "",
-    "anonymous"
-  );
-
-  if (!pixelatedSrc) return undefined;
-
-  return cachedImage || loadedImg;
-};
 
 /**
  * Canvas video element rendered on the Konva stage.
@@ -78,7 +56,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   const shimmerOpacity = useSharedSkeletonAnimation(!!video.isSkeleton);
 
   // Get pixelated overlay if available (skip for skeletons)
-  const pixelatedImg = usePixelatedOverlay(
+  const pixelatedImg = useVideoPixelatedOverlay(
     video.isSkeleton ? undefined : video.pixelatedSrc
   );
 
