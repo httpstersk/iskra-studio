@@ -12,6 +12,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up",
   "/api/webhooks(.*)",
   "/api/polar(.*)",
+  "/api/trpc(.*)", // tRPC handles its own auth via context
   "/_next(.*)",
   "/favicon.ico",
 ]);
