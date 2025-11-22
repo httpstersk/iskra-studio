@@ -626,13 +626,17 @@ export const appRouter = router({
         const endpoint = getImageModelEndpoint(input.model);
 
         // Build input based on model - Nano Banana and Seedream have different schemas
+        // Nano Banana uses aspect_ratio instead of image_size
+        const nanoBananaAspectRatio =
+          resolvedImageSize.height > resolvedImageSize.width ? "9:16" : "16:9";
+
         const falInput =
           input.model === IMAGE_MODELS.NANO_BANANA
             ? {
                 // Nano Banana Edit API schema
                 image_urls: [input.imageUrl],
                 prompt: compactPrompt,
-                image_size: resolvedImageSize,
+                aspect_ratio: nanoBananaAspectRatio,
                 num_images: 1,
                 output_format: "png" as const,
                 resolution: "2K", // 1K, 2K, 4K
