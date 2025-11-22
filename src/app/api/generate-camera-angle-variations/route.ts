@@ -23,14 +23,14 @@ export const maxDuration = 60;
 
 const requestSchema = z.object({
   cameraAngles: z.array(z.string()).min(1).max(12),
-  imageUrl: z.string().url(),
+  imageUrls: z.array(z.string().url()),
   userContext: z.string().optional(),
 });
 
 export const POST = createAuthenticatedHandler({
   schema: requestSchema,
   handler: async (input, _userId) => {
-    const { imageUrl, cameraAngles, userContext } = input;
+    const { imageUrls, cameraAngles, userContext } = input;
 
     // Initialize Convex client for quota operations
     const { getToken } = await auth();
@@ -64,7 +64,7 @@ export const POST = createAuthenticatedHandler({
     // Quota has been reserved, proceed with generation
     const generationResult = await tryPromise(
       handleVariations(variationHandlers.cameraAngle, {
-        imageUrl,
+        imageUrls,
         items: cameraAngles,
         userContext,
         itemKey: "cameraAngle",

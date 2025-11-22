@@ -140,7 +140,7 @@ export function useGenerationHandlers(deps: GenerationHandlerDeps) {
     await ensureProject();
 
     const isVariationMode =
-      selectedIds.length === 1 &&
+      (selectedIds.length === 1 || selectedIds.length === 2) &&
       (variationMode === "image" || variationMode === "video");
 
     if (isVariationMode) {

@@ -105,6 +105,8 @@ export interface ActiveGeneration {
   | { width: number; height: number };
   /** Source image URL for image-to-image generation */
   imageUrl: string;
+  /** Source image URLs for multi-image generation */
+  imageUrls?: string[];
   /** Whether this is a variation of an existing image */
   isVariation?: boolean;
   /** AI model to use for generation (Seedream or Nano Banana) */

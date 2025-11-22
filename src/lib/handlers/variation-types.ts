@@ -107,8 +107,8 @@ export interface EarlyPrepResult {
  * Configuration for image upload workflow
  */
 export interface UploadWorkflowConfig {
-  /** Selected source image */
-  selectedImage: PlacedImage;
+  /** Selected source images */
+  selectedImages: PlacedImage[];
   /** Setter for active generation states */
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, ActiveGeneration>>
@@ -121,10 +121,10 @@ export interface UploadWorkflowConfig {
  * Result of the upload workflow
  */
 export interface UploadWorkflowResult {
-  /** Convex storage URL of the uploaded image */
-  imageUrl: string;
-  /** Signed URL for tRPC/API calls */
-  signedImageUrl: string;
+  /** Convex storage URLs of the uploaded images */
+  imageUrls: string[];
+  /** Signed URLs for tRPC/API calls */
+  signedImageUrls: string[];
 }
 
 /**
@@ -133,8 +133,8 @@ export interface UploadWorkflowResult {
 export interface ApplyPixelatedOverlayConfig {
   /** Pixelated overlay data URL */
   pixelatedSrc: string | undefined;
-  /** Selected source image */
-  selectedImage: PlacedImage;
+  /** Selected source images */
+  selectedImages: PlacedImage[];
   /** Setter for images state */
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
 }
@@ -143,8 +143,8 @@ export interface ApplyPixelatedOverlayConfig {
  * Configuration for setting analyzing status
  */
 export interface SetAnalyzingStatusConfig {
-  /** Signed image URL for analysis */
-  signedImageUrl: string;
+  /** Signed image URLs for analysis */
+  signedImageUrls: string[];
   /** Setter for active generation states */
   setActiveGenerations: React.Dispatch<
     React.SetStateAction<Map<string, ActiveGeneration>>
@@ -167,8 +167,8 @@ export interface HandleVariationErrorConfig {
   setImages: React.Dispatch<React.SetStateAction<PlacedImage[]>>;
   /** Setter for global generating flag */
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>;
-  /** Optional selected image (for removing pixelated overlay from reference) */
-  selectedImage?: PlacedImage;
+  /** Optional selected images (for removing pixelated overlay from reference) */
+  selectedImages?: PlacedImage[];
   /** Timestamp used to create placeholder IDs */
   timestamp: number;
 }

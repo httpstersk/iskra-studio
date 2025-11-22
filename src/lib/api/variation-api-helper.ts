@@ -28,7 +28,7 @@ export interface VariationConfig<T extends string> {
 }
 
 export interface VariationInput<T extends string> {
-  imageUrl: string;
+  imageUrls: string[];
   items: string[];
   userContext?: string;
   itemKey: T;
@@ -52,14 +52,14 @@ export async function handleVariations<T extends string>(
   config: VariationConfig<T>,
   input: VariationInput<T>
 ): Promise<VariationOutput<T>> {
-  const { imageUrl, items, userContext } = input;
+  const { imageUrls, items, userContext } = input;
 
   // Build variation prompts for each item
   const variations = items.map((item) => config.buildPrompt(item, userContext));
 
   // Generate FIBO variations using shared service
   const { fiboAnalysis, refinedPrompts } = await generateFiboVariations({
-    imageUrl,
+    imageUrls,
     variations,
   });
 
@@ -88,7 +88,7 @@ export const variationHandlers = {
       // 2. Define the "Vibe Lock" (The immutable style constraint)
       const styleLock = `
       CRITICAL STYLE CONSTRAINT (VIBE LOCK):
-      - AESTHETIC PRESERVATION: You must strictly preserve the exact color grading, lighting mood, saturation, contrast, and film grain of the original image.
+      - AESTHETIC PRESERVATION: You must strictly preserve the exact color grading, lighting mood, saturation, contrast, and film grain of the reference images.
       - NO AUTO-CORRECTION: Do not "fix" or "enhance" the lighting. The result must look like a raw capture from the exact same camera session as the source.
       - VISUAL CONTINUITY: The final image must feel indistinguishable in tone from the source.
     `.trim();
@@ -103,8 +103,9 @@ export const variationHandlers = {
         
         EXECUTION RULES:
         1. GEOMETRY: Place the subject in the "${userContext}" at the requested angle.
-        2. AESTHETIC TRANSFER: Force the "${userContext}" environment to adopt the color palette and lighting mood of the source image. 
+        2. AESTHETIC TRANSFER: Force the "${userContext}" environment to adopt the color palette and lighting mood of the reference images. 
         3. PROHIBITION: Do not use the "default" lighting for "${userContext}". If the source is dark, the new context must be rendered as dark.
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
         
         ${styleLock}
       `.trim();
@@ -117,6 +118,7 @@ export const variationHandlers = {
         INSTRUCTIONS:
         1. PERSPECTIVE: Rotate the camera around the subject to match the requested angle.
         2. BACKGROUND EXTENSION: If the new angle reveals new parts of the background, generate them to perfectly match the existing texture and lighting logic.
+        3. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
         
         ${styleLock}
       `.trim();
@@ -141,6 +143,7 @@ export const variationHandlers = {
         1. SCENE GENERATION: Create the "${userContext}" environment, but design it specifically how ${director} would visualize it (e.g., use their typical production design and atmosphere).
         2. SUBJECT INTEGRATION: Place the subject in this new scene. The lighting on the subject must match the cinematic mood of the director.
         3. COHERENCE: The final image should look like a still frame from a ${director} movie set in this location.
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
       `.trim();
       } else {
         // MODE B: Director Style Transfer Only (Same Content)
@@ -150,6 +153,7 @@ export const variationHandlers = {
         INSTRUCTIONS:
         1. PRESERVE SUBJECT: Keep the main subject, their pose, and the general semantic content of the scene intact.
         2. TRANSFORM AESTHETIC: Overhaul the visual presentation (film grain, shadows, saturation, contrast) to strictly mimic the artistic direction of ${director}.
+        3. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
       `.trim();
       }
     },
@@ -172,6 +176,7 @@ export const variationHandlers = {
         1. ATMOSPHERE GENERATION: Generate the "${userContext}" environment specifically under the influence of the requested lighting ("${lightingScenario}").
         2. SUBJECT HARMONY: Relight the subject so their highlights, reflections, and color temperature match this new environment.
         3. SHADOW PHYSICS: Cast realistic shadows from the subject onto the new background, consistent with the direction of the light sources in "${lightingScenario}".
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
       `.trim();
       } else {
         // MODE B: Relighting the Current Scene
@@ -183,6 +188,7 @@ export const variationHandlers = {
         1. GEOMETRY LOCK: Preserve the physical structure of the room/environment and the subject's pose exactly as is.
         2. GLOBAL RELIGHTING: Overhaul the global illumination, color grading, and shadows of the current scene to match "${lightingScenario}".
         3. OVERRIDE: Discard the original lighting mood. If the original was "Day" and the request is "Night", fully commit to the new time of day.
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
       `.trim();
       }
     },
@@ -196,7 +202,7 @@ export const variationHandlers = {
       // Define the "Vibe Lock" (The immutable style constraint)
       const styleLock = `
       CRITICAL STYLE CONSTRAINT (VIBE LOCK):
-      - AESTHETIC PRESERVATION: You must strictly preserve the exact color grading, lighting mood, saturation, contrast, and film grain of the original image.
+      - AESTHETIC PRESERVATION: You must strictly preserve the exact color grading, lighting mood, saturation, contrast, and film grain of the reference images.
       - NO AUTO-CORRECTION: Do not "fix" or "enhance" the lighting. The result must look like a raw capture from the exact same camera session as the source.
       - VISUAL CONTINUITY: The final image must feel indistinguishable in tone from the source.
       `.trim();
@@ -211,6 +217,7 @@ export const variationHandlers = {
         1. STORY CONTINUATION: Use the source image as the starting point and the provided context to evolve the scene. Show us "what happens next" or "a different perspective" implied by the context.
         2. VISUAL CONSISTENCY: Maintain the same character(s), art style, and general atmosphere as the source image, but adapt the environment or action to fit the new narrative beat.
         3. CINEMATIC FRAMING: Compose the shot to tell a story. Use lighting and blocking to emphasize the emotional tone of the context.
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
         
         ${styleLock}
         `.trim();
@@ -222,6 +229,7 @@ export const variationHandlers = {
         1. IMPLIED NARRATIVE: Infer a story from the visual elements of the source image and advance it one step. What is the subject doing? Where are they going?
         2. WORLD BUILDING: Expand the view to reveal more of the world or context that wasn't visible in the original frame, while keeping the style consistent.
         3. DYNAMIC ACTION: If the source is static, introduce subtle movement or interaction that suggests a developing plot.
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
         
         ${styleLock}
         `.trim();

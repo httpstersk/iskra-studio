@@ -21,8 +21,8 @@ export interface FiboVariationConfig {
   aspectRatio?: string;
   /** Guidance scale for generation */
   guidanceScale?: number;
-  /** Image URL to analyze and refine */
-  imageUrl: string;
+  /** Image URLs to analyze and refine */
+  imageUrls: string[];
   /** Random seed for reproducibility */
   seed?: number;
   /** Number of generation steps */
@@ -68,7 +68,7 @@ export interface FiboVariationResult<T = string> {
  * ```typescript
  * // Director variations
  * const result = await generateFiboVariations({
- *   imageUrl: "https://example.com/image.jpg",
+ *   imageUrls: ["https://example.com/image.jpg"],
  *   variations: [
  *     "Make it look as though it were shot by Christopher Nolan",
  *     "Make it look as though it were shot by Wes Anderson"
@@ -77,7 +77,7 @@ export interface FiboVariationResult<T = string> {
  *
  * // Camera angle variations
  * const result = await generateFiboVariations({
- *   imageUrl: "https://example.com/image.jpg",
+ *   imageUrls: ["https://example.com/image.jpg"],
  *   variations: [
  *     "Apply this camera angle: Low angle",
  *     "Apply this camera angle: Bird's eye view"
@@ -89,7 +89,7 @@ export async function generateFiboVariations<T = string>(
   config: FiboVariationConfig
 ): Promise<FiboVariationResult<T>> {
   const {
-    imageUrl,
+    imageUrls,
     seed = getFiboSeed(),
     timeout = FIBO_ANALYSIS.EXTENDED_TIMEOUT,
     variations,
@@ -97,7 +97,7 @@ export async function generateFiboVariations<T = string>(
 
   // Step 1: Analyze image with FIBO to get baseline structured prompt
   const fiboAnalysisResult = await analyzeFiboImageWithRetry({
-    imageUrl,
+    imageUrls,
     seed,
     timeout,
   });

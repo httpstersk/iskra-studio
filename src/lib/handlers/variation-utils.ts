@@ -254,25 +254,28 @@ export function toSignedUrl(imageUrl: string): string | Error {
 }
 
 /**
- * Validates that exactly one image is selected
+ * Validates that 1 or 2 images are selected
  */
-export function validateSingleImageSelection(
+export function validateImageSelection(
   images: PlacedImage[],
   selectedIds: string[],
-): PlacedImage | null {
-  if (selectedIds.length !== 1) {
+): PlacedImage[] | null {
+  if (selectedIds.length === 0 || selectedIds.length > 2) {
     showError(
-      "Select one image",
-      "Please select exactly one image to generate variations",
+      "Select 1 or 2 images",
+      "Please select 1 or 2 images to generate variations",
     );
     return null;
   }
 
-  const selectedImage = images.find((img) => img.id === selectedIds[0]);
-  if (!selectedImage) {
-    showError("Image not found", "The selected image could not be found");
+  const selectedImages = selectedIds
+    .map((id) => images.find((img) => img.id === id))
+    .filter((img): img is PlacedImage => !!img);
+
+  if (selectedImages.length !== selectedIds.length) {
+    showError("Image not found", "One or more selected images could not be found");
     return null;
   }
 
-  return selectedImage;
+  return selectedImages;
 }

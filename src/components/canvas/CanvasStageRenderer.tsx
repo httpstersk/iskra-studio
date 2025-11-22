@@ -29,6 +29,7 @@ import { CanvasGrid } from "./CanvasGrid";
 import { CanvasImage } from "./CanvasImage";
 import { CanvasVideo } from "./CanvasVideo";
 import { SelectionBoxComponent } from "./SelectionBox";
+import { SelectionConnector } from "./SelectionConnector";
 import { VariationGhostPlaceholders } from "./VariationGhostPlaceholders";
 
 /**
@@ -390,6 +391,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
             <CanvasGrid canvasSize={canvasSize} viewport={viewport} />
           )}
           <SelectionBoxComponent selectionBox={interactions.selectionBox} />
+          <SelectionConnector images={images} selectedIds={selectedIds} />
 
           {visibleImages.map((image) => (
             <CanvasImage

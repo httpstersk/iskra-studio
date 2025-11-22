@@ -22,15 +22,15 @@ const log = logger.generation;
 export const maxDuration = 60;
 
 const requestSchema = z.object({
-  imageUrl: z.string().url(),
   lightingScenarios: z.array(z.string()).min(1).max(12),
+  imageUrls: z.array(z.string().url()),
   userContext: z.string().optional(),
 });
 
 export const POST = createAuthenticatedHandler({
   schema: requestSchema,
   handler: async (input, _userId) => {
-    const { imageUrl, lightingScenarios, userContext } = input;
+    const { imageUrls, lightingScenarios, userContext } = input;
 
     // Initialize Convex client for quota operations
     const { getToken } = await auth();
@@ -65,7 +65,7 @@ export const POST = createAuthenticatedHandler({
     // Quota has been reserved, proceed with generation
     const generationResult = await tryPromise(
       handleVariations(variationHandlers.lighting, {
-        imageUrl,
+        imageUrls,
         items: lightingScenarios,
         userContext,
         itemKey: "lightingScenario",

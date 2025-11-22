@@ -23,16 +23,12 @@ import {
  * Configuration for FIBO analysis
  */
 export interface FiboAnalysisOptions {
-  /** Image URL to analyze (must be publicly accessible or base64 data URI) */
-  imageUrl: string;
+  /** Image URLs to analyze (must be publicly accessible or base64 data URI) */
+  imageUrls: string[];
   /** Optional random seed for reproducibility */
   seed?: number;
   /** Request timeout in seconds */
   timeout?: number;
-}
-
-/**
-  }
 }
 
 /**
@@ -45,7 +41,7 @@ export interface FiboAnalysisOptions {
  * @example
  * ```typescript
  * const result = await analyzeFiboImage({
- *   imageUrl: "https://example.com/image.jpg",
+ *   imageUrls: ["https://example.com/image.jpg"],
  *   seed: getFiboSeed()
  * });
  * if (isErr(result)) {
@@ -58,24 +54,23 @@ export async function analyzeFiboImage(
   options: FiboAnalysisOptions
 ): Promise<FiboStructuredPrompt | FiboAnalysisErr | ValidationErr> {
   const {
-    imageUrl,
+    imageUrls,
     seed = getFiboSeed(),
     timeout = FIBO_ANALYSIS.REQUEST_TIMEOUT,
   } = options;
 
-  // Validate image URL
-  if (!imageUrl || !imageUrl.trim()) {
+  // Validate image URLs
+  if (!imageUrls || imageUrls.length === 0) {
     return new ValidationErr({
-      message: "Image URL is required",
-      field: "imageUrl",
+      message: "Image URLs are required",
+      field: "imageUrls",
     });
   }
 
   // Call Bria API to generate structured prompt from image
-  // Note: Bria API expects images as an array even for single image
   const result = await generateStructuredPrompt(
     {
-      images: [imageUrl],
+      images: imageUrls,
       seed,
       sync: false,
     },

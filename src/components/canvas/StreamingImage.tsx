@@ -71,7 +71,7 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
   useSubscription(
     trpc.generateImageVariation.subscriptionOptions(
       {
-        imageUrl: generation.imageUrl || "",
+        imageUrls: generation.imageUrls || [generation.imageUrl || ""],
         prompt: generation.prompt || "",
         ...(generation.model ? { model: generation.model } : {}),
         ...(generation.imageSize ? { imageSize: generation.imageSize } : {}),
@@ -79,7 +79,7 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
       {
         enabled:
           !!generation.isVariation &&
-          !!generation.imageUrl &&
+          (!!generation.imageUrl || (!!generation.imageUrls && generation.imageUrls.length > 0)) &&
           !!generation.prompt,
         onData,
         onError: onErrorHandler,

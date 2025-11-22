@@ -27,7 +27,7 @@ import {
   setAnalyzingStatus,
   VARIATION_STATUS,
 } from "./variation-shared-utils";
-import { validateSingleImageSelection } from "./variation-utils";
+import { validateImageSelection } from "./variation-utils";
 import type { ImageModelId } from "@/lib/image-models";
 
 /**
@@ -73,7 +73,7 @@ interface VariationsApiResponse {
  */
 async function fetchVariationsFromApi(
   config: VariationClientConfig,
-  imageUrl: string,
+  imageUrls: string[],
   items: string[],
   userContext?: string
 ): Promise<VariationsApiResponse | Error> {
@@ -82,7 +82,7 @@ async function fetchVariationsFromApi(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        imageUrl,
+        imageUrls,
         [config.apiRequestKey]: items,
         userContext,
       }),
@@ -139,26 +139,29 @@ export async function handleUnifiedImageVariation(
   } = deps;
 
   // Validate selection early
-  const selectedImage = validateSingleImageSelection(images, selectedIds);
-  if (!selectedImage) return;
+  const selectedImages = validateImageSelection(images, selectedIds);
+  if (!selectedImages) return;
+
+  // Use the first image as the primary reference for UI positioning
+  const primaryImage = selectedImages[0];
 
   setIsGenerating(true);
   const timestamp = Date.now();
 
   // Stage 0: Early preparation (pixelated overlay, positioning)
   const preparationResult = await tryPromise(
-    performEarlyPreparation(selectedImage, variationCount)
+    performEarlyPreparation(selectedImages, variationCount)
   );
 
   if (isErr(preparationResult)) {
     handleError(preparationResult.payload, {
       operation: `${config.displayName} variation preparation`,
-      context: { variationCount, selectedImageId: selectedImage?.id },
+      context: { variationCount, selectedImageIds: selectedIds },
     });
 
     await handleVariationError({
       error: preparationResult.payload,
-      selectedImage,
+      selectedImages,
       setActiveGenerations,
       setImages,
       setIsGenerating,
@@ -178,7 +181,7 @@ export async function handleUnifiedImageVariation(
     imageSizeDimensions,
     pixelatedSrc,
     positionIndices,
-    selectedImage,
+    selectedImage: primaryImage,
     snappedSource,
     timestamp,
   });
@@ -190,10 +193,10 @@ export async function handleUnifiedImageVariation(
 
   setImages((prev) => [...prev, ...placeholderImages]);
 
-  // Stage 1: Upload image to Convex
+  // Stage 1: Upload images to Convex
   const uploadResult = await tryPromise(
     performImageUploadWorkflow({
-      selectedImage,
+      selectedImages,
       setActiveGenerations,
       timestamp,
     })
@@ -202,12 +205,12 @@ export async function handleUnifiedImageVariation(
   if (isErr(uploadResult)) {
     handleError(uploadResult.payload, {
       operation: `${config.displayName} variation upload`,
-      context: { variationCount, selectedImageId: selectedImage?.id },
+      context: { variationCount, selectedImageIds: selectedIds },
     });
 
     await handleVariationError({
       error: uploadResult.payload,
-      selectedImage,
+      selectedImages,
       setActiveGenerations,
       setImages,
       setIsGenerating,
@@ -216,17 +219,17 @@ export async function handleUnifiedImageVariation(
     return;
   }
 
-  const { signedImageUrl } = uploadResult;
+  const { signedImageUrls } = uploadResult;
 
-  // Stage 2: Apply pixelated overlay to reference image during analysis
+  // Stage 2: Apply pixelated overlay to reference images during analysis
   applyPixelatedOverlayToReferenceImage({
     pixelatedSrc,
-    selectedImage,
+    selectedImages,
     setImages,
   });
 
   const processId = setAnalyzingStatus({
-    signedImageUrl,
+    signedImageUrls,
     setActiveGenerations,
     timestamp,
   });
@@ -240,7 +243,7 @@ export async function handleUnifiedImageVariation(
   if (isFiboAnalysisEnabled) {
     const variationsResult = await fetchVariationsFromApi(
       config,
-      signedImageUrl,
+      signedImageUrls,
       selectedItems,
       variationPrompt
     );
@@ -250,12 +253,12 @@ export async function handleUnifiedImageVariation(
 
       handleError(variationsResult, {
         operation: `${config.displayName} variation generation`,
-        context: { variationCount, selectedImageId: selectedImage?.id },
+        context: { variationCount, selectedImageIds: selectedIds },
       });
 
       await handleVariationError({
         error: variationsResult,
-        selectedImage,
+        selectedImages,
         setActiveGenerations,
         setImages,
         setIsGenerating,
@@ -311,7 +314,8 @@ export async function handleUnifiedImageVariation(
 
       newMap.set(placeholderId, {
         imageSize: imageSizeDimensions,
-        imageUrl: signedImageUrl,
+        imageUrl: signedImageUrls[0], // Use primary image for reference
+        imageUrls: signedImageUrls,
         isVariation: true,
         model: imageModel,
         prompt: finalPrompt,

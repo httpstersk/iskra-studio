@@ -530,7 +530,7 @@ export const appRouter = router({
   generateImageVariation: publicProcedure
     .input(
       z.object({
-        imageUrl: z.string().url(),
+        imageUrls: z.array(z.string().url()),
         prompt: z.string(),
         model: z
           .enum([IMAGE_MODELS.SEEDREAM, IMAGE_MODELS.NANO_BANANA])
@@ -576,23 +576,23 @@ export const appRouter = router({
         const falInput =
           input.model === IMAGE_MODELS.NANO_BANANA
             ? {
-                // Nano Banana Edit API schema
-                image_urls: [input.imageUrl],
-                prompt: compactPrompt,
-                aspect_ratio: nanoBananaAspectRatio,
-                num_images: 1,
-                output_format: "png" as const,
-                resolution: "2K", // 1K, 2K, 4K
-              }
+              // Nano Banana Edit API schema
+              image_urls: input.imageUrls,
+              prompt: compactPrompt,
+              aspect_ratio: nanoBananaAspectRatio,
+              num_images: 1,
+              output_format: "png" as const,
+              resolution: "2K", // 1K, 2K, 4K
+            }
             : {
-                // Seedream Edit API schema
-                enable_safety_checker: false,
-                image_size: resolvedImageSize,
-                image_urls: [input.imageUrl],
-                num_images: 1,
-                prompt: compactPrompt,
-                ...(input.seed !== undefined ? { seed: input.seed } : {}),
-              };
+              // Seedream Edit API schema
+              enable_safety_checker: false,
+              image_size: resolvedImageSize,
+              image_urls: input.imageUrls,
+              num_images: 1,
+              prompt: compactPrompt,
+              ...(input.seed !== undefined ? { seed: input.seed } : {}),
+            };
 
         // Subscribe to the model endpoint and wait for completion
         const result = await falClient.subscribe(endpoint, {
@@ -660,7 +660,7 @@ export const appRouter = router({
           .default("16:9"),
         directorPrompt: z.string().optional(), // Text prompt for director style
         guidanceScale: z.number().optional().default(5),
-        imageUrl: z.string().url(),
+        imageUrls: z.array(z.string().url()),
         lastEventId: z.string().optional(),
         seed: z.number().optional(),
         stepsNum: z.number().optional().default(50),
@@ -677,7 +677,7 @@ export const appRouter = router({
           {
             aspect_ratio: input.aspectRatio,
             guidance_scale: input.guidanceScale,
-            images: [input.imageUrl],
+            images: input.imageUrls,
             prompt: input.directorPrompt || "",
             seed: input.seed ?? getFiboSeed(),
             steps_num: input.stepsNum,

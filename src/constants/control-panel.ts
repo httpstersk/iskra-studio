@@ -88,6 +88,6 @@ export const FILE_INPUT_CONFIG = {
   ACCEPT: "image/*",
   CLEANUP_TIMEOUT: 30000,
   CLICK_DELAY: 10,
-  MULTIPLE: false,
+  MULTIPLE: true,
   TYPE: "file",
 } as const;

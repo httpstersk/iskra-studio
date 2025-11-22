@@ -23,14 +23,14 @@ export const maxDuration = 60;
 
 const requestSchema = z.object({
   directors: z.array(z.string()).min(1).max(12),
-  imageUrl: z.string().url(),
+  imageUrls: z.array(z.string().url()),
   userContext: z.string().optional(),
 });
 
 export const POST = createAuthenticatedHandler({
   schema: requestSchema,
   handler: async (input, _userId) => {
-    const { imageUrl, directors, userContext } = input;
+    const { imageUrls, directors, userContext } = input;
 
     // Initialize Convex client for quota operations
     const { getToken } = await auth();
@@ -38,7 +38,6 @@ export const POST = createAuthenticatedHandler({
     const convex = new ConvexHttpClient(
       requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL")
     );
-
     if (token) {
       convex.setAuth(token);
     }
@@ -65,7 +64,7 @@ export const POST = createAuthenticatedHandler({
     // Quota has been reserved, proceed with generation
     const generationResult = await tryPromise(
       handleVariations(variationHandlers.director, {
-        imageUrl,
+        imageUrls,
         items: directors,
         userContext,
         itemKey: "director",
