@@ -106,6 +106,106 @@ export function useStreamingHandlers(
     setVideos,
   } = deps;
 
+  const handleStreamingImageError = useCallback(
+    async (id: string, error: string, isContentError?: boolean) => {
+      const errorMessage = error?.trim() || "Unknown error";
+
+      // Always show error overlay for all generation failures (content errors and regular errors)
+      const image = images.find((img) => img.id === id);
+
+      if (image) {
+        try {
+          // Generate error overlay from pixelated source or original source
+          // createErrorOverlayFromUrl always returns a valid overlay (uses fallback if source fails)
+          const { createErrorOverlayFromUrl } = await import(
+            "@/utils/image-error-overlay"
+          );
+
+          const sourceUrl = image.pixelatedSrc || image.src;
+          const errorOverlayUrl = await createErrorOverlayFromUrl(
+            sourceUrl,
+            image.width,
+            image.height
+          );
+
+          // Update image with error overlay (always succeeds with fallback)
+          setImages((prev) =>
+            prev.map((img) =>
+              img.id === id
+                ? {
+                  ...img,
+                  hasContentError: isContentError || false,
+                  hasGenerationError: !isContentError,
+                  isLoading: false,
+                  opacity: 1.0,
+                  pixelatedSrc: errorOverlayUrl,
+                  src: errorOverlayUrl,
+                }
+                : img
+            )
+          );
+        } catch (overlayError) {
+          log.warn("Failed to create error overlay", { data: overlayError });
+          // Fallback: use createFallbackErrorOverlay directly
+          const { createFallbackErrorOverlay } = await import(
+            "@/utils/image-error-overlay"
+          );
+          const fallbackOverlay = createFallbackErrorOverlay(
+            image.width,
+            image.height
+          );
+          setImages((prev) =>
+            prev.map((img) =>
+              img.id === id
+                ? {
+                  ...img,
+                  hasContentError: isContentError || false,
+                  hasGenerationError: !isContentError,
+                  isLoading: false,
+                  opacity: 1.0,
+                  pixelatedSrc: fallbackOverlay,
+                  src: fallbackOverlay,
+                }
+                : img
+            )
+          );
+        }
+      } else {
+        // If image not found, just remove it from active generations
+        setImages((prev) => prev.filter((img) => img.id !== id));
+      }
+
+      setActiveGenerations((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(id);
+
+        if (newMap.size === 0) {
+          setIsGenerating(false);
+        }
+
+        return newMap;
+      });
+
+      // Show appropriate error message
+      if (isContentError) {
+        showError(
+          "Content validation failed",
+          "The generated content was flagged by content moderation and cannot be displayed."
+        );
+      } else {
+        const isVariation = id.startsWith("variation-");
+
+        showError(
+          isVariation
+            ? "Variation failed"
+            : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
+          isVariation ? "One variation failed to generate" : errorMessage
+        );
+      }
+    },
+    [images, setActiveGenerations, setImages, setIsGenerating]
+  );
+
   const handleStreamingImageComplete = useCallback(
     async (id: string, finalUrl: string, serverThumbnailUrl?: string) => {
       const isVariation = id.startsWith("variation-");
@@ -120,7 +220,9 @@ export function useStreamingHandlers(
 
       const generation = activeGenerations.get(id);
 
-      // Crop the generated/variation image to 16:9 aspect ratio
+      // Validate that the image URL is accessible before proceeding
+      // This catches 404 errors and other load failures early
+      let imageLoadValidated = false;
       let croppedUrl = finalUrl;
       let croppedThumbnailUrl = serverThumbnailUrl;
 
@@ -130,6 +232,7 @@ export function useStreamingHandlers(
         );
         const croppedResult = await cropImageUrlToAspectRatio(finalUrl);
         croppedUrl = croppedResult.croppedSrc;
+        imageLoadValidated = true; // Cropping succeeded, image is valid
 
         // Also crop the thumbnail if provided
         if (serverThumbnailUrl) {
@@ -139,7 +242,8 @@ export function useStreamingHandlers(
         }
       } catch (error) {
         log.warn("Failed to crop generated image", { data: error });
-        // Continue with original URLs if cropping fails
+        // Image cropping failed - could be 404 or CORS error
+        // Try to validate the original URL directly
       }
 
       let naturalWidth: number | undefined;
@@ -150,7 +254,8 @@ export function useStreamingHandlers(
         naturalHeight = generation.imageSize.height;
       }
 
-      if (!naturalWidth || !naturalHeight) {
+      // If cropping didn't validate the image, try loading it directly
+      if (!imageLoadValidated || !naturalWidth || !naturalHeight) {
         try {
           const img = new window.Image();
           img.crossOrigin = "anonymous";
@@ -161,9 +266,20 @@ export function useStreamingHandlers(
           });
           naturalWidth = img.naturalWidth;
           naturalHeight = img.naturalHeight;
+          imageLoadValidated = true;
         } catch (error) {
-          log.warn("Failed to extract dimensions from image", { data: error });
+          log.warn("Failed to load generated image (possible 404)", { data: error });
         }
+      }
+
+      // If image validation failed, treat as error and show error overlay
+      if (!imageLoadValidated) {
+        log.error("Generated image URL is inaccessible (404 or CORS error)", {
+          data: { id, finalUrl },
+        });
+        // Delegate to error handler which will show the error overlay
+        handleStreamingImageError(id, "Generated image failed to load (404)", false);
+        return;
       }
 
       // Get directorName, cameraAngle, and lightingScenario from the latest image state
@@ -293,6 +409,7 @@ export function useStreamingHandlers(
     },
     [
       activeGenerations,
+      handleStreamingImageError,
       isAuthenticated,
       saveToStorage,
       setActiveGenerations,
@@ -300,89 +417,6 @@ export function useStreamingHandlers(
       setIsGenerating,
       setSelectedIds,
     ]
-  );
-
-  const handleStreamingImageError = useCallback(
-    async (id: string, error: string, isContentError?: boolean) => {
-      const errorMessage = error?.trim() || "Unknown error";
-
-      // Always show error overlay for all generation failures (content errors and regular errors)
-      const image = images.find((img) => img.id === id);
-
-      if (image) {
-        try {
-          // Generate error overlay from pixelated source or original source
-          const { createErrorOverlayFromUrl } = await import(
-            "@/utils/image-error-overlay"
-          );
-
-          const sourceUrl = image.pixelatedSrc || image.src;
-          const errorOverlayUrl = await createErrorOverlayFromUrl(
-            sourceUrl,
-            image.width,
-            image.height
-          );
-
-          if (errorOverlayUrl) {
-            // Update image with error overlay
-            setImages((prev) =>
-              prev.map((img) =>
-                img.id === id
-                  ? {
-                    ...img,
-                    hasContentError: isContentError || false,
-                    hasGenerationError: !isContentError,
-                    isLoading: false,
-                    opacity: 1.0,
-                    pixelatedSrc: undefined,
-                    src: errorOverlayUrl,
-                  }
-                  : img
-              )
-            );
-          } else {
-            // Fallback: remove image if overlay generation fails
-            setImages((prev) => prev.filter((img) => img.id !== id));
-          }
-        } catch (overlayError) {
-          log.warn("Failed to create error overlay", { data: overlayError });
-          // Fallback: remove image
-          setImages((prev) => prev.filter((img) => img.id !== id));
-        }
-      } else {
-        // If image not found, just remove it from active generations
-        setImages((prev) => prev.filter((img) => img.id !== id));
-      }
-
-      setActiveGenerations((prev) => {
-        const newMap = new Map(prev);
-        newMap.delete(id);
-
-        if (newMap.size === 0) {
-          setIsGenerating(false);
-        }
-
-        return newMap;
-      });
-
-      // Show appropriate error message
-      if (isContentError) {
-        showError(
-          "Content validation failed",
-          "The generated content was flagged by content moderation and cannot be displayed."
-        );
-      } else {
-        const isVariation = id.startsWith("variation-");
-
-        showError(
-          isVariation
-            ? "Variation failed"
-            : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
-          isVariation ? "One variation failed to generate" : errorMessage
-        );
-      }
-    },
-    [images, setActiveGenerations, setImages, setIsGenerating]
   );
 
   const handleStreamingImageUpdate = useCallback(

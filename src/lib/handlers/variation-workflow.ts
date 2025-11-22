@@ -240,6 +240,7 @@ export async function handleVariationError(
   });
 
   // Generate error overlays in parallel
+  // createErrorOverlayFromUrl always returns a valid overlay (uses fallback if source fails)
   const overlayPromises = errorPlaceholders.map(async (img) => {
     const sourceUrl = img.pixelatedSrc || img.src;
     const errorOverlay = await createErrorOverlayFromUrl(
@@ -256,10 +257,11 @@ export async function handleVariationError(
   setImages((prev) =>
     prev.map((img) => {
       const overlay = overlays.find((o) => o.id === img.id);
-      if (overlay && overlay.errorOverlay) {
+      if (overlay) {
         return {
           ...img,
           pixelatedSrc: overlay.errorOverlay,
+          src: overlay.errorOverlay,
         };
       }
       return img;

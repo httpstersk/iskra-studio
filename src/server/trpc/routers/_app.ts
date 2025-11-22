@@ -5,7 +5,7 @@ import {
   videoRateLimiter,
 } from "@/lib/fal/utils";
 import {
-  DEFAULT_IMAGE_SIZE_4K_LANDSCAPE,
+  DEFAULT_IMAGE_SIZE_2K_LANDSCAPE,
   getImageModelEndpoint,
   IMAGE_MODELS,
   resolveImageSize,
@@ -455,7 +455,7 @@ export const appRouter = router({
         const falClient = await getFalClient(ctx);
 
         const resolvedImageSize = resolveImageSize(
-          input.imageSize ?? DEFAULT_IMAGE_SIZE_4K_LANDSCAPE
+          input.imageSize ?? DEFAULT_IMAGE_SIZE_2K_LANDSCAPE
         );
 
         const result = await falClient.subscribe(TEXT_TO_IMAGE_ENDPOINT, {
