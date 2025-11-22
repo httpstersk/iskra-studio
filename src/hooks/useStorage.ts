@@ -1,5 +1,6 @@
 import { PLACEHOLDER_URLS, UI_CONSTANTS } from "@/lib/constants";
 import { getErrorMessage, isErr, tryPromise } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
 import { canvasStorage } from "@/lib/storage";
 import { showError, showErrorFromException } from "@/lib/toast";
 import { currentProjectAtom } from "@/store/project-atoms";
@@ -16,6 +17,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { Viewport } from "@/utils/viewport-utils";
+
+const log = logger.storage;
 
 const DEFAULT_VIEWPORT: Viewport = {
   scale: 1,
@@ -69,10 +72,7 @@ export function useStorage(
       // If getting image fails, we might still want to try saving, or just log and continue
       // For now, let's log and proceed, assuming it might be a new image
       if (isErr(existingImageResult)) {
-        console.warn(
-          "Failed to check existing image:",
-          getErrorMessage(existingImageResult)
-        );
+        log.warn("Failed to check existing image", getErrorMessage(existingImageResult));
       }
       const existingImage = isErr(existingImageResult)
         ? null
@@ -84,11 +84,7 @@ export function useStorage(
           canvasStorage.saveImage(image.src, image.id)
         );
         if (isErr(saveResult)) {
-          console.error(
-            "Failed to save image locally:",
-            getErrorMessage(saveResult)
-          );
-          // Continue to next image/video even if one fails
+          log.error("Failed to save image locally", getErrorMessage(saveResult));
         }
       }
     }
@@ -102,10 +98,7 @@ export function useStorage(
       );
 
       if (isErr(existingVideoResult)) {
-        console.warn(
-          "Failed to check existing video:",
-          getErrorMessage(existingVideoResult)
-        );
+        log.warn("Failed to check existing video", getErrorMessage(existingVideoResult));
       }
 
       const existingVideo = isErr(existingVideoResult)
@@ -119,10 +112,7 @@ export function useStorage(
         );
 
         if (isErr(saveResult)) {
-          console.error(
-            "Failed to save video locally:",
-            getErrorMessage(saveResult)
-          );
+          log.error("Failed to save video locally", getErrorMessage(saveResult));
         }
       }
     }

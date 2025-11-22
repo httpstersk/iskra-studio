@@ -8,8 +8,11 @@
  * Format matches professional film prompts used in production.
  */
 
+import { logger } from "@/lib/logger";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import type { StorylineConcept } from "@/lib/schemas/storyline-schema";
+
+const log = logger.video;
 
 interface PromptGenerationOptions {
   storyline: StorylineConcept;
@@ -133,9 +136,7 @@ export function expandStorylineToPrompt(
   // Log warning if truncation occurred
   const originalLength = beatSections.join("\n\n").length;
   if (originalLength > PROMPT_CHAR_LIMIT) {
-    console.warn(
-      `Prompt truncated from ${originalLength} to ${finalPrompt.length} characters to fit ${PROMPT_CHAR_LIMIT} char limit`,
-    );
+    log.warn(`Prompt truncated from ${originalLength} to ${finalPrompt.length} characters to fit ${PROMPT_CHAR_LIMIT} char limit`);
   }
 
   return finalPrompt;

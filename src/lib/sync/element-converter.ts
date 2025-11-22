@@ -9,6 +9,9 @@
 import type { Asset } from "@/types/asset";
 import type { CanvasElement } from "@/types/project";
 import type { PlacedImage, PlacedVideo } from "@/types/canvas";
+import { logger } from "@/lib/logger";
+
+const log = logger.sync;
 
 /**
  * Converts a PlacedImage to a CanvasElement for persistence.
@@ -230,7 +233,7 @@ export function separateElements(
     const url = element.assetId ? assetUrls.get(element.assetId) || "" : "";
 
     if (!url) {
-      console.warn(`No URL found for element ${element.id}`);
+      log.warn(`No URL found for element ${element.id}`);
       continue;
     }
 

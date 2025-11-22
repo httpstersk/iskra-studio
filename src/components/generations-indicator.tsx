@@ -1,8 +1,11 @@
 "use client";
 
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "react";
+
+const log = logger.ui;
 
 interface GenerationsIndicatorProps {
   className?: string;
@@ -293,7 +296,7 @@ function StatusOrb({
         contextRef.current = null;
       };
     } catch (error) {
-      console.warn("StatusOrb initialization failed", error);
+      log.warn("StatusOrb initialization failed", error);
       setIsSupported(false);
       contextRef.current = null;
     }

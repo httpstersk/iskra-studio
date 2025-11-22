@@ -2,6 +2,9 @@ import { DBSchema, IDBPDatabase, openDB } from "idb";
 import { OBJECT_STORES, STORAGE_CONSTANTS } from "./constants";
 import type { CanvasState } from "@/types/project";
 import { tryPromise, isErr } from "@/lib/errors/safe-errors";
+import { logger } from "./logger";
+
+const log = logger.storage;
 
 interface CanvasImage {
   createdAt: number;
@@ -165,8 +168,7 @@ class CanvasStorage {
     })());
 
     if (isErr(videoTxResult)) {
-      // Handle case where videos store might not exist yet in older DB versions
-      console.warn("Could not clear videos store, it may not exist yet:", videoTxResult.payload);
+      log.warn("Could not clear videos store, it may not exist yet", videoTxResult.payload);
     }
   }
 

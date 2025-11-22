@@ -17,6 +17,9 @@ import type { AssetUploadResult } from "@/types/asset";
 import { api } from "../../../convex/_generated/api";
 import { createConvexClientWithToken, getConvexSiteUrl } from "./convex-server";
 import { httpClient } from "@/lib/api/http-client";
+import { logger } from "@/lib/logger";
+
+const log = logger.upload;
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
 const UPLOAD_TIMEOUT_MS = 50000; // 50 seconds
@@ -188,7 +191,7 @@ async function uploadToConvexEndpoint(
       if (retryAttempt < MAX_UPLOAD_RETRIES) {
         // Calculate exponential backoff delay: 1s, 2s, 4s
         const delayMs = INITIAL_RETRY_DELAY_MS * Math.pow(2, retryAttempt);
-        console.log(`Rate limit hit, retrying in ${delayMs}ms (attempt ${retryAttempt + 1}/${MAX_UPLOAD_RETRIES + 1})`);
+        log.info(`Rate limit hit, retrying in ${delayMs}ms (attempt ${retryAttempt + 1}/${MAX_UPLOAD_RETRIES + 1})`);
 
         await delay(delayMs);
         return uploadToConvexEndpoint(options, retryAttempt + 1);
@@ -200,7 +203,7 @@ async function uploadToConvexEndpoint(
     // Handle unexpected errors during upload
     if (isRateLimitError(error) && retryAttempt < MAX_UPLOAD_RETRIES) {
       const delayMs = INITIAL_RETRY_DELAY_MS * Math.pow(2, retryAttempt);
-      console.log(`Rate limit hit (caught), retrying in ${delayMs}ms (attempt ${retryAttempt + 1}/${MAX_UPLOAD_RETRIES + 1})`);
+      log.info(`Rate limit hit (caught), retrying in ${delayMs}ms (attempt ${retryAttempt + 1}/${MAX_UPLOAD_RETRIES + 1})`);
 
       await delay(delayMs);
       return uploadToConvexEndpoint(options, retryAttempt + 1);

@@ -8,6 +8,9 @@
  */
 
 import { Polar } from "@polar-sh/sdk";
+import { logger } from "./logger";
+
+const log = logger.config;
 
 /**
  * Validates required environment variables for Polar integration
@@ -21,21 +24,15 @@ function validatePolarConfig() {
   }
 
   if (!process.env.POLAR_ORGANIZATION_ID) {
-    console.warn(
-      "POLAR_ORGANIZATION_ID is not set. Some operations may fail."
-    );
+    log.warn("POLAR_ORGANIZATION_ID is not set. Some operations may fail.");
   }
 
   if (!process.env.POLAR_PRODUCT_ID_MONTHLY) {
-    console.warn(
-      "POLAR_PRODUCT_ID_MONTHLY is not set. Subscription creation will fail."
-    );
+    log.warn("POLAR_PRODUCT_ID_MONTHLY is not set. Subscription creation will fail.");
   }
 
   if (!process.env.POLAR_PRODUCT_ID_ANNUAL) {
-    console.warn(
-      "POLAR_PRODUCT_ID_ANNUAL is not set. Subscription creation will fail."
-    );
+    log.warn("POLAR_PRODUCT_ID_ANNUAL is not set. Subscription creation will fail.");
   }
 }
 

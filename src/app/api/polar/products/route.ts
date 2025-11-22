@@ -1,6 +1,9 @@
 import { getErrorMessage, isErr, tryPromise } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
 import { polar, POLAR_CONFIG } from "@/lib/polar";
 import { NextResponse } from "next/server";
+
+const log = logger.polar;
 
 export async function GET() {
   const productsResult = await tryPromise(
@@ -11,10 +14,7 @@ export async function GET() {
   );
 
   if (isErr(productsResult)) {
-    console.error(
-      "Failed to fetch Polar products:",
-      getErrorMessage(productsResult)
-    );
+    log.error("Failed to fetch Polar products", getErrorMessage(productsResult));
     return NextResponse.json(
       { error: "Failed to fetch products" },
       { status: 500 }

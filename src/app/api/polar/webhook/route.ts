@@ -11,6 +11,7 @@ import {
   tryPromise,
   trySync,
 } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
 import { createRateLimiter, shouldLimitRequest } from "@/lib/ratelimit";
 import {
   validateEvent,
@@ -20,6 +21,8 @@ import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { api } from "../../../../../convex/_generated/api";
+
+const log = logger.webhook;
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -130,12 +133,9 @@ export async function POST(req: NextRequest) {
   );
 
   if (isErr(rateLimitResult)) {
-    console.error("Rate limit check failed:", getErrorMessage(rateLimitResult));
-    // Fail open or closed? Let's fail open for webhooks but log error, or maybe just continue.
-    // Actually shouldLimitRequest probably doesn't throw, but let's be safe.
-    // If it failed, we probably shouldn't block the webhook.
+    log.error("Rate limit check failed", getErrorMessage(rateLimitResult));
   } else if (rateLimitResult.shouldLimitRequest) {
-    console.warn(`Webhook rate limit exceeded for IP ${ip}`);
+    log.warn(`Webhook rate limit exceeded for IP ${ip}`);
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
@@ -155,13 +155,13 @@ export async function POST(req: NextRequest) {
   if (isErr(eventResult)) {
     const error = eventResult.payload;
     if (error instanceof WebhookVerificationError) {
-      console.error("Webhook signature verification failed:", error);
+      log.error("Webhook signature verification failed", error);
       return NextResponse.json(
         { error: "Invalid webhook signature" },
         { status: 403 }
       );
     }
-    console.error("Webhook validation error:", getErrorMessage(eventResult));
+    log.error("Webhook validation failed", getErrorMessage(eventResult));
     return NextResponse.json(
       { error: "Webhook validation failed" },
       { status: 500 }
@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
   // Validate event structure using Zod schemas
   const validationResult = polarWebhookEventSchema.safeParse(event);
   if (!validationResult.success) {
-    console.error("Webhook event validation failed:", validationResult.error);
+    log.error("Webhook event validation failed", validationResult.error);
     return NextResponse.json(
       { error: "Invalid event structure" },
       { status: 400 }
@@ -191,11 +191,11 @@ export async function POST(req: NextRequest) {
   //   convex.query(api.webhooks.isEventProcessed, { eventId })
   // );
   // if (isErr(alreadyProcessedResult)) {
-  //   console.error("Failed to check if event processed:", getErrorMessage(alreadyProcessedResult));
+  //   log.error("Failed to check if event processed", getErrorMessage(alreadyProcessedResult));
   //   return NextResponse.json({ error: "Database error" }, { status: 500 });
   // }
   // if (alreadyProcessedResult) {
-  //   console.log(`Event ${eventId} already processed, skipping (replay protection)`);
+  //   log.info(`Event ${eventId} already processed, skipping (replay protection)`);
   //   return NextResponse.json({ received: true }, { status: 200 });
   // }
 
@@ -233,15 +233,12 @@ export async function POST(req: NextRequest) {
     default:
       // TypeScript exhaustiveness check - this should never be reached
       const _exhaustive: never = validatedEvent;
-      console.log(`Unhandled webhook event type: ${_exhaustive}`);
-      handleResult = null; // Or success
+      log.warn(`Unhandled webhook event type: ${_exhaustive}`);
+      handleResult = null;
   }
 
   if (isErr(handleResult)) {
-    console.error(
-      `Failed to handle event ${validatedEvent.type}:`,
-      getErrorMessage(handleResult)
-    );
+    log.error(`Failed to handle event ${validatedEvent.type}`, getErrorMessage(handleResult));
     return NextResponse.json(
       { error: "Event processing failed" },
       { status: 500 }
@@ -257,7 +254,7 @@ export async function POST(req: NextRequest) {
   //   })
   // );
   // if (isErr(markResult)) {
-  //   console.error("Failed to mark event as processed:", getErrorMessage(markResult));
+  //   log.error("Failed to mark event as processed", getErrorMessage(markResult));
   // }
 
   // Return 200 OK to acknowledge receipt
@@ -288,7 +285,7 @@ async function handleSubscriptionCreated(event: PolarEvent) {
   const userId = subscription.metadata?.clerkUserId;
 
   if (!userId) {
-    console.error("No clerkUserId in subscription metadata");
+    log.error("No clerkUserId in subscription metadata");
     return;
   }
 
@@ -297,7 +294,7 @@ async function handleSubscriptionCreated(event: PolarEvent) {
     !subscription.currentPeriodEnd ||
     !subscription.customerId
   ) {
-    console.error("Missing billing period dates or customer ID");
+    log.error("Missing billing period dates or customer ID");
     return;
   }
 
@@ -322,7 +319,7 @@ async function handleSubscriptionUpdated(event: PolarEvent) {
   const subscription = event.data;
 
   if (!subscription.currentPeriodStart || !subscription.currentPeriodEnd) {
-    console.error("Missing billing period dates");
+    log.error("Missing billing period dates");
     return;
   }
 
@@ -375,8 +372,7 @@ async function handleOrderCreated(event: PolarEvent) {
   const userId = order.metadata?.clerkUserId;
 
   if (!userId) {
-    console.error("No clerkUserId in order metadata");
+    log.error("No clerkUserId in order metadata");
     return;
   }
-  // Subscription will be handled by subscription.created event
 }

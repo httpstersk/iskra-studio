@@ -5,11 +5,14 @@ import {
   standardLimitHeaders,
   standardRateLimiter,
 } from "@/lib/fal/utils";
+import { logger } from "@/lib/logger";
 import { uploadFileToConvex } from "@/lib/server/upload-service";
 import { auth } from "@clerk/nextjs/server";
 import { checkBotId } from "botid/server";
 import { fileTypeFromBuffer } from "file-type";
 import { NextRequest, NextResponse } from "next/server";
+
+const log = logger.upload;
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 const ALLOWED_MIME_PREFIXES = ["image/", "video/"];
@@ -91,8 +94,7 @@ export async function POST(req: NextRequest) {
   );
 
   if (isErr(limiterResult)) {
-    console.error("Rate limit check failed:", getErrorMessage(limiterResult));
-    // Fail open?
+    log.error("Rate limit check failed", getErrorMessage(limiterResult));
   } else if (limiterResult.shouldLimitRequest) {
     return new Response(
       `Rate limit exceeded per ${limiterResult.period}. Please try again later.`,

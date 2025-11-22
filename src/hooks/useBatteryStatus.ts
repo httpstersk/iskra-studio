@@ -5,7 +5,10 @@
  */
 
 import { isErr, tryPromise } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
 import { useSyncExternalStore } from "react";
+
+const log = logger.battery;
 
 /**
  * Battery status information
@@ -91,7 +94,7 @@ async function initializeBattery(): Promise<void> {
   );
 
   if (isErr(batteryResult)) {
-    console.warn("Battery API not available:", batteryResult.payload);
+    log.warn("Battery API not available", batteryResult.payload);
     cachedBatteryStatus = { level: 1, charging: false, supported: false };
     return;
   }

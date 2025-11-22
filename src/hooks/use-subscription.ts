@@ -8,6 +8,7 @@
 "use client";
 
 import { getErrorMessage, isErr, tryPromise } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
 import type {
   BillingInterval,
   SubscriptionInfo,
@@ -17,6 +18,8 @@ import { useQuery } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "./useAuth";
+
+const log = logger.subscription;
 
 /**
  * Return type for the useSubscription hook.
@@ -150,7 +153,7 @@ export function useSubscription(): UseSubscriptionReturn {
       if (isErr(responseResult)) {
         const errorMessage = getErrorMessage(responseResult);
         setError(errorMessage);
-        console.error("Upgrade error:", responseResult.payload);
+        log.error("Upgrade failed", responseResult.payload);
         setIsUpgrading(false);
         return;
       }
@@ -171,7 +174,7 @@ export function useSubscription(): UseSubscriptionReturn {
       const checkoutDataResult = await tryPromise(response.json());
       if (isErr(checkoutDataResult)) {
         setError("Failed to parse checkout response");
-        console.error("Checkout parse error:", checkoutDataResult.payload);
+        log.error("Checkout parse error", checkoutDataResult.payload);
         setIsUpgrading(false);
         return;
       }
@@ -203,7 +206,7 @@ export function useSubscription(): UseSubscriptionReturn {
     if (isErr(responseResult)) {
       const errorMessage = getErrorMessage(responseResult);
       setError(errorMessage);
-      console.error("Customer portal error:", responseResult.payload);
+      log.error("Customer portal error", responseResult.payload);
       return;
     }
     const response = responseResult;
@@ -221,7 +224,7 @@ export function useSubscription(): UseSubscriptionReturn {
     const portalDataResult = await tryPromise(response.json());
     if (isErr(portalDataResult)) {
       setError("Failed to parse portal response");
-      console.error("Portal parse error:", portalDataResult.payload);
+      log.error("Portal parse error", portalDataResult.payload);
       return;
     }
     const { portalUrl } = portalDataResult;

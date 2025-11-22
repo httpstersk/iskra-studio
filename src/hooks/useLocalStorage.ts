@@ -5,7 +5,10 @@
  */
 
 import { isErr, trySync } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
 import { useCallback, useMemo, useSyncExternalStore } from "react";
+
+const log = logger.storage;
 
 // Module-level cache for localStorage values
 // Prevents infinite loops by maintaining stable snapshot references
@@ -21,10 +24,7 @@ function parseStoredValue<T>(key: string, defaultValue: T): T {
 
   const itemResult = trySync(() => window.localStorage.getItem(key));
   if (isErr(itemResult)) {
-    console.warn(
-      `Error reading localStorage key "${key}":`,
-      itemResult.payload
-    );
+    log.warn(`Error reading localStorage key "${key}"`, itemResult.payload);
     return defaultValue;
   }
   const item = itemResult;
@@ -48,7 +48,7 @@ function parseStoredValue<T>(key: string, defaultValue: T): T {
   if (typeof defaultValue === "object") {
     const jsonResult = trySync(() => JSON.parse(item));
     if (isErr(jsonResult)) {
-      console.warn(`Error parsing JSON for key "${key}":`, jsonResult.payload);
+      log.warn(`Error parsing JSON for key "${key}"`, jsonResult.payload);
       return defaultValue;
     }
     return jsonResult as T;
@@ -191,10 +191,7 @@ export function useLocalStorage<T>(
       });
 
       if (isErr(result)) {
-        console.warn(
-          `Error setting localStorage key "${key}":`,
-          result.payload
-        );
+        log.warn(`Error setting localStorage key "${key}"`, result.payload);
       }
     },
     [key, defaultValue]

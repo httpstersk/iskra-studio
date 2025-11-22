@@ -10,11 +10,14 @@ import {
   handleVariations,
   variationHandlers,
 } from "@/lib/api/variation-api-helper";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { z } from "zod";
 import { api } from "../../../../convex/_generated/api";
-import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
+
+const log = logger.generation;
 
 export const maxDuration = 60;
 
@@ -78,8 +81,7 @@ export const POST = createAuthenticatedHandler({
       );
 
       if (isErr(refundResult)) {
-        // Log refund failure but prioritize the generation error
-        console.error("Failed to refund quota:", getErrorMessage(refundResult));
+        log.error("Failed to refund quota", getErrorMessage(refundResult));
       }
 
       throw new Error(`Camera angle generation failed: ${getErrorMessage(generationResult)}`);

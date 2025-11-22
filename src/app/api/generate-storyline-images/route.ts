@@ -7,6 +7,8 @@
  */
 
 import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
+import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import { imageStyleMoodAnalysisSchema } from "@/lib/schemas/image-analysis-schema";
 import {
@@ -23,7 +25,8 @@ import { generateObject } from "ai";
 import { ConvexHttpClient } from "convex/browser";
 import { z } from "zod";
 import { api } from "../../../../convex/_generated/api";
-import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
+
+const log = logger.generation;
 
 export const maxDuration = 30;
 
@@ -228,8 +231,7 @@ export const POST = createAuthenticatedHandler({
       );
 
       if (isErr(refundResult)) {
-        // Log refund failure but prioritize the generation error
-        console.error("Failed to refund quota:", getErrorMessage(refundResult));
+        log.error("Failed to refund quota", getErrorMessage(refundResult));
       }
 
       throw new Error(`Storyline image generation failed: ${getErrorMessage(generationResult)}`);

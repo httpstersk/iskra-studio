@@ -7,6 +7,7 @@
 
 "use client";
 
+import { logger } from "@/lib/logger";
 import { showErrorFromException, showInfo } from "@/lib/toast";
 import type { CanvasState } from "@/types/project";
 import {
@@ -19,6 +20,8 @@ import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useProjects } from "./useProjects";
+
+const log = logger.sync;
 
 /**
  * Auto-save configuration options.
@@ -169,8 +172,7 @@ export function useAutoSave(
         try {
           thumbnailStorageId = await generateThumbnail();
         } catch (error) {
-          console.warn("Failed to generate thumbnail:", error);
-          // Continue with save even if thumbnail fails
+          log.warn("Failed to generate thumbnail", error);
         }
       }
 

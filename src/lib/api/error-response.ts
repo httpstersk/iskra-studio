@@ -4,6 +4,9 @@
 
 import { NextResponse } from "next/server";
 import { AuthError } from "./auth-middleware";
+import { logger } from "../logger";
+
+const log = logger.api;
 
 const IS_DEVELOPMENT = process.env.NODE_ENV === "development";
 
@@ -64,7 +67,7 @@ export function createErrorResponse(
   fallbackMessage = "Request failed"
 ): NextResponse {
   // Always log full error server-side
-  console.error("API Error:", {
+  log.error("API Error", {
     error,
     message: error instanceof Error ? error.message : String(error),
     stack: error instanceof Error ? error.stack : undefined,

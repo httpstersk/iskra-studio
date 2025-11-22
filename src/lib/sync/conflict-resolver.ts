@@ -6,6 +6,9 @@
  */
 
 import type { CanvasState } from "@/types/project";
+import { logger } from "@/lib/logger";
+
+const log = logger.sync;
 
 /**
  * Conflict resolution strategy.
@@ -65,9 +68,7 @@ export function resolveConflict(
   }
 
   // Default to remote state if strategy not recognized
-  console.warn(
-    `Unknown conflict strategy: ${strategy}, defaulting to remote state`,
-  );
+  log.warn(`Unknown conflict strategy: ${strategy}, defaulting to remote state`);
   return remoteState;
 }
 

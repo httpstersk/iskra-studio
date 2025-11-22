@@ -4,6 +4,10 @@
  * @module utils/video-element-dom
  */
 
+import { logger } from "@/lib/logger";
+
+const log = logger.video;
+
 /**
  * Prefix for video element IDs
  */
@@ -17,7 +21,7 @@ const VIDEO_ELEMENT_ID_PREFIX = "video-";
  */
 export function getVideoElement(videoId: string): HTMLVideoElement | null {
   if (!videoId || typeof videoId !== "string") {
-    console.warn("Invalid video ID provided:", videoId);
+    log.warn("Invalid video ID provided", videoId);
     return null;
   }
 
@@ -29,7 +33,7 @@ export function getVideoElement(videoId: string): HTMLVideoElement | null {
   }
 
   if (!(element instanceof HTMLVideoElement)) {
-    console.warn(`Element with ID ${elementId} is not a video element`);
+    log.warn(`Element with ID ${elementId} is not a video element`);
     return null;
   }
 
@@ -65,7 +69,7 @@ export async function toggleVideoPlayback(
  */
 export function seekVideo(videoId: string, time: number): void {
   if (typeof time !== "number" || !Number.isFinite(time) || time < 0) {
-    console.warn("Invalid seek time provided:", time);
+    log.warn("Invalid seek time provided", time);
     return;
   }
 

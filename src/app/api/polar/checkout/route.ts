@@ -6,6 +6,7 @@
  */
 
 import { getErrorMessage, isErr, tryPromise } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
 import {
   getProductIdForInterval,
   polar,
@@ -15,6 +16,8 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "../../../../../convex/_generated/api";
+
+const log = logger.polar;
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -74,10 +77,7 @@ export async function POST(req: NextRequest) {
   );
 
   if (isErr(subscriptionStatusResult)) {
-    console.error(
-      "Failed to fetch subscription status:",
-      getErrorMessage(subscriptionStatusResult)
-    );
+    log.error("Failed to fetch subscription status", getErrorMessage(subscriptionStatusResult));
     return NextResponse.json(
       { error: "Failed to fetch subscription status" },
       { status: 500 }
@@ -101,10 +101,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (isErr(customerResult)) {
-      console.error(
-        "Failed to create Polar customer:",
-        getErrorMessage(customerResult)
-      );
+      log.error("Failed to create Polar customer", getErrorMessage(customerResult));
       return NextResponse.json(
         { error: "Failed to create customer" },
         { status: 500 }
@@ -123,12 +120,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (isErr(linkResult)) {
-      console.error(
-        "Failed to link Polar customer:",
-        getErrorMessage(linkResult)
-      );
-      // We don't fail the request here, as the customer is created in Polar.
-      // But we should probably log it.
+      log.error("Failed to link Polar customer", getErrorMessage(linkResult));
     }
   }
 
@@ -146,10 +138,7 @@ export async function POST(req: NextRequest) {
   );
 
   if (isErr(checkoutSessionResult)) {
-    console.error(
-      "Checkout session creation error:",
-      getErrorMessage(checkoutSessionResult)
-    );
+    log.error("Checkout session creation failed", getErrorMessage(checkoutSessionResult));
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

@@ -12,6 +12,9 @@ import {
 import { uploadImageDirect } from "@/lib/utils/upload-utils";
 import { isConvexStorageUrl } from "@/features/generation/app-services/image-storage.service";
 import { isErr, getErrorMessage } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
+
+const log = logger.generation;
 
 interface GenerationHandlerDeps {
   images: PlacedImage[];
@@ -112,7 +115,7 @@ const handleOptimisticUpload = async (
     });
 
     if (isErr(migrationResult)) {
-      console.error("Background upload failed:", getErrorMessage(migrationResult));
+      log.error("Background upload failed", getErrorMessage(migrationResult));
       // Stop loading spinner, keep original URL
       setImages((prev) =>
         prev.map((img) =>

@@ -1,144 +1,179 @@
 /**
- * Professional Logging Utility
+ * Beautiful & Maintainable Logger
  *
- * Provides consistent, emoji-prefixed logging across the application.
- * Supports different log levels with appropriate visual indicators.
+ * Provides consistent, emoji-prefixed logging with the format:
+ * "{EMOJI} {SERVICE_IN_UPPERCASE}: MESSAGE"
+ *
+ * @example
+ * const log = createLogger("AUTH");
+ * log.info("User logged in");
+ * // Output: ℹ️ AUTH: User logged in
+ *
+ * log.error("Failed to authenticate", { userId: "123" });
+ * // Output: ❌ AUTH: Failed to authenticate { userId: "123" }
  */
 
 type LogLevel = "debug" | "info" | "success" | "warn" | "error";
 
-interface LogOptions {
-  /** Optional context/namespace for the log message */
-  context?: string;
-  /** Optional data to log alongside the message */
-  data?: unknown;
-}
-
-const LOG_EMOJIS = {
+const LOG_EMOJIS: Record<LogLevel, string> = {
   debug: "🔍",
   info: "ℹ️",
   success: "✅",
   warn: "⚠️",
   error: "❌",
-} as const;
-
-const LOG_COLORS = {
-  debug: "#6B7280", // gray-500
-  info: "#3B82F6", // blue-500
-  success: "#10B981", // green-500
-  warn: "#F59E0B", // amber-500
-  error: "#EF4444", // red-500
-} as const;
+};
 
 /**
- * Formats a log message with emoji, context, and styling
+ * Formats data for logging output
  */
-function formatLog(
-  level: LogLevel,
-  message: string,
-  options?: LogOptions,
-): string[] {
-  const emoji = LOG_EMOJIS[level];
-  const timestamp = new Date().toLocaleTimeString("en-US", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-
-  const contextStr = options?.context ? `[${options.context}]` : "";
-  const levelStr = level.toUpperCase().padEnd(7);
-
-  return [
-    `%c${emoji} ${timestamp} ${levelStr}${contextStr}%c ${message}`,
-    `color: ${LOG_COLORS[level]}; font-weight: bold;`,
-    "color: inherit; font-weight: normal;",
-  ];
+function formatData(data: unknown): string {
+  if (data === undefined || data === null) return "";
+  if (data instanceof Error) {
+    return data.stack || data.message;
+  }
+  if (typeof data === "object") {
+    try {
+      return JSON.stringify(data, null, 2);
+    } catch {
+      return String(data);
+    }
+  }
+  return String(data);
 }
 
 /**
- * Core logging function
+ * Core logging function with format: "{EMOJI} {SERVICE}: MESSAGE"
  */
-function log(level: LogLevel, message: string, options?: LogOptions): void {
-  const [formatted, ...styles] = formatLog(level, message, options);
+function log(
+  level: LogLevel,
+  service: string,
+  message: string,
+  data?: unknown,
+): void {
+  const emoji = LOG_EMOJIS[level];
+  const serviceUpper = service.toUpperCase();
+  const dataStr = data !== undefined ? ` ${formatData(data)}` : "";
+  const formatted = `${emoji} ${serviceUpper}: ${message}${dataStr}`;
 
   const consoleMethod =
     level === "error"
       ? console.error
       : level === "warn"
         ? console.warn
-        : console.log;
+        : level === "debug"
+          ? console.debug
+          : console.log;
 
-  if (options?.data !== undefined) {
-    consoleMethod(formatted, ...styles, options.data);
-  } else {
-    consoleMethod(formatted, ...styles);
-  }
+  consoleMethod(formatted);
 }
 
 /**
- * Logger object with convenience methods
+ * Service-specific logger interface
+ */
+interface ServiceLogger {
+  debug: (message: string, data?: unknown) => void;
+  info: (message: string, data?: unknown) => void;
+  success: (message: string, data?: unknown) => void;
+  warn: (message: string, data?: unknown) => void;
+  error: (message: string, data?: unknown) => void;
+}
+
+/**
+ * Creates a service-specific logger
+ *
+ * @param service - Service name (will be uppercased in output)
+ * @returns Logger instance for the service
+ *
+ * @example
+ * const log = createLogger("POLAR");
+ * log.info("Checkout created");
+ * // Output: ℹ️ POLAR: Checkout created
+ *
+ * log.error("Payment failed", { orderId: "123" });
+ * // Output: ❌ POLAR: Payment failed { orderId: "123" }
+ */
+export function createLogger(service: string): ServiceLogger {
+  return {
+    debug: (message: string, data?: unknown) => {
+      if (process.env.NODE_ENV === "development") {
+        log("debug", service, message, data);
+      }
+    },
+    info: (message: string, data?: unknown) => log("info", service, message, data),
+    success: (message: string, data?: unknown) => log("success", service, message, data),
+    warn: (message: string, data?: unknown) => log("warn", service, message, data),
+    error: (message: string, data?: unknown) => log("error", service, message, data),
+  };
+}
+
+/**
+ * Pre-configured loggers for common services
  */
 export const logger = {
+  api: createLogger("API"),
+  auth: createLogger("AUTH"),
+  battery: createLogger("BATTERY"),
+  bria: createLogger("BRIA"),
+  config: createLogger("CONFIG"),
+  fal: createLogger("FAL"),
+  generation: createLogger("GENERATION"),
+  image: createLogger("IMAGE"),
+  polar: createLogger("POLAR"),
+  quota: createLogger("QUOTA"),
+  storage: createLogger("STORAGE"),
+  subscription: createLogger("SUBSCRIPTION"),
+  sync: createLogger("SYNC"),
+  ui: createLogger("UI"),
+  upload: createLogger("UPLOAD"),
+  video: createLogger("VIDEO"),
+  webhook: createLogger("WEBHOOK"),
+
   /**
-   * Debug log - for detailed diagnostic information
-   * @example logger.debug("Processing image batch", { context: "ImageHandler", data: batch })
+   * Creates a child logger with a custom service name
+   * Supports legacy 3-argument error signature for backward compatibility
+   * @deprecated Use createLogger() directly instead
    */
-  debug: (message: string, options?: LogOptions) => {
+  child: (context: { service?: string;[key: string]: unknown }) => {
+    const service = context.service || "APP";
+    return {
+      debug: (message: string, data?: unknown) => {
+        if (process.env.NODE_ENV === "development") {
+          log("debug", service, message, data);
+        }
+      },
+      info: (message: string, data?: unknown) => log("info", service, message, data),
+      success: (message: string, data?: unknown) => log("success", service, message, data),
+      warn: (message: string, data?: unknown) => log("warn", service, message, data),
+      error: (message: string, error?: Error | unknown, ctx?: unknown) => {
+        const data = error instanceof Error
+          ? { error: error.message, stack: error.stack, ...((ctx as object) || {}) }
+          : error !== undefined
+            ? { error, ...((ctx as object) || {}) }
+            : ctx;
+        log("error", service, message, data);
+      },
+    };
+  },
+
+  /**
+   * Direct logging methods for backward compatibility
+   */
+  debug: (message: string, data?: unknown) => {
     if (process.env.NODE_ENV === "development") {
-      log("debug", message, options);
+      log("debug", "APP", message, data);
     }
   },
-
-  /**
-   * Info log - for general informational messages
-   * @example logger.info("Starting video generation", { context: "VideoHandler" })
-   */
-  info: (message: string, options?: LogOptions) => {
-    log("info", message, options);
-  },
-
-  /**
-   * Success log - for successful operations
-   * @example logger.success("Project saved successfully", { context: "ProjectSync" })
-   */
-  success: (message: string, options?: LogOptions) => {
-    log("success", message, options);
-  },
-
-  /**
-   * Warning log - for warning messages
-   * @example logger.warn("Rate limit approaching", { context: "API", data: { remaining: 5 } })
-   */
-  warn: (message: string, options?: LogOptions) => {
-    log("warn", message, options);
-  },
-
-  /**
-   * Error log - for error messages
-   * @example logger.error("Failed to upload image", { context: "Storage", data: error })
-   */
-  error: (message: string, options?: LogOptions) => {
-    log("error", message, options);
+  info: (message: string, data?: unknown) => log("info", "APP", message, data),
+  success: (message: string, data?: unknown) => log("success", "APP", message, data),
+  warn: (message: string, data?: unknown) => log("warn", "APP", message, data),
+  error: (message: string, error?: Error | unknown, context?: unknown) => {
+    const data = error instanceof Error
+      ? { error: error.message, stack: error.stack, ...((context as object) || {}) }
+      : error !== undefined
+        ? { error, ...((context as object) || {}) }
+        : context;
+    log("error", "APP", message, data);
   },
 };
 
-/**
- * Creates a scoped logger with a predefined context
- * @example const log = createLogger("VideoHandler")
- *          log.info("Processing started")
- */
-export function createLogger(context: string) {
-  return {
-    debug: (message: string, data?: unknown) =>
-      logger.debug(message, { context, data }),
-    info: (message: string, data?: unknown) =>
-      logger.info(message, { context, data }),
-    success: (message: string, data?: unknown) =>
-      logger.success(message, { context, data }),
-    warn: (message: string, data?: unknown) =>
-      logger.warn(message, { context, data }),
-    error: (message: string, data?: unknown) =>
-      logger.error(message, { context, data }),
-  };
-}
+export type { ServiceLogger };

@@ -15,6 +15,9 @@ import {
   isErr,
   isHttpErr,
 } from "@/lib/errors/safe-errors";
+import { logger } from "@/lib/logger";
+
+const log = logger.bria;
 
 /**
  * Base URL for Bria API
@@ -263,7 +266,7 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T> | B
     );
 
     if (isErr(data)) {
-      console.warn(`[Bria] Network error on attempt ${attempts}:`, data);
+      log.warn(`Network error on attempt ${attempts}`, data);
 
       // Handle network errors - retry
       if (attempts >= POLLING_CONFIG.MAX_ATTEMPTS) {
