@@ -1,4 +1,5 @@
 import { getFiboSeed } from "@/constants/fibo";
+import { isErr } from "@/lib/errors/safe-errors";
 import {
   resolveFalClient,
   standardRateLimiter,
@@ -16,10 +17,8 @@ import { generateImage } from "@/lib/services/bria-client";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { generateVideoPrompt } from "@/lib/video-prompt-generator";
 import { tracked } from "@trpc/server";
-import sharp from "sharp";
 import { z } from "zod";
 import { publicProcedure, router } from "../init";
-import { isErr, tryPromise, getErrorMessage } from "@/lib/errors/safe-errors";
 
 /**
  * API response envelope from fal.ai endpoints.
@@ -192,62 +191,6 @@ async function getFalClient(
   }
 
   return resolved.client;
-}
-
-/**
- * Downloads a remote image as a Buffer.
- *
- * @param url - The image URL to fetch
- * @returns The downloaded file contents as a Node.js Buffer
- * @throws Error when the request fails or returns a non-2xx status
- */
-async function downloadImage(url: string): Promise<Buffer> {
-  const fetchResult = await tryPromise(fetch(url));
-
-  if (isErr(fetchResult)) {
-    throw new Error(`Failed to fetch image: ${getErrorMessage(fetchResult)}`);
-  }
-
-  const response = fetchResult;
-
-  if (!response.ok) {
-    throw new Error(`Failed to download image: ${response.statusText}`);
-  }
-
-  const arrayBufferResult = await tryPromise(response.arrayBuffer());
-
-  if (isErr(arrayBufferResult)) {
-    throw new Error(
-      `Failed to read image data: ${getErrorMessage(arrayBufferResult)}`
-    );
-  }
-
-  return Buffer.from(arrayBufferResult);
-}
-
-/**
- * Generates a thumbnail from an image URL using Sharp.
- *
- * @param imageUrl - The full-size image URL
- * @param maxSize - Maximum dimension for the thumbnail (default: 400px)
- * @returns Base64 data URL of the thumbnail in WebP format
- */
-async function generateThumbnailDataUrl(
-  imageUrl: string,
-  maxSize: number = 400
-): Promise<string> {
-  const imageBuffer = await downloadImage(imageUrl);
-
-  const thumbnailBuffer = await sharp(imageBuffer)
-    .resize(maxSize, maxSize, {
-      fit: "inside",
-      withoutEnlargement: true,
-    })
-    .webp({ quality: 75 })
-    .toBuffer();
-
-  const base64 = thumbnailBuffer.toString("base64");
-  return `data:image/webp;base64,${base64}`;
 }
 
 /**
@@ -676,15 +619,10 @@ export const appRouter = router({
           return;
         }
 
-        // Generate thumbnail for immediate display
-        const fullSizeUrl = images[0].url;
-        const thumbnailDataUrl = await generateThumbnailDataUrl(fullSizeUrl);
-
-        // Send the final image with thumbnail
+        // Send the final image
         yield tracked(`${generationId}_complete`, {
           type: "complete",
-          imageUrl: fullSizeUrl,
-          thumbnailUrl: thumbnailDataUrl,
+          imageUrl: images[0].url,
           seed: resultData.seed ?? Math.random(),
         });
       } catch (error) {
@@ -757,15 +695,10 @@ export const appRouter = router({
           return;
         }
 
-        // Generate thumbnail for immediate display
-        const fullSizeUrl = result.image_url;
-        const thumbnailDataUrl = await generateThumbnailDataUrl(fullSizeUrl);
-
-        // Send the final image with thumbnail
+        // Send the final image
         yield tracked(`${generationId}_complete`, {
           type: "complete",
-          imageUrl: fullSizeUrl,
-          thumbnailUrl: thumbnailDataUrl,
+          imageUrl: result.image_url,
           seed: result.seed,
         });
       } catch (error) {

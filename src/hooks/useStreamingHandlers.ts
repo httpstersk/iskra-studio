@@ -297,10 +297,8 @@ export function useStreamingHandlers(
       });
 
       // UX IMPROVEMENT: Update canvas IMMEDIATELY with generated image (non-blocking)
-      const shouldDisplayInitialThumbnail = Boolean(croppedThumbnailUrl);
-      const initialDisplaySrc = shouldDisplayInitialThumbnail && croppedThumbnailUrl
-        ? croppedThumbnailUrl
-        : croppedUrl;
+      // We now prefer the full quality image immediately as requested
+      const initialDisplaySrc = croppedUrl;
 
       setImages((prev) =>
         prev.map((img) =>
@@ -310,13 +308,13 @@ export function useStreamingHandlers(
               cameraAngle,
               directorName,
               lightingScenario,
-              displayAsThumbnail: shouldDisplayInitialThumbnail,
+              displayAsThumbnail: false, // Don't show thumbnail initially
               isLoading: false,
               naturalHeight,
               naturalWidth,
               opacity: 1.0,
               src: initialDisplaySrc,
-              thumbnailSrc: shouldDisplayInitialThumbnail ? croppedThumbnailUrl : undefined,
+              thumbnailSrc: undefined, // Don't set thumbnail initially
               // Keep fullSizeSrc as croppedUrl temporarily until Convex upload completes
               fullSizeSrc: croppedUrl,
             }
@@ -351,10 +349,10 @@ export function useStreamingHandlers(
             const assetId = uploadResult.assetId;
             const assetSyncedAt = Date.now();
 
-            const shouldDisplayThumbnail = Boolean(convexThumbnailUrl);
-            const displaySrc = shouldDisplayThumbnail && convexThumbnailUrl
-              ? convexThumbnailUrl
-              : convexUrl;
+            // OPTIMIZATION: Keep showing the Data URL (croppedUrl) to avoid a new network request
+            // But save the Convex URL in fullSizeSrc so it persists to the DB
+            // The next time the app loads, it will use fullSizeSrc/src from the DB
+            const displaySrc = croppedUrl;
 
             setImages((prev) =>
               prev.map((img) =>
@@ -363,10 +361,10 @@ export function useStreamingHandlers(
                     ...img,
                     assetId,
                     assetSyncedAt,
-                    displayAsThumbnail: shouldDisplayThumbnail,
-                    fullSizeSrc: convexUrl,
-                    src: displaySrc,
-                    thumbnailSrc: shouldDisplayThumbnail ? convexThumbnailUrl : undefined,
+                    displayAsThumbnail: false,
+                    fullSizeSrc: convexUrl, // Save permanent URL here
+                    src: displaySrc,        // Keep showing Data URL for now
+                    thumbnailSrc: convexThumbnailUrl,
                   }
                   : img
               )
@@ -428,49 +426,19 @@ export function useStreamingHandlers(
         );
         const croppedResult = await cropImageUrlToAspectRatio(url);
 
-        // Download and generate thumbnail for streaming update
-        const fetchResult = await tryPromise(fetch(croppedResult.croppedSrc));
-        if (isErr(fetchResult)) {
-          throw new Error("Failed to fetch cropped image");
-        }
-
-        const blobResult = await tryPromise(fetchResult.blob());
-        if (isErr(blobResult)) {
-          throw new Error("Failed to convert to blob");
-        }
-
-        const blob = blobResult;
-        const thumbnailBlob = await generateThumbnail(blob);
-
-        if (thumbnailBlob) {
-          const thumbnailDataUrl = await blobToDataUrl(thumbnailBlob);
-          setImages((prev) =>
-            prev.map((img) =>
-              img.id === id
-                ? {
-                  ...img,
-                  displayAsThumbnail: true,
-                  src: thumbnailDataUrl,
-                }
-                : img
-            )
-          );
-        } else {
-          // Fallback if thumbnail generation fails
-          setImages((prev) =>
-            prev.map((img) =>
-              img.id === id
-                ? {
-                  ...img,
-                  displayAsThumbnail: true,
-                  src: croppedResult.croppedSrc,
-                }
-                : img
-            )
-          );
-        }
+        setImages((prev) =>
+          prev.map((img) =>
+            img.id === id
+              ? {
+                ...img,
+                displayAsThumbnail: false,
+                src: croppedResult.croppedSrc,
+              }
+              : img
+          )
+        );
       } catch (error) {
-        log.warn("Failed to crop/generate streaming thumbnail", {
+        log.warn("Failed to crop streaming image", {
           data: error,
         });
         // Fallback to original behavior
@@ -479,7 +447,7 @@ export function useStreamingHandlers(
             img.id === id
               ? {
                 ...img,
-                displayAsThumbnail: true,
+                displayAsThumbnail: false,
                 src: url,
               }
               : img
