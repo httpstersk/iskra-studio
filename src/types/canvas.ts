@@ -24,6 +24,7 @@ export interface PlacedImage {
   pixelatedSrc?: string;
   rotation: number;
   src: string;
+  storyline?: string;
   thumbnailSrc?: string;
   width: number;
   x: number;

@@ -187,6 +187,47 @@ export const variationHandlers = {
       }
     },
   },
+
+  storyline: {
+    itemKey: "storyline" as const,
+    buildPrompt: (_item: string, userContext?: string) => {
+      const baseInstruction = `Create a cinematic shot that expands the narrative of the source image.`;
+
+      // Define the "Vibe Lock" (The immutable style constraint)
+      const styleLock = `
+      CRITICAL STYLE CONSTRAINT (VIBE LOCK):
+      - AESTHETIC PRESERVATION: You must strictly preserve the exact color grading, lighting mood, saturation, contrast, and film grain of the original image.
+      - NO AUTO-CORRECTION: Do not "fix" or "enhance" the lighting. The result must look like a raw capture from the exact same camera session as the source.
+      - VISUAL CONTINUITY: The final image must feel indistinguishable in tone from the source.
+      `.trim();
+
+      if (userContext) {
+        return `
+        ${baseInstruction}
+        
+        NARRATIVE CONTEXT: ${userContext}
+        
+        INSTRUCTIONS:
+        1. STORY CONTINUATION: Use the source image as the starting point and the provided context to evolve the scene. Show us "what happens next" or "a different perspective" implied by the context.
+        2. VISUAL CONSISTENCY: Maintain the same character(s), art style, and general atmosphere as the source image, but adapt the environment or action to fit the new narrative beat.
+        3. CINEMATIC FRAMING: Compose the shot to tell a story. Use lighting and blocking to emphasize the emotional tone of the context.
+        
+        ${styleLock}
+        `.trim();
+      } else {
+        return `
+        ${baseInstruction}
+        
+        INSTRUCTIONS:
+        1. IMPLIED NARRATIVE: Infer a story from the visual elements of the source image and advance it one step. What is the subject doing? Where are they going?
+        2. WORLD BUILDING: Expand the view to reveal more of the world or context that wasn't visible in the original frame, while keeping the style consistent.
+        3. DYNAMIC ACTION: If the source is static, introduce subtle movement or interaction that suggests a developing plot.
+        
+        ${styleLock}
+        `.trim();
+      }
+    },
+  },
 };
 
 // =============================================================================
@@ -196,12 +237,16 @@ export const variationHandlers = {
 /**
  * Supported variation types for image generation
  */
-export type VariationType = "director" | "cameraAngle" | "lighting";
+export type VariationType = "director" | "cameraAngle" | "lighting" | "storyline";
 
 /**
  * Maps the UI variation type to our internal variation type
  */
-export type ImageVariationType = "camera-angles" | "director" | "lighting";
+export type ImageVariationType =
+  | "camera-angles"
+  | "director"
+  | "lighting"
+  | "storyline";
 
 /**
  * Client-side configuration for a variation type
@@ -271,6 +316,20 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
     buildPrompt: variationHandlers.lighting.buildPrompt,
     getPlaceholderMeta: (lightingScenario: string) => ({ lightingScenario }),
   },
+
+  storyline: {
+    displayName: "Storyline",
+    apiEndpoint: "/api/generate-storyline-variations",
+    apiRequestKey: "storylines",
+    responseItemKey: "storyline",
+    // For storyline, we don't have specific items, so we just generate generic labels
+    selectRandomItems: (count: number) =>
+      Array.from({ length: count }, (_, i) => `Story Variation ${i + 1}`),
+    buildPrompt: variationHandlers.storyline.buildPrompt,
+    getPlaceholderMeta: (storyline: string) => ({
+      storyline,
+    }),
+  },
 };
 
 /**
@@ -286,5 +345,7 @@ export function mapImageVariationType(
       return "director";
     case "lighting":
       return "lighting";
+    case "storyline":
+      return "storyline";
   }
 }

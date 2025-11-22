@@ -31,7 +31,7 @@ interface CanvasControlPanelProps {
   handleRun: () => void;
   handleVariationModeChange: (mode: "image" | "video") => void;
   imageModel: ImageModelId;
-  imageVariationType?: "camera-angles" | "director" | "lighting";
+  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline";
   images: PlacedImage[];
   isGenerating: boolean;
   redo: () => void;
@@ -39,7 +39,7 @@ interface CanvasControlPanelProps {
   setGenerationSettings: (settings: GenerationSettings) => void;
   setImageModel: (value: ImageModelId) => void;
   setImageVariationType?: (
-    type: "camera-angles" | "director" | "lighting"
+    type: "camera-angles" | "director" | "lighting" | "storyline"
   ) => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   setVideoDuration: (value: "4" | "8" | "12") => void;

@@ -12,6 +12,7 @@ import {
   Lightbulb,
   PaintBucketIcon,
   PlayIcon,
+  BookOpen,
 } from "lucide-react";
 
 /**
@@ -20,9 +21,9 @@ import {
 interface ModeIndicatorProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   hasSelection: boolean;
-  imageVariationType?: "camera-angles" | "director" | "lighting";
+  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline";
   setImageVariationType?: (
-    type: "camera-angles" | "director" | "lighting"
+    type: "camera-angles" | "director" | "lighting" | "storyline"
   ) => void;
   variationMode: "image" | "video";
 }
@@ -89,7 +90,7 @@ export function ModeIndicator({
           value={imageVariationType}
           onValueChange={(value) =>
             setImageVariationType(
-              value as "camera-angles" | "director" | "lighting"
+              value as "camera-angles" | "director" | "lighting" | "storyline"
             )
           }
         >
@@ -109,6 +110,12 @@ export function ModeIndicator({
             <div className="flex flex-row items-center gap-1.5">
               <Lightbulb className="size-3.5" />
               <span className="text-xs whitespace-nowrap">Lighting</span>
+            </div>
+          </SegmentedControl.Item>
+          <SegmentedControl.Item value="storyline">
+            <div className="flex flex-row items-center gap-1.5">
+              <BookOpen className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Storyline</span>
             </div>
           </SegmentedControl.Item>
         </SegmentedControl.Root>
