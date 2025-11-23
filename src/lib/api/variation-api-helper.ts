@@ -200,8 +200,19 @@ export const variationHandlers = {
   storyline: {
     itemKey: "storyline" as const,
     buildPrompt: (_item: string, userContext?: string, index?: number) => {
-      const step = (index ?? 0) + 1;
       const baseInstruction = `Create a cinematic shot that expands the narrative of the source image.`;
+
+      // Time-based progression for story advancement
+      const timeProgressions = [
+        { label: "Moments later", description: "seconds to minutes after the source image" },
+        { label: "Later that day", description: "hours after the source image, same day" },
+        { label: "The next day", description: "roughly 24 hours after the source image" },
+        { label: "Days later", description: "several days have passed since the source image" },
+        { label: "Weeks later", description: "significant time has passed, weeks since the source" },
+        { label: "Months later", description: "the story has jumped forward by months" },
+      ];
+
+      const progression = timeProgressions[Math.min(index ?? 0, timeProgressions.length - 1)];
 
       // Define the "Vibe Lock" (The immutable style constraint)
       const styleLock = `
@@ -212,8 +223,8 @@ export const variationHandlers = {
       `.trim();
 
       const progressionHeader = `
-      PROGRESSION STEP ${step}:
-      This is frame ${step} of a sequential narrative.
+      TIME PROGRESSION - "${progression.label}":
+      This scene takes place ${progression.description}.
       `;
 
       if (userContext) {
