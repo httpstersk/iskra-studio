@@ -11,30 +11,38 @@ import { internalMutation, mutation, query } from "./_generated/server";
 /**
  * Creates an asset record after file upload to storage.
  *
- * @param storageId - Convex storage ID of the uploaded file (full-size)
- * @param thumbnailStorageId - Optional Convex storage ID for thumbnail
- * @param type - Type of asset (image or video)
- * @param sizeBytes - Size of the file in bytes
- * @param mimeType - MIME type of the file
- * @param directorName - Optional director name for AI-generated director-style variations
  * @param cameraAngle - Optional camera angle directive for AI-generated camera angle variations
+ * @param characterVariation - Optional character description for character variations
+ * @param directorName - Optional director name for AI-generated director-style variations
+ * @param emotion - Optional emotion label for AI-generated emotion variations
  * @param lightingScenario - Optional lighting scenario for AI-generated lighting variations
  * @param metadata - Optional metadata (dimensions, generation params, etc.)
+ * @param mimeType - MIME type of the file
+ * @param sizeBytes - Size of the file in bytes
+ * @param storageId - Convex storage ID of the uploaded file (full-size)
+ * @param storylineLabel - Optional time progression label for storyline variations
+ * @param thumbnailStorageId - Optional Convex storage ID for thumbnail
+ * @param type - Type of asset (image or video)
+ * @param variationType - Optional variation type for grouping/filtering
  * @returns Asset ID
  */
 export const uploadAsset = mutation({
   args: {
     cameraAngle: v.optional(v.string()),
+    characterVariation: v.optional(v.string()),
     directorName: v.optional(v.string()),
     duration: v.optional(v.number()),
-    lightingScenario: v.optional(v.string()),
+    emotion: v.optional(v.string()),
     height: v.optional(v.number()),
+    lightingScenario: v.optional(v.string()),
     mimeType: v.string(),
     originalUrl: v.optional(v.string()),
     sizeBytes: v.number(),
     storageId: v.string(),
+    storylineLabel: v.optional(v.string()),
     thumbnailStorageId: v.optional(v.string()),
     type: v.union(v.literal("image"), v.literal("video")),
+    variationType: v.optional(v.string()),
     width: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -78,21 +86,41 @@ export const uploadAsset = mutation({
       throw new Error("Lighting scenario too long (max 500 characters)");
     }
 
+    if (args.emotion && args.emotion.length > 100) {
+      throw new Error("Emotion label too long (max 100 characters)");
+    }
+
+    if (args.storylineLabel && args.storylineLabel.length > 50) {
+      throw new Error("Storyline label too long (max 50 characters)");
+    }
+
+    if (args.characterVariation && args.characterVariation.length > 500) {
+      throw new Error("Character variation too long (max 500 characters)");
+    }
+
+    if (args.variationType && args.variationType.length > 50) {
+      throw new Error("Variation type too long (max 50 characters)");
+    }
+
     // Create asset record
     const assetId = await ctx.db.insert("assets", {
       cameraAngle: args.cameraAngle,
+      characterVariation: args.characterVariation,
       createdAt: Date.now(),
       directorName: args.directorName,
-      lightingScenario: args.lightingScenario,
       duration: args.duration,
+      emotion: args.emotion,
       height: args.height,
+      lightingScenario: args.lightingScenario,
       mimeType: args.mimeType,
       originalUrl: args.originalUrl,
       sizeBytes: args.sizeBytes,
       storageId: args.storageId,
+      storylineLabel: args.storylineLabel,
       thumbnailStorageId: args.thumbnailStorageId,
       type: args.type,
       userId,
+      variationType: args.variationType,
       width: args.width,
     });
 

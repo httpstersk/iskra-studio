@@ -284,7 +284,9 @@ export const handleStorylineImageVariations = async (
             ...img,
             isStoryline: true,
             narrativeNote: concept.narrativeNote,
+            storylineLabel: concept.timeLabel,
             timeLabel: concept.timeLabel,
+            variationType: "storyline",
           };
         }
       }

@@ -33,17 +33,23 @@ export interface UploadMetadata {
   /** Camera angle directive for AI-generated camera angle variations */
   cameraAngle?: string;
 
+  /** Character description for AI-generated character variations */
+  characterVariation?: string;
+
   /** Director name for AI-generated director-style variations */
   directorName?: string;
 
   /** Duration in seconds (video only) */
   duration?: number;
 
-  /** Lighting scenario for AI-generated lighting variations */
-  lightingScenario?: string;
+  /** Emotion label for AI-generated emotion variations */
+  emotion?: string;
 
   /** Height in pixels */
   height?: number;
+
+  /** Lighting scenario for AI-generated lighting variations */
+  lightingScenario?: string;
 
   /** AI model used for generation */
   model?: string;
@@ -53,6 +59,12 @@ export interface UploadMetadata {
 
   /** Random seed used for generation */
   seed?: number;
+
+  /** Time progression label for storyline variations */
+  storylineLabel?: string;
+
+  /** Variation type for grouping/filtering */
+  variationType?: string;
 
   /** Width in pixels */
   width?: number;
@@ -237,16 +249,20 @@ async function createAssetRecord(
 
   const assetId = await convexClient.mutation(api.assets.uploadAsset, {
     cameraAngle: metadata.cameraAngle || undefined,
+    characterVariation: metadata.characterVariation || undefined,
     directorName: metadata.directorName || undefined,
     duration: metadata.duration || undefined,
+    emotion: metadata.emotion || undefined,
     height: metadata.height || undefined,
     lightingScenario: metadata.lightingScenario || undefined,
     mimeType,
     originalUrl: undefined,
     sizeBytes: file.size,
     storageId,
+    storylineLabel: metadata.storylineLabel || undefined,
     thumbnailStorageId: thumbnailStorageId || undefined,
     type: assetType,
+    variationType: metadata.variationType || undefined,
     width: metadata.width || undefined,
   });
 

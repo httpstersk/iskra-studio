@@ -416,10 +416,11 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
     responseItemKey: "director",
     selectRandomItems: selectRandomVisualStylists,
     buildPrompt: variationHandlers.director.buildPrompt,
-    getPlaceholderMeta: () => ({}),
+    getPlaceholderMeta: () => ({ variationType: "director" }),
     getImageMeta: (director: string) => ({
       directorName: director,
       isDirector: true,
+      variationType: "director",
     }),
   },
 
@@ -430,7 +431,10 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
     responseItemKey: "cameraAngle",
     selectRandomItems: selectRandomCameraVariations,
     buildPrompt: variationHandlers.cameraAngle.buildPrompt,
-    getPlaceholderMeta: (cameraAngle: string) => ({ cameraAngle }),
+    getPlaceholderMeta: (cameraAngle: string) => ({
+      cameraAngle,
+      variationType: "camera",
+    }),
   },
 
   lighting: {
@@ -440,7 +444,10 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
     responseItemKey: "lightingScenario",
     selectRandomItems: selectRandomLightingVariations,
     buildPrompt: variationHandlers.lighting.buildPrompt,
-    getPlaceholderMeta: (lightingScenario: string) => ({ lightingScenario }),
+    getPlaceholderMeta: (lightingScenario: string) => ({
+      lightingScenario,
+      variationType: "lighting",
+    }),
   },
 
   storyline: {
@@ -454,6 +461,7 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
     buildPrompt: variationHandlers.storyline.buildPrompt,
     getPlaceholderMeta: (storyline: string) => ({
       storyline,
+      variationType: "storyline",
     }),
   },
 
@@ -468,6 +476,7 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
     buildPrompt: variationHandlers.characters.buildPrompt,
     getPlaceholderMeta: (characters: string) => ({
       characters,
+      variationType: "character",
     }),
   },
 
@@ -480,6 +489,7 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
     buildPrompt: variationHandlers.emotions.buildPrompt,
     getPlaceholderMeta: (emotions: string) => ({
       emotions,
+      variationType: "emotion",
     }),
   },
 };

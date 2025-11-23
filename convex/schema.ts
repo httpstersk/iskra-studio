@@ -100,29 +100,40 @@ export default defineSchema({
    * @property directorName - Director name for AI-generated director-style variations (nullable)
    * @property cameraAngle - Camera angle directive for AI-generated camera angle variations (nullable)
    * @property lightingScenario - Lighting scenario for AI-generated lighting variations (nullable)
+   * @property emotion - Emotion label for AI-generated emotion variations (nullable)
+   * @property storylineLabel - Time progression label for storyline variations (nullable, e.g., "+1min", "+2h5m")
+   * @property characterVariation - Character description for character variations (nullable)
+   * @property variationType - Variation type for grouping/filtering (nullable, e.g., "director", "camera", "emotion")
    * @property mimeType - MIME type (e.g., "image/png", "video/mp4")
    * @property sizeBytes - File size in bytes
    * @property createdAt - Upload timestamp
    */
   assets: defineTable({
     cameraAngle: v.optional(v.string()),
+    characterVariation: v.optional(v.string()),
     createdAt: v.number(),
     directorName: v.optional(v.string()),
     duration: v.optional(v.number()),
+    emotion: v.optional(v.string()),
     height: v.optional(v.number()),
     lightingScenario: v.optional(v.string()),
     mimeType: v.string(),
     originalUrl: v.optional(v.string()),
     sizeBytes: v.number(),
     storageId: v.string(),
+    storylineLabel: v.optional(v.string()),
     thumbnailStorageId: v.optional(v.string()),
     type: v.union(v.literal("image"), v.literal("video")),
     userId: v.string(),
+    variationType: v.optional(v.string()),
     width: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
     .index("by_userId_and_type", ["userId", "type"])
-    .index("by_storageId", ["storageId"]),
+    .index("by_storageId", ["storageId"])
+    .index("by_userId_and_variationType", ["userId", "variationType"])
+    .index("by_userId_and_directorName", ["userId", "directorName"])
+    .index("by_userId_and_cameraAngle", ["userId", "cameraAngle"]),
 
   /**
    * Projects table
