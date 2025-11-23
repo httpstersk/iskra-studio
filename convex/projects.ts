@@ -89,6 +89,7 @@ export const saveProject = mutation({
           id: v.string(),
           isPlaying: v.optional(v.boolean()),
           muted: v.optional(v.boolean()),
+          originalFalUrl: v.optional(v.string()),
           transform: v.object({
             rotation: v.number(),
             scale: v.number(),
