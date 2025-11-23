@@ -15,6 +15,24 @@ import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
 import { selectRandomEmotionVariations } from "@/utils/emotion-variation-utils";
 import { selectRandomLightingVariations } from "@/utils/lighting-variation-utils";
 
+/**
+ * Narrative time progression labels for storyline variations (supports up to 12 variations)
+ */
+const STORYLINE_TIME_PROGRESSIONS = [
+  "Moments later",
+  "Later that day",
+  "The next day",
+  "Days later",
+  "Weeks later",
+  "Months later",
+  "A year later",
+  "Years later",
+  "A decade later",
+  "A generation later",
+  "A lifetime later",
+  "An era later",
+];
+
 export interface VariationConfig<T extends string> {
   /**
    * Key name for the variation type in request/response
@@ -227,6 +245,30 @@ export const variationHandlers = {
         {
           label: "Months later",
           description: "the story has jumped forward by months",
+        },
+        {
+          label: "A year later",
+          description: "a full year has passed since the source image",
+        },
+        {
+          label: "Years later",
+          description: "multiple years have passed, noticeable aging or change",
+        },
+        {
+          label: "A decade later",
+          description: "ten years have passed, significant life changes",
+        },
+        {
+          label: "A generation later",
+          description: "twenty to thirty years later, a new generation",
+        },
+        {
+          label: "A lifetime later",
+          description: "fifty or more years later, near end of life",
+        },
+        {
+          label: "An era later",
+          description: "distant future, the world has fundamentally changed",
         },
       ];
 
@@ -483,12 +525,12 @@ export const variationClientConfigs: Record<
     apiEndpoint: "/api/generate-storyline-variations",
     apiRequestKey: "storylines",
     responseItemKey: "storyline",
-    // For storyline, we don't have specific items, so we just generate generic labels
+    // Generate narrative time progression labels ("Moments later", "Later that day", etc.)
     selectRandomItems: (count: number) =>
-      Array.from({ length: count }, (_, i) => `Story Variation ${i + 1}`),
+      STORYLINE_TIME_PROGRESSIONS.slice(0, count),
     buildPrompt: variationHandlers.storyline.buildPrompt,
-    getPlaceholderMeta: (storyline: string) => ({
-      storyline,
+    getPlaceholderMeta: (storylineLabel: string) => ({
+      storylineLabel,
       variationType: "storyline",
     }),
   },
