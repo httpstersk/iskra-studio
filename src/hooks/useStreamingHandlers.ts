@@ -133,14 +133,14 @@ export function useStreamingHandlers(
             prev.map((img) =>
               img.id === id
                 ? {
-                  ...img,
-                  hasContentError: isContentError || false,
-                  hasGenerationError: !isContentError,
-                  isLoading: false,
-                  opacity: 1.0,
-                  pixelatedSrc: errorOverlayUrl,
-                  src: errorOverlayUrl,
-                }
+                    ...img,
+                    hasContentError: isContentError || false,
+                    hasGenerationError: !isContentError,
+                    isLoading: false,
+                    opacity: 1.0,
+                    pixelatedSrc: errorOverlayUrl,
+                    src: errorOverlayUrl,
+                  }
                 : img
             )
           );
@@ -158,14 +158,14 @@ export function useStreamingHandlers(
             prev.map((img) =>
               img.id === id
                 ? {
-                  ...img,
-                  hasContentError: isContentError || false,
-                  hasGenerationError: !isContentError,
-                  isLoading: false,
-                  opacity: 1.0,
-                  pixelatedSrc: fallbackOverlay,
-                  src: fallbackOverlay,
-                }
+                    ...img,
+                    hasContentError: isContentError || false,
+                    hasGenerationError: !isContentError,
+                    isLoading: false,
+                    opacity: 1.0,
+                    pixelatedSrc: fallbackOverlay,
+                    src: fallbackOverlay,
+                  }
                 : img
             )
           );
@@ -268,7 +268,9 @@ export function useStreamingHandlers(
           naturalHeight = img.naturalHeight;
           imageLoadValidated = true;
         } catch (error) {
-          log.warn("Failed to load generated image (possible 404)", { data: error });
+          log.warn("Failed to load generated image (possible 404)", {
+            data: error,
+          });
         }
       }
 
@@ -278,21 +280,33 @@ export function useStreamingHandlers(
           data: { id, finalUrl },
         });
         // Delegate to error handler which will show the error overlay
-        handleStreamingImageError(id, "Generated image failed to load (404)", false);
+        handleStreamingImageError(
+          id,
+          "Generated image failed to load (404)",
+          false
+        );
         return;
       }
 
-      // Get directorName, cameraAngle, and lightingScenario from the latest image state
+      // Get variation metadata from the latest image state
       // Use a synchronous state read to ensure we have the latest value
       let directorName: string | undefined;
       let cameraAngle: string | undefined;
       let lightingScenario: string | undefined;
+      let emotion: string | undefined;
+      let characterVariation: string | undefined;
+      let storylineLabel: string | undefined;
+      let variationType: string | undefined;
 
       setImages((prevImages) => {
         const currentImage = prevImages.find((img) => img.id === id);
         directorName = currentImage?.directorName;
         cameraAngle = currentImage?.cameraAngle;
         lightingScenario = currentImage?.lightingScenario;
+        emotion = currentImage?.emotion;
+        characterVariation = currentImage?.characterVariation;
+        storylineLabel = currentImage?.storylineLabel;
+        variationType = currentImage?.variationType;
         return prevImages; // No state change, just reading
       });
 
@@ -304,20 +318,23 @@ export function useStreamingHandlers(
         prev.map((img) =>
           img.id === id
             ? {
-              ...img,
-              cameraAngle,
-              directorName,
-              lightingScenario,
-              displayAsThumbnail: false, // Don't show thumbnail initially
-              isLoading: false,
-              naturalHeight,
-              naturalWidth,
-              opacity: 1.0,
-              src: initialDisplaySrc,
-              thumbnailSrc: undefined, // Don't set thumbnail initially
-              // Keep fullSizeSrc as croppedUrl temporarily until Convex upload completes
-              fullSizeSrc: croppedUrl,
-            }
+                ...img,
+                cameraAngle,
+                characterVariation,
+                directorName,
+                displayAsThumbnail: false, // Don't show thumbnail initially
+                emotion,
+                fullSizeSrc: croppedUrl,
+                isLoading: false,
+                lightingScenario,
+                naturalHeight,
+                naturalWidth,
+                opacity: 1.0,
+                src: initialDisplaySrc,
+                storylineLabel,
+                thumbnailSrc: undefined, // Don't set thumbnail initially
+                variationType,
+              }
             : img
         )
       );
@@ -334,10 +351,14 @@ export function useStreamingHandlers(
               assetType: "image",
               metadata: {
                 cameraAngle,
+                characterVariation,
                 directorName,
+                emotion,
                 height: naturalHeight,
                 lightingScenario,
                 prompt: generation?.prompt,
+                storylineLabel,
+                variationType,
                 width: naturalWidth,
               },
               sourceUrl: croppedUrl,
@@ -345,7 +366,8 @@ export function useStreamingHandlers(
 
             // Update canvas with permanent Convex URLs after upload completes
             const convexUrl = uploadResult.url;
-            const convexThumbnailUrl = uploadResult.thumbnailUrl || croppedThumbnailUrl;
+            const convexThumbnailUrl =
+              uploadResult.thumbnailUrl || croppedThumbnailUrl;
             const assetId = uploadResult.assetId;
             const assetSyncedAt = Date.now();
 
@@ -358,14 +380,14 @@ export function useStreamingHandlers(
               prev.map((img) =>
                 img.id === id
                   ? {
-                    ...img,
-                    assetId,
-                    assetSyncedAt,
-                    displayAsThumbnail: false,
-                    fullSizeSrc: convexUrl, // Save permanent URL here
-                    src: displaySrc,        // Keep showing Data URL for now
-                    thumbnailSrc: convexThumbnailUrl,
-                  }
+                      ...img,
+                      assetId,
+                      assetSyncedAt,
+                      displayAsThumbnail: false,
+                      fullSizeSrc: convexUrl, // Save permanent URL here
+                      src: displaySrc, // Keep showing Data URL for now
+                      thumbnailSrc: convexThumbnailUrl,
+                    }
                   : img
               )
             );
@@ -430,10 +452,10 @@ export function useStreamingHandlers(
           prev.map((img) =>
             img.id === id
               ? {
-                ...img,
-                displayAsThumbnail: false,
-                src: croppedResult.croppedSrc,
-              }
+                  ...img,
+                  displayAsThumbnail: false,
+                  src: croppedResult.croppedSrc,
+                }
               : img
           )
         );
@@ -446,10 +468,10 @@ export function useStreamingHandlers(
           prev.map((img) =>
             img.id === id
               ? {
-                ...img,
-                displayAsThumbnail: false,
-                src: url,
-              }
+                  ...img,
+                  displayAsThumbnail: false,
+                  src: url,
+                }
               : img
           )
         );
@@ -514,11 +536,11 @@ export function useStreamingHandlers(
             return prev.map((video) =>
               video.id === videoId
                 ? {
-                  ...video,
-                  duration,
-                  isLoading: false,
-                  src: convexUrl,
-                }
+                    ...video,
+                    duration,
+                    isLoading: false,
+                    src: convexUrl,
+                  }
                 : video
             );
           });

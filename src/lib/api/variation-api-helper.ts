@@ -204,15 +204,34 @@ export const variationHandlers = {
 
       // Time-based progression for story advancement
       const timeProgressions = [
-        { label: "Moments later", description: "seconds to minutes after the source image" },
-        { label: "Later that day", description: "hours after the source image, same day" },
-        { label: "The next day", description: "roughly 24 hours after the source image" },
-        { label: "Days later", description: "several days have passed since the source image" },
-        { label: "Weeks later", description: "significant time has passed, weeks since the source" },
-        { label: "Months later", description: "the story has jumped forward by months" },
+        {
+          label: "Moments later",
+          description: "seconds to minutes after the source image",
+        },
+        {
+          label: "Later that day",
+          description: "hours after the source image, same day",
+        },
+        {
+          label: "The next day",
+          description: "roughly 24 hours after the source image",
+        },
+        {
+          label: "Days later",
+          description: "several days have passed since the source image",
+        },
+        {
+          label: "Weeks later",
+          description: "significant time has passed, weeks since the source",
+        },
+        {
+          label: "Months later",
+          description: "the story has jumped forward by months",
+        },
       ];
 
-      const progression = timeProgressions[Math.min(index ?? 0, timeProgressions.length - 1)];
+      const progression =
+        timeProgressions[Math.min(index ?? 0, timeProgressions.length - 1)];
 
       // Define the "Vibe Lock" (The immutable style constraint)
       const styleLock = `
@@ -361,7 +380,13 @@ export const variationHandlers = {
 /**
  * Supported variation types for image generation
  */
-export type VariationType = "director" | "cameraAngle" | "lighting" | "storyline" | "characters" | "emotions";
+export type VariationType =
+  | "director"
+  | "cameraAngle"
+  | "lighting"
+  | "storyline"
+  | "characters"
+  | "emotions";
 
 /**
  * Maps the UI variation type to our internal variation type
@@ -408,7 +433,10 @@ export interface VariationClientConfig {
  * Client-side configuration for all variation types
  * Single source of truth for variation behavior
  */
-export const variationClientConfigs: Record<VariationType, VariationClientConfig> = {
+export const variationClientConfigs: Record<
+  VariationType,
+  VariationClientConfig
+> = {
   director: {
     displayName: "Director",
     apiEndpoint: "/api/generate-director-variations",
@@ -474,8 +502,8 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
     selectRandomItems: (count: number) =>
       Array.from({ length: count }, (_, i) => `Character Variation ${i + 1}`),
     buildPrompt: variationHandlers.characters.buildPrompt,
-    getPlaceholderMeta: (characters: string) => ({
-      characters,
+    getPlaceholderMeta: (characterVariation: string) => ({
+      characterVariation,
       variationType: "character",
     }),
   },
@@ -487,8 +515,8 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
     responseItemKey: "emotions",
     selectRandomItems: selectRandomEmotionVariations,
     buildPrompt: variationHandlers.emotions.buildPrompt,
-    getPlaceholderMeta: (emotions: string) => ({
-      emotions,
+    getPlaceholderMeta: (emotion: string) => ({
+      emotion,
       variationType: "emotion",
     }),
   },

@@ -76,15 +76,25 @@ const getImageDimensions = (image: PlacedImage) => ({
 
 /**
  * Helper function to get the directive label text for an image.
- * Priority: directorName > cameraAngle abbreviation
+ * Priority: storylineLabel > emotion > characterVariation > directorName > cameraAngle > lightingScenario
  *
  * @param image - The placed image
  * @returns Label text or undefined if no label should be shown
  */
 const getDirectiveLabelText = (image: PlacedImage): string | undefined => {
   if (image.isLoading) return undefined;
+  // Storyline time labels (e.g., "+1min", "+2h5m")
+  if (image.storylineLabel) return image.storylineLabel;
+  // Emotion labels (e.g., "Joy", "Sadness")
+  if (image.emotion) return image.emotion;
+  // Character variation labels
+  if (image.characterVariation) return image.characterVariation;
+  // Director name labels
   if (image.directorName) return image.directorName;
+  // Camera angle labels (abbreviated)
   if (image.cameraAngle) return abbreviateCameraDirective(image.cameraAngle);
+  // Lighting scenario labels
+  if (image.lightingScenario) return image.lightingScenario;
   return undefined;
 };
 
@@ -447,7 +457,13 @@ const arePropsEqual = (
     prevImg.directorName !== nextImg.directorName ||
     prevImg.isDirector !== nextImg.isDirector ||
     prevImg.hasContentError !== nextImg.hasContentError ||
-    prevImg.errorMessage !== nextImg.errorMessage
+    prevImg.errorMessage !== nextImg.errorMessage ||
+    // Variation label fields (matching Convex schema)
+    prevImg.emotion !== nextImg.emotion ||
+    prevImg.characterVariation !== nextImg.characterVariation ||
+    prevImg.storylineLabel !== nextImg.storylineLabel ||
+    prevImg.lightingScenario !== nextImg.lightingScenario ||
+    prevImg.variationType !== nextImg.variationType
   ) {
     return false;
   }
