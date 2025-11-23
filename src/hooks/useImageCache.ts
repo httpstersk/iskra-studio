@@ -8,7 +8,7 @@
  * - Access tracking for efficient eviction
  */
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // LRU cache configuration
 const MAX_CACHE_SIZE = 150; // Maximum number of images to keep in cache
@@ -18,6 +18,10 @@ const imageCache = new Map<string, HTMLImageElement>();
 const loadingPromises = new Map<string, Promise<HTMLImageElement>>();
 // Track access order for LRU eviction (most recent at end)
 const accessOrder: string[] = [];
+
+// Secondary index: imageId → src for quick cache lookups without hitting IndexedDB
+// This allows us to check if an image is cached by ID (used when switching projects)
+const imageSrcById = new Map<string, string>();
 
 /**
  * Update access order for LRU tracking
@@ -160,6 +164,7 @@ export function clearImageCache() {
   imageCache.clear();
   loadingPromises.clear();
   accessOrder.length = 0;
+  imageSrcById.clear();
 }
 
 /**
@@ -171,6 +176,12 @@ export function removeFromCache(src: string) {
   if (index !== -1) {
     accessOrder.splice(index, 1);
   }
+  // Also remove from secondary index
+  imageSrcById.forEach((cachedSrc, imageId) => {
+    if (cachedSrc === src) {
+      imageSrcById.delete(imageId);
+    }
+  });
 }
 
 /**
@@ -183,4 +194,60 @@ export function getCacheStats() {
     lruOrder: accessOrder.length,
     maxCacheSize: MAX_CACHE_SIZE,
   };
+}
+
+/**
+ * Register an imageId → src mapping for quick cache lookups.
+ * Called when loading images from IndexedDB to enable instant cache checks
+ * when switching back to a previously viewed project.
+ *
+ * @param imageId - The unique image ID (from PlacedImage.id)
+ * @param src - The image source URL (data URL or remote URL)
+ */
+export function registerImageSrc(imageId: string, src: string) {
+  // Only register non-empty src values
+  if (src) {
+    imageSrcById.set(imageId, src);
+  }
+}
+
+/**
+ * Get the cached src for an imageId if it exists and the image is in cache.
+ * Returns the src if both conditions are met, undefined otherwise.
+ *
+ * This allows skipping skeleton placeholders when switching back to a project
+ * whose images are already loaded in memory.
+ *
+ * @param imageId - The unique image ID to look up
+ * @returns The cached src if available and in cache, undefined otherwise
+ */
+export function getCachedImageSrcById(imageId: string): string | undefined {
+  const src = imageSrcById.get(imageId);
+  if (src && imageCache.has(src)) {
+    touchLRU(src);
+    return src;
+  }
+  return undefined;
+}
+
+/**
+ * Check if an image is cached by its ID.
+ * Quick check without returning the src.
+ *
+ * @param imageId - The unique image ID to check
+ * @returns true if the image is in cache, false otherwise
+ */
+export function isImageCachedById(imageId: string): boolean {
+  const src = imageSrcById.get(imageId);
+  return !!src && imageCache.has(src);
+}
+
+/**
+ * Check if a src URL is currently in the cache.
+ *
+ * @param src - The image source URL to check
+ * @returns true if the src is in cache, false otherwise
+ */
+export function isImageCached(src: string): boolean {
+  return imageCache.has(src);
 }

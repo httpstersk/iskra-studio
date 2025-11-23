@@ -1,3 +1,7 @@
+import {
+  getCachedImageSrcById,
+  registerImageSrc,
+} from "@/hooks/useImageCache";
 import { PLACEHOLDER_URLS, UI_CONSTANTS } from "@/lib/constants";
 import { getErrorMessage, isErr, tryPromise } from "@/lib/errors/safe-errors";
 import { logger } from "@/lib/logger";
@@ -11,12 +15,12 @@ import {
   videoToCanvasElement,
 } from "@/utils/canvas-utils";
 import { snapImagesToGrid } from "@/utils/snap-utils";
+import type { Viewport } from "@/utils/viewport-utils";
 import { useConvex, useMutation } from "convex/react";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
-import type { Viewport } from "@/utils/viewport-utils";
 
 const log = logger.storage;
 
@@ -191,22 +195,44 @@ export function useStorage(
       return;
     }
 
-    // Create skeleton placeholders from canvas state for immediate display
-    const skeletonImages: PlacedImage[] = [];
+    // Create initial placeholders from canvas state for immediate display
+    // Images already in memory cache skip the skeleton phase entirely
+    const initialImages: PlacedImage[] = [];
     const skeletonVideos: PlacedVideo[] = [];
+    // Track which images were loaded from cache (to skip IndexedDB fetch later)
+    const cachedImageIds = new Set<string>();
 
     for (const element of canvasState.elements) {
       if (element.type === "image") {
-        skeletonImages.push({
-          height: element.height || 300,
-          id: element.id,
-          isSkeleton: true,
-          rotation: element.transform.rotation,
-          src: "", // Empty src for skeleton
-          width: element.width || 300,
-          x: element.transform.x,
-          y: element.transform.y,
-        });
+        // Check if this image is already in memory cache
+        const cachedSrc = getCachedImageSrcById(element.id);
+        if (cachedSrc) {
+          // Image is cached - display immediately without skeleton
+          cachedImageIds.add(element.id);
+          initialImages.push({
+            assetId: element.assetId,
+            assetSyncedAt: element.assetSyncedAt,
+            height: element.height || 300,
+            id: element.id,
+            rotation: element.transform.rotation,
+            src: cachedSrc,
+            width: element.width || 300,
+            x: element.transform.x,
+            y: element.transform.y,
+          });
+        } else {
+          // Image not cached - show skeleton placeholder
+          initialImages.push({
+            height: element.height || 300,
+            id: element.id,
+            isSkeleton: true,
+            rotation: element.transform.rotation,
+            src: "", // Empty src for skeleton
+            width: element.width || 300,
+            x: element.transform.x,
+            y: element.transform.y,
+          });
+        }
       } else if (element.type === "video") {
         skeletonVideos.push({
           currentTime: 0,
@@ -228,13 +254,13 @@ export function useStorage(
       }
     }
 
-    // Display skeletons immediately for better perceived performance
-    setImages(snapImagesToGrid(skeletonImages));
+    // Display initial images (cached or skeletons) immediately
+    setImages(snapImagesToGrid(initialImages));
     setVideos(skeletonVideos);
     setViewport(canvasState.viewport ?? DEFAULT_VIEWPORT);
 
     // Track current state of images/videos for progressive updates
-    const currentImages = [...skeletonImages];
+    const currentImages = [...initialImages];
     const currentVideos = [...skeletonVideos];
 
     const loadedImages: PlacedImage[] = [];
@@ -274,6 +300,30 @@ export function useStorage(
     // Load real images/videos and progressively replace skeletons
     for (const element of canvasState.elements) {
       if (element.type === "image") {
+        // Skip IndexedDB fetch for images already loaded from memory cache
+        if (cachedImageIds.has(element.id)) {
+          // Still update with metadata if available
+          const metadata = element.assetId
+            ? assetMetadata.get(element.assetId)
+            : undefined;
+
+          if (metadata) {
+            const index = currentImages.findIndex(
+              (img) => img.id === element.id
+            );
+            if (index !== -1) {
+              currentImages[index] = {
+                ...currentImages[index],
+                cameraAngle: metadata.cameraAngle,
+                directorName: metadata.directorName,
+                isDirector: !!metadata.directorName,
+              };
+              setImages(snapImagesToGrid([...currentImages]));
+            }
+          }
+          continue;
+        }
+
         const imageDataResult = await tryPromise(
           canvasStorage.getImage(element.id)
         );
@@ -286,6 +336,9 @@ export function useStorage(
         }
 
         if (imageData) {
+          // Register imageId → src mapping for future cache lookups
+          registerImageSrc(element.id, imageData.originalDataUrl);
+
           const metadata = element.assetId
             ? assetMetadata.get(element.assetId)
             : undefined;
