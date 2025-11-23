@@ -597,7 +597,7 @@ export const appRouter = router({
         // Subscribe to the model endpoint and wait for completion
         const result = await falClient.subscribe(endpoint, {
           input: falInput,
-          pollInterval: 1000,
+          pollInterval: 500, // Reduced from 1000ms for 2x faster completion detection
           logs: true,
         });
 
