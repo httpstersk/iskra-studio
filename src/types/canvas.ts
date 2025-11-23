@@ -5,8 +5,10 @@ export interface PlacedImage {
   assetSyncedAt?: number;
   cameraAngle?: string;
   character?: string;
+  characters?: string;
   directorName?: string;
   displayAsThumbnail?: boolean;
+  emotions?: string;
   errorMessage?: string;
   fullSizeSrc?: string;
   hasContentError?: boolean;
@@ -26,7 +28,6 @@ export interface PlacedImage {
   rotation: number;
   src: string;
   storyline?: string;
-  characters?: string;
   thumbnailSrc?: string;
   width: number;
   x: number;

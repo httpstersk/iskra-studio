@@ -23,7 +23,7 @@ interface VariationHandlerDeps {
   /** Model to use for image generation */
   imageModel?: ImageModelId;
   /** Type of image variation (camera-angles, director, or lighting) */
-  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters";
+  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions";
   /** Whether FIBO analysis is enabled */
   isFiboAnalysisEnabled?: boolean;
   /** Array of all placed images */

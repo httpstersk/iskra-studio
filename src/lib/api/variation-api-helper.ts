@@ -8,10 +8,11 @@
  */
 
 import { selectRandomVisualStylists } from "@/constants/visual-stylists";
-import { generateFiboVariations } from "@/lib/services/fibo-variation-service";
 import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
+import { generateFiboVariations } from "@/lib/services/fibo-variation-service";
 import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
+import { selectRandomEmotionVariations } from "@/utils/emotion-variation-utils";
 import { selectRandomLightingVariations } from "@/utils/lighting-variation-utils";
 
 export interface VariationConfig<T extends string> {
@@ -297,6 +298,49 @@ export const variationHandlers = {
       }
     },
   },
+
+  emotions: {
+    itemKey: "emotions" as const,
+    buildPrompt: (emotion: string, userContext?: string) => {
+      const baseInstruction = `Reimagine the subject with this specific emotion: ${emotion}.`;
+
+      // Define the "Vibe Lock" (The immutable style constraint)
+      const styleLock = `
+      CRITICAL STYLE CONSTRAINT (VIBE LOCK):
+      - AESTHETIC PRESERVATION: You must strictly preserve the exact color grading, lighting mood, saturation, contrast, and film grain of the reference images.
+      - NO AUTO-CORRECTION: Do not "fix" or "enhance" the lighting. The result must look like a raw capture from the exact same camera session as the source.
+      - VISUAL CONTINUITY: The final image must feel indistinguishable in tone from the source.
+      `.trim();
+
+      if (userContext) {
+        return `
+        ${baseInstruction}
+        
+        CONTEXT: ${userContext}
+        
+        INSTRUCTIONS:
+        1. EMOTIONAL SHIFT: Alter the subject's facial expression and body language to convey "${emotion}" while fitting the provided context.
+        2. VISUAL CONSISTENCY: Maintain the same character identity, art style, and general atmosphere as the source image.
+        3. CONTEXTUAL INTEGRATION: Ensure the emotion feels natural within the "${userContext}" setting.
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
+        
+        ${styleLock}
+        `.trim();
+      } else {
+        return `
+        ${baseInstruction}
+        
+        INSTRUCTIONS:
+        1. EXPRESSION CHANGE: Modify the subject's face and posture to clearly demonstrate "${emotion}".
+        2. IDENTITY PRESERVATION: Keep the character's identity and features consistent with the source.
+        3. STYLE MATCHING: Ensure the lighting, texture, and overall look remain identical to the original.
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
+        
+        ${styleLock}
+        `.trim();
+      }
+    },
+  },
 };
 
 // =============================================================================
@@ -306,7 +350,7 @@ export const variationHandlers = {
 /**
  * Supported variation types for image generation
  */
-export type VariationType = "director" | "cameraAngle" | "lighting" | "storyline" | "characters";
+export type VariationType = "director" | "cameraAngle" | "lighting" | "storyline" | "characters" | "emotions";
 
 /**
  * Maps the UI variation type to our internal variation type
@@ -316,7 +360,8 @@ export type ImageVariationType =
   | "director"
   | "lighting"
   | "storyline"
-  | "characters";
+  | "characters"
+  | "emotions";
 
 /**
  * Client-side configuration for a variation type
@@ -414,6 +459,18 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
       characters,
     }),
   },
+
+  emotions: {
+    displayName: "Emotions",
+    apiEndpoint: "/api/generate-emotions-variations",
+    apiRequestKey: "emotions",
+    responseItemKey: "emotions",
+    selectRandomItems: selectRandomEmotionVariations,
+    buildPrompt: variationHandlers.emotions.buildPrompt,
+    getPlaceholderMeta: (emotions: string) => ({
+      emotions,
+    }),
+  },
 };
 
 /**
@@ -433,5 +490,7 @@ export function mapImageVariationType(
       return "storyline";
     case "characters":
       return "characters";
+    case "emotions":
+      return "emotions";
   }
 }

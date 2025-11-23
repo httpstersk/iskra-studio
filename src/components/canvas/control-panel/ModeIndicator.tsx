@@ -14,6 +14,7 @@ import {
   PlayIcon,
   BookOpen,
   UserIcon,
+  SmileIcon,
 } from "lucide-react";
 
 /**
@@ -22,9 +23,9 @@ import {
 interface ModeIndicatorProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   hasSelection: boolean;
-  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters";
+  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions";
   setImageVariationType?: (
-    type: "camera-angles" | "director" | "lighting" | "storyline" | "characters"
+    type: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions"
   ) => void;
   variationMode: "image" | "video";
 }
@@ -91,7 +92,7 @@ export function ModeIndicator({
           value={imageVariationType}
           onValueChange={(value) =>
             setImageVariationType(
-              value as "camera-angles" | "director" | "lighting" | "storyline" | "characters"
+              value as "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions"
             )
           }
         >
@@ -123,6 +124,12 @@ export function ModeIndicator({
             <div className="flex flex-row items-center gap-1.5">
               <UserIcon className="size-3.5" />
               <span className="text-xs whitespace-nowrap">Characters</span>
+            </div>
+          </SegmentedControl.Item>
+          <SegmentedControl.Item value="emotions">
+            <div className="flex flex-row items-center gap-1.5">
+              <SmileIcon className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Emotions</span>
             </div>
           </SegmentedControl.Item>
         </SegmentedControl.Root>
