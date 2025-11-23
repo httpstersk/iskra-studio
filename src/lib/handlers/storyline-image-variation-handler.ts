@@ -96,7 +96,7 @@ export const handleStorylineImageVariations = async (
 
   // OPTIMIZATION: Perform early preparation BEFORE async operations
   const preparationResult = await tryPromise(
-    performEarlyPreparation(selectedImage, variationCount)
+    performEarlyPreparation([selectedImage], variationCount)
   );
 
   if (isErr(preparationResult)) {
@@ -108,7 +108,7 @@ export const handleStorylineImageVariations = async (
 
     await handleVariationError({
       error: preparationResult.payload,
-      selectedImage,
+      selectedImages: [selectedImage],
       setActiveGenerations,
       setImages,
       setIsGenerating,
@@ -165,7 +165,7 @@ export const handleStorylineImageVariations = async (
 
     await handleVariationError({
       error: imageUrl as Error,
-      selectedImage,
+      selectedImages: [selectedImage],
       setActiveGenerations,
       setImages,
       setIsGenerating,
@@ -187,7 +187,7 @@ export const handleStorylineImageVariations = async (
 
     await handleVariationError({
       error: signedImageUrl as Error,
-      selectedImage,
+      selectedImages: [selectedImage],
       setActiveGenerations,
       setImages,
       setIsGenerating,
@@ -241,7 +241,7 @@ export const handleStorylineImageVariations = async (
 
     await handleVariationError({
       error: conceptsResult.payload,
-      selectedImage,
+      selectedImages: [selectedImage],
       setActiveGenerations,
       setImages,
       setIsGenerating,

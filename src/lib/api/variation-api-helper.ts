@@ -24,7 +24,7 @@ export interface VariationConfig<T extends string> {
   /**
    * Function to build the variation prompt
    */
-  buildPrompt: (item: string, userContext?: string) => string;
+  buildPrompt: (item: string, userContext?: string, index?: number) => string;
 }
 
 export interface VariationInput<T extends string> {
@@ -55,7 +55,9 @@ export async function handleVariations<T extends string>(
   const { imageUrls, items, userContext } = input;
 
   // Build variation prompts for each item
-  const variations = items.map((item) => config.buildPrompt(item, userContext));
+  const variations = items.map((item, index) =>
+    config.buildPrompt(item, userContext, index)
+  );
 
   // Generate FIBO variations using shared service
   const { fiboAnalysis, refinedPrompts } = await generateFiboVariations({
@@ -169,9 +171,9 @@ export const variationHandlers = {
         // Requirement: The new environment must be generated *around* this light source.
         return `
         ${lightInstruction}
-
+        
         COMMAND: Transfer the subject into a new context: ${userContext}.
-
+        
         EXECUTION RULES:
         1. ATMOSPHERE GENERATION: Generate the "${userContext}" environment specifically under the influence of the requested lighting ("${lightingScenario}").
         2. SUBJECT HARMONY: Relight the subject so their highlights, reflections, and color temperature match this new environment.
@@ -183,7 +185,7 @@ export const variationHandlers = {
         // Requirement: Keep the geometry, change the pixels.
         return `
         ${lightInstruction}
-
+        
         INSTRUCTIONS:
         1. GEOMETRY LOCK: Preserve the physical structure of the room/environment and the subject's pose exactly as is.
         2. GLOBAL RELIGHTING: Overhaul the global illumination, color grading, and shadows of the current scene to match "${lightingScenario}".
@@ -196,7 +198,8 @@ export const variationHandlers = {
 
   storyline: {
     itemKey: "storyline" as const,
-    buildPrompt: (_item: string, userContext?: string) => {
+    buildPrompt: (_item: string, userContext?: string, index?: number) => {
+      const step = (index ?? 0) + 1;
       const baseInstruction = `Create a cinematic shot that expands the narrative of the source image.`;
 
       // Define the "Vibe Lock" (The immutable style constraint)
@@ -207,9 +210,15 @@ export const variationHandlers = {
       - VISUAL CONTINUITY: The final image must feel indistinguishable in tone from the source.
       `.trim();
 
+      const progressionHeader = `
+      PROGRESSION STEP ${step}:
+      This is frame ${step} of a sequential narrative.
+      `;
+
       if (userContext) {
         return `
         ${baseInstruction}
+        ${progressionHeader}
         
         NARRATIVE CONTEXT: ${userContext}
         
@@ -224,6 +233,7 @@ export const variationHandlers = {
       } else {
         return `
         ${baseInstruction}
+        ${progressionHeader}
         
         INSTRUCTIONS:
         1. IMPLIED NARRATIVE: Infer a story from the visual elements of the source image and advance it one step. What is the subject doing? Where are they going?
@@ -277,7 +287,7 @@ export interface VariationClientConfig {
   selectRandomItems: (count: number) => string[];
 
   /** Function to build prompt when FIBO analysis is disabled */
-  buildPrompt: (item: string, userContext?: string) => string;
+  buildPrompt: (item: string, userContext?: string, index?: number) => string;
 
   /** Function to get metadata for placeholder images */
   getPlaceholderMeta: (item: string) => Partial<PlacedImage>;

@@ -44,7 +44,7 @@ export async function analyzeImageCore(
 
   // Analyze image with FIBO (includes automatic retry)
   const fiboResult = await analyzeFiboImageWithRetry({
-    imageUrl,
+    imageUrls: [imageUrl],
     seed: getFiboSeed(),
     timeout: FIBO_ANALYSIS.REQUEST_TIMEOUT,
   });

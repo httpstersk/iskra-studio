@@ -167,7 +167,7 @@ export const handleBrollImageVariations = async (
   // OPTIMIZATION: Perform early preparation BEFORE async operations
   // This generates pixelated overlay immediately for instant visual feedback
   const preparationResult = await tryPromise(
-    performEarlyPreparation(selectedImage, variationCount)
+    performEarlyPreparation([selectedImage], variationCount)
   );
 
   if (isErr(preparationResult)) {
@@ -179,7 +179,7 @@ export const handleBrollImageVariations = async (
 
     await handleVariationError({
       error: preparationResult.payload,
-      selectedImage,
+      selectedImages: [selectedImage],
       setActiveGenerations,
       setImages,
       setIsGenerating,
@@ -246,7 +246,7 @@ export const handleBrollImageVariations = async (
 
     await handleVariationError({
       error: imageUrl,
-      selectedImage,
+      selectedImages: [selectedImage],
       setActiveGenerations,
       setImages,
       setIsGenerating,
@@ -274,7 +274,7 @@ export const handleBrollImageVariations = async (
 
     await handleVariationError({
       error: signedImageUrl,
-      selectedImage,
+      selectedImages: [selectedImage],
       setActiveGenerations,
       setImages,
       setIsGenerating,
@@ -322,7 +322,7 @@ export const handleBrollImageVariations = async (
 
     await handleVariationError({
       error: imageAnalysis,
-      selectedImage,
+      selectedImages: [selectedImage],
       setActiveGenerations,
       setImages,
       setIsGenerating,
@@ -349,7 +349,7 @@ export const handleBrollImageVariations = async (
 
     await handleVariationError({
       error: brollResult.payload,
-      selectedImage,
+      selectedImages: [selectedImage],
       setActiveGenerations,
       setImages,
       setIsGenerating,

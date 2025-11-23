@@ -216,7 +216,7 @@ export const handleSoraVideoVariations = async (
   // OPTIMIZATION: Perform early preparation BEFORE async operations
   // This generates pixelated overlay immediately for instant visual feedback
   const preparationResult = await tryPromise(
-    performEarlyPreparation(selectedImage, VARIATION_COUNT)
+    performEarlyPreparation([selectedImage], VARIATION_COUNT)
   );
 
   if (isErr(preparationResult)) {

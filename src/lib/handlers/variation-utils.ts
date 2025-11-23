@@ -279,3 +279,28 @@ export function validateImageSelection(
 
   return selectedImages;
 }
+
+/**
+ * Validates that exactly 1 image is selected
+ */
+export function validateSingleImageSelection(
+  images: PlacedImage[],
+  selectedIds: string[],
+): PlacedImage | null {
+  if (selectedIds.length !== 1) {
+    showError(
+      "Select 1 image",
+      "Please select exactly 1 image to generate variations",
+    );
+    return null;
+  }
+
+  const selectedImage = images.find((img) => img.id === selectedIds[0]);
+
+  if (!selectedImage) {
+    showError("Image not found", "The selected image could not be found");
+    return null;
+  }
+
+  return selectedImage;
+}
