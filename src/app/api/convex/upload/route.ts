@@ -20,10 +20,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60;
 
-// Allow up to 50MB request bodies for file uploads
-export const config = {
-  maxBodySize: "50mb",
-};
 
 /**
  * POST handler for uploading files to Convex storage.
