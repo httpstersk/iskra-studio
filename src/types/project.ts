@@ -50,6 +50,9 @@ export interface CanvasElement {
   /** Video mute state */
   muted?: boolean;
 
+  /** Original FAL URL before any cropping/compression - highest quality source for downloads */
+  originalFalUrl?: string;
+
   /** Element transform (position, rotation, scale) */
   transform: ElementTransform;
 

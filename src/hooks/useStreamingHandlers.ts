@@ -327,6 +327,7 @@ export function useStreamingHandlers(
                 naturalHeight,
                 naturalWidth,
                 opacity: 1.0,
+                originalFalUrl: finalUrl, // Store original FAL URL for high-quality downloads
                 src: initialDisplaySrc,
                 storylineLabel,
                 thumbnailSrc: undefined, // Don't set thumbnail initially

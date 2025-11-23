@@ -30,6 +30,7 @@ export const imageToCanvasElement = (image: PlacedImage): CanvasElement => ({
   assetSyncedAt: image.assetSyncedAt,
   assetType: "image",
   id: image.id,
+  originalFalUrl: image.originalFalUrl,
   type: "image",
   transform: {
     x: image.x,

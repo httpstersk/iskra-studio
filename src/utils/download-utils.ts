@@ -120,8 +120,9 @@ export const downloadImagesAsZip = async (
     // Fetch all images in parallel
     const imagePromises = selectedImages.map(async (image, index) => {
       try {
-        // Use full-size image if available (for thumbnails), otherwise use src
-        const downloadUrl = image.fullSizeSrc || image.src;
+        // Priority: originalFalUrl (highest quality) > fullSizeSrc > src
+        // originalFalUrl contains the unprocessed FAL image before any cropping/compression
+        const downloadUrl = image.originalFalUrl || image.fullSizeSrc || image.src;
         const blob = await fetchImageAsBlob(downloadUrl);
         const filename = getFilenameFromUrl(downloadUrl, index);
         folder.file(filename, blob);

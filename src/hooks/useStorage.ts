@@ -351,6 +351,7 @@ export function useStorage(
             height: element.height || 300,
             id: element.id,
             isDirector: !!metadata?.directorName,
+            originalFalUrl: element.originalFalUrl,
             rotation: element.transform.rotation,
             src: imageData.originalDataUrl,
             width: element.width || 300,

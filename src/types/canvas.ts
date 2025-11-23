@@ -25,6 +25,8 @@ export interface PlacedImage {
   naturalHeight?: number;
   naturalWidth?: number;
   opacity?: number;
+  /** Original FAL URL before any cropping/compression - highest quality source */
+  originalFalUrl?: string;
   parentGroupId?: string;
   pixelatedSrc?: string;
   rotation: number;

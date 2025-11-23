@@ -35,6 +35,7 @@ export function convertImageToElement(image: PlacedImage): CanvasElement {
     assetType: "image",
     height: image.height,
     id: image.id,
+    originalFalUrl: image.originalFalUrl,
     transform: {
       rotation: image.rotation,
       scale: 1,
@@ -116,6 +117,7 @@ export function convertElementToImage(
     directorName: asset?.directorName,
     height: element.height || 300,
     id: element.id,
+    originalFalUrl: element.originalFalUrl,
     rotation: element.transform.rotation,
     src: imageSrc,
     width: element.width || 300,
