@@ -3,7 +3,6 @@
 import { ActionButtons } from "@/components/canvas/control-panel/ActionButtons";
 import { ControlActions } from "@/components/canvas/control-panel/ControlActions";
 import { GenerationsIndicatorWrapper } from "@/components/canvas/control-panel/GenerationsIndicatorWrapper";
-import { ImageSettings } from "@/components/canvas/control-panel/ImageSettings";
 import { ModeIndicator } from "@/components/canvas/control-panel/ModeIndicator";
 import { PromptInput } from "@/components/canvas/control-panel/PromptInput";
 import { VideoSettings } from "@/components/canvas/control-panel/VideoSettings";
@@ -129,14 +128,6 @@ export const CanvasControlPanel = React.memo(function CanvasControlPanel({
                 setImageVariationType={setImageVariationType}
                 variationMode={variationMode}
               />
-
-              {/* Image settings - only show when in image mode */}
-              {hasSelection && variationMode === "image" && (
-                <ImageSettings
-                  imageModel={imageModel}
-                  setImageModel={setImageModel}
-                />
-              )}
 
               {/* Video settings - only show when in video mode */}
               {hasSelection && variationMode === "video" && (
