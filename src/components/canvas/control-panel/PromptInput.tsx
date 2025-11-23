@@ -99,26 +99,20 @@ export const PromptInput = React.memo(function PromptInput({
         )}
 
         <div className="absolute top-1 right-2 flex items-center justify-end">
-          <div className="relative h-12 w-20">
+          <div className="flex items-center gap-1">
             {selectedIds.slice(0, 3).map((id, index) => {
               const image = images.find((img) => img.id === id);
               if (!image) return null;
 
               const isLast = index === Math.min(selectedIds.length - 1, 2);
-              const offset = index * 8;
-              const size = 40 - index * 4;
-              const topOffset = index * 2;
 
               return (
                 <div
-                  className="absolute rounded-lg border border-border/20 bg-background overflow-hidden"
+                  className="relative rounded-lg border border-border/20 bg-background overflow-hidden shadow-sm"
                   key={id}
                   style={{
-                    height: `${size}px`,
-                    right: `${offset}px`,
-                    top: `${topOffset}px`,
-                    width: `${size}px`,
-                    zIndex: 3 - index,
+                    height: "48px",
+                    width: "48px",
                   }}
                 >
                   <img
