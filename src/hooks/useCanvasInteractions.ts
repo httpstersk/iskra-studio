@@ -21,20 +21,18 @@ export function useCanvasInteractions(
   });
   const [isSelecting, setIsSelecting] = useState(false);
   const [isPanningCanvas, setIsPanningCanvas] = useState(false);
-  const [lastPanPosition, setLastPanPosition] = useState({ x: 0, y: 0 });
+  const lastPanPosition = useRef({ x: 0, y: 0 });
   const [isDraggingImage, setIsDraggingImage] = useState(false);
-  const [dragStartPositions, setDragStartPositions] = useState<
-    Map<string, { x: number; y: number }>
-  >(new Map());
+  const dragStartPositions = useRef<Map<string, { x: number; y: number }>>(
+    new Map(),
+  );
   const [snapLines, setSnapLines] = useState<
     import("@/types/canvas").SnapLine[]
   >([]);
 
   // Touch event states for mobile
-  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(
-    null,
-  );
-  const [lastTouchCenter, setLastTouchCenter] = useState<{
+  const lastTouchDistance = useRef<number | null>(null);
+  const lastTouchCenter = useRef<{
     x: number;
     y: number;
   } | null>(null);
@@ -154,7 +152,7 @@ export function useCanvasInteractions(
       if (mouseButton === 1) {
         e.evt.preventDefault();
         setIsPanningCanvas(true);
-        setLastPanPosition({ x: e.evt.clientX, y: e.evt.clientY });
+        lastPanPosition.current = { x: e.evt.clientX, y: e.evt.clientY };
         return;
       }
 
@@ -187,8 +185,8 @@ export function useCanvasInteractions(
       const currentViewport = viewportRef.current;
 
       if (isPanningCanvas) {
-        const deltaX = e.evt.clientX - lastPanPosition.x;
-        const deltaY = e.evt.clientY - lastPanPosition.y;
+        const deltaX = e.evt.clientX - lastPanPosition.current.x;
+        const deltaY = e.evt.clientY - lastPanPosition.current.y;
 
         scheduleViewportUpdate((prev) => ({
           ...prev,
@@ -196,7 +194,7 @@ export function useCanvasInteractions(
           y: prev.y + deltaY,
         }));
 
-        setLastPanPosition({ x: e.evt.clientX, y: e.evt.clientY });
+        lastPanPosition.current = { x: e.evt.clientX, y: e.evt.clientY };
         return;
       }
 
@@ -216,7 +214,7 @@ export function useCanvasInteractions(
         }));
       }
     },
-    [isPanningCanvas, lastPanPosition, isSelecting, scheduleViewportUpdate],
+    [isPanningCanvas, isSelecting, scheduleViewportUpdate],
   );
 
   const handleMouseUp = useCallback(
@@ -295,8 +293,8 @@ export function useCanvasInteractions(
           y: (touch1.y + touch2.y) / 2,
         };
 
-        setLastTouchDistance(distance);
-        setLastTouchCenter(center);
+        lastTouchDistance.current = distance;
+        lastTouchCenter.current = center;
       } else if (touches.length === 1) {
         const touch = { x: touches[0].clientX, y: touches[0].clientY };
 
@@ -322,7 +320,7 @@ export function useCanvasInteractions(
           }
         }
 
-        setLastTouchCenter(touch);
+        lastTouchCenter.current = touch;
       }
     },
     [images],
@@ -339,7 +337,7 @@ export function useCanvasInteractions(
 
       const touches = e.evt.touches;
 
-      if (touches.length === 2 && lastTouchDistance && lastTouchCenter) {
+      if (touches.length === 2 && lastTouchDistance.current && lastTouchCenter.current) {
         e.evt.preventDefault();
 
         const touch1 = { x: touches[0].clientX, y: touches[0].clientY };
@@ -355,7 +353,7 @@ export function useCanvasInteractions(
         };
 
         const currentViewport = viewportRef.current;
-        const scaleFactor = distance / lastTouchDistance;
+        const scaleFactor = distance / lastTouchDistance.current;
         const newScale = Math.max(
           0.1,
           Math.min(5, currentViewport.scale * scaleFactor),
@@ -386,11 +384,11 @@ export function useCanvasInteractions(
           }));
         }
 
-        setLastTouchDistance(distance);
-        setLastTouchCenter(center);
+        lastTouchDistance.current = distance;
+        lastTouchCenter.current = center;
       } else if (
         touches.length === 1 &&
-        lastTouchCenter &&
+        lastTouchCenter.current &&
         !isSelecting &&
         !isDraggingImage &&
         !isTouchingImage
@@ -401,8 +399,8 @@ export function useCanvasInteractions(
         }
 
         const touch = { x: touches[0].clientX, y: touches[0].clientY };
-        const deltaX = touch.x - lastTouchCenter.x;
-        const deltaY = touch.y - lastTouchCenter.y;
+        const deltaX = touch.x - lastTouchCenter.current.x;
+        const deltaY = touch.y - lastTouchCenter.current.y;
 
         scheduleViewportUpdate((prev) => ({
           ...prev,
@@ -410,23 +408,21 @@ export function useCanvasInteractions(
           y: prev.y + deltaY,
         }));
 
-        setLastTouchCenter(touch);
+        lastTouchCenter.current = touch;
       }
     },
     [
       isDraggingImage,
       isSelecting,
       isTouchingImage,
-      lastTouchCenter,
-      lastTouchDistance,
       scheduleViewportUpdate,
     ],
   );
 
   const handleTouchEnd = useCallback(
     (_e: Konva.KonvaEventObject<TouchEvent>) => {
-      setLastTouchDistance(null);
-      setLastTouchCenter(null);
+      lastTouchDistance.current = null;
+      lastTouchCenter.current = null;
       setIsTouchingImage(false);
     },
     [],
@@ -446,7 +442,7 @@ export function useCanvasInteractions(
     isPanningCanvas,
     isSelecting,
     selectionBox,
-    setDragStartPositions,
+
     setIsDraggingImage,
     setSnapLines,
     snapLines,

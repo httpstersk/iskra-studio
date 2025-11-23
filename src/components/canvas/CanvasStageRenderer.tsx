@@ -41,7 +41,7 @@ interface CanvasStageRendererProps {
   generationSettings: GenerationSettings;
   images: PlacedImage[];
   interactions: {
-    dragStartPositions: Map<string, { x: number; y: number }>;
+    dragStartPositions: React.RefObject<Map<string, { x: number; y: number }>>;
     handleMouseDown: (e: Konva.KonvaEventObject<MouseEvent>) => void;
     handleMouseMove: (e: Konva.KonvaEventObject<MouseEvent>) => void;
     handleMouseUp: (e: Konva.KonvaEventObject<MouseEvent>) => void;
@@ -53,9 +53,6 @@ interface CanvasStageRendererProps {
     isDraggingImage: boolean;
     isPanningCanvas: boolean;
     selectionBox: SelectionBox;
-    setDragStartPositions: (
-      positions: Map<string, { x: number; y: number }>,
-    ) => void;
     setIsDraggingImage: (dragging: boolean) => void;
     snapLines: import("@/types/canvas").SnapLine[];
     setSnapLines: (lines: import("@/types/canvas").SnapLine[]) => void;
@@ -247,7 +244,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
   const handleImageDragEnd = React.useCallback(() => {
     interactions.setIsDraggingImage(false);
     saveToHistory();
-    interactions.setDragStartPositions(new Map());
+    interactions.dragStartPositions.current = new Map();
   }, [interactions, saveToHistory]);
 
   /**
@@ -267,7 +264,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
         const img = images.find((i) => i.id === id);
         if (img) positions.set(id, { x: img.x, y: img.y });
       });
-      interactions.setDragStartPositions(positions);
+      interactions.dragStartPositions.current = positions;
     },
     [images, interactions, selectedIdsSet, selectedIds, setSelectedIds],
   );
@@ -293,7 +290,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
     (_videoId: string) => {
       interactions.setIsDraggingImage(false);
       saveToHistory();
-      interactions.setDragStartPositions(new Map());
+      interactions.dragStartPositions.current = new Map();
     },
     [interactions, saveToHistory],
   );
@@ -315,7 +312,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
         const vid = videos.find((v) => v.id === id);
         if (vid) positions.set(id, { x: vid.x, y: vid.y });
       });
-      interactions.setDragStartPositions(positions);
+      interactions.dragStartPositions.current = positions;
     },
     [interactions, selectedIds, selectedIdsSet, setSelectedIds, videos],
   );

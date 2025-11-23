@@ -17,7 +17,7 @@ import { snapPosition, triggerSnapHaptic } from "@/utils/snap-utils";
  */
 export function useVideoDragWithSnap(
   params: {
-    dragStartPositions: Map<string, { x: number; y: number }>;
+    dragStartPositions: React.RefObject<Map<string, { x: number; y: number }>>;
     selectedIds: string[];
     selfId: string;
   },
@@ -48,7 +48,7 @@ export function useVideoDragWithSnap(
                   };
                 }
                 if (params.selectedIds.includes(vid.id)) {
-                  const p = params.dragStartPositions.get(vid.id);
+                  const p = params.dragStartPositions.current.get(vid.id);
                   if (p) {
                     return {
                       ...vid,
@@ -95,7 +95,7 @@ export function useVideoDragWithSnap(
         params.selectedIds.includes(params.selfId) &&
         params.selectedIds.length > 1;
       const startPos = isMulti
-        ? params.dragStartPositions.get(params.selfId)
+        ? params.dragStartPositions.current.get(params.selfId)
         : undefined;
 
       throttledStateUpdate(snapped, isMulti, startPos);

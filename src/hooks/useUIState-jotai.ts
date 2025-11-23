@@ -3,7 +3,6 @@
  * Manages dialog visibility, settings, and UI preferences with localStorage persistence
  */
 
-import { useEffect } from "react";
 import { useAtom } from "jotai";
 import {
   generationCountAtom,
@@ -18,7 +17,6 @@ import {
   variationModeAtom,
   visibleIndicatorsAtom,
 } from "@/store/ui-atoms";
-import { useLocalStorage } from "./useLocalStorage";
 
 /**
  * Hook to manage UI state using Jotai atoms
@@ -46,34 +44,6 @@ export function useUIState() {
   const [visibleIndicators, setVisibleIndicators] = useAtom(
     visibleIndicatorsAtom,
   );
-
-  // Use external store for persistent settings with cross-tab sync
-  const [showGridPersisted, setShowGridPersisted] = useLocalStorage(
-    "showGrid",
-    true,
-  );
-  const [showMinimapPersisted, setShowMinimapPersisted] = useLocalStorage(
-    "showMinimap",
-    true,
-  );
-
-  // Sync external store to Jotai atoms on mount and when external store changes
-  useEffect(() => {
-    setShowGrid(showGridPersisted);
-  }, [showGridPersisted, setShowGrid]);
-
-  useEffect(() => {
-    setShowMinimap(showMinimapPersisted);
-  }, [showMinimapPersisted, setShowMinimap]);
-
-  // Sync Jotai atoms back to external store when they change
-  useEffect(() => {
-    setShowGridPersisted(showGrid);
-  }, [showGrid, setShowGridPersisted]);
-
-  useEffect(() => {
-    setShowMinimapPersisted(showMinimap);
-  }, [showMinimap, setShowMinimapPersisted]);
 
   return {
     generationCount,

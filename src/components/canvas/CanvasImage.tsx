@@ -33,7 +33,7 @@ import {
  */
 interface CanvasImageProps {
   /** Map of drag start positions for multi-selection drag */
-  dragStartPositions: Map<string, { x: number; y: number }>;
+  dragStartPositions: React.RefObject<Map<string, { x: number; y: number }>>;
   /** The image to render */
   image: PlacedImage;
   /** All images on canvas (for sibling snapping) */
@@ -479,16 +479,9 @@ const arePropsEqual = (
     }
   }
 
-  // Check dragStartPositions Map
-  if (prevProps.dragStartPositions.size !== nextProps.dragStartPositions.size) {
+  // Check dragStartPositions ref identity
+  if (prevProps.dragStartPositions !== nextProps.dragStartPositions) {
     return false;
-  }
-
-  for (const [key, value] of prevProps.dragStartPositions) {
-    const nextValue = nextProps.dragStartPositions.get(key);
-    if (!nextValue || nextValue.x !== value.x || nextValue.y !== value.y) {
-      return false;
-    }
   }
 
   // Callbacks are assumed stable (should be wrapped in useCallback by parent)

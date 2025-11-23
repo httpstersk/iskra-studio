@@ -4,6 +4,7 @@
  */
 
 import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 import { IMAGE_MODELS, type ImageModelId } from "@/lib/image-models";
 
 /**
@@ -21,8 +22,8 @@ export const selectedImageForVideoAtom = atom<string | null>(null);
  * View settings atoms
  */
 export const showChatAtom = atom(false);
-export const showGridAtom = atom(true);
-export const showMinimapAtom = atom(true);
+export const showGridAtom = atomWithStorage("showGrid", true);
+export const showMinimapAtom = atomWithStorage("showMinimap", true);
 
 /**
  * Visibility control atoms

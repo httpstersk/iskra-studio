@@ -29,7 +29,7 @@ interface UseImageDragProps {
   /** IDs of all currently selected images */
   selectedIds: string[];
   /** Map of image IDs to their positions at drag start */
-  dragStartPositions: Map<string, { x: number; y: number }>;
+  dragStartPositions: React.RefObject<Map<string, { x: number; y: number }>>;
   /** Callback to update a single image's properties */
   onChange: (newAttrs: Partial<PlacedImage>) => void;
   /** State setter for all images (used in multi-selection) */
@@ -162,7 +162,7 @@ export const useImageDrag = ({
 
       if (isMultiDrag) {
         // Multi-selection drag: move all selected items together
-        const startPos = dragStartPositions.get(image.id);
+        const startPos = dragStartPositions.current.get(image.id);
         if (!startPos) return;
 
         const deltaX = snapped.x - startPos.x;
@@ -177,7 +177,7 @@ export const useImageDrag = ({
 
             // Update other selected images by delta
             if (selectedIds.includes(img.id)) {
-              const imgStartPos = dragStartPositions.get(img.id);
+              const imgStartPos = dragStartPositions.current.get(img.id);
               if (imgStartPos) {
                 const targetX = imgStartPos.x + deltaX;
                 const targetY = imgStartPos.y + deltaY;

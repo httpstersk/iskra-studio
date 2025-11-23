@@ -20,7 +20,7 @@ import { KonvaVideoControls } from "./KonvaVideoControls";
  * - Provides keyboard shortcuts when selected
  */
 interface CanvasVideoProps {
-  dragStartPositions: Map<string, { x: number; y: number }>;
+  dragStartPositions: React.RefObject<Map<string, { x: number; y: number }>>;
   isDraggingVideo: boolean;
   isSelected: boolean;
   onChange: (newAttrs: Partial<PlacedVideo>) => void;
