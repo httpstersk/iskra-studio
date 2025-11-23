@@ -5,11 +5,11 @@
  * @module features/generation/app-services/image-storage
  */
 
-import { logger } from "@/shared/logging/logger";
+import { createLogger } from "@/lib/logger";
 import { StorageError, ValidationError } from "@/shared/errors";
 import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
-const serviceLogger = logger.child({ service: "image-storage" });
+const serviceLogger = createLogger("image-storage");
 
 export function isConvexStorageUrl(url: string): boolean {
   return (

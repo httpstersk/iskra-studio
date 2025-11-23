@@ -70,14 +70,14 @@ export const CanvasControlPanel = React.memo(function CanvasControlPanel({
   handleFileUpload,
   handleRun,
   handleVariationModeChange,
-  imageModel,
+  imageModel: _imageModel,
   imageVariationType = "camera-angles",
   images,
   isGenerating,
   redo,
   selectedIds,
   setGenerationSettings,
-  setImageModel,
+  setImageModel: _setImageModel,
   setImageVariationType,
   setIsSettingsDialogOpen,
   setVideoDuration,
@@ -131,12 +131,12 @@ export const CanvasControlPanel = React.memo(function CanvasControlPanel({
               />
 
               {/* Image settings - only show when in image mode */}
-              {/* {hasSelection && variationMode === "image" && (
+              {hasSelection && variationMode === "image" && (
                 <ImageSettings
                   imageModel={imageModel}
                   setImageModel={setImageModel}
                 />
-              )} */}
+              )}
 
               {/* Video settings - only show when in video mode */}
               {hasSelection && variationMode === "video" && (

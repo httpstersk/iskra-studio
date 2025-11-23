@@ -8,7 +8,7 @@
  */
 
 import type { ActiveGeneration, PlacedImage } from "@/types/canvas";
-import { logger } from "@/shared/logging/logger";
+import { createLogger } from "@/lib/logger";
 import { handleError } from "@/shared/errors";
 import {
   config,
@@ -36,7 +36,7 @@ import {
 import { validateSingleImageSelection } from "./variation-utils";
 import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 
-const handlerLogger = logger.child({ handler: "storyline-image-variation" });
+const handlerLogger = createLogger("storyline-image-variation");
 
 /**
  * Dependencies for storyline image variation handler

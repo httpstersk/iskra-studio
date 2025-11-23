@@ -7,13 +7,13 @@
  */
 
 import { config } from "@/shared/config/runtime";
-import { logger } from "@/shared/logging/logger";
+import { createLogger } from "@/lib/logger";
 import { ImageAnalysisError, ImageGenerationError } from "@/shared/errors";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
 import { generateStorylineImageConcepts } from "@/lib/storyline-image-generator";
 import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 
-const serviceLogger = logger.child({ service: "storyline-generation" });
+const serviceLogger = createLogger("storyline-generation");
 
 /**
  * Result of image style analysis
@@ -90,7 +90,7 @@ export async function analyzeImageStyle(
   } catch (error) {
     if (error instanceof ImageAnalysisError) throw error;
 
-    serviceLogger.error("Image analysis failed", error as Error, { imageUrl });
+    serviceLogger.error("Image analysis failed", { error, imageUrl });
     throw new ImageAnalysisError(
       error instanceof Error ? error.message : "Unknown error during analysis",
       { imageUrl },
@@ -135,9 +135,7 @@ export async function generateStorylineConcepts(
       throw error;
     }
 
-    serviceLogger.error("Storyline concept generation failed", error as Error, {
-      params,
-    });
+    serviceLogger.error("Storyline concept generation failed", { error, params });
     throw new ImageGenerationError(
       error instanceof Error
         ? error.message

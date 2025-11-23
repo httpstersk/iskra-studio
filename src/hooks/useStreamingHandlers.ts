@@ -5,8 +5,6 @@ import {
 } from "@/lib/handlers/video-generation-handlers";
 import { createLogger } from "@/lib/logger";
 import { showError, showErrorFromException, showSuccess } from "@/lib/toast";
-import { generateThumbnail } from "@/lib/utils/generate-thumbnail";
-import { blobToDataUrl } from "@/lib/utils/image-utils";
 import type {
   ActiveGeneration,
   ActiveVideoGeneration,
@@ -14,7 +12,6 @@ import type {
   PlacedVideo,
 } from "@/types/canvas";
 import { useCallback } from "react";
-import { tryPromise, isErr } from "@/lib/errors/safe-errors";
 
 const log = createLogger("StreamingHandler");
 
