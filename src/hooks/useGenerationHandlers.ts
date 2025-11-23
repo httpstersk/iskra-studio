@@ -34,7 +34,7 @@ interface GenerationHandlerDeps {
   generationCount: number;
   generationSettings: GenerationSettings;
   imageModel: ImageModelId;
-  imageVariationType: "camera-angles" | "director" | "lighting" | "storyline";
+  imageVariationType: "camera-angles" | "director" | "lighting" | "storyline" | "characters";
   images: PlacedImage[];
   isAuthenticated: boolean;
   selectedIds: string[];

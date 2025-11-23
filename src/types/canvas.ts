@@ -4,10 +4,10 @@ export interface PlacedImage {
   assetId?: string;
   assetSyncedAt?: number;
   cameraAngle?: string;
+  character?: string;
   directorName?: string;
   displayAsThumbnail?: boolean;
   errorMessage?: string;
-  lightingScenario?: string;
   fullSizeSrc?: string;
   hasContentError?: boolean;
   hasGenerationError?: boolean;
@@ -17,6 +17,7 @@ export interface PlacedImage {
   isGenerated?: boolean;
   isLoading?: boolean;
   isSkeleton?: boolean;
+  lightingScenario?: string;
   naturalHeight?: number;
   naturalWidth?: number;
   opacity?: number;
@@ -25,6 +26,7 @@ export interface PlacedImage {
   rotation: number;
   src: string;
   storyline?: string;
+  characters?: string;
   thumbnailSrc?: string;
   width: number;
   x: number;

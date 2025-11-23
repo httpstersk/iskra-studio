@@ -246,6 +246,57 @@ export const variationHandlers = {
       }
     },
   },
+
+  characters: {
+    itemKey: "characters" as const,
+    buildPrompt: (_item: string, userContext?: string, index?: number) => {
+      const step = (index ?? 0) + 1;
+      const baseInstruction = `Create a completely different character based on the reference image.`;
+
+      // Define the "Vibe Lock" (The immutable style constraint)
+      const styleLock = `
+      CRITICAL STYLE CONSTRAINT (VIBE LOCK):
+      - AESTHETIC PRESERVATION: You must strictly preserve the exact color grading, lighting mood, saturation, contrast, and film grain of the reference images.
+      - NO AUTO-CORRECTION: Do not "fix" or "enhance" the lighting. The result must look like a raw capture from the exact same camera session as the source.
+      - VISUAL CONTINUITY: The final image must feel indistinguishable in tone from the source.
+      `.trim();
+
+      const characterHeader = `
+      CHARACTER VARIATION ${step}:
+      This is character variation ${step}.
+      `;
+
+      if (userContext) {
+        return `
+        ${baseInstruction}
+        ${characterHeader}
+        
+        CHARACTER CONTEXT: ${userContext}
+        
+        INSTRUCTIONS:
+        1. NEW CHARACTER IDENTITY: Generate a **completely different person** from the source image. Change facial features, ethnicity, age, or body type while fitting the provided context.
+        2. VISUAL CONSISTENCY: Maintain the same art style, clothing style, and general atmosphere as the source image.
+        3. POSE AND EXPRESSION: Adapt the pose and expression to fit the new character's personality and the context.
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
+        
+        ${styleLock}
+        `.trim();
+      } else {
+        return `
+        ${baseInstruction}
+        ${characterHeader}
+        
+        INSTRUCTIONS:
+        1. DISTINCT IDENTITY: Generate a **completely different person** from the source image. The face must be clearly distinct.
+        2. CONSISTENT STYLE: Ensure the clothing, accessories, and overall look match the aesthetic of the source.
+        3. VARIATION: Significantly change features like hair, facial structure, and demographics while keeping the "vibe" identical.
+        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
+        
+        ${styleLock}
+        `.trim();
+      }
+    },
+  },
 };
 
 // =============================================================================
@@ -255,7 +306,7 @@ export const variationHandlers = {
 /**
  * Supported variation types for image generation
  */
-export type VariationType = "director" | "cameraAngle" | "lighting" | "storyline";
+export type VariationType = "director" | "cameraAngle" | "lighting" | "storyline" | "characters";
 
 /**
  * Maps the UI variation type to our internal variation type
@@ -264,7 +315,8 @@ export type ImageVariationType =
   | "camera-angles"
   | "director"
   | "lighting"
-  | "storyline";
+  | "storyline"
+  | "characters";
 
 /**
  * Client-side configuration for a variation type
@@ -348,6 +400,20 @@ export const variationClientConfigs: Record<VariationType, VariationClientConfig
       storyline,
     }),
   },
+
+  characters: {
+    displayName: "Characters",
+    apiEndpoint: "/api/generate-characters-variations",
+    apiRequestKey: "characters",
+    responseItemKey: "characters",
+    // For characters, we generate generic labels
+    selectRandomItems: (count: number) =>
+      Array.from({ length: count }, (_, i) => `Character Variation ${i + 1}`),
+    buildPrompt: variationHandlers.characters.buildPrompt,
+    getPlaceholderMeta: (characters: string) => ({
+      characters,
+    }),
+  },
 };
 
 /**
@@ -365,5 +431,7 @@ export function mapImageVariationType(
       return "lighting";
     case "storyline":
       return "storyline";
+    case "characters":
+      return "characters";
   }
 }

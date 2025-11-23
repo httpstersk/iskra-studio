@@ -48,7 +48,7 @@ export const generationCountAtom = atom<number>(4);
  * "lighting": Random lighting scenario variations via FIBO
  */
 export const imageVariationTypeAtom = atom<
-  "camera-angles" | "director" | "lighting" | "storyline"
+  "camera-angles" | "director" | "lighting" | "storyline" | "characters"
 >("camera-angles");
 
 /**

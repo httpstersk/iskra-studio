@@ -13,6 +13,7 @@ import {
   PaintBucketIcon,
   PlayIcon,
   BookOpen,
+  UserIcon,
 } from "lucide-react";
 
 /**
@@ -21,9 +22,9 @@ import {
 interface ModeIndicatorProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   hasSelection: boolean;
-  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline";
+  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters";
   setImageVariationType?: (
-    type: "camera-angles" | "director" | "lighting" | "storyline"
+    type: "camera-angles" | "director" | "lighting" | "storyline" | "characters"
   ) => void;
   variationMode: "image" | "video";
 }
@@ -90,7 +91,7 @@ export function ModeIndicator({
           value={imageVariationType}
           onValueChange={(value) =>
             setImageVariationType(
-              value as "camera-angles" | "director" | "lighting" | "storyline"
+              value as "camera-angles" | "director" | "lighting" | "storyline" | "characters"
             )
           }
         >
@@ -116,6 +117,12 @@ export function ModeIndicator({
             <div className="flex flex-row items-center gap-1.5">
               <BookOpen className="size-3.5" />
               <span className="text-xs whitespace-nowrap">Storyline</span>
+            </div>
+          </SegmentedControl.Item>
+          <SegmentedControl.Item value="characters">
+            <div className="flex flex-row items-center gap-1.5">
+              <UserIcon className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Characters</span>
             </div>
           </SegmentedControl.Item>
         </SegmentedControl.Root>

@@ -31,7 +31,7 @@ interface CanvasControlPanelProps {
   handleRun: () => void;
   handleVariationModeChange: (mode: "image" | "video") => void;
   imageModel: ImageModelId;
-  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline";
+  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters";
   images: PlacedImage[];
   isGenerating: boolean;
   redo: () => void;
@@ -39,7 +39,7 @@ interface CanvasControlPanelProps {
   setGenerationSettings: (settings: GenerationSettings) => void;
   setImageModel: (value: ImageModelId) => void;
   setImageVariationType?: (
-    type: "camera-angles" | "director" | "lighting" | "storyline"
+    type: "camera-angles" | "director" | "lighting" | "storyline" | "characters"
   ) => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   setVideoDuration: (value: "4" | "8" | "12") => void;
@@ -131,12 +131,12 @@ export const CanvasControlPanel = React.memo(function CanvasControlPanel({
               />
 
               {/* Image settings - only show when in image mode */}
-              {hasSelection && variationMode === "image" && (
+              {/* {hasSelection && variationMode === "image" && (
                 <ImageSettings
                   imageModel={imageModel}
                   setImageModel={setImageModel}
                 />
-              )}
+              )} */}
 
               {/* Video settings - only show when in video mode */}
               {hasSelection && variationMode === "video" && (
