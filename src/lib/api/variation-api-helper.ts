@@ -312,34 +312,55 @@ export const variationHandlers = {
         },
       ];
 
+      const cinematicConcepts = [
+        "An intimate close-up focusing on the subject's emotional state (e.g., joy, contemplation, determination).",
+        "A wide establishing shot showing the subject in a new, expansive environment that reveals their current life.",
+        "An action shot, capturing the subject in the middle of a significant, defining activity.",
+        "A quiet, candid moment of introspection, interacting with a meaningful object.",
+        "A shot from a unique perspective (e.g., high angle, low angle, through a window) to create a specific mood.",
+        "A medium shot showing the subject's interaction with a new person, pet, or key element in their life.",
+        "A scene with dramatic, moody lighting (e.g., silhouette, chiaroscuro) that emphasizes feeling over detail.",
+        "A portrait that directly confronts the camera, capturing the wisdom and experience gained over the elapsed time.",
+        "A 'day in the life' shot, showing a mundane but narratively significant moment in their evolved routine.",
+        "A dynamic shot showing the subject traveling or moving towards a new destination.",
+        "A scene of conflict or challenge, with body language and expression telling the story.",
+        "A moment of peaceful resolution or celebration, showing the outcome of a recent life event.",
+      ];
+
       const progression =
         timeProgressions[Math.min(index ?? 0, timeProgressions.length - 1)];
 
-      // Base prompt structure
-      let prompt = `
-      ## 1. CORE INSTRUCTION: TIME PROGRESSION
-      Generate a photorealistic image of the **same person** from the reference image, but **${progression.label}**.
-      The new image must clearly and accurately represent the passage of time described.
+      const currentConcept =
+        cinematicConcepts[(index ?? 0) % cinematicConcepts.length];
 
-      ## 2. SUBJECT IDENTITY & AGING (CRITICAL & NON-NEGOTIABLE)
-      - **Subject:** This is the EXACT SAME PERSON from the reference image. Maintain core facial features.
+      return `
+      ## 1. CORE INSTRUCTION: CINEMATIC TIME PROGRESSION
+      Generate a photorealistic image of the **same person** from the reference image, but **${progression.label}**. The image must be a new, distinct scene that progresses the narrative.
+
+      ## 2. VISUAL DNA & CINEMATIC CONTINUITY (NON-NEGOTIABLE)
+      **The aesthetic of the reference image is the law for this entire series.** The generated image MUST perfectly match the following attributes of the original:
+      - **Color Grading:** Replicate the exact color palette, saturation, contrast, and black levels. If the original has a teal-and-orange grade, this image must too.
+      - **Lighting Style:** Match the quality of light (e.g., soft diffused, hard direct), the mood (e.g., high-key, low-key), and the overall lighting philosophy.
+      - **Camera & Lens Properties:** Reproduce the same depth of field, film grain, lens flares, and textural quality. The new image must feel like it was shot on the same camera and lens.
+
+      ## 3. SUBJECT IDENTITY & AGING (CRITICAL)
+      - **Subject:** This is the EXACT SAME PERSON. Maintain core facial features while applying the required aging.
       - **Aging Requirement:** ${progression.aging} This is a MANDATORY change. The subject MUST look the specified age.
 
-      ## 3. ENVIRONMENT & CONTEXT (MANDATORY CHANGE)
+      ## 4. CINEMATIC SCENE & NARRATIVE (MANDATORY CHANGE)
+      - **Cinematic Concept:** The scene must be completely new. Frame this shot as: **${currentConcept}**
+      - **Visual Storytelling:** Use composition and body language to imply what has changed in the subject's life.
+
+      ## 5. ENVIRONMENT & CONTEXT (MANDATORY CHANGE)
       - **Environment Requirement:** ${progression.environment}
-      - **Narrative Context:** ${userContext ? userContext : "Show the evolution of this person's life and story."}
+      - **Location:** The setting must be appropriate for the cinematic concept and the time period.
 
-      ## 4. WHAT TO AVOID (IMPORTANT)
-      - **DO NOT** make the person look the same age as the previous image (unless the time step is "Moments later" or "The next day").
-      - **DO NOT** ignore the environmental change requirements.
-      - **AVOID** generating a generic person. It must be the person from the reference.
-
-      ## 5. STYLE & CONTINUITY
-      - Maintain the cinematic style, color grading, and photographic quality of the reference image.
-      - **Final Output:** A high-resolution, photorealistic image that continues the narrative.
+      ## 6. WHAT TO AVOID (IMPORTANT)
+      - **NO STYLE DEVIATION:** Do NOT alter the color grade, lighting style, or camera properties from the original reference.
+      - **NO REPETITIVE COMPOSITION:** Do NOT use a similar camera angle or shot type as the previous image.
+      - **NO AGELESSNESS:** Do NOT make the person look the same age (unless specified). This is a critical failure.
+      - **NO GENERIC FACES:** AVOID generating a different person.
       `.trim();
-
-      return prompt;
     },
   },
 
