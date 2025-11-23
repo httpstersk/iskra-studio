@@ -59,9 +59,8 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
-  devIndicators: false,
+  reactCompiler: true,
   experimental: {
-    reactCompiler: true,
   },
   async headers() {
     return [
@@ -72,7 +71,6 @@ const nextConfig = {
     ];
   },
   images: {
-    domains: ["fal.ai", "storage.googleapis.com"],
     remotePatterns: [
       {
         protocol: "https",
@@ -81,6 +79,14 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "v3.fal.media",
+      },
+      {
+        protocol: "https",
+        hostname: "fal.ai",
+      },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
       },
     ],
   },
