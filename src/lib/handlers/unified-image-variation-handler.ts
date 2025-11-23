@@ -308,9 +308,10 @@ export async function handleUnifiedImageVariation(
       const placeholderId = `variation-${timestamp}-${index}`;
 
       // Build final prompt: use FIBO structured if available, else use buildPrompt
+      // Pass index for variation types that use sequential progression (e.g., storyline time progression)
       const finalPrompt = promptData.refinedStructuredPrompt
         ? fiboStructuredToText(promptData.refinedStructuredPrompt)
-        : config.buildPrompt(promptData.item, variationPrompt);
+        : config.buildPrompt(promptData.item, variationPrompt, index);
 
       newMap.set(placeholderId, {
         imageSize: imageSizeDimensions,

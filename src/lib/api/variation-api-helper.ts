@@ -218,105 +218,128 @@ export const variationHandlers = {
   storyline: {
     itemKey: "storyline" as const,
     buildPrompt: (_item: string, userContext?: string, index?: number) => {
-      const baseInstruction = `Create a cinematic shot that expands the narrative of the source image.`;
-
-      // Time-based progression for story advancement
       const timeProgressions = [
         {
           label: "Moments later",
-          description: "seconds to minutes after the source image",
+          description:
+            "The same person, seconds to minutes after the previous image.",
+          aging: "Identical age and appearance.",
+          environment: "Identical setting and lighting.",
         },
         {
           label: "Later that day",
-          description: "hours after the source image, same day",
+          description: "The same person, hours later on the same day.",
+          aging: "Identical age. May have a change of clothes or expression.",
+          environment:
+            "Same location, but the time of day has changed (e.g., afternoon to evening).",
         },
         {
           label: "The next day",
-          description: "roughly 24 hours after the source image",
+          description: "The same person, 24 hours later.",
+          aging: "Identical age and appearance.",
+          environment:
+            "A similar or new location, reflecting the start of a new day.",
         },
         {
           label: "Days later",
-          description: "several days have passed since the source image",
+          description: "The same person, several days have passed.",
+          aging: "Identical age, but may show a different mood or hairstyle.",
+          environment:
+            "A different location or the same location with noticeable changes (e.g., weather).",
         },
         {
           label: "Weeks later",
-          description: "significant time has passed, weeks since the source",
+          description: "The same person, several weeks have passed.",
+          aging:
+            "Subtle changes. New hairstyle, slight change in weight, or different fashion style.",
+          environment: "Hints of early seasonal changes in the background.",
         },
         {
           label: "Months later",
-          description: "the story has jumped forward by months",
+          description: "The same person, several months have passed.",
+          aging:
+            "Noticeable changes. Significantly different hairstyle, potential change in skin tone (tan or paler), clear evolution in clothing style.",
+          environment:
+            "Obvious change of season (e.g., summer to winter). The location can be entirely different.",
         },
         {
           label: "A year later",
-          description: "a full year has passed since the source image",
+          description: "The same person, one full year later.",
+          aging:
+            "Subtle but clear signs of being one year older. A touch more maturity in the face.",
+          environment:
+            "The same season as the original, but with signs of a year's passage (e.g., plants have grown, minor wear and tear on objects).",
         },
         {
           label: "Years later",
-          description: "multiple years have passed, noticeable aging or change",
+          description: "The same person, 3-5 years have passed.",
+          aging:
+            "MANDATORY VISIBLE AGING. Show early signs like crow's feet, subtle forehead lines, and a more mature facial structure.",
+          environment:
+            "Updated technology (newer phone model), fashion styles from a few years later, renovated spaces.",
         },
         {
           label: "A decade later",
-          description: "ten years have passed, significant life changes",
+          description: "The same person, 10 years have passed.",
+          aging:
+            "CRITICAL AGING. Prominent wrinkles, some graying hair (around 30-50%), visible changes in skin texture.",
+          environment:
+            "Major environmental shift. Technology is a decade newer, buildings show age or renovation, fashion reflects the new era.",
         },
         {
           label: "A generation later",
-          description: "twenty to thirty years later, a new generation",
+          description: "The same person, 20-30 years have passed.",
+          aging:
+            "NON-NEGOTIABLE ELDERLY APPEARANCE. Fully gray or white hair, deep wrinkles, aged posture, weathered skin.",
+          environment:
+            "A transformed world. The original technology is now antique, new architectural styles are present, fashion is from a different generation.",
         },
         {
           label: "A lifetime later",
-          description: "fifty or more years later, near end of life",
+          description: "The same person, 50+ years have passed.",
+          aging:
+            "VERY OLD. Extremely elderly appearance (80+ years old). Thin, white hair, significant wrinkles, a frail look.",
+          environment:
+            "Unrecognizable era. Futuristic elements, historical locations are now landmarks, or the environment reflects significant societal change.",
         },
         {
           label: "An era later",
-          description: "distant future, the world has fundamentally changed",
+          description: "Distant future, 100+ years have passed.",
+          aging:
+            "LEGACY OF THE PERSON. The person is likely gone. Show their legacy via a memorial, a framed photo in a futuristic home, or a statue.",
+          environment:
+            "A completely different world. Sci-fi aesthetics, potential effects of climate change, new civilization.",
         },
       ];
 
       const progression =
         timeProgressions[Math.min(index ?? 0, timeProgressions.length - 1)];
 
-      // Define the "Vibe Lock" (The immutable style constraint)
-      const styleLock = `
-      CRITICAL STYLE CONSTRAINT (VIBE LOCK):
-      - AESTHETIC PRESERVATION: You must strictly preserve the exact color grading, lighting mood, saturation, contrast, and film grain of the reference images.
-      - NO AUTO-CORRECTION: Do not "fix" or "enhance" the lighting. The result must look like a raw capture from the exact same camera session as the source.
-      - VISUAL CONTINUITY: The final image must feel indistinguishable in tone from the source.
+      // Base prompt structure
+      let prompt = `
+      ## 1. CORE INSTRUCTION: TIME PROGRESSION
+      Generate a photorealistic image of the **same person** from the reference image, but **${progression.label}**.
+      The new image must clearly and accurately represent the passage of time described.
+
+      ## 2. SUBJECT IDENTITY & AGING (CRITICAL & NON-NEGOTIABLE)
+      - **Subject:** This is the EXACT SAME PERSON from the reference image. Maintain core facial features.
+      - **Aging Requirement:** ${progression.aging} This is a MANDATORY change. The subject MUST look the specified age.
+
+      ## 3. ENVIRONMENT & CONTEXT (MANDATORY CHANGE)
+      - **Environment Requirement:** ${progression.environment}
+      - **Narrative Context:** ${userContext ? userContext : "Show the evolution of this person's life and story."}
+
+      ## 4. WHAT TO AVOID (IMPORTANT)
+      - **DO NOT** make the person look the same age as the previous image (unless the time step is "Moments later" or "The next day").
+      - **DO NOT** ignore the environmental change requirements.
+      - **AVOID** generating a generic person. It must be the person from the reference.
+
+      ## 5. STYLE & CONTINUITY
+      - Maintain the cinematic style, color grading, and photographic quality of the reference image.
+      - **Final Output:** A high-resolution, photorealistic image that continues the narrative.
       `.trim();
 
-      const progressionHeader = `
-      TIME PROGRESSION - "${progression.label}":
-      This scene takes place ${progression.description}.
-      `;
-
-      if (userContext) {
-        return `
-        ${baseInstruction}
-        ${progressionHeader}
-        
-        NARRATIVE CONTEXT: ${userContext}
-        
-        INSTRUCTIONS:
-        1. STORY CONTINUATION: Use the source image as the starting point and the provided context to evolve the scene. Show us "what happens next" or "a different perspective" implied by the context.
-        2. VISUAL CONSISTENCY: Maintain the same character(s), art style, and general atmosphere as the source image, but adapt the environment or action to fit the new narrative beat.
-        3. CINEMATIC FRAMING: Compose the shot to tell a story. Use lighting and blocking to emphasize the emotional tone of the context.
-        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
-        
-        ${styleLock}
-        `.trim();
-      } else {
-        return `
-        ${baseInstruction}
-        ${progressionHeader}
-        
-        INSTRUCTIONS:
-        1. IMPLIED NARRATIVE: Infer a story from the visual elements of the source image and advance it one step. What is the subject doing? Where are they going?
-        2. WORLD BUILDING: Expand the view to reveal more of the world or context that wasn't visible in the original frame, while keeping the style consistent.
-        3. DYNAMIC ACTION: If the source is static, introduce subtle movement or interaction that suggests a developing plot.
-        4. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
-        
-        ${styleLock}
-        `.trim();
-      }
+      return prompt;
     },
   },
 
