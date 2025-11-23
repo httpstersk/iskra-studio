@@ -176,10 +176,23 @@ export function useAutoSave(
         }
       }
 
+      // Sanitize canvas state to remove fields not yet in server validator
+      // TODO: Remove this once server deployment is confirmed to have originalFalUrl
+      const sanitizedElements = canvasState.elements.map((el) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { originalFalUrl, ...rest } = el;
+        return rest;
+      });
+
+      const sanitizedCanvasState = {
+        ...canvasState,
+        elements: sanitizedElements,
+      };
+
       // Save project
       await saveProject(
         currentProjectState.id as Id<"projects">,
-        canvasState,
+        sanitizedCanvasState,
         thumbnailStorageId,
       );
 
