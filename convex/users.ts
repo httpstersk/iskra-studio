@@ -28,7 +28,7 @@ async function ensureProjectForUser(ctx: MutationCtx, userId: string) {
     updatedAt: now,
   });
 
-  await ctx.db.insert("project_states", {
+  await ctx.db.insert("projectStates", {
     projectId,
     canvasState: {
       elements: [],

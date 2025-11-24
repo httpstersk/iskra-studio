@@ -17,14 +17,14 @@ export const migrateProjectStates = internalMutation({
         let count = 0;
 
         for (const project of projects.page) {
-            // 1. Migrate canvasState to project_states
+            // 1. Migrate canvasState to projectStates
             const existingState = await ctx.db
-                .query("project_states")
+                .query("projectStates")
                 .withIndex("by_projectId", (q) => q.eq("projectId", project._id))
                 .first();
 
             if (!existingState && (project as any).canvasState) {
-                await ctx.db.insert("project_states", {
+                await ctx.db.insert("projectStates", {
                     projectId: project._id,
                     canvasState: (project as any).canvasState,
                 });

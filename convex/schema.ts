@@ -167,7 +167,7 @@ export default defineSchema({
    * @property projectId - Link to projects table (indexed)
    * @property canvasState - Complete canvas state object
    */
-  project_states: defineTable({
+  projectStates: defineTable({
     canvasState: v.object({
       backgroundColor: v.optional(v.string()),
       elements: v.array(

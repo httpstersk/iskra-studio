@@ -43,7 +43,7 @@ export const validateProjectAssets = query({
 
     // Fetch project state
     const projectState = await ctx.db
-      .query("project_states")
+      .query("projectStates")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
       .first();
 
@@ -164,7 +164,7 @@ export const getProjectAssets = query({
 
     // Fetch project state
     const projectState = await ctx.db
-      .query("project_states")
+      .query("projectStates")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
       .first();
 
@@ -247,7 +247,7 @@ export const getProjectsUsingAsset = query({
     for (const project of projects) {
       // Fetch project state
       const projectState = await ctx.db
-        .query("project_states")
+        .query("projectStates")
         .withIndex("by_projectId", (q) => q.eq("projectId", project._id))
         .first();
 

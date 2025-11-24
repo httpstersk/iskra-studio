@@ -58,7 +58,7 @@ export const createProject = mutation({
     });
 
     // Create initial project state
-    await ctx.db.insert("project_states", {
+    await ctx.db.insert("projectStates", {
       projectId,
       canvasState: {
         elements: [],
@@ -172,7 +172,7 @@ export const saveProject = mutation({
 
     // Update project state
     const projectState = await ctx.db
-      .query("project_states")
+      .query("projectStates")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
       .first();
 
@@ -182,7 +182,7 @@ export const saveProject = mutation({
       });
     } else {
       // Handle case where state might be missing (e.g. migration issue)
-      await ctx.db.insert("project_states", {
+      await ctx.db.insert("projectStates", {
         projectId: args.projectId,
         canvasState: args.canvasState,
       });
@@ -280,7 +280,7 @@ export const getProject = query({
 
     // Fetch project state
     const projectState = await ctx.db
-      .query("project_states")
+      .query("projectStates")
       .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
       .first();
 
