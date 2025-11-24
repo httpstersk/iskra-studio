@@ -46,17 +46,24 @@ export const createProject = mutation({
     const defaultName = `Iskra Project ${String(existingProjects.length + 1).padStart(2, "0")}`;
     const projectName = args.name || defaultName;
 
-    // Create project with empty canvas state
+    // Create project record
     const projectId = await ctx.db.insert("projects", {
       userId,
       name: projectName,
+      imageCount: 0,
+      videoCount: 0,
+      lastSavedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Create initial project state
+    await ctx.db.insert("projectStates", {
+      projectId,
       canvasState: {
         elements: [],
         lastModified: now,
       },
-      lastSavedAt: now,
-      createdAt: now,
-      updatedAt: now,
     });
 
     return projectId;
@@ -146,13 +153,40 @@ export const saveProject = mutation({
 
     const now = Date.now();
 
-    // Update project
+    // Calculate counts
+    const imageCount = args.canvasState.elements.filter(
+      (e) => e.type === "image"
+    ).length;
+    const videoCount = args.canvasState.elements.filter(
+      (e) => e.type === "video"
+    ).length;
+
+    // Update project metadata
     await ctx.db.patch(args.projectId, {
-      canvasState: args.canvasState,
       thumbnailStorageId: args.thumbnailStorageId,
+      imageCount,
+      videoCount,
       lastSavedAt: now,
       updatedAt: now,
     });
+
+    // Update project state
+    const projectState = await ctx.db
+      .query("projectStates")
+      .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+      .first();
+
+    if (projectState) {
+      await ctx.db.patch(projectState._id, {
+        canvasState: args.canvasState,
+      });
+    } else {
+      // Handle case where state might be missing (e.g. migration issue)
+      await ctx.db.insert("projectStates", {
+        projectId: args.projectId,
+        canvasState: args.canvasState,
+      });
+    }
 
     return await ctx.db.get(args.projectId);
   },
@@ -162,6 +196,7 @@ export const saveProject = mutation({
  * Lists all projects for the authenticated user.
  *
  * Includes asset thumbnail URLs for efficient list rendering.
+ * Does NOT include heavy canvasState.
  *
  * @param limit - Maximum number of projects to return (default: 20, max: 100)
  * @returns Array of projects sorted by lastSavedAt DESC with asset thumbnails
@@ -213,9 +248,10 @@ export const listProjects = query({
  * Gets a single project by ID with ownership verification.
  *
  * Includes asset thumbnail URLs for display (full-size URLs available on-demand).
+ * Fetches canvasState from project_states table.
  *
  * @param projectId - ID of the project to retrieve
- * @returns Project record with asset thumbnails
+ * @returns Project record with asset thumbnails and canvasState
  */
 export const getProject = query({
   args: {
@@ -242,6 +278,19 @@ export const getProject = query({
       throw new Error("Project not found or access denied");
     }
 
+    // Fetch project state
+    const projectState = await ctx.db
+      .query("projectStates")
+      .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+      .first();
+
+    // Fallback to legacy canvasState if not found in new table (during migration)
+    const canvasState = projectState?.canvasState ?? (project as any).canvasState;
+
+    if (!canvasState) {
+      throw new Error("Project state not found");
+    }
+
     // Get thumbnail URL if exists
     let thumbnailUrl: string | undefined;
     if (project.thumbnailStorageId) {
@@ -251,7 +300,7 @@ export const getProject = query({
 
     // Collect asset IDs from project elements
     const assetIds = new Set<string>();
-    for (const element of project.canvasState.elements) {
+    for (const element of canvasState.elements) {
       if (element.assetId) {
         assetIds.add(element.assetId);
       }
@@ -280,6 +329,7 @@ export const getProject = query({
 
     return {
       ...project,
+      canvasState, // Inject canvasState from separate table
       thumbnailUrl,
       assetThumbnails,
     };

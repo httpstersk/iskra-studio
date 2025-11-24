@@ -146,20 +146,8 @@ export function useProjects(): UseProjectsReturn {
       createdAt: project.createdAt,
       lastSavedAt: project.lastSavedAt,
       thumbnailUrl: project.thumbnailUrl,
-      imageCount: project.canvasState.elements.filter(
-        (el) =>
-          typeof el === "object" &&
-          el !== null &&
-          "type" in el &&
-          el.type === "image"
-      ).length,
-      videoCount: project.canvasState.elements.filter(
-        (el) =>
-          typeof el === "object" &&
-          el !== null &&
-          "type" in el &&
-          el.type === "video"
-      ).length,
+      imageCount: project.imageCount ?? 0,
+      videoCount: project.videoCount ?? 0,
     }));
   }, [projectsQuery]);
 
@@ -238,20 +226,8 @@ export function useProjects(): UseProjectsReturn {
           createdAt: project.createdAt,
           lastSavedAt: project.lastSavedAt,
           thumbnailUrl: project.thumbnailUrl,
-          imageCount: project.canvasState.elements.filter(
-            (el) =>
-              typeof el === "object" &&
-              el !== null &&
-              "type" in el &&
-              el.type === "image"
-          ).length,
-          videoCount: project.canvasState.elements.filter(
-            (el) =>
-              typeof el === "object" &&
-              el !== null &&
-              "type" in el &&
-              el.type === "video"
-          ).length,
+          imageCount: project.imageCount ?? 0,
+          videoCount: project.videoCount ?? 0,
         };
 
         const existingIndex = prev.findIndex((p) => p.id === project._id);

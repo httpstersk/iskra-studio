@@ -18,17 +18,25 @@ async function ensureProjectForUser(ctx: MutationCtx, userId: string) {
 
   const now = Date.now();
 
-  return await ctx.db.insert("projects", {
+  const projectId = await ctx.db.insert("projects", {
     userId,
     name: "Project 01",
-    canvasState: {
-      elements: [],
-      lastModified: now,
-    },
+    imageCount: 0,
+    videoCount: 0,
     lastSavedAt: now,
     createdAt: now,
     updatedAt: now,
   });
+
+  await ctx.db.insert("projectStates", {
+    projectId,
+    canvasState: {
+      elements: [],
+      lastModified: now,
+    },
+  });
+
+  return projectId;
 }
 
 /**
