@@ -33,6 +33,36 @@ const STORYLINE_TIME_PROGRESSIONS = [
   "An era later",
 ];
 
+/**
+ * Surface map types for 3D modeling and cinema workflows
+ */
+const SURFACE_MAP_TYPES = [
+  "Albedo / Base Color (De-lit)",
+  "Ambient Occlusion (AO)",
+  "Anisotropy Map",
+  "Clearcoat Map",
+  "Curvature Map",
+  "Depth Map (Z-Depth)",
+  "Displacement / Height Map",
+  "Emission Map",
+  "Flow Map (Vector Field)",
+  "Fuzz / Sheen Map",
+  "Glossiness Map",
+  "IOR (Index of Refraction) Map",
+  "Metallic Map",
+  "Normal Map (Object Space)",
+  "Normal Map (Tangent Space)",
+  "Opacity / Alpha Map",
+  "Roughness Map",
+  "Segmentation / ID Map",
+  "Specular Map",
+  "Subsurface Scattering (SSS) Map",
+  "Thickness Map",
+  "Translucency Map",
+  "UV Layout / Checkerboard",
+  "Wireframe Overlay",
+];
+
 export interface VariationConfig<T extends string> {
   /**
    * Key name for the variation type in request/response
@@ -646,20 +676,12 @@ export const variationClientConfigs: Record<
     apiEndpoint: "/api/generate-surface-variations",
     apiRequestKey: "surfaceMaps",
     responseItemKey: "surfaceMap",
-    selectRandomItems: (_count: number) => [
-      "Albedo / Base Color",
-      "Ambient Occlusion",
-      "Curvature Map",
-      "Depth Map (Grayscale)",
-      "Displacement / Height Map",
-      "Edge Detection / Canny",
-      "Metallic Map",
-      "Normal Map",
-      "Roughness Map",
-      "Segmentation Map",
-      "Specular Map",
-      "Surface Normals (World Space)",
-    ],
+    selectRandomItems: (count: number) => {
+      // Shuffle and select 'count' items
+      return [...SURFACE_MAP_TYPES]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, count);
+    },
     buildPrompt: variationHandlers.surface.buildPrompt,
     getPlaceholderMeta: (surfaceMap: string) => ({
       surfaceMap,
