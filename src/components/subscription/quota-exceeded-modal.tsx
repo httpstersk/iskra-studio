@@ -147,9 +147,9 @@ export function QuotaExceededModal({
                             Upgrade to Pro
                           </h4>
                           <p className="text-sm text-muted-foreground">
-                            Get {isImageQuota ? "480 images" : "96 videos"} per
+                            Get {isImageQuota ? "130 images" : "25 videos"} per
                             month
-                            {isImageQuota ? " (20x more)" : " (24x more)"}
+                            {isImageQuota ? " (10x more)" : " (8x more)"}
                           </p>
                         </div>
                       </div>

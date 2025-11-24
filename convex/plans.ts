@@ -9,16 +9,16 @@ export const seedPlans = internalMutation({
   handler: async (ctx) => {
     const plans = [
       {
-        imagesPerPeriod: 24,
+        imagesPerPeriod: 12,
         key: "free",
         name: "Free",
-        videosPerPeriod: 4,
+        videosPerPeriod: 3,
       },
       {
-        imagesPerPeriod: 480,
+        imagesPerPeriod: 130,
         key: "pro",
         name: "Pro",
-        videosPerPeriod: 96,
+        videosPerPeriod: 25,
       },
     ];
 

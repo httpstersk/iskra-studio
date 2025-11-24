@@ -8,10 +8,10 @@ export const SUBSCRIPTION_CONSTANTS = {
   BENEFITS: {
     EDITING: "Advanced editing features",
     GENERATION_QUEUE: "Priority generation queue",
-    IMAGES: "480 images per month (20x more)",
+    IMAGES: "130 images per month (10x more)",
     RESOLUTION: "Higher resolution outputs",
     SUPPORT: "Email support",
-    VIDEOS: "96 videos per month (24x more)",
+    VIDEOS: "25 videos per month (8x more)",
   },
   BILLING: {
     ANNUAL: "Annual",

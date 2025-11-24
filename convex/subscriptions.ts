@@ -44,8 +44,8 @@ export const getSubscriptionStatus = query({
       .first();
 
     const limits = {
-      images: plan?.imagesPerPeriod ?? (user.tier === "pro" || user.tier === "paid" ? 480 : 24),
-      videos: plan?.videosPerPeriod ?? (user.tier === "pro" || user.tier === "paid" ? 96 : 4),
+      images: plan?.imagesPerPeriod ?? (user.tier === "pro" || user.tier === "paid" ? 130 : 12),
+      videos: plan?.videosPerPeriod ?? (user.tier === "pro" || user.tier === "paid" ? 25 : 3),
     };
 
     return {

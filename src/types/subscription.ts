@@ -55,10 +55,10 @@ export interface SubscriptionInfo {
  * Quota constants
  */
 export const QUOTA_LIMITS = {
-  FREE_IMAGE_QUOTA: 24,
-  FREE_VIDEO_QUOTA: 4,
-  PRO_IMAGE_QUOTA: 480,
-  PRO_VIDEO_QUOTA: 96,
+  FREE_IMAGE_QUOTA: 12,
+  FREE_VIDEO_QUOTA: 3,
+  PRO_IMAGE_QUOTA: 130,
+  PRO_VIDEO_QUOTA: 25,
 } as const;
 
 /**

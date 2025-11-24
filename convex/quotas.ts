@@ -38,8 +38,8 @@ export const getQuotaStatus = query({
       .withIndex("by_key", (q) => q.eq("key", planKey))
       .first();
 
-    const imageLimit = plan?.imagesPerPeriod ?? (planKey === "pro" ? 480 : 24);
-    const videoLimit = plan?.videosPerPeriod ?? (planKey === "pro" ? 96 : 4);
+    const imageLimit = plan?.imagesPerPeriod ?? (planKey === "pro" ? 130 : 12);
+    const videoLimit = plan?.videosPerPeriod ?? (planKey === "pro" ? 25 : 3);
 
     const now = Date.now();
     const imagesUsed = user.imagesUsedInPeriod ?? 0;
@@ -117,8 +117,8 @@ export const checkAndReserveQuota = mutation({
       .withIndex("by_key", (q) => q.eq("key", planKey))
       .first();
 
-    const imageLimit = plan?.imagesPerPeriod ?? (planKey === "pro" ? 480 : 24);
-    const videoLimit = plan?.videosPerPeriod ?? (planKey === "pro" ? 96 : 4);
+    const imageLimit = plan?.imagesPerPeriod ?? (planKey === "pro" ? 130 : 12);
+    const videoLimit = plan?.videosPerPeriod ?? (planKey === "pro" ? 25 : 3);
     const limit = args.type === "image" ? imageLimit : videoLimit;
 
     // Check if billing period has ended
