@@ -41,6 +41,19 @@ export const validateProjectAssets = query({
       throw new Error("Unauthorized");
     }
 
+    // Fetch project state
+    const projectState = await ctx.db
+      .query("project_states")
+      .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+      .first();
+
+    // Fallback to legacy canvasState if not found in new table (during migration)
+    const canvasState = projectState?.canvasState ?? (project as any).canvasState;
+
+    if (!canvasState) {
+      throw new Error("Project state not found");
+    }
+
     // Load all user's assets for reference checking
     const userAssets = await ctx.db
       .query("assets")
@@ -60,7 +73,7 @@ export const validateProjectAssets = query({
       assetId: string;
     }> = [];
 
-    for (const element of project.canvasState.elements) {
+    for (const element of canvasState.elements) {
       if (!element.assetId) {
         // Elements without asset references are valid (text, shapes, etc.)
         if (element.type !== "image" && element.type !== "video") {
@@ -109,7 +122,7 @@ export const validateProjectAssets = query({
     return {
       projectId: args.projectId,
       isValid: invalidElements.length === 0 && staleMetadata.length === 0,
-      totalElements: project.canvasState.elements.length,
+      totalElements: canvasState.elements.length,
       validElements: validElements.length,
       invalidElements,
       staleMetadata,
@@ -149,9 +162,22 @@ export const getProjectAssets = query({
       throw new Error("Unauthorized");
     }
 
+    // Fetch project state
+    const projectState = await ctx.db
+      .query("project_states")
+      .withIndex("by_projectId", (q) => q.eq("projectId", args.projectId))
+      .first();
+
+    // Fallback to legacy canvasState if not found in new table (during migration)
+    const canvasState = projectState?.canvasState ?? (project as any).canvasState;
+
+    if (!canvasState) {
+      throw new Error("Project state not found");
+    }
+
     // Collect unique asset IDs from elements
     const assetIds = new Set<string>();
-    for (const element of project.canvasState.elements) {
+    for (const element of canvasState.elements) {
       if (element.assetId) {
         assetIds.add(element.assetId);
       }
@@ -214,18 +240,37 @@ export const getProjectsUsingAsset = query({
       .collect();
 
     // Filter to projects using this asset
-    const projectsUsingAsset = projects.filter((project) =>
-      project.canvasState.elements.some(
-        (element) => element.assetId === args.assetId,
-      ),
-    );
+    // This is less efficient now as we have to fetch state for each project
+    // But this query is likely rare (only on asset deletion)
+    const projectsUsingAsset = [];
 
-    return projectsUsingAsset.map((p) => ({
-      projectId: p._id,
-      projectName: p.name,
-      elementCount: p.canvasState.elements.filter(
-        (e) => e.assetId === args.assetId,
-      ).length,
-    }));
+    for (const project of projects) {
+      // Fetch project state
+      const projectState = await ctx.db
+        .query("project_states")
+        .withIndex("by_projectId", (q) => q.eq("projectId", project._id))
+        .first();
+
+      // Fallback to legacy canvasState if not found in new table (during migration)
+      const canvasState = projectState?.canvasState ?? (project as any).canvasState;
+
+      if (!canvasState) continue;
+
+      const hasAsset = canvasState.elements.some(
+        (element: any) => element.assetId === args.assetId,
+      );
+
+      if (hasAsset) {
+        projectsUsingAsset.push({
+          projectId: project._id,
+          projectName: project.name,
+          elementCount: canvasState.elements.filter(
+            (e: any) => e.assetId === args.assetId,
+          ).length,
+        });
+      }
+    }
+
+    return projectsUsingAsset;
   },
 });

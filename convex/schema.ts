@@ -130,26 +130,44 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_and_type", ["userId", "type"])
-    .index("by_storageId", ["storageId"])
-    .index("by_userId_and_variationType", ["userId", "variationType"])
-    .index("by_userId_and_directorName", ["userId", "directorName"])
-    .index("by_userId_and_cameraAngle", ["userId", "cameraAngle"]),
+    .index("by_storageId", ["storageId"]),
 
   /**
    * Projects table
    *
-   * Stores canvas workspace state for each user's project.
-   * Canvas state includes all placed images, videos, viewport position, etc.
+   * Stores canvas workspace metadata.
+   * Canvas state is moved to project_states table for performance.
    *
    * @property userId - Owner's Clerk user ID (indexed)
    * @property name - Project display name
-   * @property canvasState - Complete canvas state object (images, videos, viewport, selections)
    * @property thumbnailStorageId - Convex storage ID for project thumbnail (nullable)
    * @property lastSavedAt - Last auto-save timestamp
    * @property createdAt - Project creation timestamp
    * @property updatedAt - Last project update timestamp
    */
   projects: defineTable({
+    createdAt: v.number(),
+    imageCount: v.optional(v.number()),
+    lastSavedAt: v.number(),
+    name: v.string(),
+    thumbnailStorageId: v.optional(v.string()),
+    updatedAt: v.number(),
+    userId: v.string(),
+    videoCount: v.optional(v.number()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_and_lastSavedAt", ["userId", "lastSavedAt"]),
+
+  /**
+   * Project States table
+   *
+   * Stores the heavy canvas state for projects.
+   * Separated from projects table to improve list performance.
+   *
+   * @property projectId - Link to projects table (indexed)
+   * @property canvasState - Complete canvas state object
+   */
+  project_states: defineTable({
     canvasState: v.object({
       backgroundColor: v.optional(v.string()),
       elements: v.array(
@@ -192,15 +210,8 @@ export default defineSchema({
         })
       ),
     }),
-    createdAt: v.number(),
-    lastSavedAt: v.number(),
-    name: v.string(),
-    thumbnailStorageId: v.optional(v.string()),
-    updatedAt: v.number(),
-    userId: v.string(),
-  })
-    .index("by_userId", ["userId"])
-    .index("by_userId_and_lastSavedAt", ["userId", "lastSavedAt"]),
+    projectId: v.id("projects"),
+  }).index("by_projectId", ["projectId"]),
 
   /**
    * Generations table
