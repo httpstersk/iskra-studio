@@ -63,6 +63,9 @@ export interface UploadMetadata {
   /** Time progression label for storyline variations */
   storylineLabel?: string;
 
+  /** Surface map type for AI-generated surface variations */
+  surfaceMap?: string;
+
   /** Variation type for grouping/filtering */
   variationType?: string;
 
@@ -260,6 +263,7 @@ async function createAssetRecord(
     sizeBytes: file.size,
     storageId,
     storylineLabel: metadata.storylineLabel || undefined,
+    surfaceMap: metadata.surfaceMap || undefined,
     thumbnailStorageId: thumbnailStorageId || undefined,
     type: assetType,
     variationType: metadata.variationType || undefined,

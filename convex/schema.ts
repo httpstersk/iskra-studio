@@ -122,6 +122,7 @@ export default defineSchema({
     sizeBytes: v.number(),
     storageId: v.string(),
     storylineLabel: v.optional(v.string()),
+    surfaceMap: v.optional(v.string()),
     thumbnailStorageId: v.optional(v.string()),
     type: v.union(v.literal("image"), v.literal("video")),
     userId: v.string(),

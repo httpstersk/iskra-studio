@@ -21,6 +21,8 @@ export interface GeneratedAssetMetadata {
   seed?: number;
   /** Time progression label for storyline variations (e.g., "+1min", "+2h5m") */
   storylineLabel?: string;
+  /** Surface map type for AI-generated surface variations */
+  surfaceMap?: string;
   /** Variation type for grouping/filtering (e.g., "director", "camera", "emotion", "storyline", "character") */
   variationType?: string;
   /** Image/video width in pixels */

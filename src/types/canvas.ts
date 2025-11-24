@@ -33,6 +33,7 @@ export interface PlacedImage {
   src: string;
   storyline?: string;
   storylineLabel?: string;
+  surfaceMap?: string;
   thumbnailSrc?: string;
   variationType?: string;
   width: number;

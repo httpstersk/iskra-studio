@@ -15,6 +15,7 @@ import {
   BookOpen,
   UserIcon,
   SmileIcon,
+  Layers,
 } from "lucide-react";
 
 /**
@@ -134,7 +135,7 @@ export function ModeIndicator({
           </SegmentedControl.Item>
           <SegmentedControl.Item value="surface">
             <div className="flex flex-row items-center gap-1.5">
-              <ImagesIcon className="size-3.5" />
+              <Layers className="size-3.5" />
               <span className="text-xs whitespace-nowrap">Surface</span>
             </div>
           </SegmentedControl.Item>

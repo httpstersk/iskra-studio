@@ -130,14 +130,14 @@ export function useStreamingHandlers(
             prev.map((img) =>
               img.id === id
                 ? {
-                    ...img,
-                    hasContentError: isContentError || false,
-                    hasGenerationError: !isContentError,
-                    isLoading: false,
-                    opacity: 1.0,
-                    pixelatedSrc: errorOverlayUrl,
-                    src: errorOverlayUrl,
-                  }
+                  ...img,
+                  hasContentError: isContentError || false,
+                  hasGenerationError: !isContentError,
+                  isLoading: false,
+                  opacity: 1.0,
+                  pixelatedSrc: errorOverlayUrl,
+                  src: errorOverlayUrl,
+                }
                 : img
             )
           );
@@ -155,14 +155,14 @@ export function useStreamingHandlers(
             prev.map((img) =>
               img.id === id
                 ? {
-                    ...img,
-                    hasContentError: isContentError || false,
-                    hasGenerationError: !isContentError,
-                    isLoading: false,
-                    opacity: 1.0,
-                    pixelatedSrc: fallbackOverlay,
-                    src: fallbackOverlay,
-                  }
+                  ...img,
+                  hasContentError: isContentError || false,
+                  hasGenerationError: !isContentError,
+                  isLoading: false,
+                  opacity: 1.0,
+                  pixelatedSrc: fallbackOverlay,
+                  src: fallbackOverlay,
+                }
                 : img
             )
           );
@@ -293,6 +293,7 @@ export function useStreamingHandlers(
       let emotion: string | undefined;
       let characterVariation: string | undefined;
       let storylineLabel: string | undefined;
+      let surfaceMap: string | undefined;
       let variationType: string | undefined;
 
       setImages((prevImages) => {
@@ -303,6 +304,7 @@ export function useStreamingHandlers(
         emotion = currentImage?.emotion;
         characterVariation = currentImage?.characterVariation;
         storylineLabel = currentImage?.storylineLabel;
+        surfaceMap = currentImage?.surfaceMap;
         variationType = currentImage?.variationType;
         return prevImages; // No state change, just reading
       });
@@ -315,24 +317,25 @@ export function useStreamingHandlers(
         prev.map((img) =>
           img.id === id
             ? {
-                ...img,
-                cameraAngle,
-                characterVariation,
-                directorName,
-                displayAsThumbnail: false, // Don't show thumbnail initially
-                emotion,
-                fullSizeSrc: croppedUrl,
-                isLoading: false,
-                lightingScenario,
-                naturalHeight,
-                naturalWidth,
-                opacity: 1.0,
-                originalFalUrl: finalUrl, // Store original FAL URL for high-quality downloads
-                src: initialDisplaySrc,
-                storylineLabel,
-                thumbnailSrc: undefined, // Don't set thumbnail initially
-                variationType,
-              }
+              ...img,
+              cameraAngle,
+              characterVariation,
+              directorName,
+              displayAsThumbnail: false, // Don't show thumbnail initially
+              emotion,
+              fullSizeSrc: croppedUrl,
+              isLoading: false,
+              lightingScenario,
+              naturalHeight,
+              naturalWidth,
+              opacity: 1.0,
+              originalFalUrl: finalUrl, // Store original FAL URL for high-quality downloads
+              src: initialDisplaySrc,
+              storylineLabel,
+              surfaceMap,
+              thumbnailSrc: undefined, // Don't set thumbnail initially
+              variationType,
+            }
             : img
         )
       );
@@ -356,6 +359,7 @@ export function useStreamingHandlers(
                 lightingScenario,
                 prompt: generation?.prompt,
                 storylineLabel,
+                surfaceMap,
                 variationType,
                 width: naturalWidth,
               },
@@ -378,14 +382,14 @@ export function useStreamingHandlers(
               prev.map((img) =>
                 img.id === id
                   ? {
-                      ...img,
-                      assetId,
-                      assetSyncedAt,
-                      displayAsThumbnail: false,
-                      fullSizeSrc: convexUrl, // Save permanent URL here
-                      src: displaySrc, // Keep showing Data URL for now
-                      thumbnailSrc: convexThumbnailUrl,
-                    }
+                    ...img,
+                    assetId,
+                    assetSyncedAt,
+                    displayAsThumbnail: false,
+                    fullSizeSrc: convexUrl, // Save permanent URL here
+                    src: displaySrc, // Keep showing Data URL for now
+                    thumbnailSrc: convexThumbnailUrl,
+                  }
                   : img
               )
             );
@@ -450,10 +454,10 @@ export function useStreamingHandlers(
           prev.map((img) =>
             img.id === id
               ? {
-                  ...img,
-                  displayAsThumbnail: false,
-                  src: croppedResult.croppedSrc,
-                }
+                ...img,
+                displayAsThumbnail: false,
+                src: croppedResult.croppedSrc,
+              }
               : img
           )
         );
@@ -466,10 +470,10 @@ export function useStreamingHandlers(
           prev.map((img) =>
             img.id === id
               ? {
-                  ...img,
-                  displayAsThumbnail: false,
-                  src: url,
-                }
+                ...img,
+                displayAsThumbnail: false,
+                src: url,
+              }
               : img
           )
         );
@@ -534,11 +538,11 @@ export function useStreamingHandlers(
             return prev.map((video) =>
               video.id === videoId
                 ? {
-                    ...video,
-                    duration,
-                    isLoading: false,
-                    src: convexUrl,
-                  }
+                  ...video,
+                  duration,
+                  isLoading: false,
+                  src: convexUrl,
+                }
                 : video
             );
           });
