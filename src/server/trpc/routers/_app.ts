@@ -582,7 +582,7 @@ export const appRouter = router({
               aspect_ratio: nanoBananaAspectRatio,
               num_images: 1,
               output_format: "png" as const,
-              resolution: "2K", // 1K, 2K, 4K
+              resolution: "1K", // 1K, 2K, 4K
             }
             : {
               // Seedream Edit API schema
