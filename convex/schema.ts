@@ -213,39 +213,7 @@ export default defineSchema({
     projectId: v.id("projects"),
   }).index("by_projectId", ["projectId"]),
 
-  /**
-   * Generations table
-   *
-   * Tracks all image and video generation attempts for quota management.
-   * Used to determine if a generation should count towards user's quota.
-   *
-   * @property userId - Owner's Clerk user ID (indexed)
-   * @property type - Generation type ("image" | "video")
-   * @property status - Generation status ("pending" | "completed" | "failed")
-   * @property countedTowardsQuota - Whether this generation was counted towards user's quota
-   * @property createdAt - Generation request timestamp
-   * @property metadata - Optional metadata about the generation (prompt, model, etc.)
-   */
-  generations: defineTable({
-    countedTowardsQuota: v.boolean(),
-    createdAt: v.number(),
-    metadata: v.optional(
-      v.object({
-        model: v.optional(v.string()),
-        prompt: v.optional(v.string()),
-      })
-    ),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("completed"),
-      v.literal("failed")
-    ),
-    type: v.union(v.literal("image"), v.literal("video")),
-    userId: v.string(),
-  })
-    .index("by_userId", ["userId"])
-    .index("by_userId_and_type", ["userId", "type"])
-    .index("by_userId_and_status", ["userId", "status"]),
+
 
   /**
    * Webhook Events table

@@ -313,67 +313,9 @@ export const resetExpiredQuotas = internalMutation({
   },
 });
 
-/**
- * Create a generation record for tracking
- *
- * @param type - Generation type ("image" or "video")
- * @param metadata - Optional metadata about the generation
- * @returns Generation ID
- */
-export const createGeneration = mutation({
-  args: {
-    type: v.union(v.literal("image"), v.literal("video")),
-    metadata: v.optional(
-      v.object({
-        model: v.optional(v.string()),
-        prompt: v.optional(v.string()),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
 
-    const userId = identity.subject;
 
-    const generationId = await ctx.db.insert("generations", {
-      userId,
-      type: args.type,
-      status: "pending",
-      countedTowardsQuota: false,
-      createdAt: Date.now(),
-      metadata: args.metadata,
-    });
 
-    return generationId;
-  },
-});
-
-/**
- * Update generation status
- *
- * @param generationId - Generation ID
- * @param status - New status
- */
-export const updateGenerationStatus = mutation({
-  args: {
-    generationId: v.id("generations"),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("completed"),
-      v.literal("failed")
-    ),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.generationId, {
-      status: args.status,
-    });
-
-    return { success: true };
-  },
-});
 
 /**
  * Helper function to calculate next billing date from signup date
