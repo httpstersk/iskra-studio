@@ -23,9 +23,9 @@ import {
 interface ModeIndicatorProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   hasSelection: boolean;
-  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions";
+  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface";
   setImageVariationType?: (
-    type: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions"
+    type: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface"
   ) => void;
   variationMode: "image" | "video";
 }
@@ -92,7 +92,7 @@ export function ModeIndicator({
           value={imageVariationType}
           onValueChange={(value) =>
             setImageVariationType(
-              value as "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions"
+              value as "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface"
             )
           }
         >
@@ -130,6 +130,12 @@ export function ModeIndicator({
             <div className="flex flex-row items-center gap-1.5">
               <SmileIcon className="size-3.5" />
               <span className="text-xs whitespace-nowrap">Emotions</span>
+            </div>
+          </SegmentedControl.Item>
+          <SegmentedControl.Item value="surface">
+            <div className="flex flex-row items-center gap-1.5">
+              <ImagesIcon className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Surface</span>
             </div>
           </SegmentedControl.Item>
         </SegmentedControl.Root>

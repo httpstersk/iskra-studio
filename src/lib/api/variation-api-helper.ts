@@ -457,6 +457,38 @@ export const variationHandlers = {
       }
     },
   },
+
+  surface: {
+    itemKey: "surfaceMap" as const,
+    buildPrompt: (mapType: string, userContext?: string) => {
+      const baseInstruction = `Generate a ${mapType} based on the reference image.`;
+
+      if (userContext) {
+        return `
+        ${baseInstruction}
+        
+        ADDITIONAL CONTEXT/INSTRUCTION: ${userContext}
+        
+        INSTRUCTIONS:
+        1. ANALYSIS: Analyze the geometry, texture, and lighting of the reference image.
+        2. INTERPRETATION: Apply the additional context to the generation of the ${mapType} (e.g., if the context implies a specific material property or modification).
+        3. GENERATION: Create a high-quality ${mapType} that aligns with the reference image's content and the provided context.
+        4. OUTPUT: The result should be a technical pass suitable for 3D workflows or compositing.
+        5. STRICT ALIGNMENT: The generated map must match the pixel space of the original image exactly.
+        `.trim();
+      }
+
+      return `
+      ${baseInstruction}
+      
+      INSTRUCTIONS:
+      1. ANALYSIS: Analyze the geometry, texture, and lighting of the reference image.
+      2. GENERATION: Create a high-quality ${mapType} that perfectly aligns with the reference image's content.
+      3. OUTPUT: The result should be a technical pass suitable for 3D workflows or compositing.
+      4. STRICT ALIGNMENT: The generated map must match the pixel space of the original image exactly.
+      `.trim();
+    },
+  },
 };
 
 // =============================================================================
@@ -472,7 +504,8 @@ export type VariationType =
   | "lighting"
   | "storyline"
   | "characters"
-  | "emotions";
+  | "emotions"
+  | "surface";
 
 /**
  * Maps the UI variation type to our internal variation type
@@ -483,7 +516,8 @@ export type ImageVariationType =
   | "lighting"
   | "storyline"
   | "characters"
-  | "emotions";
+  | "emotions"
+  | "surface";
 
 /**
  * Client-side configuration for a variation type
@@ -606,6 +640,32 @@ export const variationClientConfigs: Record<
       variationType: "emotion",
     }),
   },
+
+  surface: {
+    displayName: "Surface Maps",
+    apiEndpoint: "/api/generate-surface-variations",
+    apiRequestKey: "surfaceMaps",
+    responseItemKey: "surfaceMap",
+    selectRandomItems: (_count: number) => [
+      "Albedo / Base Color",
+      "Ambient Occlusion",
+      "Curvature Map",
+      "Depth Map (Grayscale)",
+      "Displacement / Height Map",
+      "Edge Detection / Canny",
+      "Metallic Map",
+      "Normal Map",
+      "Roughness Map",
+      "Segmentation Map",
+      "Specular Map",
+      "Surface Normals (World Space)",
+    ],
+    buildPrompt: variationHandlers.surface.buildPrompt,
+    getPlaceholderMeta: (surfaceMap: string) => ({
+      surfaceMap,
+      variationType: "surface",
+    }),
+  },
 };
 
 /**
@@ -621,11 +681,13 @@ export function mapImageVariationType(
       return "director";
     case "lighting":
       return "lighting";
-    case "storyline":
-      return "storyline";
     case "characters":
       return "characters";
     case "emotions":
       return "emotions";
+    case "storyline":
+      return "storyline";
+    case "surface":
+      return "surface";
   }
 }
