@@ -95,6 +95,8 @@ const getDirectiveLabelText = (image: PlacedImage): string | undefined => {
   if (image.cameraAngle) return abbreviateCameraDirective(image.cameraAngle);
   // Lighting scenario labels
   if (image.lightingScenario) return image.lightingScenario;
+  // Surface map labels
+  if (image.surfaceMap) return image.surfaceMap;
   return undefined;
 };
 
@@ -462,7 +464,8 @@ const arePropsEqual = (
     prevImg.characterVariation !== nextImg.characterVariation ||
     prevImg.storylineLabel !== nextImg.storylineLabel ||
     prevImg.lightingScenario !== nextImg.lightingScenario ||
-    prevImg.variationType !== nextImg.variationType
+    prevImg.variationType !== nextImg.variationType ||
+    prevImg.surfaceMap !== nextImg.surfaceMap
   ) {
     return false;
   }
