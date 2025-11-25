@@ -1,7 +1,12 @@
 import { extractFalErrorMessage, getFalClient } from "@/lib/fal/helpers";
 import { IMAGE_MODELS, resolveImageSize } from "@/lib/image-models";
 import { createProvider } from "@/lib/providers";
-import { tracked } from "@trpc/server";
+import {
+  generateId,
+  yieldComplete,
+  yieldError,
+  yieldTimestampedError,
+} from "@/lib/trpc/event-tracking";
 import { z } from "zod";
 import { publicProcedure } from "../../init";
 
@@ -44,7 +49,7 @@ export const generateImageVariation = publicProcedure
   .subscription(async function* ({ input, signal, ctx }) {
     try {
       // Create a unique ID for this generation
-      const generationId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const generationId = generateId();
 
       // Resolve imageSize to a concrete {width, height} object
       const resolvedImageSize = resolveImageSize(input.imageSize);
@@ -69,10 +74,7 @@ export const generateImageVariation = publicProcedure
       });
 
       if (result instanceof Error) {
-        yield tracked(`${generationId}_error`, {
-          type: "error",
-          error: result.message,
-        });
+        yield yieldError(generationId, result.message);
         return;
       }
 
@@ -81,8 +83,7 @@ export const generateImageVariation = publicProcedure
       }
 
       // Send the final image
-      yield tracked(`${generationId}_complete`, {
-        type: "complete",
+      yield yieldComplete(generationId, {
         imageUrl: result.imageUrl,
         provider: result.provider,
         ...(result.seed !== undefined ? { seed: result.seed } : {}),
@@ -91,12 +92,8 @@ export const generateImageVariation = publicProcedure
           : {}),
       });
     } catch (error) {
-      yield tracked(`error_${Date.now()}`, {
-        type: "error",
-        error: extractFalErrorMessage(
-          error,
-          "Failed to generate image variation",
-        ),
-      });
+      yield yieldTimestampedError(
+        extractFalErrorMessage(error, "Failed to generate image variation"),
+      );
     }
   });

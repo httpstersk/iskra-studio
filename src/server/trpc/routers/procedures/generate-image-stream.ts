@@ -1,12 +1,17 @@
 import {
   extractFalErrorMessage,
   extractFirstImageUrl,
-  extractImages,
   extractResultData,
   getFalClient,
 } from "@/lib/fal/helpers";
 import type { FalImageResult } from "@/lib/fal/types";
-import { tracked } from "@trpc/server";
+import {
+  generateId,
+  yieldComplete,
+  yieldCustom,
+  yieldError,
+  yieldTimestampedError,
+} from "@/lib/trpc/event-tracking";
 import { z } from "zod";
 import { publicProcedure } from "../../init";
 
@@ -31,7 +36,7 @@ export const generateImageStream = publicProcedure
       const falClient = await getFalClient(ctx);
 
       // Create a unique ID for this generation
-      const generationId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const generationId = generateId();
 
       // Start streaming from fal.ai
       const stream = await falClient.stream("fal-ai/flux/dev/image-to-image", {
@@ -55,7 +60,7 @@ export const generateImageStream = publicProcedure
 
         const eventId = `${generationId}_${eventIndex++}`;
 
-        yield tracked(eventId, {
+        yield yieldCustom(eventId, {
           type: "progress",
           data: event,
         });
@@ -70,23 +75,18 @@ export const generateImageStream = publicProcedure
       };
       const imageUrl = extractFirstImageUrl(result);
       if (!imageUrl) {
-        yield tracked(`${generationId}_error`, {
-          type: "error",
-          error: "No image generated",
-        });
+        yield yieldError(generationId, "No image generated");
         return;
       }
 
       // Send the final image
-      yield tracked(`${generationId}_complete`, {
-        type: "complete",
+      yield yieldComplete(generationId, {
         imageUrl,
         seed: resultData.seed ?? Math.random(),
       });
     } catch (error) {
-      yield tracked(`error_${Date.now()}`, {
-        type: "error",
-        error: extractFalErrorMessage(error, "Failed to generate image"),
-      });
+      yield yieldTimestampedError(
+        extractFalErrorMessage(error, "Failed to generate image"),
+      );
     }
   });

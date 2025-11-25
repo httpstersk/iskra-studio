@@ -1,7 +1,11 @@
 import { getFiboSeed } from "@/constants/fibo";
 import { isErr } from "@/lib/errors/safe-errors";
 import { generateImage } from "@/lib/services/bria-client";
-import { tracked } from "@trpc/server";
+import {
+  generateId,
+  yieldComplete,
+  yieldTimestampedError,
+} from "@/lib/trpc/event-tracking";
 import { z } from "zod";
 import { publicProcedure } from "../../init";
 
@@ -38,7 +42,7 @@ export const generateFiboImageVariation = publicProcedure
   )
   .subscription(async function* ({ input, signal, ctx: _ctx }) {
     try {
-      const generationId = `fibo_gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const generationId = generateId("fibo_gen");
 
       // Call Bria API to generate image from structured prompt
       // Note: Bria API expects images as an array even for single image
@@ -65,8 +69,7 @@ export const generateFiboImageVariation = publicProcedure
       }
 
       // Send the final image
-      yield tracked(`${generationId}_complete`, {
-        type: "complete",
+      yield yieldComplete(generationId, {
         imageUrl: result.image_url,
         seed: result.seed,
       });
@@ -76,9 +79,6 @@ export const generateFiboImageVariation = publicProcedure
           ? error.message
           : "Failed to generate FIBO image variation";
 
-      yield tracked(`error_${Date.now()}`, {
-        type: "error",
-        error: errorMessage,
-      });
+      yield yieldTimestampedError(errorMessage);
     }
   });

@@ -5,9 +5,15 @@ import {
 } from "@/lib/fal/helpers";
 import type { ApiResponse } from "@/lib/fal/types";
 import { sanitizePrompt } from "@/lib/prompt-utils";
+import {
+  generateId,
+  yieldComplete,
+  yieldError,
+  yieldProgress,
+  yieldTimestampedError,
+} from "@/lib/trpc/event-tracking";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { generateVideoPrompt } from "@/lib/video-prompt-generator";
-import { tracked } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure } from "../../init";
 
@@ -33,13 +39,14 @@ export const generateImageToVideo = publicProcedure
   .subscription(async function* ({ input, signal: _signal, ctx }) {
     try {
       const falClient = await getFalClient(ctx, true);
-      const generationId = `img2vid_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const generationId = generateId("img2vid");
 
-      yield tracked(`${generationId}_start`, {
-        progress: 0,
-        status: "Starting image-to-video conversion...",
-        type: "progress",
-      });
+      yield yieldProgress(
+        generationId,
+        0,
+        "Starting image-to-video conversion...",
+        "start",
+      );
 
       const model = getVideoModelById(input.modelId || SORA_2_MODEL_ID);
 
@@ -72,13 +79,14 @@ export const generateImageToVideo = publicProcedure
       const userGuidance = sanitizePrompt(input.prompt);
 
       // Generate prompt using AI analysis (optionally guided by user input)
-      yield tracked(`${generationId}_analyze`, {
-        progress: 20,
-        status: userGuidance
+      yield yieldProgress(
+        generationId,
+        20,
+        userGuidance
           ? "Analyzing image with your creative direction..."
           : "Analyzing image to generate prompt...",
-        type: "progress",
-      });
+        "analyze",
+      );
 
       let finalPrompt: string;
       try {
@@ -93,31 +101,25 @@ export const generateImageToVideo = publicProcedure
           throw new Error("Generated prompt is empty");
         }
 
-        yield tracked(`${generationId}_prompt_ready`, {
-          progress: 40,
-          status: "Prompt generated, starting video generation...",
-          type: "progress",
-        });
+        yield yieldProgress(
+          generationId,
+          40,
+          "Prompt generated, starting video generation...",
+          "prompt_ready",
+        );
       } catch (promptError) {
         const errorMessage =
           promptError instanceof Error
             ? promptError.message
             : "Failed to generate video prompt";
 
-        yield tracked(`${generationId}_error`, {
-          error: `Prompt generation failed: ${errorMessage}`,
-          type: "error",
-          // No need to return here, let it fall through or handle appropriately
-        });
+        yield yieldError(generationId, `Prompt generation failed: ${errorMessage}`);
         return;
       }
 
       // Final validation before sending to FAL
       if (!finalPrompt || finalPrompt.trim().length === 0) {
-        yield tracked(`${generationId}_error`, {
-          error: "Invalid prompt: prompt cannot be empty",
-          type: "error",
-        });
+        yield yieldError(generationId, "Invalid prompt: prompt cannot be empty");
         return;
       }
 
@@ -137,37 +139,25 @@ export const generateImageToVideo = publicProcedure
         input: soraInput,
       })) as ApiResponse;
 
-      yield tracked(`${generationId}_progress`, {
-        progress: 100,
-        status: "Video generation complete",
-        type: "progress",
-      });
+      yield yieldProgress(generationId, 100, "Video generation complete");
 
       const videoUrl = extractVideoUrl(result);
 
       if (!videoUrl) {
-        yield tracked(`${generationId}_error`, {
-          error: "No video generated",
-          type: "error",
-        });
+        yield yieldError(generationId, "No video generated");
         return;
       }
 
       const videoDuration =
         result.data?.duration || result.duration || resolvedDuration;
 
-      yield tracked(`${generationId}_complete`, {
+      yield yieldComplete(generationId, {
         duration: videoDuration,
-        type: "complete",
         videoUrl,
       });
     } catch (error) {
-      yield tracked(`error_${Date.now()}`, {
-        error: extractFalErrorMessage(
-          error,
-          "Failed to convert image to video",
-        ),
-        type: "error",
-      });
+      yield yieldTimestampedError(
+        extractFalErrorMessage(error, "Failed to convert image to video"),
+      );
     }
   });
