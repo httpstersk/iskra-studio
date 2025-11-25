@@ -1,5 +1,6 @@
 import {
   extractFalErrorMessage,
+  extractImages,
   extractResultData,
   getFalClient,
 } from "@/lib/fal/helpers";
@@ -60,7 +61,7 @@ export const generateTextToImage = publicProcedure
       const resultData = extractResultData<FalImageResult>(result) ?? {
         images: [],
       };
-      const images = resultData.images ?? [];
+      const images = extractImages(result) ?? [];
       if (!images[0]?.url) {
         throw new Error("No image generated");
       }

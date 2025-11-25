@@ -1,4 +1,8 @@
-import { extractFalErrorMessage, getFalClient } from "@/lib/fal/helpers";
+import {
+  extractFalErrorMessage,
+  extractVideoUrl,
+  getFalClient,
+} from "@/lib/fal/helpers";
 import type { ApiResponse } from "@/lib/fal/types";
 import { sanitizePrompt } from "@/lib/prompt-utils";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
@@ -139,11 +143,7 @@ export const generateImageToVideo = publicProcedure
         type: "progress",
       });
 
-      const videoUrl =
-        result.data?.video?.url ||
-        result.data?.url ||
-        result.video?.url ||
-        result.url;
+      const videoUrl = extractVideoUrl(result);
 
       if (!videoUrl) {
         yield tracked(`${generationId}_error`, {

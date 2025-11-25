@@ -16,7 +16,13 @@ import {
 import type { RequestLike } from "./types";
 
 // Re-export response utilities for convenience
-export { extractFalErrorMessage, extractResultData } from "./response";
+export {
+  extractFalErrorMessage,
+  extractFirstImageUrl,
+  extractImages,
+  extractResultData,
+  extractVideoUrl,
+} from "./response";
 
 /**
  * Converts a multi-line prompt string into a single line by collapsing all

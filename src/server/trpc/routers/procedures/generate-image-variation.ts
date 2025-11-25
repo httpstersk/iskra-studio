@@ -1,5 +1,6 @@
 import {
   extractFalErrorMessage,
+  extractFirstImageUrl,
   extractResultData,
   getFalClient,
   toSingleLinePrompt,
@@ -145,9 +146,9 @@ export const generateImageVariation = publicProcedure
         const resultData = extractResultData<FalImageResult>(result) ?? {
           images: [],
         };
-        const images = resultData.images ?? [];
+        const imageUrl = extractFirstImageUrl(result);
 
-        if (!images?.[0]?.url) {
+        if (!imageUrl) {
           yield tracked(`${generationId}_error`, {
             type: "error",
             error: "No image generated",
@@ -158,7 +159,7 @@ export const generateImageVariation = publicProcedure
         // Send the final image
         yield tracked(`${generationId}_complete`, {
           type: "complete",
-          imageUrl: images[0].url,
+          imageUrl,
           provider: "fal" as const,
           seed: resultData.seed ?? Math.random(),
         });

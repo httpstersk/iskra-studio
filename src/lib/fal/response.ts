@@ -2,6 +2,8 @@
  * Response extraction and error handling utilities for FAL.ai API.
  */
 
+import type { ApiResponse, FalImageResult } from "./types";
+
 /**
  * Safely extracts the typed payload from a FAL response.
  *
@@ -24,6 +26,48 @@ export function extractResultData<T extends object>(
   }
 
   return input as T;
+}
+
+/**
+ * Extracts video URL from FAL API response.
+ *
+ * Handles multiple possible response structures where video URLs may be nested
+ * at different levels.
+ *
+ * @param result - The API response from a video generation endpoint
+ * @returns The video URL string, or undefined if not found
+ */
+export function extractVideoUrl(result: ApiResponse): string | undefined {
+  return (
+    result.data?.video?.url ||
+    result.data?.url ||
+    result.video?.url ||
+    result.video_url ||
+    (result.url as string | undefined)
+  );
+}
+
+/**
+ * Extracts the first image URL from FAL API response.
+ *
+ * @param result - The API response from an image generation endpoint
+ * @returns The first image URL string, or undefined if not found
+ */
+export function extractFirstImageUrl(result: unknown): string | undefined {
+  const resultData = extractResultData<FalImageResult>(result);
+  const images = resultData?.images ?? [];
+  return images[0]?.url;
+}
+
+/**
+ * Extracts all image information from FAL API response.
+ *
+ * @param result - The API response from an image generation endpoint
+ * @returns Array of image objects with url, width, and height
+ */
+export function extractImages(result: unknown): FalImageResult["images"] {
+  const resultData = extractResultData<FalImageResult>(result);
+  return resultData?.images ?? [];
 }
 
 /**

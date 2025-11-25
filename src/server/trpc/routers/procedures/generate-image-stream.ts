@@ -1,5 +1,7 @@
 import {
   extractFalErrorMessage,
+  extractFirstImageUrl,
+  extractImages,
   extractResultData,
   getFalClient,
 } from "@/lib/fal/helpers";
@@ -66,8 +68,8 @@ export const generateImageStream = publicProcedure
       const resultData = extractResultData<FalImageResult>(result) ?? {
         images: [],
       };
-      const images = resultData.images ?? [];
-      if (!images?.[0]?.url) {
+      const imageUrl = extractFirstImageUrl(result);
+      if (!imageUrl) {
         yield tracked(`${generationId}_error`, {
           type: "error",
           error: "No image generated",
@@ -78,7 +80,7 @@ export const generateImageStream = publicProcedure
       // Send the final image
       yield tracked(`${generationId}_complete`, {
         type: "complete",
-        imageUrl: images[0].url,
+        imageUrl,
         seed: resultData.seed ?? Math.random(),
       });
     } catch (error) {

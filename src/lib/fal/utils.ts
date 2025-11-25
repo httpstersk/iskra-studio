@@ -36,5 +36,8 @@ export {
 // Re-export response utilities
 export {
   extractFalErrorMessage,
+  extractFirstImageUrl,
+  extractImages,
   extractResultData,
+  extractVideoUrl,
 } from "./response";
