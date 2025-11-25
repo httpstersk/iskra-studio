@@ -37,7 +37,7 @@ interface ControlActionsProps {
  * Creates and configures a file input element for image upload
  */
 const createFileInput = (
-  handleFileUpload: (files: FileList | null) => void
+  handleFileUpload: (files: FileList | null) => void,
 ): HTMLInputElement => {
   const input = document.createElement("input");
   input.type = FILE_INPUT_CONFIG.TYPE;
@@ -57,7 +57,7 @@ const createFileInput = (
     } catch (_error) {
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_FAILED,
-        CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC
+        CONTROL_PANEL_STRINGS.UPLOAD_FAILED_DESC,
       );
     } finally {
       if (input.parentNode) {
@@ -88,7 +88,7 @@ const triggerFileDialog = (input: HTMLInputElement) => {
     } catch (_error) {
       showError(
         CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE,
-        CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC
+        CONTROL_PANEL_STRINGS.UPLOAD_UNAVAILABLE_DESC,
       );
 
       if (input.parentNode) {
@@ -168,7 +168,8 @@ export function ControlActions({
                 isRunDisabled
                   ? "bg-neutral-200 dark:bg-neutral-700"
                   : "bg-white dark:bg-white shadow-[0_0_20px_rgba(255,255,255,0.6)] hover:bg-white dark:hover:bg-white hover:shadow-[0_0_25px_rgba(255,255,255,0.8)] dark:hover:shadow-[0_0_25px_rgba(255,255,255,0.7)]",
-                isGenerating && "bg-neutral-300 dark:bg-neutral-600 shadow-none"
+                isGenerating &&
+                  "bg-neutral-300 dark:bg-neutral-600 shadow-none",
               )}
               disabled={isRunDisabled}
               onClick={handleRun}
@@ -180,7 +181,7 @@ export function ControlActions({
                   "h-5 w-5",
                   isRunDisabled
                     ? "text-neutral-400 dark:text-neutral-500"
-                    : "text-neutral-900 group-hover:animate-arrow-cycle"
+                    : "text-neutral-900 group-hover:animate-arrow-cycle",
                 )}
               />
             </Button>

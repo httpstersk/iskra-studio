@@ -9,9 +9,7 @@
 import { FIBO_ANALYSIS, getFiboSeed } from "@/constants/fibo";
 import { adaptFiboToAnalysis } from "@/lib/adapters/fibo-to-analysis-adapter";
 import type { ImageStyleMoodAnalysis } from "@/lib/schemas/image-analysis-schema";
-import {
-  analyzeFiboImageWithRetry,
-} from "@/lib/services/fibo-image-analyzer";
+import { analyzeFiboImageWithRetry } from "@/lib/services/fibo-image-analyzer";
 import {
   FiboAnalysisErr,
   ValidationErr,
@@ -33,7 +31,7 @@ export interface ImageAnalysisResult {
  * @returns Promise resolving to image style and mood analysis or error
  */
 export async function analyzeImageCore(
-  imageUrl: string
+  imageUrl: string,
 ): Promise<ImageAnalysisResult | FiboAnalysisErr | ValidationErr> {
   if (!imageUrl || !imageUrl.trim()) {
     return new ValidationErr({

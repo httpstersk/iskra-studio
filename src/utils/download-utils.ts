@@ -40,7 +40,7 @@ const fetchImageAsBlob = async (url: string): Promise<Blob> => {
 
   try {
     const fetchResult = await tryPromise(
-      fetch(url, { signal: controller.signal })
+      fetch(url, { signal: controller.signal }),
     );
 
     if (isErr(fetchResult)) {
@@ -55,7 +55,9 @@ const fetchImageAsBlob = async (url: string): Promise<Blob> => {
 
     const blobResult = await tryPromise(response.blob());
     if (isErr(blobResult)) {
-      throw new Error(`Failed to get image blob: ${getErrorMessage(blobResult)}`);
+      throw new Error(
+        `Failed to get image blob: ${getErrorMessage(blobResult)}`,
+      );
     }
 
     return blobResult;
@@ -122,7 +124,8 @@ export const downloadImagesAsZip = async (
       try {
         // Priority: originalFalUrl (highest quality) > fullSizeSrc > src
         // originalFalUrl contains the unprocessed FAL image before any cropping/compression
-        const downloadUrl = image.originalFalUrl || image.fullSizeSrc || image.src;
+        const downloadUrl =
+          image.originalFalUrl || image.fullSizeSrc || image.src;
         const blob = await fetchImageAsBlob(downloadUrl);
         const filename = getFilenameFromUrl(downloadUrl, index);
         folder.file(filename, blob);

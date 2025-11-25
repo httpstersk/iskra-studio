@@ -22,9 +22,7 @@ export function ImageSettings({
     <SegmentedControl.Root
       size="1"
       value={imageModel}
-      onValueChange={(value) =>
-        setImageModel(value as ImageModelId)
-      }
+      onValueChange={(value) => setImageModel(value as ImageModelId)}
     >
       <SegmentedControl.Item value={IMAGE_MODELS.SEEDREAM}>
         <span className="text-xs">Seedream</span>

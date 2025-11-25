@@ -159,11 +159,13 @@ export async function generateStorylines(
         duration,
         userPrompt,
       }),
-    })
+    }),
   );
 
   if (isErr(fetchResult)) {
-    throw new Error(`Failed to fetch storylines: ${getErrorMessage(fetchResult)}`);
+    throw new Error(
+      `Failed to fetch storylines: ${getErrorMessage(fetchResult)}`,
+    );
   }
 
   const response = fetchResult;
@@ -179,7 +181,9 @@ export async function generateStorylines(
 
   const jsonResult = await tryPromise(response.json());
   if (isErr(jsonResult)) {
-    throw new Error(`Failed to parse storylines response: ${getErrorMessage(jsonResult)}`);
+    throw new Error(
+      `Failed to parse storylines response: ${getErrorMessage(jsonResult)}`,
+    );
   }
 
   return jsonResult.storylines;

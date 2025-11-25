@@ -36,7 +36,7 @@ export const checkUploadRateLimit = internalQuery({
 
     // Count uploads in the last minute
     const uploadsLastMinute = recentUploads.filter(
-      (upload) => upload.timestamp > oneMinuteAgo
+      (upload) => upload.timestamp > oneMinuteAgo,
     ).length;
 
     // Count uploads in the last hour

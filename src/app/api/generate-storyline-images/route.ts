@@ -66,7 +66,7 @@ const generateStorylineImagesRequestSchema = z.object({
 function buildUserPrompt(
   analysis: ImageStyleMoodAnalysis,
   count: number,
-  userContext?: string
+  userContext?: string,
 ): string {
   const styleContext = buildStorylineStyleContext(analysis);
   const { subject, mood } = analysis;
@@ -173,7 +173,7 @@ export const POST = createAuthenticatedHandler({
     const { getToken } = await auth();
     const token = await getToken({ template: "convex" });
     const convex = new ConvexHttpClient(
-      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL")
+      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL"),
     );
     if (token) {
       convex.setAuth(token);
@@ -185,7 +185,7 @@ export const POST = createAuthenticatedHandler({
       convex.mutation(api.quotas.checkAndReserveQuota, {
         type: "image",
         count: count,
-      })
+      }),
     );
 
     if (isErr(quotaResult)) {
@@ -218,7 +218,7 @@ export const POST = createAuthenticatedHandler({
             content: userPrompt,
           },
         ],
-      })
+      }),
     );
 
     if (isErr(generationResult)) {
@@ -227,14 +227,16 @@ export const POST = createAuthenticatedHandler({
         convex.mutation(api.quotas.refundQuota, {
           type: "image",
           count: count,
-        })
+        }),
       );
 
       if (isErr(refundResult)) {
         log.error("Failed to refund quota", getErrorMessage(refundResult));
       }
 
-      throw new Error(`Storyline image generation failed: ${getErrorMessage(generationResult)}`);
+      throw new Error(
+        `Storyline image generation failed: ${getErrorMessage(generationResult)}`,
+      );
     }
 
     return {

@@ -116,7 +116,7 @@ export async function listProjects(limit = 10) {
 
   const client = clientResult;
   const projectsResult = await tryPromise(
-    client.query(api.projects.listProjects, { limit })
+    client.query(api.projects.listProjects, { limit }),
   );
 
   if (isErr(projectsResult)) {

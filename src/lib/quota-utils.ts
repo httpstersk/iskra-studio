@@ -72,7 +72,7 @@ export function isQuotaWarning(used: number, limit: number): boolean {
 export function formatQuotaDisplay(
   used: number,
   limit: number,
-  type: GenerationType
+  type: GenerationType,
 ): string {
   const label = type === "image" ? "images" : "videos";
   return `${used}/${limit} ${label}`;
@@ -144,7 +144,7 @@ export function getTimeUntilReset(billingCycleEnd: number): string {
 export function shouldShowUpgradePrompt(
   tier: SubscriptionTier,
   imagePercentage: number,
-  videoPercentage: number
+  videoPercentage: number,
 ): boolean {
   if (tier !== "free") {
     return false;

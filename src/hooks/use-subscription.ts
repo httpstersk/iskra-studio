@@ -104,7 +104,7 @@ export function useSubscription(): UseSubscriptionReturn {
   // Convex query - only run when authenticated
   const subscriptionData = useQuery(
     api.subscriptions.getSubscriptionStatus,
-    isAuthenticated ? {} : "skip"
+    isAuthenticated ? {} : "skip",
   );
 
   // Memoize subscription info to avoid unnecessary recalculations
@@ -147,7 +147,7 @@ export function useSubscription(): UseSubscriptionReturn {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ billingInterval }),
-        })
+        }),
       );
 
       if (isErr(responseResult)) {
@@ -184,7 +184,7 @@ export function useSubscription(): UseSubscriptionReturn {
       window.location.href = checkoutUrl;
       setIsUpgrading(false);
     },
-    []
+    [],
   );
 
   /**
@@ -200,7 +200,7 @@ export function useSubscription(): UseSubscriptionReturn {
         headers: {
           "Content-Type": "application/json",
         },
-      })
+      }),
     );
 
     if (isErr(responseResult)) {

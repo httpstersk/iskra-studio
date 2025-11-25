@@ -116,7 +116,9 @@ export function useFileUpload(
                   (async () => {
                     try {
                       // Convert cropped image data URL to blob
-                      const fetchResult = await tryPromise(fetch(croppedImageSrc));
+                      const fetchResult = await tryPromise(
+                        fetch(croppedImageSrc),
+                      );
                       if (isErr(fetchResult)) {
                         throw new Error("Failed to fetch cropped image");
                       }

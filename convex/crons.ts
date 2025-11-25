@@ -21,7 +21,7 @@ crons.daily(
     hourUTC: 0, // Run at midnight UTC
     minuteUTC: 0,
   },
-  internal.quotas.resetExpiredQuotas
+  internal.quotas.resetExpiredQuotas,
 );
 
 /**

@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
   if (!providedUrl && !storageId) {
     return NextResponse.json(
       { error: "Either 'url' or 'storageId' parameter required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     if (isErr(urlObjResult)) {
       return NextResponse.json(
         { error: "Invalid URL format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     if (urlObj.protocol !== "https:") {
       return NextResponse.json(
         { error: "Only HTTPS URLs are allowed" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
     if (allowedHosts.length === 0) {
       return NextResponse.json(
         { error: "Convex storage not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -103,7 +103,7 @@ export async function GET(req: NextRequest) {
         {
           error: "Invalid URL origin. Only Convex storage URLs are allowed.",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
     if (urlObj.username || urlObj.password) {
       return NextResponse.json(
         { error: "URLs with credentials are not allowed" },
-        { status: 403 }
+        { status: 403 },
       );
     }
   }
@@ -127,7 +127,7 @@ export async function GET(req: NextRequest) {
     if (!convexUrl) {
       return NextResponse.json(
         { error: "Convex configuration missing" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -149,7 +149,7 @@ export async function GET(req: NextRequest) {
             "User-Agent": "Spark-Videos-Proxy/1.0",
           },
           signal: AbortSignal.timeout(30000),
-        })
+        }),
       );
 
       if (isErr(testResponseResult)) {
@@ -172,7 +172,7 @@ export async function GET(req: NextRequest) {
           error: "Failed to fetch from storage",
           details: lastError?.message || "Unknown error",
         },
-        { status: 502 }
+        { status: 502 },
       );
     }
 
@@ -181,7 +181,7 @@ export async function GET(req: NextRequest) {
     // Should never happen due to earlier check, but satisfy TypeScript
     return NextResponse.json(
       { error: "Either 'url' or 'storageId' parameter required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -193,7 +193,7 @@ export async function GET(req: NextRequest) {
         "User-Agent": "Spark-Videos-Proxy/1.0",
       },
       signal: AbortSignal.timeout(30000),
-    })
+    }),
   );
 
   if (isErr(responseResult)) {
@@ -202,7 +202,7 @@ export async function GET(req: NextRequest) {
         error: "Failed to fetch from storage",
         details: getErrorMessage(responseResult),
       },
-      { status: 502 }
+      { status: 502 },
     );
   }
 
@@ -219,7 +219,7 @@ export async function GET(req: NextRequest) {
         error: `Failed to fetch from storage: ${response.status}`,
         details: errorText,
       },
-      { status: response.status }
+      { status: response.status },
     );
   }
 
@@ -235,7 +235,7 @@ export async function GET(req: NextRequest) {
         error: "Failed to process file",
         details: getErrorMessage(bufferResult),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -247,7 +247,7 @@ export async function GET(req: NextRequest) {
         error: "Failed to process file",
         details: "Received empty buffer from Convex storage",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 

@@ -5,7 +5,7 @@
  * It replaces try-catch blocks with explicit error returns for better type safety and performance.
  */
 
-import * as st from '@safe-std/error';
+import * as st from "@safe-std/error";
 
 // ============================================================================
 // Custom Error Types
@@ -14,7 +14,7 @@ import * as st from '@safe-std/error';
 /**
  * HTTP Error - for API requests and fetch operations
  */
-const httpErrSymbol = Symbol('httpErrSymbol');
+const httpErrSymbol = Symbol("httpErrSymbol");
 
 export interface HttpErrPayload {
   status: number;
@@ -29,7 +29,7 @@ export class HttpErr extends st.Err<HttpErrPayload> {
 /**
  * Bria API Error - for Bria-specific API failures
  */
-const briaApiErrSymbol = Symbol('briaApiErrSymbol');
+const briaApiErrSymbol = Symbol("briaApiErrSymbol");
 
 export interface BriaApiErrPayload {
   message: string;
@@ -45,7 +45,7 @@ export class BriaApiErr extends st.Err<BriaApiErrPayload> {
 /**
  * Bria Token Error - when API token is missing/invalid
  */
-const briaTokenErrSymbol = Symbol('briaTokenErrSymbol');
+const briaTokenErrSymbol = Symbol("briaTokenErrSymbol");
 
 export interface BriaTokenErrPayload {
   message: string;
@@ -58,11 +58,11 @@ export class BriaTokenErr extends st.Err<BriaTokenErrPayload> {
 /**
  * Storage Error - for file/storage operations
  */
-const storageErrSymbol = Symbol('storageErrSymbol');
+const storageErrSymbol = Symbol("storageErrSymbol");
 
 export interface StorageErrPayload {
   message: string;
-  operation: 'upload' | 'download' | 'delete' | 'read' | 'write';
+  operation: "upload" | "download" | "delete" | "read" | "write";
   cause?: unknown;
 }
 
@@ -73,7 +73,7 @@ export class StorageErr extends st.Err<StorageErrPayload> {
 /**
  * Quota Error - for quota-related failures
  */
-const quotaErrSymbol = Symbol('quotaErrSymbol');
+const quotaErrSymbol = Symbol("quotaErrSymbol");
 
 export interface QuotaErrPayload {
   message: string;
@@ -88,7 +88,7 @@ export class QuotaErr extends st.Err<QuotaErrPayload> {
 /**
  * Validation Error - for input validation failures
  */
-const validationErrSymbol = Symbol('validationErrSymbol');
+const validationErrSymbol = Symbol("validationErrSymbol");
 
 export interface ValidationErrPayload {
   message: string;
@@ -102,7 +102,7 @@ export class ValidationErr extends st.Err<ValidationErrPayload> {
 /**
  * FIBO Analysis Error - for image analysis failures
  */
-const fiboAnalysisErrSymbol = Symbol('fiboAnalysisErrSymbol');
+const fiboAnalysisErrSymbol = Symbol("fiboAnalysisErrSymbol");
 
 export interface FiboAnalysisErrPayload {
   message: string;
@@ -247,16 +247,16 @@ export function getErrorMessage(error: unknown): string {
 
   if (isErr(error)) {
     const payload = error.payload;
-    if (typeof payload === 'string') {
+    if (typeof payload === "string") {
       return payload;
     }
     if (payload instanceof Error) {
       return payload.message;
     }
-    if (payload && typeof payload === 'object' && 'message' in payload) {
+    if (payload && typeof payload === "object" && "message" in payload) {
       return String((payload as { message: unknown }).message);
     }
-    return 'Unknown error';
+    return "Unknown error";
   }
 
   if (error instanceof Error) {
@@ -280,7 +280,7 @@ export async function retryWithBackoff<T>(
   fn: () => Promise<T | st.Err<unknown>>,
   maxRetries: number,
   shouldRetry: (error: st.Err<unknown>) => boolean = () => true,
-  baseDelay = 1000
+  baseDelay = 1000,
 ): Promise<T | st.Err<unknown>> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const result = await fn();
@@ -302,10 +302,10 @@ export async function retryWithBackoff<T>(
     // Exponential backoff with jitter
     const delay = Math.pow(2, attempt) * baseDelay;
     const jitter = Math.random() * 500;
-    await new Promise(resolve => setTimeout(resolve, delay + jitter));
+    await new Promise((resolve) => setTimeout(resolve, delay + jitter));
   }
 
-  return st.err('Max retries exceeded');
+  return st.err("Max retries exceeded");
 }
 
 /**
@@ -313,7 +313,7 @@ export async function retryWithBackoff<T>(
  */
 export function mapOk<T, U>(
   result: T | st.Err<unknown>,
-  fn: (value: T) => U
+  fn: (value: T) => U,
 ): U | st.Err<unknown> {
   if (isErr(result)) {
     return result;
@@ -326,7 +326,7 @@ export function mapOk<T, U>(
  */
 export function mapErr<T>(
   result: T | st.Err<unknown>,
-  fn: (error: st.Err<unknown>) => st.Err<unknown>
+  fn: (error: st.Err<unknown>) => st.Err<unknown>,
 ): T | st.Err<unknown> {
   if (isErr(result)) {
     return fn(result);
@@ -360,7 +360,7 @@ export function unwrapOr<T>(result: T | st.Err<unknown>, defaultValue: T): T {
  */
 export function unwrapOrElse<T>(
   result: T | st.Err<unknown>,
-  fn: (error: st.Err<unknown>) => T
+  fn: (error: st.Err<unknown>) => T,
 ): T {
   if (isErr(result)) {
     return fn(result);

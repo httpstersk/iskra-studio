@@ -53,7 +53,6 @@ function detectDeviceCapabilities(): "high" | "medium" | "low" {
   }
 }
 
-
 /**
  * Monitor frame performance and adjust quality
  */

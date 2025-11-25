@@ -32,7 +32,7 @@ const uiMessageSchema = uiMessageBaseSchema.refine(
   {
     message: "Message must include content or parts",
     path: ["content"],
-  }
+  },
 );
 
 const chatRequestSchema = z.object({
@@ -133,7 +133,7 @@ export const POST = createAuthenticatedHandler({
               .enum(["square"])
               .default("square")
               .describe(
-                "The aspect ratio of the generated image. Always use 'square' format."
+                "The aspect ratio of the generated image. Always use 'square' format.",
               ),
           }),
         },

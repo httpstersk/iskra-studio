@@ -97,7 +97,6 @@ export type GenerationStatus =
   | "generating"
   | "uploading";
 
-
 /**
  * Configuration for an active image generation job.
  *
@@ -107,12 +106,12 @@ export type GenerationStatus =
 export interface ActiveGeneration {
   /** Target dimensions for the generated image */
   imageSize?:
-  | "landscape_16_9"
-  | "portrait_16_9"
-  | "landscape_4_3"
-  | "portrait_4_3"
-  | "square"
-  | { width: number; height: number };
+    | "landscape_16_9"
+    | "portrait_16_9"
+    | "landscape_4_3"
+    | "portrait_4_3"
+    | "square"
+    | { width: number; height: number };
   /** Source image URL for image-to-image generation */
   imageUrl: string;
   /** Source image URLs for multi-image generation */
@@ -129,15 +128,15 @@ export interface ActiveGeneration {
   useFibo?: boolean;
   /** Aspect ratio for FIBO generation */
   fiboAspectRatio?:
-  | "1:1"
-  | "2:3"
-  | "3:2"
-  | "3:4"
-  | "4:3"
-  | "4:5"
-  | "5:4"
-  | "9:16"
-  | "16:9";
+    | "1:1"
+    | "2:3"
+    | "3:2"
+    | "3:4"
+    | "4:3"
+    | "4:5"
+    | "5:4"
+    | "9:16"
+    | "16:9";
 }
 
 /**
@@ -180,7 +179,6 @@ export interface ActiveVideoGeneration {
   /** Additional model-specific parameters */
   [key: string]: unknown;
 }
-
 
 export interface SelectionBox {
   endX: number;

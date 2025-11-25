@@ -99,10 +99,14 @@ export function createLogger(service: string): ServiceLogger {
         log("debug", service, message, data);
       }
     },
-    info: (message: string, data?: unknown) => log("info", service, message, data),
-    success: (message: string, data?: unknown) => log("success", service, message, data),
-    warn: (message: string, data?: unknown) => log("warn", service, message, data),
-    error: (message: string, data?: unknown) => log("error", service, message, data),
+    info: (message: string, data?: unknown) =>
+      log("info", service, message, data),
+    success: (message: string, data?: unknown) =>
+      log("success", service, message, data),
+    warn: (message: string, data?: unknown) =>
+      log("warn", service, message, data),
+    error: (message: string, data?: unknown) =>
+      log("error", service, message, data),
   };
 }
 
@@ -133,7 +137,7 @@ export const logger = {
    * Supports legacy 3-argument error signature for backward compatibility
    * @deprecated Use createLogger() directly instead
    */
-  child: (context: { service?: string;[key: string]: unknown }) => {
+  child: (context: { service?: string; [key: string]: unknown }) => {
     const service = context.service || "APP";
     return {
       debug: (message: string, data?: unknown) => {
@@ -141,15 +145,23 @@ export const logger = {
           log("debug", service, message, data);
         }
       },
-      info: (message: string, data?: unknown) => log("info", service, message, data),
-      success: (message: string, data?: unknown) => log("success", service, message, data),
-      warn: (message: string, data?: unknown) => log("warn", service, message, data),
+      info: (message: string, data?: unknown) =>
+        log("info", service, message, data),
+      success: (message: string, data?: unknown) =>
+        log("success", service, message, data),
+      warn: (message: string, data?: unknown) =>
+        log("warn", service, message, data),
       error: (message: string, error?: Error | unknown, ctx?: unknown) => {
-        const data = error instanceof Error
-          ? { error: error.message, stack: error.stack, ...((ctx as object) || {}) }
-          : error !== undefined
-            ? { error, ...((ctx as object) || {}) }
-            : ctx;
+        const data =
+          error instanceof Error
+            ? {
+                error: error.message,
+                stack: error.stack,
+                ...((ctx as object) || {}),
+              }
+            : error !== undefined
+              ? { error, ...((ctx as object) || {}) }
+              : ctx;
         log("error", service, message, data);
       },
     };
@@ -164,14 +176,20 @@ export const logger = {
     }
   },
   info: (message: string, data?: unknown) => log("info", "APP", message, data),
-  success: (message: string, data?: unknown) => log("success", "APP", message, data),
+  success: (message: string, data?: unknown) =>
+    log("success", "APP", message, data),
   warn: (message: string, data?: unknown) => log("warn", "APP", message, data),
   error: (message: string, error?: Error | unknown, context?: unknown) => {
-    const data = error instanceof Error
-      ? { error: error.message, stack: error.stack, ...((context as object) || {}) }
-      : error !== undefined
-        ? { error, ...((context as object) || {}) }
-        : context;
+    const data =
+      error instanceof Error
+        ? {
+            error: error.message,
+            stack: error.stack,
+            ...((context as object) || {}),
+          }
+        : error !== undefined
+          ? { error, ...((context as object) || {}) }
+          : context;
     log("error", "APP", message, data);
   },
 };

@@ -37,7 +37,9 @@ export async function generateVideoPrompt(
   const analysisResult = await analyzeImageCore(imageUrl);
 
   if (isErr(analysisResult)) {
-    throw new Error(`Image analysis failed: ${getErrorMessage(analysisResult)}`);
+    throw new Error(
+      `Image analysis failed: ${getErrorMessage(analysisResult)}`,
+    );
   }
 
   const { analysis: styleAnalysis } = analysisResult;

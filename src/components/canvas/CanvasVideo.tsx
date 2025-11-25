@@ -57,7 +57,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
 
   // Get pixelated overlay if available (skip for skeletons)
   const pixelatedImg = useVideoPixelatedOverlay(
-    video.isSkeleton ? undefined : video.pixelatedSrc
+    video.isSkeleton ? undefined : video.pixelatedSrc,
   );
 
   // Create HTMLVideoElement and wire events
@@ -79,7 +79,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
     },
     (currentTime) => {
       onChange({ currentTime });
-    }
+    },
   );
 
   // Animation coordinator for pixelated overlay transition
@@ -117,7 +117,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
       onChange({
         currentTime: Math.min(
           video.duration,
-          Math.max(0, video.currentTime + delta)
+          Math.max(0, video.currentTime + delta),
         ),
       }),
     volumeBy: (delta) => {
@@ -135,7 +135,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
       selfId: video.id,
     },
     setVideos,
-    onChange
+    onChange,
   );
 
   /**
@@ -151,7 +151,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
         onSelect(e);
       }
     },
-    [isSelected, onChange, onSelect, video.isPlaying]
+    [isSelected, onChange, onSelect, video.isPlaying],
   );
 
   const handleDragStart = useCallback(
@@ -164,7 +164,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
 
       onDragStart();
     },
-    [isSelected, onDragStart, onSelect]
+    [isSelected, onDragStart, onSelect],
   );
 
   const handleDragEnd = useCallback(() => {
@@ -181,7 +181,7 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
         return;
       }
     },
-    []
+    [],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -224,7 +224,12 @@ const CanvasVideoComponent: React.FC<CanvasVideoProps> = ({
   // Skeleton placeholder rendering - shows before real video loads
   if (video.isSkeleton) {
     return (
-      <Group x={video.x} y={video.y} rotation={video.rotation} listening={false}>
+      <Group
+        x={video.x}
+        y={video.y}
+        rotation={video.rotation}
+        listening={false}
+      >
         <Rect
           width={video.width}
           height={video.height}

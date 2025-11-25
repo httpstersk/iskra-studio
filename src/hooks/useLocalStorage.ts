@@ -115,7 +115,7 @@ function getCachedValue<T>(key: string, defaultValue: T): T {
  */
 export function useLocalStorage<T>(
   key: string,
-  defaultValue: T
+  defaultValue: T,
 ): [T, (value: T | ((prev: T) => T)) => void] {
   // Initialize cache for this key if not exists
   // This happens once per key to establish the cached value
@@ -161,7 +161,7 @@ export function useLocalStorage<T>(
   const value = useSyncExternalStore(
     storeConfig.subscribe,
     storeConfig.getSnapshot,
-    storeConfig.getServerSnapshot
+    storeConfig.getServerSnapshot,
   );
 
   // Setter function with support for functional updates
@@ -186,7 +186,7 @@ export function useLocalStorage<T>(
             key,
             newValue: serializeValue(valueToStore),
             storageArea: window.localStorage,
-          })
+          }),
         );
       });
 
@@ -194,7 +194,7 @@ export function useLocalStorage<T>(
         log.warn(`Error setting localStorage key "${key}"`, result.payload);
       }
     },
-    [key, defaultValue]
+    [key, defaultValue],
   );
 
   return [value, setValue];

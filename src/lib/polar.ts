@@ -19,7 +19,7 @@ const log = logger.config;
 function validatePolarConfig() {
   if (!process.env.POLAR_ACCESS_TOKEN) {
     throw new Error(
-      "POLAR_ACCESS_TOKEN is not set in environment variables. Please add it to your .env.local file."
+      "POLAR_ACCESS_TOKEN is not set in environment variables. Please add it to your .env.local file.",
     );
   }
 
@@ -28,11 +28,15 @@ function validatePolarConfig() {
   }
 
   if (!process.env.POLAR_PRODUCT_ID_MONTHLY) {
-    log.warn("POLAR_PRODUCT_ID_MONTHLY is not set. Subscription creation will fail.");
+    log.warn(
+      "POLAR_PRODUCT_ID_MONTHLY is not set. Subscription creation will fail.",
+    );
   }
 
   if (!process.env.POLAR_PRODUCT_ID_ANNUAL) {
-    log.warn("POLAR_PRODUCT_ID_ANNUAL is not set. Subscription creation will fail.");
+    log.warn(
+      "POLAR_PRODUCT_ID_ANNUAL is not set. Subscription creation will fail.",
+    );
   }
 }
 
@@ -78,7 +82,7 @@ export type BillingInterval = "month" | "year";
  * Helper function to get product ID based on billing interval
  */
 export function getProductIdForInterval(
-  interval: BillingInterval
+  interval: BillingInterval,
 ): string | null {
   if (interval === "month") {
     return POLAR_CONFIG.products.monthly || null;

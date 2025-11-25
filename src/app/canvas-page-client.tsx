@@ -253,7 +253,9 @@ export function CanvasPageClient() {
         onOpenChange={setShowSignInPrompt}
       />
 
-      {isAuthenticated && <CanvasLoadingOverlay isLoading={projects.isLoading} />}
+      {isAuthenticated && (
+        <CanvasLoadingOverlay isLoading={projects.isLoading} />
+      )}
 
       <StreamingGenerations
         activeGenerations={generationState.activeGenerations}

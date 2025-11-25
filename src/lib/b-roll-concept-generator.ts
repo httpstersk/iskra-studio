@@ -145,11 +145,13 @@ export async function generateBRollConcepts(
         "Content-Type": "application/json",
       },
       method: "POST",
-    })
+    }),
   );
 
   if (isErr(fetchResult)) {
-    throw new Error(`Failed to fetch B-roll concepts: ${getErrorMessage(fetchResult)}`);
+    throw new Error(
+      `Failed to fetch B-roll concepts: ${getErrorMessage(fetchResult)}`,
+    );
   }
 
   const response = fetchResult;
@@ -165,7 +167,9 @@ export async function generateBRollConcepts(
 
   const jsonResult = await tryPromise(response.json());
   if (isErr(jsonResult)) {
-    throw new Error(`Failed to parse B-roll concepts response: ${getErrorMessage(jsonResult)}`);
+    throw new Error(
+      `Failed to parse B-roll concepts response: ${getErrorMessage(jsonResult)}`,
+    );
   }
 
   return jsonResult;

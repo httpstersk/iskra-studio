@@ -55,11 +55,13 @@ export async function uploadGeneratedAssetToConvex(
           "Content-Type": "application/json",
         },
         method: "POST",
-      })
+      }),
     );
 
     if (isErr(fetchResult)) {
-      throw new Error(`Failed to fetch upload endpoint: ${getErrorMessage(fetchResult)}`);
+      throw new Error(
+        `Failed to fetch upload endpoint: ${getErrorMessage(fetchResult)}`,
+      );
     }
 
     const response = fetchResult;
@@ -74,7 +76,9 @@ export async function uploadGeneratedAssetToConvex(
 
     const jsonResult = await tryPromise(response.json());
     if (isErr(jsonResult)) {
-      throw new Error(`Failed to parse upload response: ${getErrorMessage(jsonResult)}`);
+      throw new Error(
+        `Failed to parse upload response: ${getErrorMessage(jsonResult)}`,
+      );
     }
 
     const result = jsonResult;

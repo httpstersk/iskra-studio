@@ -24,9 +24,23 @@ import {
 interface ModeIndicatorProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   hasSelection: boolean;
-  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface";
+  imageVariationType?:
+    | "camera-angles"
+    | "director"
+    | "lighting"
+    | "storyline"
+    | "characters"
+    | "emotions"
+    | "surface";
   setImageVariationType?: (
-    type: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface"
+    type:
+      | "camera-angles"
+      | "director"
+      | "lighting"
+      | "storyline"
+      | "characters"
+      | "emotions"
+      | "surface",
   ) => void;
   variationMode: "image" | "video";
 }
@@ -47,7 +61,7 @@ export function ModeIndicator({
         className={cn(
           "h-9 rounded-xl overflow-clip flex items-center px-3",
           "pointer-events-none select-none",
-          CONTROL_PANEL_STYLES.ORANGE_BADGE
+          CONTROL_PANEL_STYLES.ORANGE_BADGE,
         )}
       >
         <div className="flex items-center gap-2 text-xs font-medium">
@@ -93,7 +107,14 @@ export function ModeIndicator({
           value={imageVariationType}
           onValueChange={(value) =>
             setImageVariationType(
-              value as "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface"
+              value as
+                | "camera-angles"
+                | "director"
+                | "lighting"
+                | "storyline"
+                | "characters"
+                | "emotions"
+                | "surface",
             )
           }
         >

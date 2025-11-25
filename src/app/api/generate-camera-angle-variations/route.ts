@@ -36,7 +36,7 @@ export const POST = createAuthenticatedHandler({
     const { getToken } = await auth();
     const token = await getToken({ template: "convex" });
     const convex = new ConvexHttpClient(
-      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL")
+      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL"),
     );
     if (token) {
       convex.setAuth(token);
@@ -48,7 +48,7 @@ export const POST = createAuthenticatedHandler({
       convex.mutation(api.quotas.checkAndReserveQuota, {
         type: "image",
         count: cameraAngles.length,
-      })
+      }),
     );
 
     if (isErr(quotaResult)) {
@@ -68,7 +68,7 @@ export const POST = createAuthenticatedHandler({
         items: cameraAngles,
         userContext,
         itemKey: "cameraAngle",
-      })
+      }),
     );
 
     if (isErr(generationResult)) {
@@ -77,14 +77,16 @@ export const POST = createAuthenticatedHandler({
         convex.mutation(api.quotas.refundQuota, {
           type: "image",
           count: cameraAngles.length,
-        })
+        }),
       );
 
       if (isErr(refundResult)) {
         log.error("Failed to refund quota", getErrorMessage(refundResult));
       }
 
-      throw new Error(`Camera angle generation failed: ${getErrorMessage(generationResult)}`);
+      throw new Error(
+        `Camera angle generation failed: ${getErrorMessage(generationResult)}`,
+      );
     }
 
     return generationResult;

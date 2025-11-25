@@ -28,13 +28,13 @@ interface StreamingHandlerDeps {
   selectedImageForVideo: string | null;
   setActiveGenerations: (
     updater: (
-      prev: Map<string, ActiveGeneration>
-    ) => Map<string, ActiveGeneration>
+      prev: Map<string, ActiveGeneration>,
+    ) => Map<string, ActiveGeneration>,
   ) => void;
   setActiveVideoGenerations: (
     updater: (
-      prev: Map<string, ActiveVideoGeneration>
-    ) => Map<string, ActiveVideoGeneration>
+      prev: Map<string, ActiveVideoGeneration>,
+    ) => Map<string, ActiveVideoGeneration>,
   ) => void;
   setImages: (updater: (prev: PlacedImage[]) => PlacedImage[]) => void;
   setIsConvertingToVideo: (value: boolean) => void;
@@ -52,24 +52,24 @@ interface StreamingHandlers {
   handleStreamingImageComplete: (
     id: string,
     finalUrl: string,
-    thumbnailUrl?: string
+    thumbnailUrl?: string,
   ) => Promise<void>;
   handleStreamingImageError: (
     id: string,
     error: string,
-    isContentError?: boolean
+    isContentError?: boolean,
   ) => void;
   handleStreamingImageUpdate: (id: string, url: string) => Promise<void>;
   handleVideoGenerationComplete: (
     videoId: string,
     videoUrl: string,
-    duration: number
+    duration: number,
   ) => Promise<void>;
   handleVideoGenerationError: (videoId: string, error: string) => void;
   handleVideoGenerationProgress: (
     videoId: string,
     progress: number,
-    status: string
+    status: string,
   ) => void;
 }
 
@@ -83,7 +83,7 @@ interface StreamingHandlers {
  * @returns Streaming event handlers
  */
 export function useStreamingHandlers(
-  deps: StreamingHandlerDeps
+  deps: StreamingHandlerDeps,
 ): StreamingHandlers {
   const {
     activeGenerations,
@@ -122,7 +122,7 @@ export function useStreamingHandlers(
           const errorOverlayUrl = await createErrorOverlayFromUrl(
             sourceUrl,
             image.width,
-            image.height
+            image.height,
           );
 
           // Update image with error overlay (always succeeds with fallback)
@@ -130,16 +130,16 @@ export function useStreamingHandlers(
             prev.map((img) =>
               img.id === id
                 ? {
-                  ...img,
-                  hasContentError: isContentError || false,
-                  hasGenerationError: !isContentError,
-                  isLoading: false,
-                  opacity: 1.0,
-                  pixelatedSrc: errorOverlayUrl,
-                  src: errorOverlayUrl,
-                }
-                : img
-            )
+                    ...img,
+                    hasContentError: isContentError || false,
+                    hasGenerationError: !isContentError,
+                    isLoading: false,
+                    opacity: 1.0,
+                    pixelatedSrc: errorOverlayUrl,
+                    src: errorOverlayUrl,
+                  }
+                : img,
+            ),
           );
         } catch (overlayError) {
           log.warn("Failed to create error overlay", { data: overlayError });
@@ -149,22 +149,22 @@ export function useStreamingHandlers(
           );
           const fallbackOverlay = createFallbackErrorOverlay(
             image.width,
-            image.height
+            image.height,
           );
           setImages((prev) =>
             prev.map((img) =>
               img.id === id
                 ? {
-                  ...img,
-                  hasContentError: isContentError || false,
-                  hasGenerationError: !isContentError,
-                  isLoading: false,
-                  opacity: 1.0,
-                  pixelatedSrc: fallbackOverlay,
-                  src: fallbackOverlay,
-                }
-                : img
-            )
+                    ...img,
+                    hasContentError: isContentError || false,
+                    hasGenerationError: !isContentError,
+                    isLoading: false,
+                    opacity: 1.0,
+                    pixelatedSrc: fallbackOverlay,
+                    src: fallbackOverlay,
+                  }
+                : img,
+            ),
           );
         }
       } else {
@@ -187,7 +187,7 @@ export function useStreamingHandlers(
       if (isContentError) {
         showError(
           "Content validation failed",
-          "The generated content was flagged by content moderation and cannot be displayed."
+          "The generated content was flagged by content moderation and cannot be displayed.",
         );
       } else {
         const isVariation = id.startsWith("variation-");
@@ -196,11 +196,11 @@ export function useStreamingHandlers(
           isVariation
             ? "Variation failed"
             : CANVAS_STRINGS.ERRORS.GENERATION_FAILED,
-          isVariation ? "One variation failed to generate" : errorMessage
+          isVariation ? "One variation failed to generate" : errorMessage,
         );
       }
     },
-    [images, setActiveGenerations, setImages, setIsGenerating]
+    [images, setActiveGenerations, setImages, setIsGenerating],
   );
 
   const handleStreamingImageComplete = useCallback(
@@ -280,7 +280,7 @@ export function useStreamingHandlers(
         handleStreamingImageError(
           id,
           "Generated image failed to load (404)",
-          false
+          false,
         );
         return;
       }
@@ -317,27 +317,27 @@ export function useStreamingHandlers(
         prev.map((img) =>
           img.id === id
             ? {
-              ...img,
-              cameraAngle,
-              characterVariation,
-              directorName,
-              displayAsThumbnail: false, // Don't show thumbnail initially
-              emotion,
-              fullSizeSrc: croppedUrl,
-              isLoading: false,
-              lightingScenario,
-              naturalHeight,
-              naturalWidth,
-              opacity: 1.0,
-              originalFalUrl: finalUrl, // Store original FAL URL for high-quality downloads
-              src: initialDisplaySrc,
-              storylineLabel,
-              surfaceMap,
-              thumbnailSrc: undefined, // Don't set thumbnail initially
-              variationType,
-            }
-            : img
-        )
+                ...img,
+                cameraAngle,
+                characterVariation,
+                directorName,
+                displayAsThumbnail: false, // Don't show thumbnail initially
+                emotion,
+                fullSizeSrc: croppedUrl,
+                isLoading: false,
+                lightingScenario,
+                naturalHeight,
+                naturalWidth,
+                opacity: 1.0,
+                originalFalUrl: finalUrl, // Store original FAL URL for high-quality downloads
+                src: initialDisplaySrc,
+                storylineLabel,
+                surfaceMap,
+                thumbnailSrc: undefined, // Don't set thumbnail initially
+                variationType,
+              }
+            : img,
+        ),
       );
 
       // Upload to Convex in background (non-blocking for UX)
@@ -382,16 +382,16 @@ export function useStreamingHandlers(
               prev.map((img) =>
                 img.id === id
                   ? {
-                    ...img,
-                    assetId,
-                    assetSyncedAt,
-                    displayAsThumbnail: false,
-                    fullSizeSrc: convexUrl, // Save permanent URL here
-                    src: displaySrc, // Keep showing Data URL for now
-                    thumbnailSrc: convexThumbnailUrl,
-                  }
-                  : img
-              )
+                      ...img,
+                      assetId,
+                      assetSyncedAt,
+                      displayAsThumbnail: false,
+                      fullSizeSrc: convexUrl, // Save permanent URL here
+                      src: displaySrc, // Keep showing Data URL for now
+                      thumbnailSrc: convexThumbnailUrl,
+                    }
+                  : img,
+              ),
             );
 
             // Save to storage after Convex upload completes
@@ -409,7 +409,7 @@ export function useStreamingHandlers(
 
         if (variationBatchTimestamp && newMap.size > 0) {
           const hasMoreFromBatch = Array.from(newMap.keys()).some((key) =>
-            key.startsWith(`variation-${variationBatchTimestamp}-`)
+            key.startsWith(`variation-${variationBatchTimestamp}-`),
           );
 
           if (!hasMoreFromBatch) {
@@ -438,7 +438,7 @@ export function useStreamingHandlers(
       setImages,
       setIsGenerating,
       setSelectedIds,
-    ]
+    ],
   );
 
   const handleStreamingImageUpdate = useCallback(
@@ -454,12 +454,12 @@ export function useStreamingHandlers(
           prev.map((img) =>
             img.id === id
               ? {
-                ...img,
-                displayAsThumbnail: false,
-                src: croppedResult.croppedSrc,
-              }
-              : img
-          )
+                  ...img,
+                  displayAsThumbnail: false,
+                  src: croppedResult.croppedSrc,
+                }
+              : img,
+          ),
         );
       } catch (error) {
         log.warn("Failed to crop streaming image", {
@@ -470,16 +470,16 @@ export function useStreamingHandlers(
           prev.map((img) =>
             img.id === id
               ? {
-                ...img,
-                displayAsThumbnail: false,
-                src: url,
-              }
-              : img
-          )
+                  ...img,
+                  displayAsThumbnail: false,
+                  src: url,
+                }
+              : img,
+          ),
         );
       }
     },
-    [setImages]
+    [setImages],
   );
 
   const handleVideoGenerationComplete = useCallback(
@@ -538,12 +538,12 @@ export function useStreamingHandlers(
             return prev.map((video) =>
               video.id === videoId
                 ? {
-                  ...video,
-                  duration,
-                  isLoading: false,
-                  src: convexUrl,
-                }
-                : video
+                    ...video,
+                    duration,
+                    isLoading: false,
+                    src: convexUrl,
+                  }
+                : video,
             );
           });
 
@@ -557,7 +557,7 @@ export function useStreamingHandlers(
             saveToHistory();
             showSuccess(
               "Video variations complete",
-              "All 4 cinematic videos have been generated"
+              "All 4 cinematic videos have been generated",
             );
           }
 
@@ -571,7 +571,7 @@ export function useStreamingHandlers(
           duration,
           generation || null,
           images,
-          selectedImageForVideo
+          selectedImageForVideo,
         );
 
         if (newVideo) {
@@ -592,7 +592,7 @@ export function useStreamingHandlers(
         showErrorFromException(
           CANVAS_STRINGS.ERRORS.VIDEO_CREATION_FAILED,
           error,
-          CANVAS_STRINGS.ERRORS.VIDEO_FAILED
+          CANVAS_STRINGS.ERRORS.VIDEO_FAILED,
         );
       }
     },
@@ -606,7 +606,7 @@ export function useStreamingHandlers(
       setIsConvertingToVideo,
       setSelectedImageForVideo,
       setVideos,
-    ]
+    ],
   );
 
   const handleVideoGenerationError = useCallback(
@@ -622,7 +622,7 @@ export function useStreamingHandlers(
         return newMap;
       });
     },
-    [setActiveVideoGenerations]
+    [setActiveVideoGenerations],
   );
 
   const handleVideoGenerationProgress = useCallback(
@@ -631,7 +631,7 @@ export function useStreamingHandlers(
         data: { videoId, progress, status },
       });
     },
-    []
+    [],
   );
 
   return {

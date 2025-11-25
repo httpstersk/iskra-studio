@@ -10,9 +10,10 @@ import { SignInButton } from "@/components/auth/sign-in-button";
 import { UserMenu } from "@/components/auth/user-menu";
 import { QuotaIndicator } from "@/components/subscription/quota-indicator";
 import { Switch } from "@/components/ui/switch";
-import { isFiboAnalysisEnabledAtom } from "@/store/ui-atoms";
+import { isFiboAnalysisEnabledAtom, aiProviderAtom } from "@/store/ui-atoms";
 import { useAuth } from "@/hooks/useAuth";
 import { useAtom } from "jotai";
+import { SegmentedControl } from "@radix-ui/themes";
 
 /**
  * Props for the CanvasHeader component.
@@ -52,6 +53,7 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
   const [isFiboAnalysisEnabled, setIsFiboAnalysisEnabled] = useAtom(
     isFiboAnalysisEnabledAtom
   );
+  const [aiProvider, setAiProvider] = useAtom(aiProviderAtom);
 
   return (
     <header
@@ -60,11 +62,26 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
       <div className="flex items-center justify-between h-14 px-4">
         <div className="flex items-center"></div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center w-full gap-3">
           {!isLoading && (
             <>
               {isAuthenticated ? (
                 <>
+                  <SegmentedControl.Root
+                    className="mr-auto ml-24"
+                    value={aiProvider}
+                    onValueChange={(value) =>
+                      setAiProvider(value as "fal" | "replicate")
+                    }
+                    size="1"
+                  >
+                    <SegmentedControl.Item value="fal">
+                      Fal
+                    </SegmentedControl.Item>
+                    <SegmentedControl.Item value="replicate">
+                      Replicate
+                    </SegmentedControl.Item>
+                  </SegmentedControl.Root>
                   <div className="flex items-center gap-2 mr-4">
                     <Switch
                       id="fibo-mode"

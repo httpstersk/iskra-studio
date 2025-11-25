@@ -19,7 +19,7 @@ const analyzeImageRequestSchema = z.object({
       (value) => value.startsWith("https://") || value.startsWith("http://"),
       {
         message: "Image URL must use http or https",
-      }
+      },
     ),
 });
 

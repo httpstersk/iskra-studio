@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
     req.headers.get("x-real-ip") ||
     "unknown";
   const rateLimitResult = await tryPromise(
-    shouldLimitRequest(webhookRateLimiter, ip, "polar-webhook")
+    shouldLimitRequest(webhookRateLimiter, ip, "polar-webhook"),
   );
 
   if (isErr(rateLimitResult)) {
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
 
   // Verify webhook signature
   const eventResult = trySync(() =>
-    validateEvent(payload, headers, process.env.POLAR_WEBHOOK_SECRET!)
+    validateEvent(payload, headers, process.env.POLAR_WEBHOOK_SECRET!),
   );
 
   if (isErr(eventResult)) {
@@ -158,13 +158,13 @@ export async function POST(req: NextRequest) {
       log.error("Webhook signature verification failed", error);
       return NextResponse.json(
         { error: "Invalid webhook signature" },
-        { status: 403 }
+        { status: 403 },
       );
     }
     log.error("Webhook validation failed", getErrorMessage(eventResult));
     return NextResponse.json(
       { error: "Webhook validation failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
     log.error("Webhook event validation failed", validationResult.error);
     return NextResponse.json(
       { error: "Invalid event structure" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -204,20 +204,20 @@ export async function POST(req: NextRequest) {
   switch (validatedEvent.type) {
     case "subscription.created":
       handleResult = await tryPromise(
-        handleSubscriptionCreated(validatedEvent)
+        handleSubscriptionCreated(validatedEvent),
       );
       break;
 
     case "subscription.updated":
       handleResult = await tryPromise(
-        handleSubscriptionUpdated(validatedEvent)
+        handleSubscriptionUpdated(validatedEvent),
       );
       break;
 
     case "subscription.canceled":
     case "subscription.revoked":
       handleResult = await tryPromise(
-        handleSubscriptionCanceled(validatedEvent)
+        handleSubscriptionCanceled(validatedEvent),
       );
       break;
 
@@ -238,10 +238,13 @@ export async function POST(req: NextRequest) {
   }
 
   if (isErr(handleResult)) {
-    log.error(`Failed to handle event ${validatedEvent.type}`, getErrorMessage(handleResult));
+    log.error(
+      `Failed to handle event ${validatedEvent.type}`,
+      getErrorMessage(handleResult),
+    );
     return NextResponse.json(
       { error: "Event processing failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -299,7 +302,7 @@ async function handleSubscriptionCreated(event: PolarEvent) {
   }
 
   const currentPeriodStart = new Date(
-    subscription.currentPeriodStart
+    subscription.currentPeriodStart,
   ).getTime();
   const currentPeriodEnd = new Date(subscription.currentPeriodEnd).getTime();
 
@@ -324,7 +327,7 @@ async function handleSubscriptionUpdated(event: PolarEvent) {
   }
 
   const currentPeriodStart = new Date(
-    subscription.currentPeriodStart
+    subscription.currentPeriodStart,
   ).getTime();
   const currentPeriodEnd = new Date(subscription.currentPeriodEnd).getTime();
 

@@ -249,11 +249,13 @@ export async function generateStorylineImageConcepts(
         styleAnalysis,
         userContext,
       }),
-    })
+    }),
   );
 
   if (isErr(fetchResult)) {
-    throw new Error(`Failed to fetch storyline images: ${getErrorMessage(fetchResult)}`);
+    throw new Error(
+      `Failed to fetch storyline images: ${getErrorMessage(fetchResult)}`,
+    );
   }
 
   const response = fetchResult;
@@ -269,7 +271,9 @@ export async function generateStorylineImageConcepts(
 
   const jsonResult = await tryPromise(response.json());
   if (isErr(jsonResult)) {
-    throw new Error(`Failed to parse storyline images response: ${getErrorMessage(jsonResult)}`);
+    throw new Error(
+      `Failed to parse storyline images response: ${getErrorMessage(jsonResult)}`,
+    );
   }
 
   return jsonResult;
@@ -282,8 +286,13 @@ export async function generateStorylineImageConcepts(
 export function buildStorylineStyleContext(
   analysis: ImageStyleMoodAnalysis,
 ): Record<string, string> {
-  const { colorPalette, lighting: _lighting, visualStyle, styleSignature, narrativeTone } =
-    analysis;
+  const {
+    colorPalette,
+    lighting: _lighting,
+    visualStyle,
+    styleSignature,
+    narrativeTone,
+  } = analysis;
 
   return {
     // Colorimetry

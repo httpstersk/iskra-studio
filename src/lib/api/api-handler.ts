@@ -69,10 +69,10 @@ interface PublicHandlerConfig<TInput, TOutput> {
  * ```
  */
 export function createAuthenticatedHandler<TInput, TOutput>(
-  config: AuthenticatedHandlerConfig<TInput, TOutput>
+  config: AuthenticatedHandlerConfig<TInput, TOutput>,
 ) {
   return async (
-    req: Request
+    req: Request,
   ): Promise<NextResponse<TOutput | ErrorResponse>> => {
     try {
       // Authenticate user
@@ -81,7 +81,7 @@ export function createAuthenticatedHandler<TInput, TOutput>(
       if (!userId) {
         return NextResponse.json(
           { error: "Authentication required" },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -92,7 +92,7 @@ export function createAuthenticatedHandler<TInput, TOutput>(
       if (!parseResult.success) {
         return NextResponse.json(
           { error: "Invalid request", details: parseResult.error.flatten() },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -106,7 +106,7 @@ export function createAuthenticatedHandler<TInput, TOutput>(
           error: "Request failed",
           details: error instanceof Error ? error.message : "Unknown error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
   };
@@ -139,10 +139,10 @@ export function createAuthenticatedHandler<TInput, TOutput>(
  * ```
  */
 export function createPublicHandler<TInput, TOutput>(
-  config: PublicHandlerConfig<TInput, TOutput>
+  config: PublicHandlerConfig<TInput, TOutput>,
 ) {
   return async (
-    req: Request
+    req: Request,
   ): Promise<NextResponse<TOutput | ErrorResponse>> => {
     try {
       // Parse and validate request body
@@ -152,7 +152,7 @@ export function createPublicHandler<TInput, TOutput>(
       if (!parseResult.success) {
         return NextResponse.json(
           { error: "Invalid request", details: parseResult.error.flatten() },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -166,7 +166,7 @@ export function createPublicHandler<TInput, TOutput>(
           error: "Request failed",
           details: error instanceof Error ? error.message : "Unknown error",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
   };

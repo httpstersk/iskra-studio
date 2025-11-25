@@ -7,8 +7,8 @@
 
 import { createAuthenticatedHandler, requireEnv } from "@/lib/api/api-handler";
 import {
-    handleVariations,
-    variationHandlers,
+  handleVariations,
+  variationHandlers,
 } from "@/lib/api/variation-api-helper";
 import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
 import { logger } from "@/lib/logger";
@@ -22,71 +22,73 @@ const log = logger.generation;
 export const maxDuration = 60;
 
 const requestSchema = z.object({
-    surfaceMaps: z.array(z.string()).min(1).max(12),
-    imageUrls: z.array(z.string().url()),
-    userContext: z.string().optional(),
+  surfaceMaps: z.array(z.string()).min(1).max(12),
+  imageUrls: z.array(z.string().url()),
+  userContext: z.string().optional(),
 });
 
 export const POST = createAuthenticatedHandler({
-    schema: requestSchema,
-    handler: async (input, _userId) => {
-        const { imageUrls, surfaceMaps, userContext } = input;
+  schema: requestSchema,
+  handler: async (input, _userId) => {
+    const { imageUrls, surfaceMaps, userContext } = input;
 
-        // Initialize Convex client for quota operations
-        const { getToken } = await auth();
-        const token = await getToken({ template: "convex" });
-        const convex = new ConvexHttpClient(
-            requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL")
-        );
-        if (token) {
-            convex.setAuth(token);
-        }
+    // Initialize Convex client for quota operations
+    const { getToken } = await auth();
+    const token = await getToken({ template: "convex" });
+    const convex = new ConvexHttpClient(
+      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL"),
+    );
+    if (token) {
+      convex.setAuth(token);
+    }
 
-        // Atomically check and reserve quota before generation
-        // This prevents race conditions where parallel requests could exceed quota limits
-        const quotaResult = await tryPromise(
-            convex.mutation(api.quotas.checkAndReserveQuota, {
-                type: "image",
-                count: surfaceMaps.length,
-            })
-        );
+    // Atomically check and reserve quota before generation
+    // This prevents race conditions where parallel requests could exceed quota limits
+    const quotaResult = await tryPromise(
+      convex.mutation(api.quotas.checkAndReserveQuota, {
+        type: "image",
+        count: surfaceMaps.length,
+      }),
+    );
 
-        if (isErr(quotaResult)) {
-            const errorMsg = getErrorMessage(quotaResult);
-            // Preserve quota exceeded errors for proper client handling
-            if (errorMsg.includes("Quota exceeded")) {
-                throw new Error(errorMsg);
-            }
+    if (isErr(quotaResult)) {
+      const errorMsg = getErrorMessage(quotaResult);
+      // Preserve quota exceeded errors for proper client handling
+      if (errorMsg.includes("Quota exceeded")) {
+        throw new Error(errorMsg);
+      }
 
-            throw new Error(`Failed to reserve quota for generation: ${errorMsg}`);
-        }
+      throw new Error(`Failed to reserve quota for generation: ${errorMsg}`);
+    }
 
-        // Quota has been reserved, proceed with generation
-        const generationResult = await tryPromise(
-            handleVariations(variationHandlers.surface, {
-                imageUrls,
-                items: surfaceMaps,
-                userContext,
-                itemKey: "surfaceMap",
-            })
-        );
+    // Quota has been reserved, proceed with generation
+    const generationResult = await tryPromise(
+      handleVariations(variationHandlers.surface, {
+        imageUrls,
+        items: surfaceMaps,
+        userContext,
+        itemKey: "surfaceMap",
+      }),
+    );
 
-        if (isErr(generationResult)) {
-            // Refund quota if generation fails
-            const refundResult = await tryPromise(
-                convex.mutation(api.quotas.refundQuota, {
-                    type: "image",
-                    count: surfaceMaps.length,
-                })
-            );
+    if (isErr(generationResult)) {
+      // Refund quota if generation fails
+      const refundResult = await tryPromise(
+        convex.mutation(api.quotas.refundQuota, {
+          type: "image",
+          count: surfaceMaps.length,
+        }),
+      );
 
-            if (isErr(refundResult)) {
-                log.error("Failed to refund quota", getErrorMessage(refundResult));
-            }
+      if (isErr(refundResult)) {
+        log.error("Failed to refund quota", getErrorMessage(refundResult));
+      }
 
-            throw new Error(`Surface variation generation failed: ${getErrorMessage(generationResult)}`);
-        }
+      throw new Error(
+        `Surface variation generation failed: ${getErrorMessage(generationResult)}`,
+      );
+    }
 
-        return generationResult;
-    },
+    return generationResult;
+  },
 });

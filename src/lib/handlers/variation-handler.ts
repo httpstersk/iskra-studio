@@ -23,7 +23,14 @@ interface VariationHandlerDeps {
   /** Model to use for image generation */
   imageModel?: ImageModelId;
   /** Type of image variation (camera-angles, director, or lighting) */
-  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface";
+  imageVariationType?:
+    | "camera-angles"
+    | "director"
+    | "lighting"
+    | "storyline"
+    | "characters"
+    | "emotions"
+    | "surface";
   /** Whether FIBO analysis is enabled */
   isFiboAnalysisEnabled?: boolean;
   /** Array of all placed images */
@@ -70,7 +77,7 @@ interface VariationHandlerDeps {
  * - Image mode: Uses unified handler for all variation types (director, camera angles, lighting)
  */
 export const handleVariationGeneration = async (
-  deps: VariationHandlerDeps
+  deps: VariationHandlerDeps,
 ): Promise<void> => {
   const {
     images,
@@ -96,7 +103,7 @@ export const handleVariationGeneration = async (
     if (!setVideos || !setActiveVideoGenerations) {
       showError(
         "Configuration error",
-        "Video generation handlers not available"
+        "Video generation handlers not available",
       );
       return;
     }

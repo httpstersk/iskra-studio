@@ -41,7 +41,7 @@ interface UpgradeModalProps {
  */
 export function UpgradeModal({ onOpenChange, open }: UpgradeModalProps) {
   const [billingInterval, setBillingInterval] = useState<"month" | "year">(
-    "year"
+    "year",
   );
   const { error, isUpgrading, upgrade } = useSubscription();
   const { isLoading, products } = usePolarProducts();
@@ -86,7 +86,7 @@ export function UpgradeModal({ onOpenChange, open }: UpgradeModalProps) {
                 "cursor-pointer",
                 billingInterval === "month"
                   ? "text-foreground"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground",
               )}
               htmlFor="billing-switch"
             >
@@ -104,7 +104,7 @@ export function UpgradeModal({ onOpenChange, open }: UpgradeModalProps) {
                 "cursor-pointer",
                 billingInterval === "year"
                   ? "text-foreground"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground",
               )}
               htmlFor="billing-switch"
             >

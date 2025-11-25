@@ -22,10 +22,7 @@
  * // Returns 2 unique colors, e.g., ['blue', 'yellow']
  * ```
  */
-export function selectRandomItems<T>(
-  items: readonly T[],
-  count: number,
-): T[] {
+export function selectRandomItems<T>(items: readonly T[], count: number): T[] {
   if (count <= 0) {
     return [];
   }

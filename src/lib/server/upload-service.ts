@@ -138,17 +138,17 @@ function validateFile(file: File | Blob): void {
  * @returns True if the error indicates a rate limit
  */
 function isRateLimitError(error: unknown): boolean {
-  if (typeof error === 'object' && error !== null) {
+  if (typeof error === "object" && error !== null) {
     // Check HttpErr payload
-    if ('payload' in error) {
+    if ("payload" in error) {
       const payload = (error as { payload?: { message?: string } }).payload;
-      const message = payload?.message || '';
-      return message.toLowerCase().includes('rate limit');
+      const message = payload?.message || "";
+      return message.toLowerCase().includes("rate limit");
     }
 
     // Check regular Error
     if (error instanceof Error) {
-      return error.message.toLowerCase().includes('rate limit');
+      return error.message.toLowerCase().includes("rate limit");
     }
   }
 
@@ -202,11 +202,13 @@ async function uploadToConvexEndpoint(
     );
 
     // If result is an error and it's a rate limit error, retry
-    if ('payload' in result && isRateLimitError(result)) {
+    if ("payload" in result && isRateLimitError(result)) {
       if (retryAttempt < MAX_UPLOAD_RETRIES) {
         // Calculate exponential backoff delay: 1s, 2s, 4s
         const delayMs = INITIAL_RETRY_DELAY_MS * Math.pow(2, retryAttempt);
-        log.info(`Rate limit hit, retrying in ${delayMs}ms (attempt ${retryAttempt + 1}/${MAX_UPLOAD_RETRIES + 1})`);
+        log.info(
+          `Rate limit hit, retrying in ${delayMs}ms (attempt ${retryAttempt + 1}/${MAX_UPLOAD_RETRIES + 1})`,
+        );
 
         await delay(delayMs);
         return uploadToConvexEndpoint(options, retryAttempt + 1);
@@ -218,7 +220,9 @@ async function uploadToConvexEndpoint(
     // Handle unexpected errors during upload
     if (isRateLimitError(error) && retryAttempt < MAX_UPLOAD_RETRIES) {
       const delayMs = INITIAL_RETRY_DELAY_MS * Math.pow(2, retryAttempt);
-      log.info(`Rate limit hit (caught), retrying in ${delayMs}ms (attempt ${retryAttempt + 1}/${MAX_UPLOAD_RETRIES + 1})`);
+      log.info(
+        `Rate limit hit (caught), retrying in ${delayMs}ms (attempt ${retryAttempt + 1}/${MAX_UPLOAD_RETRIES + 1})`,
+      );
 
       await delay(delayMs);
       return uploadToConvexEndpoint(options, retryAttempt + 1);
@@ -321,15 +325,15 @@ export async function uploadFileToConvex(
   const uploadResult = await uploadToConvexEndpoint(options);
 
   // Check if result is an error (has payload property)
-  if ('payload' in uploadResult) {
-    const errorMessage = uploadResult.payload.message || 'Unknown error';
+  if ("payload" in uploadResult) {
+    const errorMessage = uploadResult.payload.message || "Unknown error";
 
     // Provide more helpful message for rate limit errors
     if (isRateLimitError(uploadResult)) {
       throw new Error(
         `Upload to Convex failed after ${MAX_UPLOAD_RETRIES + 1} attempts due to rate limiting. ` +
-        `This usually happens when too many uploads are happening simultaneously. ` +
-        `The system will automatically retry. Original error: ${errorMessage}`
+          `This usually happens when too many uploads are happening simultaneously. ` +
+          `The system will automatically retry. Original error: ${errorMessage}`,
       );
     }
 

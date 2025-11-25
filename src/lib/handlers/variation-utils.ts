@@ -74,9 +74,11 @@ export async function imageToBlob(imageSrc: string): Promise<Blob | Error> {
     new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
       img.onerror = (_error) => {
-        reject(new Error(`Failed to load image: ${imageSrc.substring(0, 100)}`));
+        reject(
+          new Error(`Failed to load image: ${imageSrc.substring(0, 100)}`),
+        );
       };
-    })
+    }),
   );
 
   if (isErr(loadResult)) {
@@ -107,7 +109,7 @@ export async function imageToBlob(imageSrc: string): Promise<Blob | Error> {
         "image/png",
         0.95,
       );
-    })
+    }),
   );
 
   if (isErr(blobResult)) {
@@ -129,7 +131,7 @@ export async function uploadToConvex(blob: Blob): Promise<string | Error> {
     fetch("/api/convex/upload", {
       method: "POST",
       body: formData,
-    })
+    }),
   );
 
   if (isErr(fetchResult)) {
@@ -142,9 +144,10 @@ export async function uploadToConvex(blob: Blob): Promise<string | Error> {
 
   if (!response.ok) {
     const errorResult = await tryPromise(response.json());
-    const errorMsg = !isErr(errorResult) && errorResult?.message
-      ? errorResult.message
-      : `Upload failed with status ${response.status}`;
+    const errorMsg =
+      !isErr(errorResult) && errorResult?.message
+        ? errorResult.message
+        : `Upload failed with status ${response.status}`;
 
     // Check for rate limit
     const isRateLimit =
@@ -178,7 +181,9 @@ export async function uploadToConvex(blob: Blob): Promise<string | Error> {
  * Returns a URL (either proxy or full, depending on input)
  * Returns errors as values instead of throwing
  */
-export async function ensureImageInConvex(imageSrc: string): Promise<string | Error> {
+export async function ensureImageInConvex(
+  imageSrc: string,
+): Promise<string | Error> {
   // If already in Convex, return as-is (could be proxy or signed URL)
   if (isConvexStorageUrl(imageSrc)) {
     return imageSrc;
@@ -246,7 +251,9 @@ export function toSignedUrl(imageUrl: string): string | Error {
   try {
     new URL(trimmedUrl);
   } catch {
-    return new Error(`Malformed URL structure: ${trimmedUrl.substring(0, 100)}`);
+    return new Error(
+      `Malformed URL structure: ${trimmedUrl.substring(0, 100)}`,
+    );
   }
 
   // Otherwise return as-is (already a full URL)
@@ -273,7 +280,10 @@ export function validateImageSelection(
     .filter((img): img is PlacedImage => !!img);
 
   if (selectedImages.length !== selectedIds.length) {
-    showError("Image not found", "One or more selected images could not be found");
+    showError(
+      "Image not found",
+      "One or more selected images could not be found",
+    );
     return null;
   }
 

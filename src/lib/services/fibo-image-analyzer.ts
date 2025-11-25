@@ -51,7 +51,7 @@ export interface FiboAnalysisOptions {
  * ```
  */
 export async function analyzeFiboImage(
-  options: FiboAnalysisOptions
+  options: FiboAnalysisOptions,
 ): Promise<FiboStructuredPrompt | FiboAnalysisErr | ValidationErr> {
   const {
     imageUrls,
@@ -74,7 +74,7 @@ export async function analyzeFiboImage(
       seed,
       sync: false,
     },
-    timeout
+    timeout,
   );
 
   if (isErr(result)) {
@@ -124,7 +124,7 @@ export async function analyzeFiboImage(
  */
 export async function analyzeFiboImageWithRetry(
   options: FiboAnalysisOptions,
-  maxRetries = 2
+  maxRetries = 2,
 ): Promise<FiboStructuredPrompt | FiboAnalysisErr | ValidationErr> {
   let lastError: FiboAnalysisErr | ValidationErr | undefined;
 

@@ -5,7 +5,12 @@ import {
 import type { GeneratedAssetUploadPayload } from "@/types/generated-asset";
 import { Buffer } from "node:buffer";
 import sharp from "sharp";
-import { trySync, tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
+import {
+  trySync,
+  tryPromise,
+  isErr,
+  getErrorMessage,
+} from "@/lib/errors/safe-errors";
 
 const PROXY_PATH = "/api/storage/proxy";
 
@@ -78,19 +83,21 @@ export function resolveSourceUrl(sourceUrl: string, origin: string): string {
 
 async function downloadRemoteAsset(
   url: string,
-  assetType: GeneratedAssetUploadPayload["assetType"]
+  assetType: GeneratedAssetUploadPayload["assetType"],
 ): Promise<DownloadedAsset> {
   const fetchResult = await tryPromise(fetch(url));
 
   if (isErr(fetchResult)) {
-    throw new Error(`Failed to fetch asset from ${url}: ${getErrorMessage(fetchResult)}`);
+    throw new Error(
+      `Failed to fetch asset from ${url}: ${getErrorMessage(fetchResult)}`,
+    );
   }
 
   const response = fetchResult;
 
   if (!response.ok) {
     throw new Error(
-      `Failed to download asset from ${url}: ${response.status} ${response.statusText}`
+      `Failed to download asset from ${url}: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -99,7 +106,9 @@ async function downloadRemoteAsset(
 
   const arrayBufferResult = await tryPromise(response.arrayBuffer());
   if (isErr(arrayBufferResult)) {
-    throw new Error(`Failed to read asset data: ${getErrorMessage(arrayBufferResult)}`);
+    throw new Error(
+      `Failed to read asset data: ${getErrorMessage(arrayBufferResult)}`,
+    );
   }
 
   return {
@@ -109,7 +118,7 @@ async function downloadRemoteAsset(
 }
 
 async function generateThumbnailBlob(
-  buffer: Buffer
+  buffer: Buffer,
 ): Promise<Blob | undefined> {
   const thumbnailResult = await tryPromise(
     sharp(buffer)
@@ -118,7 +127,7 @@ async function generateThumbnailBlob(
         withoutEnlargement: true,
       })
       .webp({ quality: 75 })
-      .toBuffer()
+      .toBuffer(),
   );
 
   if (isErr(thumbnailResult)) {

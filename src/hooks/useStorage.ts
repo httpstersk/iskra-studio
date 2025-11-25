@@ -1,7 +1,4 @@
-import {
-  getCachedImageSrcById,
-  registerImageSrc,
-} from "@/hooks/useImageCache";
+import { getCachedImageSrcById, registerImageSrc } from "@/hooks/useImageCache";
 import { PLACEHOLDER_URLS, UI_CONSTANTS } from "@/lib/constants";
 import { getErrorMessage, isErr, tryPromise } from "@/lib/errors/safe-errors";
 import { logger } from "@/lib/logger";
@@ -37,7 +34,7 @@ export function useStorage(
   setImages: (images: PlacedImage[]) => void,
   setVideos: (videos: PlacedVideo[]) => void,
   setViewport: (viewport: Viewport) => void,
-  activeGenerationsSize: number
+  activeGenerationsSize: number,
 ) {
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,7 +48,7 @@ export function useStorage(
   // Track the CURRENT project ID (not the one being loaded) to detect project switches during async operations
   // This ref is updated immediately when currentProject changes, allowing async operations to check if they should abort
   const currentProjectIdRef = useRef<string | null>(
-    currentProject?._id ?? null
+    currentProject?._id ?? null,
   );
 
   const saveToStorage = useCallback(async () => {
@@ -71,12 +68,15 @@ export function useStorage(
       if (image.src.startsWith(PLACEHOLDER_URLS.TRANSPARENT_GIF)) continue;
 
       const existingImageResult = await tryPromise(
-        canvasStorage.getImage(image.id)
+        canvasStorage.getImage(image.id),
       );
       // If getting image fails, we might still want to try saving, or just log and continue
       // For now, let's log and proceed, assuming it might be a new image
       if (isErr(existingImageResult)) {
-        log.warn("Failed to check existing image", getErrorMessage(existingImageResult));
+        log.warn(
+          "Failed to check existing image",
+          getErrorMessage(existingImageResult),
+        );
       }
       const existingImage = isErr(existingImageResult)
         ? null
@@ -85,10 +85,13 @@ export function useStorage(
       // Save if new, or update if the src has changed (e.g., variation completed)
       if (!existingImage || existingImage.originalDataUrl !== image.src) {
         const saveResult = await tryPromise(
-          canvasStorage.saveImage(image.src, image.id)
+          canvasStorage.saveImage(image.src, image.id),
         );
         if (isErr(saveResult)) {
-          log.error("Failed to save image locally", getErrorMessage(saveResult));
+          log.error(
+            "Failed to save image locally",
+            getErrorMessage(saveResult),
+          );
         }
       }
     }
@@ -98,11 +101,14 @@ export function useStorage(
       if (video.src.startsWith(PLACEHOLDER_URLS.TRANSPARENT_GIF)) continue;
 
       const existingVideoResult = await tryPromise(
-        canvasStorage.getVideo(video.id)
+        canvasStorage.getVideo(video.id),
       );
 
       if (isErr(existingVideoResult)) {
-        log.warn("Failed to check existing video", getErrorMessage(existingVideoResult));
+        log.warn(
+          "Failed to check existing video",
+          getErrorMessage(existingVideoResult),
+        );
       }
 
       const existingVideo = isErr(existingVideoResult)
@@ -112,11 +118,14 @@ export function useStorage(
       // Save if new, or update if the src has changed (e.g., video generation completed)
       if (!existingVideo || existingVideo.originalDataUrl !== video.src) {
         const saveResult = await tryPromise(
-          canvasStorage.saveVideo(video.src, video.duration, video.id)
+          canvasStorage.saveVideo(video.src, video.duration, video.id),
         );
 
         if (isErr(saveResult)) {
-          log.error("Failed to save video locally", getErrorMessage(saveResult));
+          log.error(
+            "Failed to save video locally",
+            getErrorMessage(saveResult),
+          );
         }
       }
     }
@@ -127,14 +136,14 @@ export function useStorage(
         saveProjectMutation({
           projectId: currentProject._id as Id<"projects">,
           canvasState,
-        })
+        }),
       );
 
       if (isErr(saveResult)) {
         showErrorFromException(
           "Save failed",
           saveResult.payload,
-          "Could not save to cloud"
+          "Could not save to cloud",
         );
       }
     }
@@ -143,7 +152,7 @@ export function useStorage(
     // setTimeout necessary here for precise timing delay, not animation-dependent
     setTimeout(
       () => setIsSaving(false),
-      UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS
+      UI_CONSTANTS.SAVING_INDICATOR_DELAY_MS,
     );
   }, [currentProject?._id, images, saveProjectMutation, videos, viewport]);
 
@@ -166,7 +175,7 @@ export function useStorage(
       const projectResult = await tryPromise(
         convexClient.query(api.projects.getProject, {
           projectId: projectIdToLoad as Id<"projects">,
-        })
+        }),
       );
 
       if (isErr(projectResult)) {
@@ -283,7 +292,7 @@ export function useStorage(
       const assetResult = await tryPromise(
         convexClient.query(api.assets.getAsset, {
           assetId: assetId as Id<"assets">,
-        })
+        }),
       );
 
       if (!isErr(assetResult)) {
@@ -309,7 +318,7 @@ export function useStorage(
 
           if (metadata) {
             const index = currentImages.findIndex(
-              (img) => img.id === element.id
+              (img) => img.id === element.id,
             );
             if (index !== -1) {
               currentImages[index] = {
@@ -325,7 +334,7 @@ export function useStorage(
         }
 
         const imageDataResult = await tryPromise(
-          canvasStorage.getImage(element.id)
+          canvasStorage.getImage(element.id),
         );
         const imageData = isErr(imageDataResult) ? null : imageDataResult;
 
@@ -371,7 +380,7 @@ export function useStorage(
         }
       } else if (element.type === "video") {
         const videoDataResult = await tryPromise(
-          canvasStorage.getVideo(element.id)
+          canvasStorage.getVideo(element.id),
         );
         const videoData = isErr(videoDataResult) ? null : videoDataResult;
 

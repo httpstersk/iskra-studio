@@ -57,7 +57,7 @@ function formatBeat(
  */
 function truncatePromptToLimit(beatSections: string[]): string {
   let prompt = beatSections.join("\n\n");
-  
+
   // If already within limit, return as-is
   if (prompt.length <= PROMPT_CHAR_LIMIT) {
     return prompt;
@@ -86,10 +86,7 @@ function truncatePromptToLimit(beatSections: string[]): string {
 
     // Calculate target length for description
     const currentDescLength = description.length;
-    const targetDescLength = Math.max(
-      80,
-      currentDescLength - reductionPerBeat,
-    );
+    const targetDescLength = Math.max(80, currentDescLength - reductionPerBeat);
 
     // Truncate description if needed
     const shortenedDesc =
@@ -136,7 +133,9 @@ export function expandStorylineToPrompt(
   // Log warning if truncation occurred
   const originalLength = beatSections.join("\n\n").length;
   if (originalLength > PROMPT_CHAR_LIMIT) {
-    log.warn(`Prompt truncated from ${originalLength} to ${finalPrompt.length} characters to fit ${PROMPT_CHAR_LIMIT} char limit`);
+    log.warn(
+      `Prompt truncated from ${originalLength} to ${finalPrompt.length} characters to fit ${PROMPT_CHAR_LIMIT} char limit`,
+    );
   }
 
   return finalPrompt;

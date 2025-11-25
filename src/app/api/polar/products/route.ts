@@ -10,14 +10,17 @@ export async function GET() {
     polar.products.list({
       organizationId: POLAR_CONFIG.organizationId,
       isArchived: false,
-    })
+    }),
   );
 
   if (isErr(productsResult)) {
-    log.error("Failed to fetch Polar products", getErrorMessage(productsResult));
+    log.error(
+      "Failed to fetch Polar products",
+      getErrorMessage(productsResult),
+    );
     return NextResponse.json(
       { error: "Failed to fetch products" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -25,10 +28,10 @@ export async function GET() {
 
   // Filter for our specific products
   const monthlyProduct = products.items.find(
-    (p) => p.id === POLAR_CONFIG.products.monthly
+    (p) => p.id === POLAR_CONFIG.products.monthly,
   );
   const annualProduct = products.items.find(
-    (p) => p.id === POLAR_CONFIG.products.annual
+    (p) => p.id === POLAR_CONFIG.products.annual,
   );
 
   return NextResponse.json({

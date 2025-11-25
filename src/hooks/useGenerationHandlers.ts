@@ -24,17 +24,24 @@ interface GenerationHandlerDeps {
     prompt: string;
     seed?: number;
     imageSize?:
-    | "square"
-    | "landscape_16_9"
-    | "portrait_16_9"
-    | "landscape_4_3"
-    | "portrait_4_3"
-    | { width: number; height: number };
+      | "square"
+      | "landscape_16_9"
+      | "portrait_16_9"
+      | "landscape_4_3"
+      | "portrait_4_3"
+      | { width: number; height: number };
   }) => Promise<{ url: string; width: number; height: number; seed: number }>;
   generationCount: number;
   generationSettings: GenerationSettings;
   imageModel: ImageModelId;
-  imageVariationType: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface";
+  imageVariationType:
+    | "camera-angles"
+    | "director"
+    | "lighting"
+    | "storyline"
+    | "characters"
+    | "emotions"
+    | "surface";
   images: PlacedImage[];
   isAuthenticated: boolean;
   selectedIds: string[];

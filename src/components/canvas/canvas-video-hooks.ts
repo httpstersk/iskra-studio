@@ -21,7 +21,7 @@ import useImage from "use-image";
  * @returns Loaded pixelated image element or undefined
  */
 export const useVideoPixelatedOverlay = (
-  pixelatedSrc: string | undefined
+  pixelatedSrc: string | undefined,
 ): HTMLImageElement | undefined => {
   const cachedImage = pixelatedSrc
     ? getCachedPixelatedImage(pixelatedSrc)
@@ -29,7 +29,7 @@ export const useVideoPixelatedOverlay = (
 
   const [loadedImg] = useImage(
     pixelatedSrc && !cachedImage ? pixelatedSrc : "",
-    "anonymous"
+    "anonymous",
   );
 
   if (!pixelatedSrc) return undefined;

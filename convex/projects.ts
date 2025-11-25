@@ -155,10 +155,10 @@ export const saveProject = mutation({
 
     // Calculate counts
     const imageCount = args.canvasState.elements.filter(
-      (e) => e.type === "image"
+      (e) => e.type === "image",
     ).length;
     const videoCount = args.canvasState.elements.filter(
-      (e) => e.type === "video"
+      (e) => e.type === "video",
     ).length;
 
     // Update project metadata
@@ -285,7 +285,8 @@ export const getProject = query({
       .first();
 
     // Fallback to legacy canvasState if not found in new table (during migration)
-    const canvasState = projectState?.canvasState ?? (project as any).canvasState;
+    const canvasState =
+      projectState?.canvasState ?? (project as any).canvasState;
 
     if (!canvasState) {
       throw new Error("Project state not found");

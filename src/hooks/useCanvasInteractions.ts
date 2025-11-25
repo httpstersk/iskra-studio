@@ -337,7 +337,11 @@ export function useCanvasInteractions(
 
       const touches = e.evt.touches;
 
-      if (touches.length === 2 && lastTouchDistance.current && lastTouchCenter.current) {
+      if (
+        touches.length === 2 &&
+        lastTouchDistance.current &&
+        lastTouchCenter.current
+      ) {
         e.evt.preventDefault();
 
         const touch1 = { x: touches[0].clientX, y: touches[0].clientY };
@@ -411,12 +415,7 @@ export function useCanvasInteractions(
         lastTouchCenter.current = touch;
       }
     },
-    [
-      isDraggingImage,
-      isSelecting,
-      isTouchingImage,
-      scheduleViewportUpdate,
-    ],
+    [isDraggingImage, isSelecting, isTouchingImage, scheduleViewportUpdate],
   );
 
   const handleTouchEnd = useCallback(

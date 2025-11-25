@@ -11,5 +11,5 @@ import { selectRandomItems } from "./random-selection-utils";
  * @returns Array of randomly selected, unique emotion variation prompts
  */
 export function selectRandomEmotionVariations(count: number): string[] {
-    return selectRandomItems(EMOTION_VARIATIONS, count);
+  return selectRandomItems(EMOTION_VARIATIONS, count);
 }

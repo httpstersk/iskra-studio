@@ -98,7 +98,6 @@ const getDirectiveLabelText = (image: PlacedImage): string | undefined => {
   return undefined;
 };
 
-
 /**
  * CanvasImage component renders an image on the Konva canvas with full interaction support.
  *
@@ -155,12 +154,12 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
     image.hasContentError || image.isSkeleton ? "" : image.src,
     image.thumbnailSrc,
     !!image.isGenerated,
-    !!image.displayAsThumbnail
+    !!image.displayAsThumbnail,
   );
 
   // Get pixelated overlay if available (skip for skeletons)
   const pixelatedImg = usePixelatedOverlay(
-    image.isSkeleton ? undefined : image.pixelatedSrc
+    image.isSkeleton ? undefined : image.pixelatedSrc,
   );
 
   // Unified animation coordinator for all animations
@@ -221,7 +220,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       setImages,
       setSnapLines,
       throttleFrame,
-    }
+    },
   );
 
   // Handle interaction states
@@ -247,7 +246,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       handleDragEndInternal();
       onDragEnd();
     },
-    [handleDragEndInternal, onDragEnd]
+    [handleDragEndInternal, onDragEnd],
   );
 
   // Handle double-click to toggle variation mode
@@ -258,7 +257,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
         onDoubleClick(image.id);
       }
     },
-    [onDoubleClick, image.id]
+    [onDoubleClick, image.id],
   );
 
   // Common props shared across all KonvaImage instances
@@ -299,7 +298,7 @@ const CanvasImageComponent: React.FC<CanvasImageProps> = ({
       handleMouseUp,
       strokeColor,
       strokeWidth,
-    ]
+    ],
   );
 
   // Get directive label text if applicable
@@ -425,7 +424,7 @@ CanvasImageComponent.displayName = "CanvasImage";
  */
 const arePropsEqual = (
   prevProps: CanvasImageProps,
-  nextProps: CanvasImageProps
+  nextProps: CanvasImageProps,
 ): boolean => {
   // Check primitive props
   if (

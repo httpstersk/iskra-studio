@@ -36,7 +36,7 @@ export const POST = createAuthenticatedHandler({
     const { getToken } = await auth();
     const token = await getToken({ template: "convex" });
     const convex = new ConvexHttpClient(
-      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL")
+      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL"),
     );
 
     if (token) {
@@ -49,7 +49,7 @@ export const POST = createAuthenticatedHandler({
       convex.mutation(api.quotas.checkAndReserveQuota, {
         type: "image",
         count: lightingScenarios.length,
-      })
+      }),
     );
 
     if (isErr(quotaResult)) {
@@ -69,7 +69,7 @@ export const POST = createAuthenticatedHandler({
         items: lightingScenarios,
         userContext,
         itemKey: "lightingScenario",
-      })
+      }),
     );
 
     if (isErr(generationResult)) {
@@ -78,14 +78,16 @@ export const POST = createAuthenticatedHandler({
         convex.mutation(api.quotas.refundQuota, {
           type: "image",
           count: lightingScenarios.length,
-        })
+        }),
       );
 
       if (isErr(refundResult)) {
         log.error("Failed to refund quota", getErrorMessage(refundResult));
       }
 
-      throw new Error(`Lighting variation generation failed: ${getErrorMessage(generationResult)}`);
+      throw new Error(
+        `Lighting variation generation failed: ${getErrorMessage(generationResult)}`,
+      );
     }
 
     return generationResult;

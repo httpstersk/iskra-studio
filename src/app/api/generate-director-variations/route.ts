@@ -36,7 +36,7 @@ export const POST = createAuthenticatedHandler({
     const { getToken } = await auth();
     const token = await getToken({ template: "convex" });
     const convex = new ConvexHttpClient(
-      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL")
+      requireEnv("NEXT_PUBLIC_CONVEX_URL", "Convex URL"),
     );
     if (token) {
       convex.setAuth(token);
@@ -48,7 +48,7 @@ export const POST = createAuthenticatedHandler({
       convex.mutation(api.quotas.checkAndReserveQuota, {
         type: "image",
         count: directors.length,
-      })
+      }),
     );
 
     if (isErr(quotaResult)) {
@@ -68,7 +68,7 @@ export const POST = createAuthenticatedHandler({
         items: directors,
         userContext,
         itemKey: "director",
-      })
+      }),
     );
 
     if (isErr(generationResult)) {
@@ -77,14 +77,16 @@ export const POST = createAuthenticatedHandler({
         convex.mutation(api.quotas.refundQuota, {
           type: "image",
           count: directors.length,
-        })
+        }),
       );
 
       if (isErr(refundResult)) {
         log.error("Failed to refund quota", getErrorMessage(refundResult));
       }
 
-      throw new Error(`Director variation generation failed: ${getErrorMessage(generationResult)}`);
+      throw new Error(
+        `Director variation generation failed: ${getErrorMessage(generationResult)}`,
+      );
     }
 
     return generationResult;

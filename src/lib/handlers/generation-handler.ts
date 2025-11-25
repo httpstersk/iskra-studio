@@ -32,11 +32,11 @@ interface GenerationHandlerDeps {
     prompt: string;
     seed?: number;
     imageSize?:
-    | "landscape_4_3"
-    | "portrait_4_3"
-    | "square"
-    | "landscape_16_9"
-    | "portrait_16_9";
+      | "landscape_4_3"
+      | "portrait_4_3"
+      | "square"
+      | "landscape_16_9"
+      | "portrait_16_9";
   }) => Promise<{ width: number; height: number; url: string }>;
   userId?: string; // Optional user ID for Convex storage
   useConvexStorage?: boolean; // Flag to enable Convex storage migration
@@ -229,12 +229,7 @@ const processImageVariation = async (
   img: PlacedImage,
   deps: GenerationHandlerDeps,
 ): Promise<boolean> => {
-  const {
-    generationSettings,
-    setImages,
-    setActiveGenerations,
-    userId,
-  } = deps;
+  const { generationSettings, setImages, setActiveGenerations, userId } = deps;
 
   let finalUrl = img.src;
 
@@ -333,12 +328,7 @@ const handleImageToImage = async (
 };
 
 export const handleRun = async (deps: GenerationHandlerDeps) => {
-  const {
-    images,
-    selectedIds,
-    generationSettings,
-    setIsGenerating,
-  } = deps;
+  const { images, selectedIds, generationSettings, setIsGenerating } = deps;
 
   if (!generationSettings.prompt) {
     showError("No Prompt", "Please enter a prompt to generate an image");

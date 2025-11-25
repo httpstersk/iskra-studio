@@ -35,7 +35,7 @@ export const useCanvasImageSource = (
   src: string,
   thumbnailSrc: string | undefined,
   isGenerated: boolean,
-  displayAsThumbnail: boolean
+  displayAsThumbnail: boolean,
 ) => {
   // When displayAsThumbnail is true, ONLY load thumbnail, never load src
   // This prevents loading full-size images when we only want thumbnails
@@ -49,11 +49,11 @@ export const useCanvasImageSource = (
 
   // Load full-size image (only if shouldLoadFullSize is true)
   const [streamingImg] = useStreamingImage(
-    isGenerated && shouldLoadFullSize ? effectiveSrc : ""
+    isGenerated && shouldLoadFullSize ? effectiveSrc : "",
   );
   const [cachedImg] = useImageCache(
     !isGenerated && shouldLoadFullSize ? effectiveSrc : "",
-    CORS_MODE
+    CORS_MODE,
   );
 
   // Full-size image (once loaded, switch from thumbnail)
@@ -82,7 +82,7 @@ export const usePixelatedOverlay = (pixelatedSrc: string | undefined) => {
 
   const [loadedImg] = useImageCache(
     pixelatedSrc && !cachedImage ? pixelatedSrc : "",
-    CORS_MODE
+    CORS_MODE,
   );
 
   if (!pixelatedSrc) return undefined;

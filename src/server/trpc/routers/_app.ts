@@ -132,7 +132,7 @@ function toSingleLinePrompt(input: string): string {
  */
 function extractFalErrorMessage(
   error: unknown,
-  fallbackMessage: string
+  fallbackMessage: string,
 ): string {
   if (!(error instanceof Error)) {
     return fallbackMessage;
@@ -169,7 +169,7 @@ function extractFalErrorMessage(
  */
 async function getFalClient(
   ctx: { req?: RequestLike; userId?: string },
-  isVideo: boolean = false
+  isVideo: boolean = false,
 ) {
   const headersSource =
     ctx.req?.headers instanceof Headers ? ctx.req.headers : ctx.req?.headers;
@@ -219,7 +219,7 @@ export const appRouter = router({
           prompt: z.string().optional(),
           resolution: z.enum(["auto", "720p", "1080p"]).optional(),
         })
-        .passthrough()
+        .passthrough(),
     )
     .subscription(async function* ({ input, signal: _signal, ctx }) {
       try {
@@ -276,7 +276,7 @@ export const appRouter = router({
           finalPrompt = await generateVideoPrompt(
             input.imageUrl,
             resolvedDuration,
-            userGuidance
+            userGuidance,
           );
 
           // Validate the generated prompt
@@ -360,7 +360,7 @@ export const appRouter = router({
         yield tracked(`error_${Date.now()}`, {
           error: extractFalErrorMessage(
             error,
-            "Failed to convert image to video"
+            "Failed to convert image to video",
           ),
           type: "error",
         });
@@ -391,14 +391,14 @@ export const appRouter = router({
             z.object({ width: z.number(), height: z.number() }),
           ])
           .optional(),
-      })
+      }),
     )
     .mutation(async ({ input, ctx }) => {
       try {
         const falClient = await getFalClient(ctx);
 
         const resolvedImageSize = resolveImageSize(
-          input.imageSize ?? DEFAULT_IMAGE_SIZE_2K_LANDSCAPE
+          input.imageSize ?? DEFAULT_IMAGE_SIZE_2K_LANDSCAPE,
         );
 
         const result = await falClient.subscribe(TEXT_TO_IMAGE_ENDPOINT, {
@@ -430,7 +430,7 @@ export const appRouter = router({
         };
       } catch (error) {
         throw new Error(
-          extractFalErrorMessage(error, "Failed to generate image")
+          extractFalErrorMessage(error, "Failed to generate image"),
         );
       }
     }),
@@ -449,7 +449,7 @@ export const appRouter = router({
         prompt: z.string(),
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
-      })
+      }),
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
@@ -470,7 +470,7 @@ export const appRouter = router({
               enable_safety_checker: true,
               seed: input.seed,
             },
-          }
+          },
         );
 
         let eventIndex = 0;
@@ -535,6 +535,7 @@ export const appRouter = router({
         model: z
           .enum([IMAGE_MODELS.SEEDREAM, IMAGE_MODELS.NANO_BANANA])
           .default(IMAGE_MODELS.SEEDREAM),
+        provider: z.enum(["fal", "replicate"]).optional().default("fal"),
         imageSize: z
           .union([
             z.enum([
@@ -552,12 +553,10 @@ export const appRouter = router({
           .optional(),
         seed: z.number().optional(),
         lastEventId: z.string().optional(),
-      })
+      }),
     )
     .subscription(async function* ({ input, signal, ctx }) {
       try {
-        const falClient = await getFalClient(ctx);
-
         // Create a unique ID for this generation
         const generationId = `gen_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
@@ -565,72 +564,120 @@ export const appRouter = router({
         const resolvedImageSize = resolveImageSize(input.imageSize);
         // Normalize prompt to a single line for cleaner provider input
         const compactPrompt = toSingleLinePrompt(input.prompt);
-        // Get the endpoint based on the selected model
-        const endpoint = getImageModelEndpoint(input.model);
 
-        // Build input based on model - Nano Banana and Seedream have different schemas
-        // Nano Banana uses aspect_ratio instead of image_size
-        const nanoBananaAspectRatio =
-          resolvedImageSize.height > resolvedImageSize.width ? "9:16" : "16:9";
+        // Route to appropriate provider
+        if (input.provider === "replicate") {
+          // Use Replicate Nano Banana Pro
+          const { generateImageWithNanoBananaPro } = await import(
+            "@/lib/services/replicate-client"
+          );
 
-        const falInput =
-          input.model === IMAGE_MODELS.NANO_BANANA
-            ? {
-              // Nano Banana Edit API schema
-              image_urls: input.imageUrls,
-              prompt: compactPrompt,
-              aspect_ratio: nanoBananaAspectRatio,
-              num_images: 1,
-              output_format: "png" as const,
-              resolution: "1K", // 1K, 2K, 4K
-            }
-            : {
-              // Seedream Edit API schema
-              enable_safety_checker: false,
-              image_size: resolvedImageSize,
-              image_urls: input.imageUrls,
-              num_images: 1,
-              prompt: compactPrompt,
-              ...(input.seed !== undefined ? { seed: input.seed } : {}),
-            };
+          const nanoBananaAspectRatio =
+            resolvedImageSize.height > resolvedImageSize.width
+              ? "9:16"
+              : "16:9";
 
-        // Subscribe to the model endpoint and wait for completion
-        const result = await falClient.subscribe(endpoint, {
-          input: falInput,
-          pollInterval: 500, // Reduced from 1000ms for 2x faster completion detection
-          logs: true,
-        });
-
-        if (signal?.aborted) {
-          return;
-        }
-
-        // Handle different possible response structures
-        const resultData = extractResultData<FalImageResult>(result) ?? {
-          images: [],
-        };
-        const images = resultData.images ?? [];
-
-        if (!images?.[0]?.url) {
-          yield tracked(`${generationId}_error`, {
-            type: "error",
-            error: "No image generated",
+          const result = await generateImageWithNanoBananaPro({
+            prompt: compactPrompt,
+            image_input: input.imageUrls,
+            aspect_ratio: nanoBananaAspectRatio,
+            resolution: "1K",
+            output_format: "png",
           });
-          return;
-        }
 
-        // Send the final image
-        yield tracked(`${generationId}_complete`, {
-          type: "complete",
-          imageUrl: images[0].url,
-          seed: resultData.seed ?? Math.random(),
-        });
+          if (result instanceof Error) {
+            yield tracked(`${generationId}_error`, {
+              type: "error",
+              error: result.message,
+            });
+            return;
+          }
+
+          if (signal?.aborted) {
+            return;
+          }
+
+          // Send the final image with replicateUrl
+          yield tracked(`${generationId}_complete`, {
+            type: "complete",
+            imageUrl: result.url,
+            replicateUrl: result.replicateUrl,
+            provider: "replicate" as const,
+          });
+        } else {
+          // Use Fal.ai (existing logic)
+          const falClient = await getFalClient(ctx);
+
+          // Get the endpoint based on the selected model
+          const endpoint = getImageModelEndpoint(input.model);
+
+          // Build input based on model - Nano Banana and Seedream have different schemas
+          // Nano Banana uses aspect_ratio instead of image_size
+          const nanoBananaAspectRatio =
+            resolvedImageSize.height > resolvedImageSize.width
+              ? "9:16"
+              : "16:9";
+
+          const falInput =
+            input.model === IMAGE_MODELS.NANO_BANANA
+              ? {
+                  // Nano Banana Edit API schema
+                  image_urls: input.imageUrls,
+                  prompt: compactPrompt,
+                  aspect_ratio: nanoBananaAspectRatio,
+                  num_images: 1,
+                  output_format: "png" as const,
+                  resolution: "1K", // 1K, 2K, 4K
+                }
+              : {
+                  // Seedream Edit API schema
+                  enable_safety_checker: false,
+                  image_size: resolvedImageSize,
+                  image_urls: input.imageUrls,
+                  num_images: 1,
+                  prompt: compactPrompt,
+                  ...(input.seed !== undefined ? { seed: input.seed } : {}),
+                };
+
+          // Subscribe to the model endpoint and wait for completion
+          const result = await falClient.subscribe(endpoint, {
+            input: falInput,
+            pollInterval: 500, // Reduced from 1000ms for 2x faster completion detection
+            logs: true,
+          });
+
+          if (signal?.aborted) {
+            return;
+          }
+
+          // Handle different possible response structures
+          const resultData = extractResultData<FalImageResult>(result) ?? {
+            images: [],
+          };
+          const images = resultData.images ?? [];
+
+          if (!images?.[0]?.url) {
+            yield tracked(`${generationId}_error`, {
+              type: "error",
+              error: "No image generated",
+            });
+            return;
+          }
+
+          // Send the final image
+          yield tracked(`${generationId}_complete`, {
+            type: "complete",
+            imageUrl: images[0].url,
+            provider: "fal" as const,
+            seed: resultData.seed ?? Math.random(),
+          });
+        }
       } catch (error) {
         yield tracked(`error_${Date.now()}`, {
           type: "error",
           error: extractFalErrorMessage(
             error,
-            "Failed to generate image variation"
+            "Failed to generate image variation",
           ),
         });
       }
@@ -665,7 +712,7 @@ export const appRouter = router({
         seed: z.number().optional(),
         stepsNum: z.number().optional().default(50),
         structuredPrompt: z.any(), // FIBO structured JSON
-      })
+      }),
     )
     .subscription(async function* ({ input, signal, ctx: _ctx }) {
       try {
@@ -684,7 +731,7 @@ export const appRouter = router({
             structured_prompt: JSON.stringify(input.structuredPrompt),
             sync: false,
           },
-          30000
+          30000,
         );
 
         if (isErr(result)) {

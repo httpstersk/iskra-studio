@@ -161,7 +161,7 @@ export function SubscriptionManagement({
                     <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
                       <p className="text-sm text-foreground">
                         {SUBSCRIPTION_CONSTANTS.PRO_PLAN.WILL_NOT_RENEW(
-                          formatDate(nextBillingDate ?? null)
+                          formatDate(nextBillingDate ?? null),
                         )}
                       </p>
                     </div>
@@ -190,7 +190,7 @@ export function SubscriptionManagement({
                   <p className="text-sm text-muted-foreground">
                     {SUBSCRIPTION_CONSTANTS.FREE_PLAN.DESCRIPTION(
                       imagesLimit,
-                      videosLimit
+                      videosLimit,
                     )}
                   </p>
                   {nextBillingDate && (

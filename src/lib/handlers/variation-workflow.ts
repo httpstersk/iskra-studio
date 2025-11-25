@@ -110,8 +110,8 @@ export async function performImageUploadWorkflow(
 
   const results = await Promise.all(uploadPromises);
 
-  const imageUrls = results.map(r => r.imageUrl);
-  const signedImageUrls = results.map(r => r.signedImageUrl);
+  const imageUrls = results.map((r) => r.imageUrl);
+  const signedImageUrls = results.map((r) => r.signedImageUrl);
 
   // Remove uploading status
   setActiveGenerations((prev) => {
@@ -136,7 +136,7 @@ export function applyPixelatedOverlayToReferenceImage(
 ): void {
   const { pixelatedSrc, selectedImages, setImages } = config;
 
-  const selectedIds = new Set(selectedImages.map(img => img.id));
+  const selectedIds = new Set(selectedImages.map((img) => img.id));
 
   setImages((prev) =>
     prev.map((img) =>
@@ -283,7 +283,7 @@ export async function handleVariationError(
   );
 
   if (selectedImages && selectedImages.length > 0) {
-    const selectedIds = new Set(selectedImages.map(img => img.id));
+    const selectedIds = new Set(selectedImages.map((img) => img.id));
     setImages((prev) =>
       prev.map((img) =>
         selectedIds.has(img.id) ? { ...img, pixelatedSrc: undefined } : img,

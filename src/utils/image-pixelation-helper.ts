@@ -21,7 +21,7 @@ interface ImageDimensions {
 /**
  * Generates a pixelated version of an image for overlay display
  * Returns both data URL and preloaded Image element for immediate use
- * 
+ *
  * Uses ESNext features: createImageBitmap + Scheduler.yield() for performance
  *
  * @param imageUrl - URL of the source image
@@ -41,7 +41,7 @@ export async function generatePixelatedOverlay(
     // Fallback to Image() for older browsers
     let imageSource: HTMLImageElement | HTMLCanvasElement;
 
-    if ('createImageBitmap' in window) {
+    if ("createImageBitmap" in window) {
       // Modern browsers: Use createImageBitmap for faster decode
       const response = await fetch(imageUrl);
       const blob = await response.blob();
@@ -51,10 +51,10 @@ export async function generatePixelatedOverlay(
       await yieldToMainThread();
 
       // Convert ImageBitmap to canvas for compatibility with existing pixelation logic
-      const tempCanvas = document.createElement('canvas');
+      const tempCanvas = document.createElement("canvas");
       tempCanvas.width = imageBitmap.width;
       tempCanvas.height = imageBitmap.height;
-      const ctx = tempCanvas.getContext('2d');
+      const ctx = tempCanvas.getContext("2d");
 
       if (!ctx) {
         // Fallback to traditional loading if canvas context fails
@@ -63,7 +63,8 @@ export async function generatePixelatedOverlay(
 
         await new Promise<void>((resolve, reject) => {
           fallbackImg.onload = () => resolve();
-          fallbackImg.onerror = () => reject(new Error("Failed to load fallback image"));
+          fallbackImg.onerror = () =>
+            reject(new Error("Failed to load fallback image"));
           fallbackImg.src = imageUrl;
         });
 
@@ -75,7 +76,9 @@ export async function generatePixelatedOverlay(
       }
     } else {
       // Fallback: Traditional Image loading for older browsers
-      const imageElement: HTMLImageElement = new (window as typeof globalThis).Image();
+      const imageElement: HTMLImageElement = new (
+        window as typeof globalThis
+      ).Image();
       imageElement.crossOrigin = "anonymous";
 
       await new Promise<void>((resolve, reject) => {

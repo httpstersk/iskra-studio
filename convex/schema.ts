@@ -71,8 +71,8 @@ export default defineSchema({
         v.literal("cancelled"),
         v.literal("past_due"),
         v.literal("incomplete"),
-        v.literal("trialing")
-      )
+        v.literal("trialing"),
+      ),
     ),
     tier: v.union(v.literal("free"), v.literal("paid"), v.literal("pro")),
     updatedAt: v.number(),
@@ -91,9 +91,10 @@ export default defineSchema({
    *
    * @property userId - Owner's Clerk user ID (indexed)
    * @property type - Asset type ("image" | "video")
-   * @property storageId - Convex file storage ID (full-size, for FAL API)
+   * @property storageId - Convex file storage ID (full-size, for AI generation)
    * @property thumbnailStorageId - Convex file storage ID for thumbnail (nullable, for UI)
-   * @property originalUrl - Original FAL URL (nullable, for reference)
+   * @property originalUrl - Original provider URL (nullable, for reference)
+   * @property provider - AI generation provider ("fal" | "replicate", nullable)
    * @property width - Asset width in pixels
    * @property height - Asset height in pixels
    * @property duration - Video duration in seconds (nullable, video only)
@@ -119,6 +120,7 @@ export default defineSchema({
     lightingScenario: v.optional(v.string()),
     mimeType: v.string(),
     originalUrl: v.optional(v.string()),
+    provider: v.optional(v.union(v.literal("fal"), v.literal("replicate"))),
     sizeBytes: v.number(),
     storageId: v.string(),
     storylineLabel: v.optional(v.string()),
@@ -176,7 +178,7 @@ export default defineSchema({
           assetId: v.optional(v.string()),
           assetSyncedAt: v.optional(v.number()),
           assetType: v.optional(
-            v.union(v.literal("image"), v.literal("video"))
+            v.union(v.literal("image"), v.literal("video")),
           ),
           currentTime: v.optional(v.number()),
           duration: v.optional(v.number()),
@@ -195,12 +197,12 @@ export default defineSchema({
             v.literal("image"),
             v.literal("video"),
             v.literal("text"),
-            v.literal("shape")
+            v.literal("shape"),
           ),
           volume: v.optional(v.number()),
           width: v.optional(v.number()),
           zIndex: v.number(),
-        })
+        }),
       ),
       lastModified: v.number(),
       viewport: v.optional(
@@ -208,13 +210,11 @@ export default defineSchema({
           scale: v.number(),
           x: v.number(),
           y: v.number(),
-        })
+        }),
       ),
     }),
     projectId: v.id("projects"),
   }).index("by_projectId", ["projectId"]),
-
-
 
   /**
    * Webhook Events table

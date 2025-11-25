@@ -54,7 +54,7 @@ export async function analyzeImageStyle(
         body: JSON.stringify({ imageUrl }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
-      })
+      }),
     );
 
     if (isErr(fetchResult)) {
@@ -135,7 +135,10 @@ export async function generateStorylineConcepts(
       throw error;
     }
 
-    serviceLogger.error("Storyline concept generation failed", { error, params });
+    serviceLogger.error("Storyline concept generation failed", {
+      error,
+      params,
+    });
     throw new ImageGenerationError(
       error instanceof Error
         ? error.message

@@ -15,7 +15,7 @@ export class ApiError extends Error {
     message: string,
     public statusCode: number = 500,
     public details?: unknown,
-    public isUserFacing: boolean = true
+    public isUserFacing: boolean = true,
   ) {
     super(message);
     this.name = "ApiError";
@@ -28,7 +28,7 @@ export class ApiError extends Error {
  */
 function sanitizeErrorMessage(
   error: unknown,
-  fallbackMessage: string
+  fallbackMessage: string,
 ): { message: string; details?: unknown } {
   // In development, show full error details
   if (IS_DEVELOPMENT) {
@@ -64,7 +64,7 @@ function sanitizeErrorMessage(
  */
 export function createErrorResponse(
   error: unknown,
-  fallbackMessage = "Request failed"
+  fallbackMessage = "Request failed",
 ): NextResponse {
   // Always log full error server-side
   log.error("API Error", {
@@ -82,14 +82,14 @@ export function createErrorResponse(
         error: sanitized.message,
         ...(sanitized.details ? { details: sanitized.details } : {}),
       },
-      { status: error.statusCode }
+      { status: error.statusCode },
     );
   }
 
   if (error instanceof AuthError) {
     return NextResponse.json(
       { error: error.message },
-      { status: error.statusCode }
+      { status: error.statusCode },
     );
   }
 
@@ -100,7 +100,7 @@ export function createErrorResponse(
       error: sanitized.message,
       ...(sanitized.details ? { details: sanitized.details } : {}),
     },
-    { status: 500 }
+    { status: 500 },
   );
 }
 
@@ -122,7 +122,8 @@ export async function parseApiError(response: Response): Promise<never> {
         `Request failed with status ${response.status}`;
     } else {
       const errorText = await response.text();
-      errorMessage = errorText || `Request failed with status ${response.status}`;
+      errorMessage =
+        errorText || `Request failed with status ${response.status}`;
       errorDetails = { text: errorText };
     }
   } catch {
@@ -137,7 +138,7 @@ export async function parseApiError(response: Response): Promise<never> {
  */
 export function withErrorHandling<T>(
   handler: () => Promise<T>,
-  errorMessage?: string
+  errorMessage?: string,
 ): Promise<T | NextResponse> {
   return handler().catch((error) => createErrorResponse(error, errorMessage));
 }
@@ -147,7 +148,7 @@ export function withErrorHandling<T>(
  */
 export function createSuccessResponse<T>(
   data: T,
-  status: number = 200
+  status: number = 200,
 ): NextResponse {
   return NextResponse.json(data, { status });
 }

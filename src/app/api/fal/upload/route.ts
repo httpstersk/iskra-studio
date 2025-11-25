@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   if (authHeader) {
     return NextResponse.json(
       { error: "Custom FAL API keys are not accepted." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   if (isErr(authResult)) {
     return NextResponse.json(
       { error: "Authentication failed" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json(
       { error: "Authentication required" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       headers: req.headers,
       userId: userId ?? undefined,
       limitType: "standard",
-    })
+    }),
   );
 
   if (isErr(limiterResult)) {
@@ -102,9 +102,9 @@ export async function POST(req: NextRequest) {
         status: 429,
         headers: buildRateLimitHeaders(
           limiterResult.period,
-          standardLimitHeaders
+          standardLimitHeaders,
         ),
-      }
+      },
     );
   }
 
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
   if (isErr(formDataResult)) {
     return NextResponse.json(
       { error: "Failed to parse form data" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -132,13 +132,13 @@ export async function POST(req: NextRequest) {
   // First check: MIME type from client (basic filter)
   const mimeType = (file.type || "").toLowerCase();
   const isAllowedType = ALLOWED_MIME_PREFIXES.some((prefix) =>
-    mimeType.startsWith(prefix)
+    mimeType.startsWith(prefix),
   );
 
   if (!isAllowedType) {
     return NextResponse.json(
       { error: "Unsupported file type" },
-      { status: 415 }
+      { status: 415 },
     );
   }
 
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
   if (isErr(detectedTypeResult)) {
     return NextResponse.json(
       { error: "Failed to detect file type" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
         error:
           "Unable to determine file type. File may be corrupted or invalid.",
       },
-      { status: 415 }
+      { status: 415 },
     );
   }
 
@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
       {
         error: `Invalid file type detected. Expected image or video, got ${detectedType.mime}`,
       },
-      { status: 415 }
+      { status: 415 },
     );
   }
 
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
       {
         error: `File type mismatch. Claimed type: ${mimeType}, detected type: ${detectedType.mime}`,
       },
-      { status: 415 }
+      { status: 415 },
     );
   }
 
@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
   if (detectedType.mime === "image/svg+xml" || file.name.endsWith(".svg")) {
     return NextResponse.json(
       { error: "SVG files are not allowed for security reasons" },
-      { status: 415 }
+      { status: 415 },
     );
   }
 
@@ -215,20 +215,20 @@ export async function POST(req: NextRequest) {
   if (isErr(authDataResult)) {
     return NextResponse.json(
       { error: "Authentication failed" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
   const authData = authDataResult;
 
   const tokenResult = await tryPromise(
-    authData.getToken({ template: "convex" })
+    authData.getToken({ template: "convex" }),
   );
 
   if (isErr(tokenResult)) {
     return NextResponse.json(
       { error: "Failed to get auth token" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
   if (!token) {
     return NextResponse.json(
       { error: "Failed to get auth token" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
       authToken: token,
       file: blob,
       metadata: {},
-    })
+    }),
   );
 
   if (isErr(uploadResult)) {
@@ -265,7 +265,7 @@ export async function POST(req: NextRequest) {
           error: "Rate limit exceeded",
           message: "Please try again later.",
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -274,7 +274,7 @@ export async function POST(req: NextRequest) {
         error: "Upload failed",
         message: getErrorMessage(uploadResult),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 

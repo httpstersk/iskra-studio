@@ -48,7 +48,8 @@ export const validateProjectAssets = query({
       .first();
 
     // Fallback to legacy canvasState if not found in new table (during migration)
-    const canvasState = projectState?.canvasState ?? (project as any).canvasState;
+    const canvasState =
+      projectState?.canvasState ?? (project as any).canvasState;
 
     if (!canvasState) {
       throw new Error("Project state not found");
@@ -169,7 +170,8 @@ export const getProjectAssets = query({
       .first();
 
     // Fallback to legacy canvasState if not found in new table (during migration)
-    const canvasState = projectState?.canvasState ?? (project as any).canvasState;
+    const canvasState =
+      projectState?.canvasState ?? (project as any).canvasState;
 
     if (!canvasState) {
       throw new Error("Project state not found");
@@ -252,7 +254,8 @@ export const getProjectsUsingAsset = query({
         .first();
 
       // Fallback to legacy canvasState if not found in new table (during migration)
-      const canvasState = projectState?.canvasState ?? (project as any).canvasState;
+      const canvasState =
+        projectState?.canvasState ?? (project as any).canvasState;
 
       if (!canvasState) continue;
 

@@ -11,24 +11,24 @@ import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
  * Polar product structure
  */
 export interface PolarProduct {
-    description: string | null;
+  description: string | null;
+  id: string;
+  name: string;
+  prices: {
+    amountType: string;
     id: string;
-    name: string;
-    prices: {
-        amountType: string;
-        id: string;
-        priceAmount: number;
-        priceCurrency: string;
-        recurringInterval: string;
-    }[];
+    priceAmount: number;
+    priceCurrency: string;
+    recurringInterval: string;
+  }[];
 }
 
 /**
  * Polar products response structure
  */
 export interface PolarProducts {
-    annual: PolarProduct | null;
-    monthly: PolarProduct | null;
+  annual: PolarProduct | null;
+  monthly: PolarProduct | null;
 }
 
 /**
@@ -37,36 +37,40 @@ export interface PolarProducts {
  * @returns Object containing products, loading state, and error.
  */
 export function usePolarProducts() {
-    const {
-        data: products,
-        error,
-        isLoading,
-    } = useQuery<PolarProducts>({
-        queryKey: ["polar-products"],
-        queryFn: async () => {
-            const fetchResult = await tryPromise(fetch("/api/polar/products"));
-            if (isErr(fetchResult)) {
-                throw new Error(`Failed to fetch products: ${getErrorMessage(fetchResult)}`);
-            }
+  const {
+    data: products,
+    error,
+    isLoading,
+  } = useQuery<PolarProducts>({
+    queryKey: ["polar-products"],
+    queryFn: async () => {
+      const fetchResult = await tryPromise(fetch("/api/polar/products"));
+      if (isErr(fetchResult)) {
+        throw new Error(
+          `Failed to fetch products: ${getErrorMessage(fetchResult)}`,
+        );
+      }
 
-            const response = fetchResult;
-            if (!response.ok) {
-                throw new Error("Failed to fetch products");
-            }
+      const response = fetchResult;
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
 
-            const jsonResult = await tryPromise(response.json());
-            if (isErr(jsonResult)) {
-                throw new Error(`Failed to parse products response: ${getErrorMessage(jsonResult)}`);
-            }
+      const jsonResult = await tryPromise(response.json());
+      if (isErr(jsonResult)) {
+        throw new Error(
+          `Failed to parse products response: ${getErrorMessage(jsonResult)}`,
+        );
+      }
 
-            return jsonResult;
-        },
-        staleTime: 1000 * 60 * 60, // 1 hour
-    });
+      return jsonResult;
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
 
-    return {
-        error: error instanceof Error ? error.message : null,
-        isLoading,
-        products: products ?? null,
-    };
+  return {
+    error: error instanceof Error ? error.message : null,
+    isLoading,
+    products: products ?? null,
+  };
 }

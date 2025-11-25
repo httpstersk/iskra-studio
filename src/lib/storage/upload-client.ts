@@ -26,8 +26,15 @@ class UploadClient {
   /**
    * Upload file with optional thumbnail and metadata
    */
-  async upload(options: UploadOptions): Promise<AssetUploadResult | import("@/lib/errors/safe-errors").HttpErr> {
-    const { file, thumbnail, metadata, endpoint = this.defaultEndpoint } = options;
+  async upload(
+    options: UploadOptions,
+  ): Promise<AssetUploadResult | import("@/lib/errors/safe-errors").HttpErr> {
+    const {
+      file,
+      thumbnail,
+      metadata,
+      endpoint = this.defaultEndpoint,
+    } = options;
 
     const formData = this.buildFormData(file, thumbnail, metadata);
 
@@ -42,7 +49,7 @@ class UploadClient {
    */
   async uploadFromUrl(
     url: string,
-    metadata?: UploadMetadata
+    metadata?: UploadMetadata,
   ): Promise<AssetUploadResult | import("@/lib/errors/safe-errors").HttpErr> {
     return httpClient.fetchJson<AssetUploadResult>("/api/convex/fetch-upload", {
       method: "POST",
@@ -57,7 +64,7 @@ class UploadClient {
   private buildFormData(
     file: Blob,
     thumbnail?: Blob,
-    metadata?: UploadMetadata
+    metadata?: UploadMetadata,
   ): FormData {
     const formData = new FormData();
 

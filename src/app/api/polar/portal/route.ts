@@ -38,7 +38,7 @@ export async function GET(_req: NextRequest) {
 
   // Apply rate limiting per user to prevent abuse
   const rateLimitResult = await tryPromise(
-    shouldLimitRequest(portalRateLimiter, userId, "polar-portal")
+    shouldLimitRequest(portalRateLimiter, userId, "polar-portal"),
   );
 
   if (isErr(rateLimitResult)) {
@@ -47,20 +47,23 @@ export async function GET(_req: NextRequest) {
     log.warn(`Portal session rate limit exceeded for user ${userId}`);
     return NextResponse.json(
       { error: "Too many portal session requests" },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
   // Get user's subscription status from Convex
   const subscriptionStatusResult = await tryPromise(
-    convex.query(api.subscriptions.getSubscriptionStatus)
+    convex.query(api.subscriptions.getSubscriptionStatus),
   );
 
   if (isErr(subscriptionStatusResult)) {
-    log.error("Failed to fetch subscription status", getErrorMessage(subscriptionStatusResult));
+    log.error(
+      "Failed to fetch subscription status",
+      getErrorMessage(subscriptionStatusResult),
+    );
     return NextResponse.json(
       { error: "Failed to fetch subscription status" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -69,7 +72,7 @@ export async function GET(_req: NextRequest) {
   if (!subscriptionStatus?.polarCustomerId) {
     return NextResponse.json(
       { error: "No Polar customer found" },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -77,14 +80,17 @@ export async function GET(_req: NextRequest) {
   const sessionResult = await tryPromise(
     polar.customerSessions.create({
       customerId: subscriptionStatus.polarCustomerId,
-    })
+    }),
   );
 
   if (isErr(sessionResult)) {
-    log.error("Customer portal session creation failed", getErrorMessage(sessionResult));
+    log.error(
+      "Customer portal session creation failed",
+      getErrorMessage(sessionResult),
+    );
     return NextResponse.json(
       { error: "Failed to create portal session" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -99,7 +105,7 @@ export async function GET(_req: NextRequest) {
     log.error("Portal session already expired");
     return NextResponse.json(
       { error: "Session creation failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -107,7 +113,9 @@ export async function GET(_req: NextRequest) {
     log.warn("Portal session has unusually long expiration");
   }
 
-  log.info(`Portal session created for user ${userId}, expires: ${expiresAt.toISOString()}`);
+  log.info(
+    `Portal session created for user ${userId}, expires: ${expiresAt.toISOString()}`,
+  );
 
   // Return only the portal URL to the client
   // The session token is embedded in the URL and doesn't need to be exposed separately

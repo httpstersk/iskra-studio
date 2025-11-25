@@ -86,7 +86,7 @@ export interface FiboVariationResult<T = string> {
  * ```
  */
 export async function generateFiboVariations<T = string>(
-  config: FiboVariationConfig
+  config: FiboVariationConfig,
 ): Promise<FiboVariationResult<T>> {
   const {
     imageUrls,
@@ -103,8 +103,10 @@ export async function generateFiboVariations<T = string>(
   });
 
   // Check if result is an error (has payload property)
-  if ('payload' in fiboAnalysisResult) {
-    throw new Error(`FIBO analysis failed: ${fiboAnalysisResult.payload.message || 'Unknown error'}`);
+  if ("payload" in fiboAnalysisResult) {
+    throw new Error(
+      `FIBO analysis failed: ${fiboAnalysisResult.payload.message || "Unknown error"}`,
+    );
   }
 
   const fiboAnalysis = fiboAnalysisResult;
@@ -120,17 +122,19 @@ export async function generateFiboVariations<T = string>(
         structured_prompt: JSON.stringify(fiboAnalysis),
         sync: true,
       },
-      timeout
+      timeout,
     );
 
     // Check if result is an error (has payload property)
-    if ('payload' in result) {
-      throw new Error(`FIBO refinement failed: ${result.payload.message || 'Unknown error'}`);
+    if ("payload" in result) {
+      throw new Error(
+        `FIBO refinement failed: ${result.payload.message || "Unknown error"}`,
+      );
     }
 
     // Parse the refined structured prompt
     const refinedStructuredPrompt: FiboStructuredPrompt = JSON.parse(
-      result.structured_prompt
+      result.structured_prompt,
     );
 
     return {

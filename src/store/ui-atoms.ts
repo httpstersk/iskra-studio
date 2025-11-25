@@ -49,7 +49,13 @@ export const generationCountAtom = atom<number>(4);
  * "lighting": Random lighting scenario variations via FIBO
  */
 export const imageVariationTypeAtom = atom<
-  "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface"
+  | "camera-angles"
+  | "director"
+  | "lighting"
+  | "storyline"
+  | "characters"
+  | "emotions"
+  | "surface"
 >("camera-angles");
 
 /**
@@ -75,3 +81,13 @@ export const isOnlineAtom = atom<boolean>(
  * FIBO Analysis atom - controls whether FIBO image analysis is enabled
  */
 export const isFiboAnalysisEnabledAtom = atom(false);
+
+/**
+ * AI Provider atom - controls which AI generation provider to use
+ * "fal": Fal.ai (current default)
+ * "replicate": Replicate (Nano Banana Pro)
+ */
+export const aiProviderAtom = atomWithStorage<"fal" | "replicate">(
+  "aiProvider",
+  "fal",
+);

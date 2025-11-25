@@ -99,13 +99,13 @@ export interface VariationOutput<T extends string> {
  */
 export async function handleVariations<T extends string>(
   config: VariationConfig<T>,
-  input: VariationInput<T>
+  input: VariationInput<T>,
 ): Promise<VariationOutput<T>> {
   const { imageUrls, items, userContext } = input;
 
   // Build variation prompts for each item
   const variations = items.map((item, index) =>
-    config.buildPrompt(item, userContext, index)
+    config.buildPrompt(item, userContext, index),
   );
 
   // Generate FIBO variations using shared service
@@ -694,7 +694,7 @@ export const variationClientConfigs: Record<
  * Maps UI variation type to internal variation type
  */
 export function mapImageVariationType(
-  imageVariationType: ImageVariationType
+  imageVariationType: ImageVariationType,
 ): VariationType {
   switch (imageVariationType) {
     case "camera-angles":

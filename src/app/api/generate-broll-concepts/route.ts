@@ -166,7 +166,7 @@ Include film grain and all post-processing effects explicitly in every prompt.
       model: OPENAI_MODEL,
       response_format: zodResponseFormat(
         bRollConceptSetSchema,
-        "broll_concepts"
+        "broll_concepts",
       ),
     });
 

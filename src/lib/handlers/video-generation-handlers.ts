@@ -43,7 +43,9 @@ export async function uploadMediaIfNeeded(
 
     const blobResult = await tryPromise(fetchResult.blob());
     if (isErr(blobResult)) {
-      throw new Error(`Failed to convert to blob: ${getErrorMessage(blobResult)}`);
+      throw new Error(
+        `Failed to convert to blob: ${getErrorMessage(blobResult)}`,
+      );
     }
 
     const blob = blobResult;
@@ -58,8 +60,10 @@ export async function uploadMediaIfNeeded(
     });
 
     // Check if result is an error (has payload property)
-    if ('payload' in result) {
-      throw new Error(`Upload failed: ${result.payload.message || 'Unknown error'}`);
+    if ("payload" in result) {
+      throw new Error(
+        `Upload failed: ${result.payload.message || "Unknown error"}`,
+      );
     }
 
     return result.url;

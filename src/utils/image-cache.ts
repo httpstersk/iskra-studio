@@ -1,12 +1,12 @@
 /**
  * Image cache utilities for optimizing image rendering performance.
- * 
+ *
  * Uses WeakRef + FinalizationRegistry for automatic memory management (ESNext).
  *
  * @module utils/image-cache
  */
 
-import { weakImageCache } from './weak-image-cache';
+import { weakImageCache } from "./weak-image-cache";
 
 /**
  * Legacy Map-based cache for browsers without WeakRef support
@@ -16,11 +16,11 @@ const legacyCache = new Map<string, HTMLImageElement>();
 /**
  * Feature detection for WeakRef support
  */
-const hasWeakRefSupport = typeof WeakRef !== 'undefined';
+const hasWeakRefSupport = typeof WeakRef !== "undefined";
 
 /**
  * Caches a preloaded pixelated image for immediate rendering.
- * 
+ *
  * Uses WeakRef for automatic garbage collection in modern browsers,
  * falls back to Map for older browsers.
  *
@@ -81,7 +81,7 @@ export function getPixelatedImageCacheSize(): number {
 /**
  * Gets count of alive (non-GC'd) images in cache.
  * Only meaningful with WeakRef support.
- * 
+ *
  * @returns Number of alive cached images
  */
 export function getAlivePixelatedImageCount(): number {

@@ -181,7 +181,7 @@ export function QuotaExceededModal({
               <div
                 className={cn(
                   "rounded-lg border border-border/50 p-4",
-                  isFree ? "bg-secondary/50" : "bg-accent/20"
+                  isFree ? "bg-secondary/50" : "bg-accent/20",
                 )}
               >
                 <div className="space-y-2">

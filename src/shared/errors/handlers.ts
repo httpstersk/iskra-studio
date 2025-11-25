@@ -6,11 +6,7 @@
  */
 
 import { logger } from "../logging/logger";
-import {
-  getErrorMessage,
-  getErrorStatusCode,
-  isAppError,
-} from "./types";
+import { getErrorMessage, getErrorStatusCode, isAppError } from "./types";
 
 /**
  * Toast notification interface (compatible with shadcn/ui toast)

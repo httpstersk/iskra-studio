@@ -96,11 +96,14 @@ export const handleStorylineImageVariations = async (
 
   // OPTIMIZATION: Perform early preparation BEFORE async operations
   const preparationResult = await tryPromise(
-    performEarlyPreparation([selectedImage], variationCount)
+    performEarlyPreparation([selectedImage], variationCount),
   );
 
   if (isErr(preparationResult)) {
-    handlerLogger.error("Early preparation failed", preparationResult.payload as Error);
+    handlerLogger.error(
+      "Early preparation failed",
+      preparationResult.payload as Error,
+    );
     handleError(preparationResult.payload, {
       operation: "Storyline variation preparation",
       context: { variationCount, selectedImageId: selectedImage?.id },
@@ -117,12 +120,8 @@ export const handleStorylineImageVariations = async (
     return;
   }
 
-  const {
-    imageSizeDimensions,
-    pixelatedSrc,
-    positionIndices,
-    snappedSource,
-  } = preparationResult;
+  const { imageSizeDimensions, pixelatedSrc, positionIndices, snappedSource } =
+    preparationResult;
 
   // Create factory function with shared configuration for all placeholders
   const makePlaceholder = createPlaceholderFactory({
@@ -154,7 +153,7 @@ export const handleStorylineImageVariations = async (
   const sourceImageUrl = selectedImage.fullSizeSrc || selectedImage.src;
   const imageUrl = await ensureImageInConvex(sourceImageUrl);
 
-  if (imageUrl && typeof imageUrl === 'object' && 'message' in imageUrl) {
+  if (imageUrl && typeof imageUrl === "object" && "message" in imageUrl) {
     handlerLogger.error("Image upload failed", imageUrl as Error);
     handleError(imageUrl as Error, {
       operation: "Storyline variation upload",
@@ -178,7 +177,11 @@ export const handleStorylineImageVariations = async (
 
   const signedImageUrl = toSignedUrl(imageUrl as string);
 
-  if (signedImageUrl && typeof signedImageUrl === 'object' && 'message' in signedImageUrl) {
+  if (
+    signedImageUrl &&
+    typeof signedImageUrl === "object" &&
+    "message" in signedImageUrl
+  ) {
     handlerLogger.error("URL conversion failed", signedImageUrl as Error);
     handleError(signedImageUrl as Error, {
       operation: "Storyline variation URL conversion",
@@ -227,11 +230,14 @@ export const handleStorylineImageVariations = async (
       count: variationCount,
       imageUrl: signedImageUrl,
       userContext: variationPrompt,
-    })
+    }),
   );
 
   if (isErr(conceptsResult)) {
-    handlerLogger.error("Storyline concept generation failed", conceptsResult.payload as Error);
+    handlerLogger.error(
+      "Storyline concept generation failed",
+      conceptsResult.payload as Error,
+    );
     handleError(conceptsResult.payload, {
       operation: "Storyline variation generation",
       context: { variationCount, selectedImageId: selectedImage?.id },
@@ -266,10 +272,7 @@ export const handleStorylineImageVariations = async (
         const concept = concepts[index];
         if (concept) {
           // Set up active generation for this placeholder
-          const placeholderId = createVariationId(
-            timestamp,
-            index.toString(),
-          );
+          const placeholderId = createVariationId(timestamp, index.toString());
           activeGenerations.set(placeholderId, {
             imageSize: imageSizeDimensions,
             imageUrl: signedImageUrl,

@@ -30,7 +30,14 @@ interface CanvasControlPanelProps {
   handleRun: () => void;
   handleVariationModeChange: (mode: "image" | "video") => void;
   imageModel: ImageModelId;
-  imageVariationType?: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface";
+  imageVariationType?:
+    | "camera-angles"
+    | "director"
+    | "lighting"
+    | "storyline"
+    | "characters"
+    | "emotions"
+    | "surface";
   images: PlacedImage[];
   isGenerating: boolean;
   redo: () => void;
@@ -38,12 +45,19 @@ interface CanvasControlPanelProps {
   setGenerationSettings: (settings: GenerationSettings) => void;
   setImageModel: (value: ImageModelId) => void;
   setImageVariationType?: (
-    type: "camera-angles" | "director" | "lighting" | "storyline" | "characters" | "emotions" | "surface"
+    type:
+      | "camera-angles"
+      | "director"
+      | "lighting"
+      | "storyline"
+      | "characters"
+      | "emotions"
+      | "surface",
   ) => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   setVideoDuration: (value: "4" | "8" | "12") => void;
   setVideoModel: (
-    value: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro"
+    value: "sora-2" | "sora-2-pro" | "veo-3.1" | "veo-3.1-pro",
   ) => void;
   setVideoResolution: (value: "auto" | "720p" | "1080p") => void;
   showSuccess: boolean;
@@ -96,7 +110,7 @@ export const CanvasControlPanel = React.memo(function CanvasControlPanel({
         className={cn(
           "bg-card/98 backdrop-blur-2xl rounded-2xl border border-border/50",
           "shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
-          "w-full md:w-fit"
+          "w-full md:w-fit",
         )}
       >
         <div className="flex flex-col gap-3 px-4 md:px-4 py-3 md:py-3 relative justify-between min-w-0">

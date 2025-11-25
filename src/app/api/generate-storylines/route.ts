@@ -26,7 +26,7 @@ const generateStorylinesRequestSchema = z.object({
  */
 function buildStyleContext(
   analysis: ImageStyleMoodAnalysis,
-  duration: number
+  duration: number,
 ): string {
   const {
     subject,

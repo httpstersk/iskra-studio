@@ -40,12 +40,18 @@ export const getSubscriptionStatus = query({
 
     const plan = await ctx.db
       .query("plans")
-      .withIndex("by_key", (q) => q.eq("key", user.tier === "paid" ? "pro" : user.tier))
+      .withIndex("by_key", (q) =>
+        q.eq("key", user.tier === "paid" ? "pro" : user.tier),
+      )
       .first();
 
     const limits = {
-      images: plan?.imagesPerPeriod ?? (user.tier === "pro" || user.tier === "paid" ? 130 : 12),
-      videos: plan?.videosPerPeriod ?? (user.tier === "pro" || user.tier === "paid" ? 25 : 3),
+      images:
+        plan?.imagesPerPeriod ??
+        (user.tier === "pro" || user.tier === "paid" ? 130 : 12),
+      videos:
+        plan?.videosPerPeriod ??
+        (user.tier === "pro" || user.tier === "paid" ? 25 : 3),
     };
 
     return {
@@ -121,7 +127,10 @@ export const handleUpgrade = action({
     billingCycleEnd: v.number(),
   },
   handler: async (ctx, args) => {
-    return await ctx.runMutation((internal as any).subscriptions.handleUpgradeInternal, args);
+    return await ctx.runMutation(
+      (internal as any).subscriptions.handleUpgradeInternal,
+      args,
+    );
   },
 });
 
@@ -156,18 +165,23 @@ export const handleDowngrade = internalMutation({
     const billingCycleStart = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
-      signupDate.getDate()
+      signupDate.getDate(),
     ).getTime();
 
     // If the day has already passed this month, move to next month
-    const adjustedStart = billingCycleStart > now
-      ? new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, signupDate.getDate()).getTime()
-      : billingCycleStart;
+    const adjustedStart =
+      billingCycleStart > now
+        ? new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth() - 1,
+            signupDate.getDate(),
+          ).getTime()
+        : billingCycleStart;
 
     const billingCycleEnd = new Date(
       new Date(adjustedStart).getFullYear(),
       new Date(adjustedStart).getMonth() + 1,
-      signupDate.getDate()
+      signupDate.getDate(),
     ).getTime();
 
     await ctx.db.patch(user._id, {
@@ -205,13 +219,13 @@ export const updateBillingCycleInternal = internalMutation({
     const user = await ctx.db
       .query("users")
       .withIndex("by_polarSubscriptionId", (q) =>
-        q.eq("polarSubscriptionId", args.polarSubscriptionId)
+        q.eq("polarSubscriptionId", args.polarSubscriptionId),
       )
       .first();
 
     if (!user) {
       throw new Error(
-        `User not found for subscription: ${args.polarSubscriptionId}`
+        `User not found for subscription: ${args.polarSubscriptionId}`,
       );
     }
 
@@ -238,7 +252,10 @@ export const updateBillingCycle = action({
     billingCycleEnd: v.number(),
   },
   handler: async (ctx, args) => {
-    return await ctx.runMutation((internal as any).subscriptions.updateBillingCycleInternal, args);
+    return await ctx.runMutation(
+      (internal as any).subscriptions.updateBillingCycleInternal,
+      args,
+    );
   },
 });
 
@@ -258,20 +275,20 @@ export const updateSubscriptionStatusInternal = internalMutation({
       v.literal("cancelled"),
       v.literal("past_due"),
       v.literal("incomplete"),
-      v.literal("trialing")
+      v.literal("trialing"),
     ),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
       .withIndex("by_polarSubscriptionId", (q) =>
-        q.eq("polarSubscriptionId", args.polarSubscriptionId)
+        q.eq("polarSubscriptionId", args.polarSubscriptionId),
       )
       .first();
 
     if (!user) {
       throw new Error(
-        `User not found for subscription: ${args.polarSubscriptionId}`
+        `User not found for subscription: ${args.polarSubscriptionId}`,
       );
     }
 
@@ -295,11 +312,14 @@ export const updateSubscriptionStatus = action({
       v.literal("cancelled"),
       v.literal("past_due"),
       v.literal("incomplete"),
-      v.literal("trialing")
+      v.literal("trialing"),
     ),
   },
   handler: async (ctx, args) => {
-    return await ctx.runMutation((internal as any).subscriptions.updateSubscriptionStatusInternal, args);
+    return await ctx.runMutation(
+      (internal as any).subscriptions.updateSubscriptionStatusInternal,
+      args,
+    );
   },
 });
 
@@ -344,7 +364,10 @@ export const linkPolarCustomer = action({
     polarCustomerId: v.string(),
   },
   handler: async (ctx, args) => {
-    return await ctx.runMutation((internal as any).subscriptions.linkPolarCustomerInternal, args);
+    return await ctx.runMutation(
+      (internal as any).subscriptions.linkPolarCustomerInternal,
+      args,
+    );
   },
 });
 
@@ -364,7 +387,7 @@ export const getUserByPolarCustomerId = query({
     const user = await ctx.db
       .query("users")
       .withIndex("by_polarCustomerId", (q) =>
-        q.eq("polarCustomerId", args.polarCustomerId)
+        q.eq("polarCustomerId", args.polarCustomerId),
       )
       .first();
 

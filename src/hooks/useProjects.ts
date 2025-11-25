@@ -61,7 +61,7 @@ interface UseProjectsReturn {
   saveProject: (
     projectId: Id<"projects">,
     canvasState: CanvasState,
-    thumbnailStorageId?: string
+    thumbnailStorageId?: string,
   ) => Promise<void>;
 }
 
@@ -122,7 +122,7 @@ export function useProjects(): UseProjectsReturn {
   // Automatically reverts on error without manual cleanup
   const [_optimisticProject, setOptimisticProject] = useOptimistic(
     currentProject,
-    (_, newProject: Project | null) => newProject
+    (_, newProject: Project | null) => newProject,
   );
 
   // Convex mutations
@@ -133,7 +133,7 @@ export function useProjects(): UseProjectsReturn {
   // Convex queries - only run when authenticated
   const projectsQuery = useQuery(
     api.projects.listProjects,
-    isAuthenticated ? { limit: 50 } : "skip"
+    isAuthenticated ? { limit: 50 } : "skip",
   );
 
   // Memoize project list to avoid unnecessary recalculations
@@ -167,14 +167,14 @@ export function useProjects(): UseProjectsReturn {
 
       if (isErr(projectIdResult)) {
         throw new Error(
-          `Project creation failed: ${getErrorMessage(projectIdResult)}`
+          `Project creation failed: ${getErrorMessage(projectIdResult)}`,
         );
       }
 
       // Refresh project list (will happen automatically via query)
       return projectIdResult;
     },
-    [createProjectMutation]
+    [createProjectMutation],
   );
 
   /**
@@ -191,13 +191,13 @@ export function useProjects(): UseProjectsReturn {
       const projectResult = await tryPromise(
         convex.query(api.projects.getProject, {
           projectId,
-        })
+        }),
       );
 
       if (isErr(projectResult)) {
         setIsLoading(false);
         throw new Error(
-          `Project load failed: ${getErrorMessage(projectResult)}`
+          `Project load failed: ${getErrorMessage(projectResult)}`,
         );
       }
       const project = projectResult;
@@ -243,7 +243,7 @@ export function useProjects(): UseProjectsReturn {
 
       setIsLoading(false);
     },
-    [convex, setCurrentProject, setIsLoading, setLastSavedAt, setProjectList]
+    [convex, setCurrentProject, setIsLoading, setLastSavedAt, setProjectList],
   );
 
   /**
@@ -256,7 +256,7 @@ export function useProjects(): UseProjectsReturn {
     async (
       projectId: Id<"projects">,
       canvasState: CanvasState,
-      thumbnailStorageId?: string
+      thumbnailStorageId?: string,
     ): Promise<void> => {
       setIsSaving(true);
 
@@ -265,7 +265,7 @@ export function useProjects(): UseProjectsReturn {
           projectId,
           canvasState,
           thumbnailStorageId,
-        })
+        }),
       );
 
       if (isErr(saveResult)) {
@@ -295,7 +295,7 @@ export function useProjects(): UseProjectsReturn {
       setIsSaving,
       setLastSavedAt,
       setCurrentProject,
-    ]
+    ],
   );
 
   /**
@@ -319,14 +319,14 @@ export function useProjects(): UseProjectsReturn {
 
       // Perform the actual mutation
       const renameResult = await tryPromise(
-        renameProjectMutation({ projectId, name })
+        renameProjectMutation({ projectId, name }),
       );
 
       if (isErr(renameResult)) {
         // useOptimistic automatically reverts on error (when component re-renders with original state)
         // but we should throw to let caller know
         throw new Error(
-          `Project rename failed: ${getErrorMessage(renameResult)}`
+          `Project rename failed: ${getErrorMessage(renameResult)}`,
         );
       }
 
@@ -346,7 +346,7 @@ export function useProjects(): UseProjectsReturn {
       currentProject,
       setCurrentProject,
       setOptimisticProject,
-    ]
+    ],
   );
 
   return {

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (!user || !user.emailAddresses[0]) {
     return NextResponse.json(
       { error: "User email not found" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   if (isErr(bodyResult)) {
     return NextResponse.json(
       { error: "Invalid request body" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   if (!billingInterval || !["month", "year"].includes(billingInterval)) {
     return NextResponse.json(
       { error: "Invalid billing interval. Must be 'month' or 'year'" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
   if (!productId) {
     return NextResponse.json(
       { error: "Product not configured for this billing interval" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -73,14 +73,17 @@ export async function POST(req: NextRequest) {
 
   // Check if user already has a Polar customer ID
   const subscriptionStatusResult = await tryPromise(
-    convex.query(api.subscriptions.getSubscriptionStatus)
+    convex.query(api.subscriptions.getSubscriptionStatus),
   );
 
   if (isErr(subscriptionStatusResult)) {
-    log.error("Failed to fetch subscription status", getErrorMessage(subscriptionStatusResult));
+    log.error(
+      "Failed to fetch subscription status",
+      getErrorMessage(subscriptionStatusResult),
+    );
     return NextResponse.json(
       { error: "Failed to fetch subscription status" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -97,14 +100,17 @@ export async function POST(req: NextRequest) {
         metadata: {
           clerkUserId: userId,
         },
-      })
+      }),
     );
 
     if (isErr(customerResult)) {
-      log.error("Failed to create Polar customer", getErrorMessage(customerResult));
+      log.error(
+        "Failed to create Polar customer",
+        getErrorMessage(customerResult),
+      );
       return NextResponse.json(
         { error: "Failed to create customer" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -116,7 +122,7 @@ export async function POST(req: NextRequest) {
       convex.action(api.subscriptions.linkPolarCustomer, {
         userId,
         polarCustomerId,
-      })
+      }),
     );
 
     if (isErr(linkResult)) {
@@ -134,14 +140,17 @@ export async function POST(req: NextRequest) {
         clerkUserId: userId,
         billingInterval,
       },
-    })
+    }),
   );
 
   if (isErr(checkoutSessionResult)) {
-    log.error("Checkout session creation failed", getErrorMessage(checkoutSessionResult));
+    log.error(
+      "Checkout session creation failed",
+      getErrorMessage(checkoutSessionResult),
+    );
     return NextResponse.json(
       { error: "Failed to create checkout session" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 

@@ -31,7 +31,10 @@ interface QuotaDisplayProps {
  * <QuotaDisplay compact /> // Compact version for sidebars
  * ```
  */
-export function QuotaDisplay({ className, compact = false }: QuotaDisplayProps) {
+export function QuotaDisplay({
+  className,
+  compact = false,
+}: QuotaDisplayProps) {
   const {
     imagesUsed,
     imagesLimit,
@@ -85,7 +88,9 @@ export function QuotaDisplay({ className, compact = false }: QuotaDisplayProps) 
                 className={cn(
                   "font-medium",
                   imagesPercentage >= 100 && "text-destructive",
-                  imagesPercentage >= 80 && imagesPercentage < 100 && "text-warning"
+                  imagesPercentage >= 80 &&
+                    imagesPercentage < 100 &&
+                    "text-warning",
                 )}
               >
                 {imagesRemaining} / {imagesLimit} left
@@ -97,14 +102,12 @@ export function QuotaDisplay({ className, compact = false }: QuotaDisplayProps) 
                 imagesPercentage >= 100
                   ? "destructive"
                   : imagesPercentage >= 80
-                  ? "warning"
-                  : "default"
+                    ? "warning"
+                    : "default"
               }
             />
             {!compact && (
-              <p className="text-xs text-muted-foreground">
-                {imagesUsed} used
-              </p>
+              <p className="text-xs text-muted-foreground">{imagesUsed} used</p>
             )}
           </div>
 
@@ -116,7 +119,9 @@ export function QuotaDisplay({ className, compact = false }: QuotaDisplayProps) 
                 className={cn(
                   "font-medium",
                   videosPercentage >= 100 && "text-destructive",
-                  videosPercentage >= 80 && videosPercentage < 100 && "text-warning"
+                  videosPercentage >= 80 &&
+                    videosPercentage < 100 &&
+                    "text-warning",
                 )}
               >
                 {videosRemaining} / {videosLimit} left
@@ -128,14 +133,12 @@ export function QuotaDisplay({ className, compact = false }: QuotaDisplayProps) 
                 videosPercentage >= 100
                   ? "destructive"
                   : videosPercentage >= 80
-                  ? "warning"
-                  : "default"
+                    ? "warning"
+                    : "default"
               }
             />
             {!compact && (
-              <p className="text-xs text-muted-foreground">
-                {videosUsed} used
-              </p>
+              <p className="text-xs text-muted-foreground">{videosUsed} used</p>
             )}
           </div>
 
@@ -143,7 +146,8 @@ export function QuotaDisplay({ className, compact = false }: QuotaDisplayProps) 
           {!compact && (
             <div className="border-t border-border/50 pt-3">
               <p className="text-xs text-muted-foreground">
-                Resets in {daysUntilReset} {daysUntilReset === 1 ? "day" : "days"}
+                Resets in {daysUntilReset}{" "}
+                {daysUntilReset === 1 ? "day" : "days"}
               </p>
             </div>
           )}
@@ -166,7 +170,7 @@ function ProgressBar({ percentage, variant = "default" }: ProgressBarProps) {
           "h-full transition-all duration-300 ease-in-out",
           variant === "default" && "bg-primary",
           variant === "warning" && "bg-warning",
-          variant === "destructive" && "bg-destructive"
+          variant === "destructive" && "bg-destructive",
         )}
         style={{ width: `${Math.min(percentage, 100)}%` }}
       />

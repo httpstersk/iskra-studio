@@ -98,27 +98,32 @@ async function analyzeImageStyle(
         "Content-Type": "application/json",
       },
       method: "POST",
-    })
+    }),
   );
 
   if (isErr(fetchResult)) {
-    return new Error(`Failed to call image analysis API: ${getErrorMessage(fetchResult)}`);
+    return new Error(
+      `Failed to call image analysis API: ${getErrorMessage(fetchResult)}`,
+    );
   }
 
   const response = fetchResult;
 
   if (!response.ok) {
     const errorResult = await tryPromise(response.json());
-    const errorMsg = !isErr(errorResult) && errorResult?.error
-      ? errorResult.error
-      : `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
+    const errorMsg =
+      !isErr(errorResult) && errorResult?.error
+        ? errorResult.error
+        : `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
     return new Error(errorMsg);
   }
 
   const jsonResult = await tryPromise(response.json());
 
   if (isErr(jsonResult)) {
-    return new Error(`Failed to parse image analysis response: ${getErrorMessage(jsonResult)}`);
+    return new Error(
+      `Failed to parse image analysis response: ${getErrorMessage(jsonResult)}`,
+    );
   }
 
   return jsonResult.analysis;
@@ -167,7 +172,7 @@ export const handleBrollImageVariations = async (
   // OPTIMIZATION: Perform early preparation BEFORE async operations
   // This generates pixelated overlay immediately for instant visual feedback
   const preparationResult = await tryPromise(
-    performEarlyPreparation([selectedImage], variationCount)
+    performEarlyPreparation([selectedImage], variationCount),
   );
 
   if (isErr(preparationResult)) {
@@ -188,12 +193,8 @@ export const handleBrollImageVariations = async (
     return;
   }
 
-  const {
-    imageSizeDimensions,
-    pixelatedSrc,
-    positionIndices,
-    snappedSource,
-  } = preparationResult;
+  const { imageSizeDimensions, pixelatedSrc, positionIndices, snappedSource } =
+    preparationResult;
 
   // Create factory function with shared configuration for all placeholders
   const makePlaceholder = createPlaceholderFactory({
@@ -337,7 +338,7 @@ export const handleBrollImageVariations = async (
       count: variationCount,
       styleAnalysis: imageAnalysis,
       userContext: variationPrompt,
-    })
+    }),
   );
 
   if (isErr(brollResult)) {

@@ -75,7 +75,7 @@ async function fetchVariationsFromApi(
   config: VariationClientConfig,
   imageUrls: string[],
   items: string[],
-  userContext?: string
+  userContext?: string,
 ): Promise<VariationsApiResponse | Error> {
   const fetchResult = await tryPromise(
     fetch(config.apiEndpoint, {
@@ -86,12 +86,12 @@ async function fetchVariationsFromApi(
         [config.apiRequestKey]: items,
         userContext,
       }),
-    })
+    }),
   );
 
   if (isErr(fetchResult)) {
     return new Error(
-      `Failed to call ${config.displayName} variations API: ${getErrorMessage(fetchResult)}`
+      `Failed to call ${config.displayName} variations API: ${getErrorMessage(fetchResult)}`,
     );
   }
 
@@ -110,7 +110,7 @@ async function fetchVariationsFromApi(
 
   if (isErr(jsonResult)) {
     return new Error(
-      `Failed to parse ${config.displayName} variations response: ${getErrorMessage(jsonResult)}`
+      `Failed to parse ${config.displayName} variations response: ${getErrorMessage(jsonResult)}`,
     );
   }
 
@@ -123,7 +123,7 @@ async function fetchVariationsFromApi(
  */
 export async function handleUnifiedImageVariation(
   variationType: VariationType,
-  deps: UnifiedImageVariationHandlerDeps
+  deps: UnifiedImageVariationHandlerDeps,
 ): Promise<void> {
   const config = variationClientConfigs[variationType];
   const {
@@ -150,7 +150,7 @@ export async function handleUnifiedImageVariation(
 
   // Stage 0: Early preparation (pixelated overlay, positioning)
   const preparationResult = await tryPromise(
-    performEarlyPreparation(selectedImages, variationCount)
+    performEarlyPreparation(selectedImages, variationCount),
   );
 
   if (isErr(preparationResult)) {
@@ -188,7 +188,7 @@ export async function handleUnifiedImageVariation(
 
   // Create placeholders with type-specific metadata
   const placeholderImages: PlacedImage[] = selectedItems.map((item, index) =>
-    makePlaceholder(config.getPlaceholderMeta(item), index)
+    makePlaceholder(config.getPlaceholderMeta(item), index),
   );
 
   setImages((prev) => [...prev, ...placeholderImages]);
@@ -199,7 +199,7 @@ export async function handleUnifiedImageVariation(
       selectedImages,
       setActiveGenerations,
       timestamp,
-    })
+    }),
   );
 
   if (isErr(uploadResult)) {
@@ -245,7 +245,7 @@ export async function handleUnifiedImageVariation(
       config,
       signedImageUrls,
       selectedItems,
-      variationPrompt
+      variationPrompt,
     );
 
     if (variationsResult instanceof Error) {
@@ -296,7 +296,7 @@ export async function handleUnifiedImageVariation(
           }
         }
         return img;
-      })
+      }),
     );
   }
 
@@ -336,7 +336,7 @@ export async function handleUnifiedImageVariation(
  */
 export async function handleImageVariationByType(
   imageVariationType: ImageVariationType,
-  deps: UnifiedImageVariationHandlerDeps
+  deps: UnifiedImageVariationHandlerDeps,
 ): Promise<void> {
   const variationType = mapImageVariationType(imageVariationType);
   return handleUnifiedImageVariation(variationType, deps);

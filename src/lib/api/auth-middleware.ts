@@ -13,7 +13,7 @@ export interface AuthContext {
 export class AuthError extends Error {
   constructor(
     message: string,
-    public statusCode: number = 401
+    public statusCode: number = 401,
   ) {
     super(message);
     this.name = "AuthError";
@@ -82,7 +82,7 @@ export function handleAuthError(error: unknown): NextResponse {
   if (error instanceof AuthError) {
     return NextResponse.json(
       { error: error.message },
-      { status: error.statusCode }
+      { status: error.statusCode },
     );
   }
 

@@ -11,14 +11,14 @@ import { tryPromise, isErr, getErrorMessage } from "@/lib/errors/safe-errors";
  */
 export const uploadImageDirect = async (
   dataUrl: string,
-  userId: string | undefined
+  userId: string | undefined,
 ) => {
   // Convert data URL to blob first
   const fetchResult = await tryPromise(fetch(dataUrl));
 
   if (isErr(fetchResult)) {
     const error = new Error(
-      `Failed to fetch data URL: ${getErrorMessage(fetchResult)}`
+      `Failed to fetch data URL: ${getErrorMessage(fetchResult)}`,
     );
     showErrorFromException("Failed to upload image", error, "Unknown error");
     throw error;
@@ -28,7 +28,7 @@ export const uploadImageDirect = async (
 
   if (isErr(blobResult)) {
     const error = new Error(
-      `Failed to convert to blob: ${getErrorMessage(blobResult)}`
+      `Failed to convert to blob: ${getErrorMessage(blobResult)}`,
     );
     showErrorFromException("Failed to upload image", error, "Unknown error");
     throw error;

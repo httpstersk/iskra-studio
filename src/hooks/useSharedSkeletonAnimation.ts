@@ -40,7 +40,7 @@ class SkeletonAnimationCoordinator {
     if (typeof document !== "undefined") {
       document.addEventListener(
         "visibilitychange",
-        this.handleVisibilityChange
+        this.handleVisibilityChange,
       );
     }
   }
@@ -101,7 +101,8 @@ class SkeletonAnimationCoordinator {
       const elapsed = (performance.now() - this.startTime) % SHIMMER_DURATION;
       const progress = elapsed / SHIMMER_DURATION;
       this.currentOpacity =
-        SHIMMER_BASE_OPACITY + Math.sin(progress * Math.PI * 2) * SHIMMER_AMPLITUDE;
+        SHIMMER_BASE_OPACITY +
+        Math.sin(progress * Math.PI * 2) * SHIMMER_AMPLITUDE;
 
       // Notify all listeners with the new opacity
       this.listeners.forEach((listener) => {
@@ -130,7 +131,7 @@ class SkeletonAnimationCoordinator {
     if (typeof document !== "undefined") {
       document.removeEventListener(
         "visibilitychange",
-        this.handleVisibilityChange
+        this.handleVisibilityChange,
       );
     }
   }

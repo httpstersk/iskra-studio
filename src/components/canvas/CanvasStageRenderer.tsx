@@ -161,7 +161,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
   // Get device pixel ratio for crisp rendering on retina displays
   const pixelRatio = useMemo(
     () => (typeof window !== "undefined" ? window.devicePixelRatio : 1),
-    []
+    [],
   );
 
   /**
@@ -368,7 +368,7 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
         height={canvasSize.height}
         onContextMenu={handleContextMenu}
         onMouseDown={interactions.handleMouseDown}
-        onMouseLeave={() => { }}
+        onMouseLeave={() => {}}
         onMouseMove={interactions.handleMouseMove}
         onMouseUp={interactions.handleMouseUp}
         onTouchEnd={interactions.handleTouchEnd}
@@ -456,4 +456,3 @@ export const CanvasStageRenderer = React.memo(function CanvasStageRenderer({
     </>
   );
 });
-

@@ -20,7 +20,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const maxDuration = 60;
 
-
 /**
  * POST handler for uploading files to Convex storage.
  *
@@ -84,7 +83,7 @@ export async function POST(req: NextRequest) {
       file,
       metadata,
       thumbnail: thumbnail instanceof Blob ? thumbnail : undefined,
-    })
+    }),
   );
 
   if (isErr(result)) {

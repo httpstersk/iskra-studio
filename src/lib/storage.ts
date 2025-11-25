@@ -161,14 +161,19 @@ class CanvasStorage {
     await imageTx.done;
 
     // Clear videos (may not exist in older DB versions)
-    const videoTxResult = await tryPromise((async () => {
-      const videoTx = this.db!.transaction(OBJECT_STORES.VIDEOS, "readwrite");
-      await videoTx.objectStore(OBJECT_STORES.VIDEOS).clear();
-      await videoTx.done;
-    })());
+    const videoTxResult = await tryPromise(
+      (async () => {
+        const videoTx = this.db!.transaction(OBJECT_STORES.VIDEOS, "readwrite");
+        await videoTx.objectStore(OBJECT_STORES.VIDEOS).clear();
+        await videoTx.done;
+      })(),
+    );
 
     if (isErr(videoTxResult)) {
-      log.warn("Could not clear videos store, it may not exist yet", videoTxResult.payload);
+      log.warn(
+        "Could not clear videos store, it may not exist yet",
+        videoTxResult.payload,
+      );
     }
   }
 

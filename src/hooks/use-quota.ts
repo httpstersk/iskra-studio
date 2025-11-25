@@ -110,7 +110,7 @@ export function useQuota(): UseQuotaReturn {
   // Fetch subscription data which includes quota information
   const subscriptionData = useQuery(
     api.subscriptions.getSubscriptionStatus,
-    isAuthenticated ? {} : "skip"
+    isAuthenticated ? {} : "skip",
   );
 
   // Memoize quota status to avoid unnecessary recalculations
@@ -151,8 +151,7 @@ export function useQuota(): UseQuotaReturn {
   const imageQuotaExceeded = imagesUsed >= imagesLimit;
   const videoQuotaExceeded = videosUsed >= videosLimit;
 
-  const isWarning =
-    imagesPercentage >= 80 || videosPercentage >= 80;
+  const isWarning = imagesPercentage >= 80 || videosPercentage >= 80;
 
   const resetDate = quotaStatus?.resetDate ?? null;
   const daysUntilReset = quotaStatus?.daysUntilReset ?? 30;

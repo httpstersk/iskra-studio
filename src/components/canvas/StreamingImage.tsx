@@ -3,6 +3,8 @@ import type { ActiveGeneration } from "@/types/canvas";
 import { isContentValidationError } from "@/utils/image-error-overlay";
 import { useSubscription } from "@trpc/tanstack-react-query";
 import React from "react";
+import { useAtomValue } from "jotai";
+import { aiProviderAtom } from "@/store/ui-atoms";
 
 interface StreamingImageProps {
   imageId: string;
@@ -24,6 +26,7 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
   onStreamingUpdate,
 }) => {
   const trpc = useTRPC();
+  const aiProvider = useAtomValue(aiProviderAtom);
 
   const onErrorHandler = (error: { message?: string }) => {
     const errorMessage = error.message?.trim() || "Generation failed";
@@ -73,13 +76,15 @@ export const StreamingImage: React.FC<StreamingImageProps> = ({
       {
         imageUrls: generation.imageUrls || [generation.imageUrl || ""],
         prompt: generation.prompt || "",
+        provider: aiProvider,
         ...(generation.model ? { model: generation.model } : {}),
         ...(generation.imageSize ? { imageSize: generation.imageSize } : {}),
       },
       {
         enabled:
           !!generation.isVariation &&
-          (!!generation.imageUrl || (!!generation.imageUrls && generation.imageUrls.length > 0)) &&
+          (!!generation.imageUrl ||
+            (!!generation.imageUrls && generation.imageUrls.length > 0)) &&
           !!generation.prompt,
         onData,
         onError: onErrorHandler,

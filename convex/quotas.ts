@@ -140,7 +140,7 @@ export const checkAndReserveQuota = mutation({
     // Check if quota is available BEFORE incrementing
     if (currentUsed + count > limit) {
       throw new Error(
-        `Quota exceeded: ${currentUsed}/${limit} ${args.type}s used this period. Requested ${count}, but only ${limit - currentUsed} remaining.`
+        `Quota exceeded: ${currentUsed}/${limit} ${args.type}s used this period. Requested ${count}, but only ${limit - currentUsed} remaining.`,
       );
     }
 
@@ -243,13 +243,13 @@ export const resetQuotaForUser = internalMutation({
     const newBillingStart = new Date(
       currentDate.getFullYear(),
       currentDate.getMonth(),
-      signupDate.getDate()
+      signupDate.getDate(),
     ).getTime();
 
     const newBillingEnd = new Date(
       new Date(newBillingStart).getFullYear(),
       new Date(newBillingStart).getMonth() + 1,
-      signupDate.getDate()
+      signupDate.getDate(),
     ).getTime();
 
     await ctx.db.patch(user._id, {
@@ -288,13 +288,13 @@ export const resetExpiredQuotas = internalMutation({
         const newBillingStart = new Date(
           currentDate.getFullYear(),
           currentDate.getMonth(),
-          signupDate.getDate()
+          signupDate.getDate(),
         ).getTime();
 
         const newBillingEnd = new Date(
           new Date(newBillingStart).getFullYear(),
           new Date(newBillingStart).getMonth() + 1,
-          signupDate.getDate()
+          signupDate.getDate(),
         ).getTime();
 
         await ctx.db.patch(user._id, {
@@ -313,10 +313,6 @@ export const resetExpiredQuotas = internalMutation({
   },
 });
 
-
-
-
-
 /**
  * Helper function to calculate next billing date from signup date
  */
@@ -327,7 +323,7 @@ function calculateNextBillingDate(signupTimestamp: number): number {
   const nextBillingDate = new Date(
     now.getFullYear(),
     now.getMonth() + 1,
-    signupDate.getDate()
+    signupDate.getDate(),
   );
 
   return nextBillingDate.getTime();

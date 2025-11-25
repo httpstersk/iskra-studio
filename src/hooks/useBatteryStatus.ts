@@ -32,11 +32,11 @@ interface BatteryManager extends EventTarget {
   level: number;
   addEventListener(
     type: "chargingchange" | "levelchange",
-    listener: () => void
+    listener: () => void,
   ): void;
   removeEventListener(
     type: "chargingchange" | "levelchange",
-    listener: () => void
+    listener: () => void,
   ): void;
 }
 
@@ -90,7 +90,7 @@ async function initializeBattery(): Promise<void> {
   }
 
   const batteryResult = await tryPromise(
-    (navigator as NavigatorWithBattery).getBattery()
+    (navigator as NavigatorWithBattery).getBattery(),
   );
 
   if (isErr(batteryResult)) {

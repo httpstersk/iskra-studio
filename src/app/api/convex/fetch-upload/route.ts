@@ -1,5 +1,8 @@
 import { requireAuth } from "@/lib/api/auth-middleware";
-import { createErrorResponse, createSuccessResponse } from "@/lib/api/error-response";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+} from "@/lib/api/error-response";
 import { isErr, tryPromise } from "@/lib/errors/safe-errors";
 import { uploadRemoteAsset } from "@/lib/server/remote-asset-uploader";
 import type { GeneratedAssetUploadPayload } from "@/types/generated-asset";
@@ -29,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (!payload?.sourceUrl || !payload.assetType) {
     return NextResponse.json(
       { error: "sourceUrl and assetType are required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -38,7 +41,7 @@ export async function POST(req: NextRequest) {
       authToken: convexToken,
       origin: req.nextUrl.origin,
       payload,
-    })
+    }),
   );
 
   if (isErr(uploadResult)) {

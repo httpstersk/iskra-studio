@@ -3,10 +3,10 @@
  * Uses errors-as-values pattern with @safe-std/error
  */
 
-import { HttpErr, isErr, tryPromise } from '@/lib/errors/safe-errors';
+import { HttpErr, isErr, tryPromise } from "@/lib/errors/safe-errors";
 
 export interface RequestConfig {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD";
   headers?: Record<string, string>;
   body?: unknown;
   timeout?: number;
@@ -29,7 +29,10 @@ class HttpClient {
    * Fetch JSON data with automatic retry, timeout, and error handling
    * Returns errors as values instead of throwing
    */
-  async fetchJson<T>(url: string, config: RequestConfig = {}): Promise<T | HttpErr> {
+  async fetchJson<T>(
+    url: string,
+    config: RequestConfig = {},
+  ): Promise<T | HttpErr> {
     const response = await this.fetch<T>(url, config);
     if (isErr(response)) {
       return response;
@@ -41,9 +44,12 @@ class HttpClient {
    * Fetch with full response details
    * Returns errors as values instead of throwing
    */
-  async fetch<T>(url: string, config: RequestConfig = {}): Promise<FetchResponse<T> | HttpErr> {
+  async fetch<T>(
+    url: string,
+    config: RequestConfig = {},
+  ): Promise<FetchResponse<T> | HttpErr> {
     const {
-      method = 'GET',
+      method = "GET",
       headers = {},
       body,
       timeout = this.defaultTimeout,
@@ -54,15 +60,16 @@ class HttpClient {
     const fetchOptions: RequestInit = {
       method,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...headers,
       },
       signal,
     };
 
     // Don't add body for GET/HEAD requests
-    if (body !== undefined && method !== 'GET' && method !== 'HEAD') {
-      fetchOptions.body = typeof body === 'string' ? body : JSON.stringify(body);
+    if (body !== undefined && method !== "GET" && method !== "HEAD") {
+      fetchOptions.body =
+        typeof body === "string" ? body : JSON.stringify(body);
     }
 
     return this.fetchWithRetry<T>(url, fetchOptions, timeout, retries);
@@ -75,10 +82,10 @@ class HttpClient {
   async fetchFormData<T>(
     url: string,
     formData: FormData,
-    config: Omit<RequestConfig, 'body'> = {}
+    config: Omit<RequestConfig, "body"> = {},
   ): Promise<T | HttpErr> {
     const {
-      method = 'POST',
+      method = "POST",
       headers = {},
       timeout = this.defaultTimeout,
       retries = this.defaultRetries,
@@ -92,7 +99,12 @@ class HttpClient {
       signal,
     };
 
-    const response = await this.fetchWithRetry<T>(url, fetchOptions, timeout, retries);
+    const response = await this.fetchWithRetry<T>(
+      url,
+      fetchOptions,
+      timeout,
+      retries,
+    );
     if (isErr(response)) {
       return response;
     }
@@ -107,7 +119,7 @@ class HttpClient {
     url: string,
     init: RequestInit,
     timeout: number,
-    maxRetries: number
+    maxRetries: number,
   ): Promise<FetchResponse<T> | HttpErr> {
     let lastError: HttpErr | null = null;
 
@@ -126,7 +138,7 @@ class HttpClient {
         const shouldRetry =
           response.payload.status === 408 || // Request Timeout
           response.payload.status === 429 || // Too Many Requests
-          response.payload.status >= 500;    // Server errors
+          response.payload.status >= 500; // Server errors
 
         if (!shouldRetry) {
           return response;
@@ -162,10 +174,13 @@ class HttpClient {
       };
     }
 
-    return lastError || new HttpErr({
-      status: 0,
-      message: 'Fetch failed after all retries',
-    });
+    return (
+      lastError ||
+      new HttpErr({
+        status: 0,
+        message: "Fetch failed after all retries",
+      })
+    );
   }
 
   /**
@@ -175,20 +190,17 @@ class HttpClient {
   private async fetchWithTimeout(
     url: string,
     init: RequestInit,
-    timeout: number
+    timeout: number,
   ): Promise<Response | HttpErr> {
     // Use provided signal or create new abort controller
     const controller = init.signal ? null : new AbortController();
-    const timeoutId = setTimeout(
-      () => controller?.abort(),
-      timeout
-    );
+    const timeoutId = setTimeout(() => controller?.abort(), timeout);
 
     const fetchResult = await tryPromise(
       fetch(url, {
         ...init,
         signal: init.signal || controller?.signal,
-      })
+      }),
     );
 
     clearTimeout(timeoutId);
@@ -196,7 +208,7 @@ class HttpClient {
     if (isErr(fetchResult)) {
       const error = fetchResult.payload;
 
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (error instanceof Error && error.name === "AbortError") {
         return new HttpErr({
           status: 408,
           message: `Request timed out after ${timeout}ms`,
@@ -222,13 +234,13 @@ class HttpClient {
     }
 
     // Handle empty responses
-    const contentType = response.headers.get('content-type');
+    const contentType = response.headers.get("content-type");
     if (!contentType || response.status === 204) {
       return undefined as T;
     }
 
     // Parse JSON responses
-    if (contentType.includes('application/json')) {
+    if (contentType.includes("application/json")) {
       try {
         return await response.json();
       } catch (error) {
@@ -259,9 +271,9 @@ class HttpClient {
     let errorDetails: unknown;
 
     try {
-      const contentType = response.headers.get('content-type');
+      const contentType = response.headers.get("content-type");
 
-      if (contentType?.includes('application/json')) {
+      if (contentType?.includes("application/json")) {
         errorDetails = await response.json();
         errorMessage =
           (errorDetails as { error?: string; message?: string })?.error ||
@@ -269,7 +281,8 @@ class HttpClient {
           `Request failed with status ${response.status}`;
       } else {
         const errorText = await response.text();
-        errorMessage = errorText || `Request failed with status ${response.status}`;
+        errorMessage =
+          errorText || `Request failed with status ${response.status}`;
         errorDetails = { text: errorText };
       }
     } catch {
@@ -287,7 +300,7 @@ class HttpClient {
    * Delay helper for retry logic
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -307,7 +320,7 @@ class HttpClient {
 }
 
 // Re-export for convenience
-export { HttpErr, isErr } from '@/lib/errors/safe-errors';
+export { HttpErr, isErr } from "@/lib/errors/safe-errors";
 
 // Export singleton instance
 export const httpClient = new HttpClient();

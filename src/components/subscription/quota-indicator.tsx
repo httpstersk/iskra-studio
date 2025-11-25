@@ -43,7 +43,7 @@ export function QuotaIndicator({ className }: QuotaIndicatorProps) {
               className={cn(
                 "flex h-8 items-center gap-1.5 px-3 font-mono text-xs font-medium",
                 imagesRemaining === 0 &&
-                  "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  "bg-destructive/10 text-destructive hover:bg-destructive/20",
               )}
             >
               <ImageIcon className="h-3.5 w-3.5" />
@@ -64,7 +64,7 @@ export function QuotaIndicator({ className }: QuotaIndicatorProps) {
               className={cn(
                 "flex h-8 items-center gap-1.5 px-3 font-mono text-xs font-medium",
                 videosRemaining === 0 &&
-                  "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                  "bg-destructive/10 text-destructive hover:bg-destructive/20",
               )}
             >
               <Video className="h-3.5 w-3.5" />

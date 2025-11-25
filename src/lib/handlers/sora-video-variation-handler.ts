@@ -73,7 +73,9 @@ interface SoraVideoVariationHandlerDeps {
  * @param imageUrl - URL of the image to analyze
  * @returns Promise resolving to image style and mood analysis or Error
  */
-async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis | Error> {
+async function analyzeImage(
+  imageUrl: string,
+): Promise<ImageStyleMoodAnalysis | Error> {
   // Validate URL before sending to API
   if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
     return new Error(
@@ -88,11 +90,13 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis | 
         "Content-Type": "application/json",
       },
       method: "POST",
-    })
+    }),
   );
 
   if (isErr(fetchResult)) {
-    return new Error(`Failed to call image analysis API: ${getErrorMessage(fetchResult)}`);
+    return new Error(
+      `Failed to call image analysis API: ${getErrorMessage(fetchResult)}`,
+    );
   }
 
   const response = fetchResult;
@@ -101,11 +105,12 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis | 
     const errorResult = await tryPromise(response.json());
 
     // Include validation details in the error message
-    const errorMsg = !isErr(errorResult) && errorResult?.details
-      ? `${errorResult.error}: ${JSON.stringify(errorResult.details)} (URL: ${imageUrl.substring(0, 100)})`
-      : !isErr(errorResult) && errorResult?.error
-        ? errorResult.error
-        : `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
+    const errorMsg =
+      !isErr(errorResult) && errorResult?.details
+        ? `${errorResult.error}: ${JSON.stringify(errorResult.details)} (URL: ${imageUrl.substring(0, 100)})`
+        : !isErr(errorResult) && errorResult?.error
+          ? errorResult.error
+          : `${ERROR_MESSAGES.IMAGE_ANALYSIS_FAILED} with status ${response.status}`;
 
     return new Error(errorMsg);
   }
@@ -113,7 +118,9 @@ async function analyzeImage(imageUrl: string): Promise<ImageStyleMoodAnalysis | 
   const jsonResult = await tryPromise(response.json());
 
   if (isErr(jsonResult)) {
-    return new Error(`Failed to parse image analysis response: ${getErrorMessage(jsonResult)}`);
+    return new Error(
+      `Failed to parse image analysis response: ${getErrorMessage(jsonResult)}`,
+    );
   }
 
   return jsonResult.analysis;
@@ -216,7 +223,7 @@ export const handleSoraVideoVariations = async (
   // OPTIMIZATION: Perform early preparation BEFORE async operations
   // This generates pixelated overlay immediately for instant visual feedback
   const preparationResult = await tryPromise(
-    performEarlyPreparation([selectedImage], VARIATION_COUNT)
+    performEarlyPreparation([selectedImage], VARIATION_COUNT),
   );
 
   if (isErr(preparationResult)) {
@@ -363,7 +370,7 @@ export const handleSoraVideoVariations = async (
       duration,
       styleAnalysis: imageAnalysis,
       userPrompt: deps.basePrompt,
-    })
+    }),
   );
 
   if (isErr(storylineResult)) {

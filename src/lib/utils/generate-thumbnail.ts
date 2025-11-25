@@ -29,7 +29,7 @@ const THUMBNAIL_QUALITY = 0.9;
 function calculateThumbnailDimensions(
   originalWidth: number,
   originalHeight: number,
-  maxSize: number
+  maxSize: number,
 ): { height: number; width: number } {
   const aspectRatio = originalWidth / originalHeight;
   const isLandscape = originalWidth > originalHeight;
@@ -76,7 +76,7 @@ function calculateThumbnailDimensions(
  */
 export async function generateThumbnail(
   imageBlob: Blob,
-  maxSize: number = DEFAULT_THUMBNAIL_SIZE
+  maxSize: number = DEFAULT_THUMBNAIL_SIZE,
 ): Promise<Blob | undefined> {
   try {
     const dataUrl = await blobToDataUrl(imageBlob);
@@ -85,7 +85,7 @@ export async function generateThumbnail(
     const { height, width } = calculateThumbnailDimensions(
       img.width,
       img.height,
-      maxSize
+      maxSize,
     );
 
     const canvas = document.createElement("canvas");
@@ -99,7 +99,7 @@ export async function generateThumbnail(
     const blob = await canvasToBlob(
       canvas,
       THUMBNAIL_FORMAT,
-      THUMBNAIL_QUALITY
+      THUMBNAIL_QUALITY,
     );
 
     return blob;

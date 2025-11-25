@@ -1,6 +1,6 @@
 /**
  * Variation ghost placeholders components
- * 
+ *
  * Compound component pattern for displaying ghost placeholders
  * that show where variations will be generated.
  */

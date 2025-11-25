@@ -121,7 +121,8 @@ export const DEFAULT_FIBO_ANALYSIS = {
       cadence: "steady",
       tempo: "measured",
     },
-    styleLockPrompt: "Cinematic style with balanced lighting and natural colors.",
+    styleLockPrompt:
+      "Cinematic style with balanced lighting and natural colors.",
   },
   cinematicPotential: {
     motionStyle: ["smooth", "steady"],

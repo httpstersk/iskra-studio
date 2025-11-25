@@ -275,7 +275,7 @@ export const listAssets = query({
       query = ctx.db
         .query("assets")
         .withIndex("by_userId_and_type", (q) =>
-          q.eq("userId", userId).eq("type", assetType)
+          q.eq("userId", userId).eq("type", assetType),
         );
     } else {
       query = ctx.db

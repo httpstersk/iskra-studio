@@ -72,14 +72,14 @@ interface BriaStatusResponse<T> {
   request_id: string;
   result?: T;
   status:
-  | "PENDING"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "FAILED"
-  | "pending"
-  | "processing"
-  | "completed"
-  | "failed";
+    | "PENDING"
+    | "IN_PROGRESS"
+    | "COMPLETED"
+    | "FAILED"
+    | "pending"
+    | "processing"
+    | "completed"
+    | "failed";
   warning?: string;
 }
 
@@ -149,7 +149,8 @@ export function getBriaApiToken(): string | BriaTokenErr {
 
   if (!token || !token.trim()) {
     return new BriaTokenErr({
-      message: "BRIA_API_TOKEN environment variable is not configured. Get your API token from https://platform.bria.ai/console/account/api-keys"
+      message:
+        "BRIA_API_TOKEN environment variable is not configured. Get your API token from https://platform.bria.ai/console/account/api-keys",
     });
   }
 
@@ -168,7 +169,7 @@ export function getBriaApiToken(): string | BriaTokenErr {
 async function briaRequest<T>(
   endpoint: string,
   body: Record<string, unknown>,
-  timeout = 30000
+  timeout = 30000,
 ): Promise<T | BriaApiErr | BriaTokenErr> {
   const token = getBriaApiToken();
 
@@ -191,7 +192,14 @@ async function briaRequest<T>(
       let errorMessage = `HTTP ${result.payload.status}`;
 
       // Try to extract detailed error message
-      const response = result.payload.response as { error?: unknown; message?: unknown; detail?: unknown; request_id?: string } | undefined;
+      const response = result.payload.response as
+        | {
+            error?: unknown;
+            message?: unknown;
+            detail?: unknown;
+            request_id?: string;
+          }
+        | undefined;
       if (response?.error) {
         errorMessage =
           typeof response.error === "string"
@@ -237,7 +245,9 @@ async function briaRequest<T>(
  * @param statusUrl - Status URL to poll
  * @returns Final result or error
  */
-async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T> | BriaApiErr | BriaTokenErr> {
+async function pollStatus<T>(
+  statusUrl: string,
+): Promise<BriaBaseResponse<T> | BriaApiErr | BriaTokenErr> {
   const token = getBriaApiToken();
 
   if (isErr(token)) {
@@ -248,22 +258,19 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T> | B
 
   // Initial delay before first poll
   await new Promise((resolve) =>
-    setTimeout(resolve, POLLING_CONFIG.INITIAL_DELAY_MS)
+    setTimeout(resolve, POLLING_CONFIG.INITIAL_DELAY_MS),
   );
 
   while (attempts < POLLING_CONFIG.MAX_ATTEMPTS) {
     attempts++;
 
-    const data = await httpClient.fetchJson<BriaStatusResponse<T>>(
-      statusUrl,
-      {
-        method: "GET",
-        headers: {
-          api_token: token,
-        },
-        timeout: 10000, // 10 second timeout for polling requests
-      }
-    );
+    const data = await httpClient.fetchJson<BriaStatusResponse<T>>(statusUrl, {
+      method: "GET",
+      headers: {
+        api_token: token,
+      },
+      timeout: 10000, // 10 second timeout for polling requests
+    });
 
     if (isErr(data)) {
       log.warn(`Network error on attempt ${attempts}`, data);
@@ -278,7 +285,7 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T> | B
 
       // Wait before retry
       await new Promise((resolve) =>
-        setTimeout(resolve, POLLING_CONFIG.INTERVAL_MS)
+        setTimeout(resolve, POLLING_CONFIG.INTERVAL_MS),
       );
       continue;
     }
@@ -315,7 +322,7 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T> | B
 
     // Still pending/processing, wait before next poll
     await new Promise((resolve) =>
-      setTimeout(resolve, POLLING_CONFIG.INTERVAL_MS)
+      setTimeout(resolve, POLLING_CONFIG.INTERVAL_MS),
     );
   }
 
@@ -368,7 +375,7 @@ async function pollStatus<T>(statusUrl: string): Promise<BriaBaseResponse<T> | B
  */
 export async function generateStructuredPrompt(
   request: BriaStructuredPromptRequest,
-  timeout = 30000
+  timeout = 30000,
 ): Promise<BriaStructuredPromptResult | BriaApiErr | BriaTokenErr> {
   const { sync = false, ...body } = request;
 
@@ -379,7 +386,7 @@ export async function generateStructuredPrompt(
     >(
       BRIA_ENDPOINTS.STRUCTURED_PROMPT_GENERATE,
       { ...body, sync: true },
-      timeout
+      timeout,
     );
 
     if (isErr(response)) {
@@ -400,7 +407,7 @@ export async function generateStructuredPrompt(
   const asyncResponse = await briaRequest<BriaAsyncResponse>(
     BRIA_ENDPOINTS.STRUCTURED_PROMPT_GENERATE,
     { ...body, sync: false },
-    timeout
+    timeout,
   );
 
   if (isErr(asyncResponse)) {
@@ -408,7 +415,7 @@ export async function generateStructuredPrompt(
   }
 
   const finalResponse = await pollStatus<BriaStructuredPromptResult>(
-    asyncResponse.status_url
+    asyncResponse.status_url,
   );
 
   if (isErr(finalResponse)) {
@@ -472,7 +479,7 @@ export async function generateStructuredPrompt(
  */
 export async function generateImage(
   request: BriaImageGenerationRequest,
-  timeout = 30000
+  timeout = 30000,
 ): Promise<BriaImageGenerationResult | BriaApiErr | BriaTokenErr> {
   const { sync = false, ...body } = request;
 
@@ -500,7 +507,7 @@ export async function generateImage(
   const asyncResponse = await briaRequest<BriaAsyncResponse>(
     BRIA_ENDPOINTS.IMAGE_GENERATE,
     { ...body, sync: false },
-    timeout
+    timeout,
   );
 
   if (isErr(asyncResponse)) {
@@ -508,7 +515,7 @@ export async function generateImage(
   }
 
   const finalResponse = await pollStatus<BriaImageGenerationResult>(
-    asyncResponse.status_url
+    asyncResponse.status_url,
   );
 
   if (isErr(finalResponse)) {
