@@ -76,9 +76,9 @@ export interface NanoBananaProInput {
   output_format?: "jpg" | "png";
   /** Safety filter level */
   safety_filter_level?:
-    | "block_low_and_above"
-    | "block_medium_and_above"
-    | "block_only_high";
+  | "block_low_and_above"
+  | "block_medium_and_above"
+  | "block_only_high";
 }
 
 /**
@@ -291,10 +291,6 @@ export async function generateImageWithNanoBananaPro(
     return new Error("Invalid output URL");
   }
 
-  log.info("Nano Banana Pro generation complete", {
-    id: finalPrediction.id,
-    url: imageUrl,
-  });
 
   return {
     url: imageUrl,
