@@ -1,4 +1,5 @@
 import { toSingleLinePrompt } from "@/lib/fal/helpers";
+import { getAspectRatioFromSize } from "@/lib/validation";
 import type {
   ImageVariationProvider,
   VariationInput,
@@ -15,8 +16,7 @@ export class ReplicateProvider implements ImageVariationProvider {
     );
 
     const compactPrompt = toSingleLinePrompt(input.prompt);
-    const aspectRatio =
-      input.imageSize.height > input.imageSize.width ? "9:16" : "16:9";
+    const aspectRatio = getAspectRatioFromSize(input.imageSize);
 
     const result = await generateImageWithNanoBananaPro({
       prompt: compactPrompt,

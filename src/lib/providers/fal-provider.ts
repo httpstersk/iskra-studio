@@ -7,6 +7,7 @@ import {
   IMAGE_MODELS,
   type ImageModelId,
 } from "@/lib/image-models";
+import { getAspectRatioFromSize } from "@/lib/validation";
 import type {
   ImageVariationProvider,
   VariationInput,
@@ -28,8 +29,7 @@ export class FalProvider implements ImageVariationProvider {
     const endpoint = getImageModelEndpoint(this.model);
 
     // Build input based on model - Nano Banana and Seedream have different schemas
-    const nanoBananaAspectRatio =
-      input.imageSize.height > input.imageSize.width ? "9:16" : "16:9";
+    const nanoBananaAspectRatio = getAspectRatioFromSize(input.imageSize);
 
     const falInput =
       this.model === IMAGE_MODELS.NANO_BANANA

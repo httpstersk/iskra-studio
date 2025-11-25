@@ -12,6 +12,7 @@ import {
   yieldProgress,
   yieldTimestampedError,
 } from "@/lib/trpc/event-tracking";
+import { validateDuration } from "@/lib/validation";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { generateVideoPrompt } from "@/lib/video-prompt-generator";
 import { z } from "zod";
@@ -54,26 +55,11 @@ export const generateImageToVideo = publicProcedure
         throw new Error(`Unknown model ID: ${input.modelId ?? "undefined"}`);
       }
 
-      const parsedDuration =
-        typeof input.duration === "string"
-          ? Number.parseInt(input.duration, 10)
-          : input.duration;
-
-      const resolvedDuration = (() => {
-        if (parsedDuration === undefined || parsedDuration === null) {
-          return 4;
-        }
-
-        if (!Number.isFinite(parsedDuration) || parsedDuration % 1 !== 0) {
-          throw new Error("Invalid duration value");
-        }
-
-        if (parsedDuration < 1 || parsedDuration > 60) {
-          throw new Error("Duration must be between 1 and 60 seconds");
-        }
-
-        return parsedDuration;
-      })();
+      const resolvedDuration = validateDuration(input.duration, {
+        min: 1,
+        max: 60,
+        default: 4,
+      });
 
       // Sanitize user-provided prompt for guidance
       const userGuidance = sanitizePrompt(input.prompt);
