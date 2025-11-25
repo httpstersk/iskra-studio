@@ -1,5 +1,4 @@
 import {
-  extractFalErrorMessage,
   extractImages,
   extractResultData,
   getFalClient,
@@ -10,6 +9,10 @@ import {
   resolveImageSize,
   TEXT_TO_IMAGE_ENDPOINT,
 } from "@/lib/image-models";
+import {
+  assertResultPresent,
+  handleFalError,
+} from "@/lib/trpc/error-handling";
 import { z } from "zod";
 import { publicProcedure } from "../../init";
 
@@ -62,22 +65,21 @@ export const generateTextToImage = publicProcedure
         images: [],
       };
       const images = extractImages(result) ?? [];
-      if (!images[0]?.url) {
-        throw new Error("No image generated");
-      }
+      const firstImage = assertResultPresent(
+        images[0]?.url,
+        "No image generated",
+      );
 
       const outWidth = images[0].width ?? resolvedImageSize.width;
       const outHeight = images[0].height ?? resolvedImageSize.height;
 
       return {
-        url: images[0].url ?? "",
+        url: firstImage,
         width: outWidth,
         height: outHeight,
         seed: resultData.seed ?? Math.random(),
       };
     } catch (error) {
-      throw new Error(
-        extractFalErrorMessage(error, "Failed to generate image"),
-      );
+      throw handleFalError(error, "Failed to generate image");
     }
   });

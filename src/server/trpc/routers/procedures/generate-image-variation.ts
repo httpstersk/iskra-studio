@@ -1,12 +1,12 @@
-import { extractFalErrorMessage, getFalClient } from "@/lib/fal/helpers";
+import { getFalClient } from "@/lib/fal/helpers";
 import { IMAGE_MODELS, resolveImageSize } from "@/lib/image-models";
 import { createProvider } from "@/lib/providers";
 import {
   generateId,
   yieldComplete,
   yieldError,
-  yieldTimestampedError,
 } from "@/lib/trpc/event-tracking";
+import { handleFalError } from "@/lib/trpc/error-handling";
 import { z } from "zod";
 import { publicProcedure } from "../../init";
 
@@ -92,8 +92,6 @@ export const generateImageVariation = publicProcedure
           : {}),
       });
     } catch (error) {
-      yield yieldTimestampedError(
-        extractFalErrorMessage(error, "Failed to generate image variation"),
-      );
+      yield handleFalError(error, "Failed to generate image variation");
     }
   });

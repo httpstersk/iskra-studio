@@ -1,11 +1,11 @@
 import { getFiboSeed } from "@/constants/fibo";
 import { isErr } from "@/lib/errors/safe-errors";
 import { generateImage } from "@/lib/services/bria-client";
+import { generateId, yieldComplete } from "@/lib/trpc/event-tracking";
 import {
-  generateId,
-  yieldComplete,
-  yieldTimestampedError,
-} from "@/lib/trpc/event-tracking";
+  extractErrorMessage,
+  handleFalError,
+} from "@/lib/trpc/error-handling";
 import { z } from "zod";
 import { publicProcedure } from "../../init";
 
@@ -74,11 +74,9 @@ export const generateFiboImageVariation = publicProcedure
         seed: result.seed,
       });
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to generate FIBO image variation";
-
-      yield yieldTimestampedError(errorMessage);
+      yield handleFalError(
+        error,
+        extractErrorMessage(error, "Failed to generate FIBO image variation"),
+      );
     }
   });

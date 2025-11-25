@@ -1,5 +1,4 @@
 import {
-  extractFalErrorMessage,
   extractFirstImageUrl,
   extractResultData,
   getFalClient,
@@ -10,8 +9,8 @@ import {
   yieldComplete,
   yieldCustom,
   yieldError,
-  yieldTimestampedError,
 } from "@/lib/trpc/event-tracking";
+import { handleFalError } from "@/lib/trpc/error-handling";
 import { z } from "zod";
 import { publicProcedure } from "../../init";
 
@@ -85,8 +84,6 @@ export const generateImageStream = publicProcedure
         seed: resultData.seed ?? Math.random(),
       });
     } catch (error) {
-      yield yieldTimestampedError(
-        extractFalErrorMessage(error, "Failed to generate image"),
-      );
+      yield handleFalError(error, "Failed to generate image");
     }
   });

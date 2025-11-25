@@ -1,8 +1,4 @@
-import {
-  extractFalErrorMessage,
-  extractVideoUrl,
-  getFalClient,
-} from "@/lib/fal/helpers";
+import { extractVideoUrl, getFalClient } from "@/lib/fal/helpers";
 import type { ApiResponse } from "@/lib/fal/types";
 import { sanitizePrompt } from "@/lib/prompt-utils";
 import {
@@ -10,8 +6,8 @@ import {
   yieldComplete,
   yieldError,
   yieldProgress,
-  yieldTimestampedError,
 } from "@/lib/trpc/event-tracking";
+import { handleFalError } from "@/lib/trpc/error-handling";
 import { validateDuration } from "@/lib/validation";
 import { getVideoModelById, SORA_2_MODEL_ID } from "@/lib/video-models";
 import { generateVideoPrompt } from "@/lib/video-prompt-generator";
@@ -142,8 +138,6 @@ export const generateImageToVideo = publicProcedure
         videoUrl,
       });
     } catch (error) {
-      yield yieldTimestampedError(
-        extractFalErrorMessage(error, "Failed to convert image to video"),
-      );
+      yield handleFalError(error, "Failed to convert image to video");
     }
   });
