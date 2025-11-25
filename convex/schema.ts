@@ -89,25 +89,26 @@ export default defineSchema({
    * Stores metadata for all uploaded images and videos.
    * Actual files are stored in Convex file storage.
    *
-   * @property userId - Owner's Clerk user ID (indexed)
-   * @property type - Asset type ("image" | "video")
-   * @property storageId - Convex file storage ID (full-size, for AI generation)
-   * @property thumbnailStorageId - Convex file storage ID for thumbnail (nullable, for UI)
+   * @property cameraAngle - Camera angle directive for AI-generated camera angle variations (nullable)
+   * @property characterVariation - Character description for character variations (nullable)
+   * @property createdAt - Upload timestamp
+   * @property directorName - Director name for AI-generated director-style variations (nullable)
+   * @property duration - Video duration in seconds (nullable, video only)
+   * @property emotion - Emotion label for AI-generated emotion variations (nullable)
+   * @property height - Asset height in pixels
+   * @property lightingScenario - Lighting scenario for AI-generated lighting variations (nullable)
+   * @property mimeType - MIME type (e.g., "image/png", "video/mp4")
    * @property originalUrl - Original provider URL (nullable, for reference)
    * @property provider - AI generation provider ("fal" | "replicate", nullable)
-   * @property width - Asset width in pixels
-   * @property height - Asset height in pixels
-   * @property duration - Video duration in seconds (nullable, video only)
-   * @property directorName - Director name for AI-generated director-style variations (nullable)
-   * @property cameraAngle - Camera angle directive for AI-generated camera angle variations (nullable)
-   * @property lightingScenario - Lighting scenario for AI-generated lighting variations (nullable)
-   * @property emotion - Emotion label for AI-generated emotion variations (nullable)
-   * @property storylineLabel - Time progression label for storyline variations (nullable, e.g., "+1min", "+2h5m")
-   * @property characterVariation - Character description for character variations (nullable)
-   * @property variationType - Variation type for grouping/filtering (nullable, e.g., "director", "camera", "emotion")
-   * @property mimeType - MIME type (e.g., "image/png", "video/mp4")
    * @property sizeBytes - File size in bytes
-   * @property createdAt - Upload timestamp
+   * @property storageId - Convex file storage ID (full-size, for AI generation)
+   * @property storylineLabel - Time progression label for storyline variations (nullable, e.g., "+1min", "+2h5m")
+   * @property thumbnailStorageId - Convex file storage ID for thumbnail (nullable, for UI)
+   * @property type - Asset type ("image" | "video")
+   * @property userId - Owner's Clerk user ID (indexed)
+   * @property variationType - Variation type for grouping/filtering (nullable, e.g., "director", "camera", "emotion", "weather")
+   * @property weather - Weather condition for AI-generated weather variations (nullable)
+   * @property width - Asset width in pixels
    */
   assets: defineTable({
     cameraAngle: v.optional(v.string()),
@@ -129,6 +130,7 @@ export default defineSchema({
     type: v.union(v.literal("image"), v.literal("video")),
     userId: v.string(),
     variationType: v.optional(v.string()),
+    weather: v.optional(v.string()),
     width: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])

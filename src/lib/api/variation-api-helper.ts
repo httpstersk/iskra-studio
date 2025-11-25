@@ -14,6 +14,7 @@ import type { PlacedImage } from "@/types/canvas";
 import { selectRandomCameraVariations } from "@/utils/camera-variation-utils";
 import { selectRandomEmotionVariations } from "@/utils/emotion-variation-utils";
 import { selectRandomLightingVariations } from "@/utils/lighting-variation-utils";
+import { selectRandomWeatherVariations } from "@/utils/weather-variation-utils";
 
 /**
  * Narrative time progression labels for storyline variations (supports up to 12 variations)
@@ -505,9 +506,9 @@ export const variationHandlers = {
       if (userContext) {
         return `
         ${baseInstruction}
-        
+
         ADDITIONAL CONTEXT/INSTRUCTION: ${userContext}
-        
+
         INSTRUCTIONS:
         1. ANALYSIS: Analyze the geometry, texture, and lighting of the reference image.
         2. INTERPRETATION: Apply the additional context to the generation of the ${mapType} (e.g., if the context implies a specific material property or modification).
@@ -519,13 +520,65 @@ export const variationHandlers = {
 
       return `
       ${baseInstruction}
-      
+
       INSTRUCTIONS:
       1. ANALYSIS: Analyze the geometry, texture, and lighting of the reference image.
       2. GENERATION: Create a high-quality ${mapType} that perfectly aligns with the reference image's content.
       3. OUTPUT: The result should be a technical pass suitable for 3D workflows or compositing.
       4. STRICT ALIGNMENT: The generated map must match the pixel space of the original image exactly.
       `.trim();
+    },
+  },
+
+  weather: {
+    itemKey: "weather" as const,
+    buildPrompt: (weather: string, userContext?: string) => {
+      const weatherInstruction = `Re-render the scene with this specific weather condition: ${weather}.`;
+
+      // Define the "Vibe Lock" (The immutable style constraint)
+      const styleLock = `
+      CRITICAL STYLE CONSTRAINT (VIBE LOCK):
+      - AESTHETIC PRESERVATION: You must strictly preserve the color grading, saturation, contrast, and film grain of the reference images where appropriate for the weather condition.
+      - NATURAL ADAPTATION: The weather should naturally affect the lighting and atmosphere (e.g., fog reduces contrast, rain adds reflections, snow brightens the scene).
+      - VISUAL CONTINUITY: The final image must feel like the same scene under different weather, not a completely different aesthetic.
+      `.trim();
+
+      if (userContext) {
+        // MODE A: New Context + New Weather
+        return `
+        ${weatherInstruction}
+
+        COMMAND: Transfer the subject to this new context: ${userContext}.
+
+        EXECUTION RULES:
+        1. WEATHER APPLICATION: Apply the weather condition "${weather}" to the new environment ("${userContext}").
+        2. ATMOSPHERIC EFFECTS: Add appropriate atmospheric effects (precipitation, fog, clouds, etc.) that are realistic for this weather.
+        3. LIGHTING ADAPTATION: Adjust the lighting naturally based on the weather (overcast skies are diffused, clear skies are bright, storms are dark).
+        4. SURFACE EFFECTS: Show weather impact on surfaces (wet ground for rain, snow accumulation, etc.).
+        5. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
+
+        ${styleLock}
+        `.trim();
+      } else {
+        // MODE B: Weather Change Only
+        return `
+        ${weatherInstruction}
+
+        INSTRUCTIONS:
+        1. PRESERVE COMPOSITION: Keep the camera angle, subject position, and overall scene composition identical.
+        2. WEATHER EFFECTS: Add all appropriate weather elements (clouds, precipitation, fog, etc.) that define "${weather}".
+        3. LIGHTING ADAPTATION: Naturally adjust the lighting to match the weather condition. For example:
+           - Overcast/fog: Soft, diffused light with reduced shadows
+           - Rain: Darker skies, wet reflective surfaces
+           - Clear/sunny: Bright direct light with defined shadows
+           - Snow: Bright, cool-toned light with soft shadows
+        4. ATMOSPHERIC CONSISTENCY: Ensure the weather affects the entire scene uniformly (sky, ground, subject lighting).
+        5. SURFACE INTERACTIONS: Show how weather interacts with surfaces (wetness, snow accumulation, wind effects on loose objects).
+        6. DUAL REFERENCE: If two reference images are provided, consider one for the character/subject and the other for the vibe/scene.
+
+        ${styleLock}
+        `.trim();
+      }
     },
   },
 };
@@ -538,25 +591,27 @@ export const variationHandlers = {
  * Supported variation types for image generation
  */
 export type VariationType =
-  | "director"
   | "cameraAngle"
+  | "characters"
+  | "director"
+  | "emotions"
   | "lighting"
   | "storyline"
-  | "characters"
-  | "emotions"
-  | "surface";
+  | "surface"
+  | "weather";
 
 /**
  * Maps the UI variation type to our internal variation type
  */
 export type ImageVariationType =
   | "camera-angles"
+  | "characters"
   | "director"
+  | "emotions"
   | "lighting"
   | "storyline"
-  | "characters"
-  | "emotions"
-  | "surface";
+  | "surface"
+  | "weather";
 
 /**
  * Client-side configuration for a variation type
@@ -697,6 +752,19 @@ export const variationClientConfigs: Record<
       variationType: "surface",
     }),
   },
+
+  weather: {
+    displayName: "Weather",
+    apiEndpoint: "/api/generate-weather-variations",
+    apiRequestKey: "weatherConditions",
+    responseItemKey: "weather",
+    selectRandomItems: selectRandomWeatherVariations,
+    buildPrompt: variationHandlers.weather.buildPrompt,
+    getPlaceholderMeta: (weather: string) => ({
+      weather,
+      variationType: "weather",
+    }),
+  },
 };
 
 /**
@@ -720,5 +788,7 @@ export function mapImageVariationType(
       return "storyline";
     case "surface":
       return "surface";
+    case "weather":
+      return "weather";
   }
 }

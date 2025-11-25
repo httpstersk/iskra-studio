@@ -36,6 +36,7 @@ export interface PlacedImage {
   surfaceMap?: string;
   thumbnailSrc?: string;
   variationType?: string;
+  weather?: string;
   width: number;
   x: number;
   y: number;
