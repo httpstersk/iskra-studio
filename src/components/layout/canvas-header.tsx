@@ -50,7 +50,7 @@ interface CanvasHeaderProps {
 export function CanvasHeader({ className }: CanvasHeaderProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const [isFiboAnalysisEnabled, setIsFiboAnalysisEnabled] = useAtom(
-    isFiboAnalysisEnabledAtom,
+    isFiboAnalysisEnabledAtom
   );
 
   return (
@@ -73,7 +73,7 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
                     />
                     <label
                       htmlFor="fibo-mode"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
                       FIBO Analysis
                     </label>
