@@ -252,83 +252,87 @@ export const variationHandlers = {
         {
           label: "Moments later",
           description:
-            "The same person, seconds to minutes after the previous image.",
-          aging: "Identical age and appearance.",
+            "The same subject, seconds to minutes after the previous image.",
+          aging:
+            "If subject is a person: Identical age and appearance. If subject is an object or scene: No visible changes yet.",
           environment: "Identical setting and lighting.",
         },
         {
           label: "Later that day",
-          description: "The same person, hours later on the same day.",
-          aging: "Identical age. May have a change of clothes or expression.",
+          description: "The same subject, hours later on the same day.",
+          aging:
+            "If subject is a person: Identical age, may have a change of clothes or expression. If subject is an object or scene: Slight changes in lighting or position.",
           environment:
             "Same location, but the time of day has changed (e.g., afternoon to evening).",
         },
         {
           label: "The next day",
-          description: "The same person, 24 hours later.",
-          aging: "Identical age and appearance.",
+          description: "The same subject, 24 hours later.",
+          aging:
+            "If subject is a person: Identical age and appearance. If subject is an object or scene: Minimal changes, but new day context visible.",
           environment:
             "A similar or new location, reflecting the start of a new day.",
         },
         {
           label: "Days later",
-          description: "The same person, several days have passed.",
-          aging: "Identical age, but may show a different mood or hairstyle.",
+          description: "The same subject, several days have passed.",
+          aging:
+            "If subject is a person: Identical age, but may show a different mood or hairstyle. If subject is an object or scene: Subtle changes in wear or context.",
           environment:
             "A different location or the same location with noticeable changes (e.g., weather).",
         },
         {
           label: "Weeks later",
-          description: "The same person, several weeks have passed.",
+          description: "The same subject, several weeks have passed.",
           aging:
-            "Subtle changes. New hairstyle, slight change in weight, or different fashion style.",
+            "If subject is a person: Subtle changes like new hairstyle, slight change in weight, or different fashion style. If subject is an object or scene: Visible changes in condition or surroundings.",
           environment: "Hints of early seasonal changes in the background.",
         },
         {
           label: "Months later",
-          description: "The same person, several months have passed.",
+          description: "The same subject, several months have passed.",
           aging:
-            "Noticeable changes. Significantly different hairstyle, potential change in skin tone (tan or paler), clear evolution in clothing style.",
+            "If subject is a person: Noticeable changes like significantly different hairstyle, potential change in skin tone, clear evolution in clothing style. If subject is an object or scene: Moderate aging, patina, or seasonal transformation.",
           environment:
             "Obvious change of season (e.g., summer to winter). The location can be entirely different.",
         },
         {
           label: "A year later",
-          description: "The same person, one full year later.",
+          description: "The same subject, one full year later.",
           aging:
-            "Subtle but clear signs of being one year older. A touch more maturity in the face.",
+            "If subject is a person: Subtle but clear signs of being one year older, a touch more maturity in the face. If subject is an object or scene: One year's worth of weathering or growth.",
           environment:
             "The same season as the original, but with signs of a year's passage (e.g., plants have grown, minor wear and tear on objects).",
         },
         {
           label: "Years later",
-          description: "The same person, 3-5 years have passed.",
+          description: "The same subject, 3-5 years have passed.",
           aging:
-            "MANDATORY VISIBLE AGING. Show early signs like crow's feet, subtle forehead lines, and a more mature facial structure.",
+            "If subject is a person: MANDATORY VISIBLE AGING. Show early signs like crow's feet, subtle forehead lines, and a more mature facial structure. If subject is an object or scene: Significant wear, decay, or transformation.",
           environment:
             "Updated technology (newer phone model), fashion styles from a few years later, renovated spaces.",
         },
         {
           label: "A decade later",
-          description: "The same person, 10 years have passed.",
+          description: "The same subject, 10 years have passed.",
           aging:
-            "CRITICAL AGING. Prominent wrinkles, some graying hair (around 30-50%), visible changes in skin texture.",
+            "If subject is a person: CRITICAL AGING. Prominent wrinkles, some graying hair (around 30-50%), visible changes in skin texture. If subject is an object or scene: Major deterioration, heavy patina, or complete environmental change.",
           environment:
             "Major environmental shift. Technology is a decade newer, buildings show age or renovation, fashion reflects the new era.",
         },
         {
           label: "A generation later",
-          description: "The same person, 20-30 years have passed.",
+          description: "The same subject, 20-30 years have passed.",
           aging:
-            "NON-NEGOTIABLE ELDERLY APPEARANCE. Fully gray or white hair, deep wrinkles, aged posture, weathered skin.",
+            "If subject is a person: NON-NEGOTIABLE ELDERLY APPEARANCE. Fully gray or white hair, deep wrinkles, aged posture, weathered skin. If subject is an object or scene: Dramatic transformation, possibly abandoned or repurposed.",
           environment:
             "A transformed world. The original technology is now antique, new architectural styles are present, fashion is from a different generation.",
         },
         {
           label: "A lifetime later",
-          description: "The same person, 50+ years have passed.",
+          description: "The same subject, 50+ years have passed.",
           aging:
-            "VERY OLD. Extremely elderly appearance (80+ years old). Thin, white hair, significant wrinkles, a frail look.",
+            "If subject is a person: VERY OLD. Extremely elderly appearance (80+ years old). Thin, white hair, significant wrinkles, a frail look. If subject is an object or scene: Extreme aging, ruins, or complete transformation.",
           environment:
             "Unrecognizable era. Futuristic elements, historical locations are now landmarks, or the environment reflects significant societal change.",
         },
@@ -336,7 +340,7 @@ export const variationHandlers = {
           label: "An era later",
           description: "Distant future, 100+ years have passed.",
           aging:
-            "LEGACY OF THE PERSON. The person is likely gone. Show their legacy via a memorial, a framed photo in a futuristic home, or a statue.",
+            "If subject is a person: LEGACY. The person is likely gone. Show their legacy via a memorial, a framed photo in a futuristic home, or a statue. If subject is an object or scene: May be completely gone, replaced, or preserved as a historical artifact.",
           environment:
             "A completely different world. Sci-fi aesthetics, potential effects of climate change, new civilization.",
         },
@@ -365,7 +369,12 @@ export const variationHandlers = {
 
       return `
       ## 1. CORE INSTRUCTION: CINEMATIC TIME PROGRESSION
-      Generate a photorealistic image of the **same person** from the reference image, but **${progression.label}**. The image must be a new, distinct scene that progresses the narrative.
+      Generate a photorealistic image of the **same subject** from the reference image, but **${progression.label}**. The image must be a new, distinct scene that progresses the narrative.
+
+      **IMPORTANT:** The subject can be a person, object, scene, or any visual element. Adapt the time progression appropriately:
+      - **If Person:** Show aging, changes in appearance, clothing, and life circumstances
+      - **If Object:** Show wear, patina, changes in condition, or context
+      - **If Scene/Location:** Show environmental changes, time of day, seasons, or usage patterns
 
       ## 2. VISUAL DNA & CINEMATIC CONTINUITY (NON-NEGOTIABLE)
       **The aesthetic of the reference image is the law for this entire series.** The generated image MUST perfectly match the following attributes of the original:
@@ -373,13 +382,13 @@ export const variationHandlers = {
       - **Lighting Style:** Match the quality of light (e.g., soft diffused, hard direct), the mood (e.g., high-key, low-key), and the overall lighting philosophy.
       - **Camera & Lens Properties:** Reproduce the same depth of field, film grain, lens flares, and textural quality. The new image must feel like it was shot on the same camera and lens.
 
-      ## 3. SUBJECT IDENTITY & AGING (CRITICAL)
-      - **Subject:** This is the EXACT SAME PERSON. Maintain core facial features while applying the required aging.
-      - **Aging Requirement:** ${progression.aging} This is a MANDATORY change. The subject MUST look the specified age.
+      ## 3. SUBJECT IDENTITY & TEMPORAL CHANGES (CRITICAL)
+      - **Subject:** This is the EXACT SAME SUBJECT. Maintain core identifying features while applying time-appropriate changes.
+      - **Temporal Changes:** ${progression.aging}
 
       ## 4. CINEMATIC SCENE & NARRATIVE (MANDATORY CHANGE)
-      - **Cinematic Concept:** The scene must be completely new. Frame this shot as: **${currentConcept}**
-      - **Visual Storytelling:** Use composition and body language to imply what has changed in the subject's life.
+      - **Cinematic Concept:** The scene must be completely new. Frame this shot appropriately for the subject type.
+      - **Visual Storytelling:** Use composition and visual cues to imply what has changed over time.
 
       ## 5. ENVIRONMENT & CONTEXT (MANDATORY CHANGE)
       - **Environment Requirement:** ${progression.environment}
@@ -388,8 +397,8 @@ export const variationHandlers = {
       ## 6. WHAT TO AVOID (IMPORTANT)
       - **NO STYLE DEVIATION:** Do NOT alter the color grade, lighting style, or camera properties from the original reference.
       - **NO REPETITIVE COMPOSITION:** Do NOT use a similar camera angle or shot type as the previous image.
-      - **NO AGELESSNESS:** Do NOT make the person look the same age (unless specified). This is a critical failure.
-      - **NO GENERIC FACES:** AVOID generating a different person.
+      - **NO INCONSISTENT PROGRESSION:** Ensure time-appropriate changes match the elapsed time period.
+      - **NO SUBJECT REPLACEMENT:** Keep the core identity of the subject consistent.
       `.trim();
     },
   },
