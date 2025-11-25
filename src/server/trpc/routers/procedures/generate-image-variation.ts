@@ -1,16 +1,6 @@
-import {
-  extractFalErrorMessage,
-  extractFirstImageUrl,
-  extractResultData,
-  getFalClient,
-  toSingleLinePrompt,
-} from "@/lib/fal/helpers";
-import type { FalImageResult } from "@/lib/fal/types";
-import {
-  getImageModelEndpoint,
-  IMAGE_MODELS,
-  resolveImageSize,
-} from "@/lib/image-models";
+import { extractFalErrorMessage, getFalClient } from "@/lib/fal/helpers";
+import { IMAGE_MODELS, resolveImageSize } from "@/lib/image-models";
+import { createProvider } from "@/lib/providers";
 import { tracked } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure } from "../../init";
@@ -58,112 +48,48 @@ export const generateImageVariation = publicProcedure
 
       // Resolve imageSize to a concrete {width, height} object
       const resolvedImageSize = resolveImageSize(input.imageSize);
-      // Normalize prompt to a single line for cleaner provider input
-      const compactPrompt = toSingleLinePrompt(input.prompt);
 
-      // Route to appropriate provider
-      if (input.provider === "replicate") {
-        // Use Replicate Nano Banana Pro
-        const { generateImageWithNanoBananaPro } = await import(
-          "@/lib/services/replicate-client"
-        );
+      // Create the appropriate provider
+      const falClient =
+        input.provider === "fal" ? await getFalClient(ctx) : undefined;
 
-        const nanoBananaAspectRatio =
-          resolvedImageSize.height > resolvedImageSize.width ? "9:16" : "16:9";
+      const provider = createProvider({
+        type: input.provider,
+        falClient,
+        model: input.model,
+      });
 
-        const result = await generateImageWithNanoBananaPro({
-          prompt: compactPrompt,
-          image_input: input.imageUrls,
-          aspect_ratio: nanoBananaAspectRatio,
-          resolution: "1K",
-          output_format: "png",
+      // Generate the image variation
+      const result = await provider.generate({
+        imageUrls: input.imageUrls,
+        prompt: input.prompt,
+        imageSize: resolvedImageSize,
+        seed: input.seed,
+        model: input.model,
+      });
+
+      if (result instanceof Error) {
+        yield tracked(`${generationId}_error`, {
+          type: "error",
+          error: result.message,
         });
-
-        if (result instanceof Error) {
-          yield tracked(`${generationId}_error`, {
-            type: "error",
-            error: result.message,
-          });
-          return;
-        }
-
-        if (signal?.aborted) {
-          return;
-        }
-
-        // Send the final image with replicateUrl
-        yield tracked(`${generationId}_complete`, {
-          type: "complete",
-          imageUrl: result.url,
-          replicateUrl: result.replicateUrl,
-          provider: "replicate" as const,
-        });
-      } else {
-        // Use Fal.ai (existing logic)
-        const falClient = await getFalClient(ctx);
-
-        // Get the endpoint based on the selected model
-        const endpoint = getImageModelEndpoint(input.model);
-
-        // Build input based on model - Nano Banana and Seedream have different schemas
-        // Nano Banana uses aspect_ratio instead of image_size
-        const nanoBananaAspectRatio =
-          resolvedImageSize.height > resolvedImageSize.width ? "9:16" : "16:9";
-
-        const falInput =
-          input.model === IMAGE_MODELS.NANO_BANANA
-            ? {
-                // Nano Banana Edit API schema
-                image_urls: input.imageUrls,
-                prompt: compactPrompt,
-                aspect_ratio: nanoBananaAspectRatio,
-                num_images: 1,
-                output_format: "png" as const,
-                resolution: "1K", // 1K, 2K, 4K
-              }
-            : {
-                // Seedream Edit API schema
-                enable_safety_checker: false,
-                image_size: resolvedImageSize,
-                image_urls: input.imageUrls,
-                num_images: 1,
-                prompt: compactPrompt,
-                ...(input.seed !== undefined ? { seed: input.seed } : {}),
-              };
-
-        // Subscribe to the model endpoint and wait for completion
-        const result = await falClient.subscribe(endpoint, {
-          input: falInput,
-          pollInterval: 500, // Reduced from 1000ms for 2x faster completion detection
-          logs: true,
-        });
-
-        if (signal?.aborted) {
-          return;
-        }
-
-        // Handle different possible response structures
-        const resultData = extractResultData<FalImageResult>(result) ?? {
-          images: [],
-        };
-        const imageUrl = extractFirstImageUrl(result);
-
-        if (!imageUrl) {
-          yield tracked(`${generationId}_error`, {
-            type: "error",
-            error: "No image generated",
-          });
-          return;
-        }
-
-        // Send the final image
-        yield tracked(`${generationId}_complete`, {
-          type: "complete",
-          imageUrl,
-          provider: "fal" as const,
-          seed: resultData.seed ?? Math.random(),
-        });
+        return;
       }
+
+      if (signal?.aborted) {
+        return;
+      }
+
+      // Send the final image
+      yield tracked(`${generationId}_complete`, {
+        type: "complete",
+        imageUrl: result.imageUrl,
+        provider: result.provider,
+        ...(result.seed !== undefined ? { seed: result.seed } : {}),
+        ...(result.replicateUrl
+          ? { replicateUrl: result.replicateUrl }
+          : {}),
+      });
     } catch (error) {
       yield tracked(`error_${Date.now()}`, {
         type: "error",
