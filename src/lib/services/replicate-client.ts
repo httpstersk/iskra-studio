@@ -56,7 +56,7 @@ interface ReplicatePrediction {
     get: string;
     cancel: string;
   };
-  output?: string[] | null;
+  output?: string | string[] | null;
   error?: string | null;
 }
 
@@ -223,15 +223,10 @@ async function pollPrediction(
 
   for (let attempt = 0; attempt < POLLING_CONFIG.MAX_ATTEMPTS; attempt++) {
     const prediction = await getPrediction(predictionId);
+
     if (prediction instanceof Error) {
       return prediction;
     }
-
-    log.info("Polling Replicate prediction", {
-      id: predictionId,
-      status: prediction.status,
-      attempt: attempt + 1,
-    });
 
     if (prediction.status === "succeeded") {
       return prediction;
@@ -282,12 +277,17 @@ export async function generateImageWithNanoBananaPro(
   }
 
   // Extract output URL
-  if (!finalPrediction.output || finalPrediction.output.length === 0) {
+  // Replicate can return output as either a string or an array of strings
+  if (!finalPrediction.output) {
     return new Error("No output generated");
   }
 
-  const imageUrl = finalPrediction.output[0];
-  if (!imageUrl) {
+  const imageUrl =
+    typeof finalPrediction.output === "string"
+      ? finalPrediction.output
+      : finalPrediction.output[0];
+
+  if (!imageUrl || typeof imageUrl !== "string") {
     return new Error("Invalid output URL");
   }
 
