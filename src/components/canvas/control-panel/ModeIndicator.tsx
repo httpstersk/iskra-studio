@@ -7,16 +7,15 @@ import {
 import { cn } from "@/lib/utils";
 import { SegmentedControl } from "@radix-ui/themes";
 import {
+  BookOpen,
   CctvIcon,
+  CloudIcon,
   ImagesIcon,
   Lightbulb,
   PaintBucketIcon,
   PlayIcon,
-  BookOpen,
-  UserIcon,
   SmileIcon,
-  Layers,
-  CloudIcon,
+  UserIcon,
 } from "lucide-react";
 
 /**
@@ -26,24 +25,22 @@ interface ModeIndicatorProps {
   handleVariationModeChange: (mode: "image" | "video") => void;
   hasSelection: boolean;
   imageVariationType?:
-  | "camera-angles"
-  | "director"
-  | "lighting"
-  | "storyline"
-  | "characters"
-  | "emotions"
-  | "surface"
-  | "weather";
+    | "camera-angles"
+    | "characters"
+    | "director"
+    | "emotions"
+    | "lighting"
+    | "storyline"
+    | "weather";
   setImageVariationType?: (
     type:
       | "camera-angles"
+      | "characters"
       | "director"
+      | "emotions"
       | "lighting"
       | "storyline"
-      | "characters"
-      | "emotions"
-      | "surface"
-      | "weather",
+      | "weather"
   ) => void;
   variationMode: "image" | "video";
 }
@@ -64,7 +61,7 @@ export function ModeIndicator({
         className={cn(
           "h-9 rounded-xl overflow-clip flex items-center px-3",
           "pointer-events-none select-none",
-          CONTROL_PANEL_STYLES.ORANGE_BADGE,
+          CONTROL_PANEL_STYLES.ORANGE_BADGE
         )}
       >
         <div className="flex items-center gap-2 text-xs font-medium">
@@ -111,14 +108,13 @@ export function ModeIndicator({
           onValueChange={(value) =>
             setImageVariationType(
               value as
-              | "camera-angles"
-              | "director"
-              | "lighting"
-              | "storyline"
-              | "characters"
-              | "emotions"
-              | "surface"
-              | "weather",
+                | "camera-angles"
+                | "director"
+                | "lighting"
+                | "storyline"
+                | "characters"
+                | "emotions"
+                | "weather"
             )
           }
         >
@@ -164,12 +160,6 @@ export function ModeIndicator({
               <span className="text-xs whitespace-nowrap">Weather</span>
             </div>
           </SegmentedControl.Item>
-          {/* <SegmentedControl.Item value="surface">
-            <div className="flex flex-row items-center gap-1.5">
-              <Layers className="size-3.5" />
-              <span className="text-xs whitespace-nowrap">Surface</span>
-            </div>
-          </SegmentedControl.Item> */}
         </SegmentedControl.Root>
       )}
     </>
