@@ -22,7 +22,7 @@ export { calculateBalancedPosition } from "./variation-shared-utils";
 interface VariationHandlerDeps {
   /** Model to use for image generation */
   imageModel?: ImageModelId;
-  /** Type of image variation (camera-angles, director, or lighting) */
+  /** Type of image variation (camera-angles, director, lighting, or weather) */
   imageVariationType?:
     | "camera-angles"
     | "director"
@@ -30,7 +30,8 @@ interface VariationHandlerDeps {
     | "storyline"
     | "characters"
     | "emotions"
-    | "surface";
+    | "surface"
+    | "weather";
   /** Whether FIBO analysis is enabled */
   isFiboAnalysisEnabled?: boolean;
   /** Array of all placed images */

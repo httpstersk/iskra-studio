@@ -37,7 +37,8 @@ interface CanvasControlPanelProps {
     | "storyline"
     | "characters"
     | "emotions"
-    | "surface";
+    | "surface"
+    | "weather";
   images: PlacedImage[];
   isGenerating: boolean;
   redo: () => void;
@@ -52,7 +53,8 @@ interface CanvasControlPanelProps {
       | "storyline"
       | "characters"
       | "emotions"
-      | "surface",
+      | "surface"
+      | "weather",
   ) => void;
   setIsSettingsDialogOpen: (open: boolean) => void;
   setVideoDuration: (value: "4" | "8" | "12") => void;

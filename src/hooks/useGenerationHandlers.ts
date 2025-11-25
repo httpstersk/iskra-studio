@@ -41,7 +41,8 @@ interface GenerationHandlerDeps {
     | "storyline"
     | "characters"
     | "emotions"
-    | "surface";
+    | "surface"
+    | "weather";
   images: PlacedImage[];
   isAuthenticated: boolean;
   selectedIds: string[];

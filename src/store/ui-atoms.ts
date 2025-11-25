@@ -47,6 +47,7 @@ export const generationCountAtom = atom<number>(4);
  * "camera-angles": Random camera angle variations (default)
  * "director": AI-generated variations with director visual signatures via FIBO
  * "lighting": Random lighting scenario variations via FIBO
+ * "weather": Random weather condition variations via FIBO
  */
 export const imageVariationTypeAtom = atom<
   | "camera-angles"
@@ -56,6 +57,7 @@ export const imageVariationTypeAtom = atom<
   | "characters"
   | "emotions"
   | "surface"
+  | "weather"
 >("camera-angles");
 
 /**

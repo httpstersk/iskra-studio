@@ -16,6 +16,7 @@ import {
   UserIcon,
   SmileIcon,
   Layers,
+  CloudIcon,
 } from "lucide-react";
 
 /**
@@ -31,7 +32,8 @@ interface ModeIndicatorProps {
     | "storyline"
     | "characters"
     | "emotions"
-    | "surface";
+    | "surface"
+    | "weather";
   setImageVariationType?: (
     type:
       | "camera-angles"
@@ -40,7 +42,8 @@ interface ModeIndicatorProps {
       | "storyline"
       | "characters"
       | "emotions"
-      | "surface",
+      | "surface"
+      | "weather",
   ) => void;
   variationMode: "image" | "video";
 }
@@ -114,7 +117,8 @@ export function ModeIndicator({
                 | "storyline"
                 | "characters"
                 | "emotions"
-                | "surface",
+                | "surface"
+                | "weather",
             )
           }
         >
@@ -158,6 +162,12 @@ export function ModeIndicator({
             <div className="flex flex-row items-center gap-1.5">
               <Layers className="size-3.5" />
               <span className="text-xs whitespace-nowrap">Surface</span>
+            </div>
+          </SegmentedControl.Item>
+          <SegmentedControl.Item value="weather">
+            <div className="flex flex-row items-center gap-1.5">
+              <CloudIcon className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Weather</span>
             </div>
           </SegmentedControl.Item>
         </SegmentedControl.Root>
