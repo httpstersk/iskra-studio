@@ -1,6 +1,6 @@
 # Clerk Authentication Setup Guide
 
-This guide will walk you through setting up Clerk authentication for Iskra (spark-videos).
+This guide will walk you through setting up Clerk authentication for Iskra (iskra-studio).
 
 ## Prerequisites
 
@@ -22,7 +22,7 @@ This guide will walk you through setting up Clerk authentication for Iskra (spar
 1. After signing in, you'll see the Clerk Dashboard
 2. Click **"+ Create application"**
 3. Configure your application:
-   - **Application name**: `Iskra` or `spark-videos`
+   - **Application name**: `iskra-studio`
    - **Select authentication methods** (enable all three):
      - ✅ Email address
      - ✅ Google

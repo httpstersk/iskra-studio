@@ -7,7 +7,7 @@
 
 ### 2. Create Application
 - Click **"+ Create application"**
-- Name: `Iskra` or `spark-videos`
+- Name: `iskra-studio`
 - Enable: ✅ Email, ✅ Google, ✅ GitHub
 - Click **"Create application"**
 

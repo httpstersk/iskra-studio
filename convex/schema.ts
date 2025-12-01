@@ -1,7 +1,7 @@
 /**
  * Convex Database Schema
  *
- * Defines the database tables for Iskra (spark-videos):
+ * Defines the database tables for Iskra (iskra-studio):
  * - users: User accounts with tiers and storage quotas
  * - assets: Images and videos uploaded by users
  * - projects: Canvas workspaces with saved state
@@ -71,8 +71,8 @@ export default defineSchema({
         v.literal("cancelled"),
         v.literal("past_due"),
         v.literal("incomplete"),
-        v.literal("trialing"),
-      ),
+        v.literal("trialing")
+      )
     ),
     tier: v.union(v.literal("free"), v.literal("paid"), v.literal("pro")),
     updatedAt: v.number(),
@@ -180,7 +180,7 @@ export default defineSchema({
           assetId: v.optional(v.string()),
           assetSyncedAt: v.optional(v.number()),
           assetType: v.optional(
-            v.union(v.literal("image"), v.literal("video")),
+            v.union(v.literal("image"), v.literal("video"))
           ),
           currentTime: v.optional(v.number()),
           duration: v.optional(v.number()),
@@ -199,12 +199,12 @@ export default defineSchema({
             v.literal("image"),
             v.literal("video"),
             v.literal("text"),
-            v.literal("shape"),
+            v.literal("shape")
           ),
           volume: v.optional(v.number()),
           width: v.optional(v.number()),
           zIndex: v.number(),
-        }),
+        })
       ),
       lastModified: v.number(),
       viewport: v.optional(
@@ -212,7 +212,7 @@ export default defineSchema({
           scale: v.number(),
           x: v.number(),
           y: v.number(),
-        }),
+        })
       ),
     }),
     projectId: v.id("projects"),

@@ -314,7 +314,7 @@ We're planning an automated migration tool with these features:
 ### Implementation Status
 
 Track progress on GitHub:
-- Issue: [#XX - Implement IndexedDB to Convex Migration Tool](https://github.com/yourrepo/spark-videos/issues/XX)
+- Issue: [#XX - Implement IndexedDB to Convex Migration Tool](https://github.com/yourrepo/iskra-studio/issues/XX)
 - Milestone: Post-MVP Features
 
 ### ETA

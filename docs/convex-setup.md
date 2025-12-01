@@ -31,7 +31,7 @@ Convex provides:
 
 1. Log in to [https://dashboard.convex.dev/](https://dashboard.convex.dev/)
 2. Click "Create a project"
-3. Enter project name: `spark-videos` (or your preferred name)
+3. Enter project name: `iskra-studio` (or your preferred name)
 4. Select your region (choose closest to your users)
 5. Click "Create Project"
 
@@ -44,7 +44,7 @@ Convex provides:
 
 2. Navigate to your project directory:
    ```bash
-   cd /path/to/spark-videos
+   cd /path/to/iskra-studio
    ```
 
 3. Initialize Convex in your project:
@@ -55,7 +55,7 @@ Convex provides:
 4. Follow the prompts:
    - **Login**: Browser will open to authenticate with Convex
    - **Create new project**: Select "Create a new project"
-   - **Project name**: Enter `spark-videos` or your preferred name
+   - **Project name**: Enter `iskra-studio` or your preferred name
    - **Region**: Select your preferred region
 
 5. The CLI will:
@@ -76,8 +76,8 @@ NEXT_PUBLIC_CONVEX_URL=https://<your-deployment>.convex.cloud
 
 **Example:**
 ```bash
-CONVEX_DEPLOYMENT=prod:spark-videos-123
-NEXT_PUBLIC_CONVEX_URL=https://spark-videos-123.convex.cloud
+CONVEX_DEPLOYMENT=prod:iskra-studio-123
+NEXT_PUBLIC_CONVEX_URL=https://iskra-studio-123.convex.cloud
 ```
 
 ### Finding Your Deployment URL

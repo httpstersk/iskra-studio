@@ -1,6 +1,6 @@
 # Convex Backend
 
-This directory contains the Convex backend functions for Iskra (spark-videos).
+This directory contains the Convex backend functions for `iskra-studio`.
 
 ## Setup Instructions
 
