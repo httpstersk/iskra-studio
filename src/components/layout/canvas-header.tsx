@@ -10,10 +10,15 @@ import { SignInButton } from "@/components/auth/sign-in-button";
 import { UserMenu } from "@/components/auth/user-menu";
 import { QuotaIndicator } from "@/components/subscription/quota-indicator";
 import { Switch } from "@/components/ui/switch";
-import { isFiboAnalysisEnabledAtom, aiProviderAtom } from "@/store/ui-atoms";
 import { useAuth } from "@/hooks/useAuth";
-import { useAtom } from "jotai";
+import { IMAGE_MODELS, type ImageModelId } from "@/lib/image-models";
+import {
+  aiProviderAtom,
+  imageModelAtom,
+  isFiboAnalysisEnabledAtom,
+} from "@/store/ui-atoms";
 import { SegmentedControl } from "@radix-ui/themes";
+import { useAtom } from "jotai";
 
 /**
  * Props for the CanvasHeader component.
@@ -54,6 +59,7 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
     isFiboAnalysisEnabledAtom
   );
   const [aiProvider, setAiProvider] = useAtom(aiProviderAtom);
+  const [imageModel, setImageModel] = useAtom(imageModelAtom);
 
   return (
     <header
@@ -68,20 +74,42 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
               {isAuthenticated ? (
                 <>
                   <SegmentedControl.Root
-                    className="mr-auto ml-24"
-                    value={aiProvider}
-                    onValueChange={(value) =>
-                      setAiProvider(value as "fal" | "replicate")
-                    }
+                    className="ml-24"
                     size="1"
+                    value={aiProvider}
+                    onValueChange={(value) => {
+                      if (value === "replicate") return;
+                      setAiProvider(value as "fal" | "replicate");
+                    }}
                   >
                     <SegmentedControl.Item value="fal">
                       Fal
                     </SegmentedControl.Item>
-                    <SegmentedControl.Item value="replicate">
+                    <SegmentedControl.Item
+                      aria-disabled
+                      className="cursor-not-allowed"
+                      value="replicate"
+                    >
                       Replicate
                     </SegmentedControl.Item>
                   </SegmentedControl.Root>
+
+                  <SegmentedControl.Root
+                    className="mr-auto"
+                    size="1"
+                    value={imageModel}
+                    onValueChange={(value) =>
+                      setImageModel(value as ImageModelId)
+                    }
+                  >
+                    <SegmentedControl.Item value={IMAGE_MODELS.SEEDREAM}>
+                      🌱 Seedream
+                    </SegmentedControl.Item>
+                    <SegmentedControl.Item value={IMAGE_MODELS.NANO_BANANA}>
+                      🍌 Nano Banana
+                    </SegmentedControl.Item>
+                  </SegmentedControl.Root>
+
                   <div className="flex items-center gap-2 mr-4">
                     <Switch
                       id="fibo-mode"

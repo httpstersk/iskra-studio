@@ -51,21 +51,20 @@ export const generationCountAtom = atom<number>(4);
  */
 export const imageVariationTypeAtom = atom<
   | "camera-angles"
+  | "characters"
   | "director"
+  | "emotions"
   | "lighting"
   | "storyline"
-  | "characters"
-  | "emotions"
-  | "surface"
   | "weather"
 >("camera-angles");
 
 /**
  * Image model atom - controls which model to use for image variations
- * "seedream": Seedream v4 Edit
- * "nano-banana": Nano Banana Edit (default)
+ * "seedream": Seedream v4 Edit (default)
+ * "nano-banana": Nano Banana Edit
  */
-export const imageModelAtom = atom<ImageModelId>(IMAGE_MODELS.NANO_BANANA);
+export const imageModelAtom = atom<ImageModelId>(IMAGE_MODELS.SEEDREAM);
 
 /**
  * Network status atom - tracks online/offline state
@@ -76,7 +75,7 @@ export const imageModelAtom = atom<ImageModelId>(IMAGE_MODELS.NANO_BANANA);
  * - Used by sync manager to queue changes when offline
  */
 export const isOnlineAtom = atom<boolean>(
-  typeof window !== "undefined" ? navigator.onLine : true,
+  typeof window !== "undefined" ? navigator.onLine : true
 );
 
 /**
@@ -91,5 +90,5 @@ export const isFiboAnalysisEnabledAtom = atom(false);
  */
 export const aiProviderAtom = atomWithStorage<"fal" | "replicate">(
   "aiProvider",
-  "fal",
+  "fal"
 );

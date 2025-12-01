@@ -1,10 +1,10 @@
 # Iskra Studio
 
-Iskra Studio is a powerful AI-driven video generation and canvas editing platform. It leverages cutting-edge AI models to generate images and videos, allowing users to arrange, edit, and compose them on an infinite canvas.
+**Iskra Studio** is an AI image and video gen tool for quick explorations. The word 'iskra' means 'spark' in Slovak. With just one click, it generates different camera angles and shots based on the reference image, with no prompts needed!
 
 ## ✨ Key Features
 
-- **AI Generation**: Generate high-quality images and videos using Fal.ai and Bria models.
+- **AI Generation**: Generate high-quality images and videos using fal.ai and BRIA APIs.
 - **Infinite Canvas**: Organize your assets on a drag-and-drop canvas powered by Konva.
 - **Project Management**: Save and manage multiple projects with auto-saving capabilities.
 - **User Authentication**: Secure sign-up and login via Clerk.
@@ -16,7 +16,7 @@ Iskra Studio is a powerful AI-driven video generation and canvas editing platfor
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Database & Backend**: [Convex](https://convex.dev/)
 - **Authentication**: [Clerk](https://clerk.com/)
-- **AI Models**: [Fal.ai](https://fal.ai/), [Bria](https://bria.ai/)
+- **AI Tools**: [fal.ai](https://fal.ai/), [BRIA](https://bria.ai/)
 - **Canvas**: [Konva](https://konvajs.org/) / [React Konva](https://konvajs.org/docs/react/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/), [Radix UI](https://www.radix-ui.com/)
 - **Payments**: [Polar](https://polar.sh/)
