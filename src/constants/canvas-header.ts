@@ -6,10 +6,8 @@
  * CSS class names used in the canvas header.
  */
 export const CANVAS_HEADER_CLASSES = {
-  /** Class for the AI provider selector positioning */
-  AI_PROVIDER_SELECTOR: "ml-24",
   /** Class for the FIBO toggle container */
-  FIBO_TOGGLE_CONTAINER: "flex items-center gap-2 mr-auto",
+  FIBO_TOGGLE_CONTAINER: "flex items-center gap-2 flex-1",
   /** Class for the FIBO toggle label */
   FIBO_TOGGLE_LABEL:
     "text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
@@ -19,7 +17,7 @@ export const CANVAS_HEADER_CLASSES = {
   /** Class for the header content wrapper */
   HEADER_CONTENT: "flex items-center justify-between h-14 px-4",
   /** Class for the main controls container */
-  MAIN_CONTROLS: "flex items-center w-full gap-3",
+  MAIN_CONTROLS: "flex items-center justify-end w-full gap-3",
 } as const;
 
 /**

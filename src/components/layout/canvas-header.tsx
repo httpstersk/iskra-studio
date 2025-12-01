@@ -64,8 +64,6 @@ export function CanvasHeader({ className }: CanvasHeaderProps) {
   return (
     <header className={`${CANVAS_HEADER_CLASSES.HEADER} ${className || ""}`}>
       <div className={CANVAS_HEADER_CLASSES.HEADER_CONTENT}>
-        <div className="flex items-center" />
-
         <div className={CANVAS_HEADER_CLASSES.MAIN_CONTROLS}>
           {isAuthenticated ? (
             <>

@@ -4,13 +4,11 @@
  * AI provider selector component for switching between FAL and Replicate.
  */
 
-import {
-  CANVAS_HEADER_CLASSES,
-  CANVAS_HEADER_LABELS,
-} from "@/constants/canvas-header";
-import { aiProviderAtom } from "@/store/ui-atoms";
+import { CANVAS_HEADER_LABELS } from "@/constants/canvas-header";
+import { cn } from "@/lib/utils";
+import { aiProviderAtom, isProjectsPanelOpenAtom } from "@/store/ui-atoms";
 import { SegmentedControl } from "@radix-ui/themes";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 import { FalIcon } from "./FalIcon";
 import { ReplicateIcon } from "./ReplicateIcon";
@@ -29,6 +27,7 @@ type AIProvider = "fal" | "replicate";
  */
 export function AIProviderSelector() {
   const [aiProvider, setAiProvider] = useAtom(aiProviderAtom);
+  const isProjectsPanelOpen = useAtomValue(isProjectsPanelOpenAtom);
 
   const handleValueChange = (value: string) => {
     if (value === "replicate") return;
@@ -37,7 +36,10 @@ export function AIProviderSelector() {
 
   return (
     <SegmentedControl.Root
-      className={CANVAS_HEADER_CLASSES.AI_PROVIDER_SELECTOR}
+      className={cn(
+        "transition-[margin] duration-300 ease-in-out",
+        isProjectsPanelOpen ? "ml-28" : "ml-4"
+      )}
       size="1"
       value={aiProvider}
       onValueChange={handleValueChange}

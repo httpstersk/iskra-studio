@@ -4,10 +4,7 @@
  * Image model selector component for switching between available models.
  */
 
-import {
-  CANVAS_HEADER_CLASSES,
-  CANVAS_HEADER_LABELS,
-} from "@/constants/canvas-header";
+import { CANVAS_HEADER_LABELS } from "@/constants/canvas-header";
 import { IMAGE_MODELS, type ImageModelId } from "@/lib/image-models";
 import { imageModelAtom } from "@/store/ui-atoms";
 import { SegmentedControl } from "@radix-ui/themes";
@@ -31,7 +28,6 @@ export function ImageModelSelector() {
 
   return (
     <SegmentedControl.Root
-      className={CANVAS_HEADER_CLASSES.IMAGE_MODEL_SELECTOR}
       size="1"
       value={imageModel}
       onValueChange={handleValueChange}

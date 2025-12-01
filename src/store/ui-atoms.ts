@@ -92,3 +92,8 @@ export const aiProviderAtom = atomWithStorage<"fal" | "replicate">(
   "aiProvider",
   "fal"
 );
+
+/**
+ * Projects panel visibility atom - controls sidebar panel open/close state
+ */
+export const isProjectsPanelOpenAtom = atom(true);

@@ -11,6 +11,7 @@ import {
   CctvIcon,
   CloudIcon,
   ImagesIcon,
+  Layers,
   Lightbulb,
   PaintBucketIcon,
   PlayIcon,
@@ -31,6 +32,7 @@ interface ModeIndicatorProps {
     | "emotions"
     | "lighting"
     | "storyline"
+    | "surface"
     | "weather";
   setImageVariationType?: (
     type:
@@ -40,6 +42,7 @@ interface ModeIndicatorProps {
       | "emotions"
       | "lighting"
       | "storyline"
+      | "surface"
       | "weather"
   ) => void;
   variationMode: "image" | "video";
@@ -109,11 +112,12 @@ export function ModeIndicator({
             setImageVariationType(
               value as
                 | "camera-angles"
+                | "characters"
                 | "director"
+                | "emotions"
                 | "lighting"
                 | "storyline"
-                | "characters"
-                | "emotions"
+                | "surface"
                 | "weather"
             )
           }
@@ -152,6 +156,12 @@ export function ModeIndicator({
             <div className="flex flex-row items-center gap-1.5">
               <SmileIcon className="size-3.5" />
               <span className="text-xs whitespace-nowrap">Emotions</span>
+            </div>
+          </SegmentedControl.Item>
+          <SegmentedControl.Item value="surface">
+            <div className="flex flex-row items-center gap-1.5">
+              <Layers className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Surface</span>
             </div>
           </SegmentedControl.Item>
           <SegmentedControl.Item value="weather">

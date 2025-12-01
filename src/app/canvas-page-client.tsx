@@ -42,6 +42,8 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import Konva from "konva";
 import { useTheme } from "next-themes";
+import { isProjectsPanelOpenAtom } from "@/store/ui-atoms";
+import { useAtom } from "jotai";
 import { useCallback, useRef, useState } from "react";
 
 /**
@@ -60,7 +62,7 @@ export function CanvasPageClient() {
   const historyState = useHistoryState(
     canvasState.images,
     canvasState.videos,
-    canvasState.selectedIds,
+    canvasState.selectedIds
   );
   const uiState = useUIState();
 
@@ -69,12 +71,14 @@ export function CanvasPageClient() {
 
   const projects = useProjects();
   const { restoreLastGoodState } = useProjectSync();
-  const [isProjectsPanelOpen, setIsProjectsPanelOpen] = useState(true);
+  const [isProjectsPanelOpen, setIsProjectsPanelOpen] = useAtom(
+    isProjectsPanelOpenAtom
+  );
   const currentProjectId = projects.currentProject?._id ?? null;
 
   const handleToggleProjectsPanel = useCallback(() => {
     setIsProjectsPanelOpen((prev) => !prev);
-  }, []);
+  }, [setIsProjectsPanelOpen]);
 
   const interactions = useCanvasInteractions(
     canvasState.viewport,
@@ -83,7 +87,7 @@ export function CanvasPageClient() {
     canvasState.images,
     canvasState.videos,
     canvasState.selectedIds,
-    canvasState.setSelectedIds,
+    canvasState.setSelectedIds
   );
 
   const { isStorageLoaded, saveToStorage } = useStorage(
@@ -93,25 +97,25 @@ export function CanvasPageClient() {
     canvasState.setImages,
     canvasState.setVideos,
     canvasState.setViewport,
-    generationState.activeGenerations.size,
+    generationState.activeGenerations.size
   );
 
   const { handleDrop, handleFileUpload } = useFileUpload(
     canvasState.setImages,
     canvasState.viewport,
     canvasState.canvasSize,
-    userId ?? undefined,
+    userId ?? undefined
   );
 
   const { mutateAsync: generateTextToImage } = useMutation(
-    trpc.generateTextToImage.mutationOptions(),
+    trpc.generateTextToImage.mutationOptions()
   );
 
   useDefaultImages(
     isStorageLoaded,
     canvasState.images.length,
     canvasState.canvasSize,
-    canvasState.setImages,
+    canvasState.setImages
   );
 
   const { handleRedo, handleUndo } = useHistoryHandlers({
