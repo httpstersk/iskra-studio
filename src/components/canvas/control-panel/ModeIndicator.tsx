@@ -11,7 +11,6 @@ import {
   CctvIcon,
   CloudIcon,
   ImagesIcon,
-  Layers,
   Lightbulb,
   PaintBucketIcon,
   PlayIcon,
@@ -158,18 +157,18 @@ export function ModeIndicator({
               <span className="text-xs whitespace-nowrap">Emotions</span>
             </div>
           </SegmentedControl.Item>
-          <SegmentedControl.Item value="surface">
-            <div className="flex flex-row items-center gap-1.5">
-              <Layers className="size-3.5" />
-              <span className="text-xs whitespace-nowrap">Surface</span>
-            </div>
-          </SegmentedControl.Item>
           <SegmentedControl.Item value="weather">
             <div className="flex flex-row items-center gap-1.5">
               <CloudIcon className="size-3.5" />
               <span className="text-xs whitespace-nowrap">Weather</span>
             </div>
           </SegmentedControl.Item>
+          {/* <SegmentedControl.Item value="surface">
+            <div className="flex flex-row items-center gap-1.5">
+              <Layers className="size-3.5" />
+              <span className="text-xs whitespace-nowrap">Surface</span>
+            </div>
+          </SegmentedControl.Item> */}
         </SegmentedControl.Root>
       )}
     </>
