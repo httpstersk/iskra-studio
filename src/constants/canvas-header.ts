@@ -8,10 +8,8 @@
 export const CANVAS_HEADER_CLASSES = {
   /** Class for the AI provider selector positioning */
   AI_PROVIDER_SELECTOR: "ml-24",
-  /** Class for the image model selector positioning */
-  IMAGE_MODEL_SELECTOR: "mr-auto",
   /** Class for the FIBO toggle container */
-  FIBO_TOGGLE_CONTAINER: "flex items-center gap-2 mr-4",
+  FIBO_TOGGLE_CONTAINER: "flex items-center gap-2 mr-auto",
   /** Class for the FIBO toggle label */
   FIBO_TOGGLE_LABEL:
     "text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",

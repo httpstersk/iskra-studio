@@ -11,9 +11,9 @@ import { Loader } from "@/components/ai-elements/loader";
 import { Button } from "@/components/ui/button";
 import { useProjects } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import type { Id } from "../../../convex/_generated/dataModel";
-import { PanelLeftClose, Plus } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
 
 /**
  * Props for ProjectPanel component.
@@ -61,7 +61,6 @@ export function ProjectPanel({
   currentProjectId,
   isOpen = false,
   onOpenProject,
-  onToggle,
 }: ProjectPanelProps) {
   const { projects, isLoading, createProject } = useProjects();
 
@@ -71,19 +70,8 @@ export function ProjectPanel({
         id: project.id as Id<"projects">,
         label: `${(index + 1).toString().padStart(2, "0")}`,
       })),
-    [projects],
+    [projects]
   );
-
-  /**
-   * Toggles the panel open/closed.
-   */
-  const togglePanel = () => {
-    onToggle?.();
-  };
-
-  // Store latest onToggle in ref
-  const toggleRef = useRef(onToggle);
-  toggleRef.current = onToggle;
 
   /**
    * Handles keyboard shortcut (Cmd/Ctrl+P).
@@ -93,7 +81,6 @@ export function ProjectPanel({
       // Cmd+P (Mac) or Ctrl+P (Windows/Linux)
       if ((e.metaKey || e.ctrlKey) && e.key === "p") {
         e.preventDefault();
-        toggleRef.current?.();
       }
     };
 
@@ -134,28 +121,10 @@ export function ProjectPanel({
           "bg-card/96 backdrop-blur-2xl",
           "shadow-[0_8px_32px_rgba(0,0,0,0.45)]",
           "transition-transform duration-300 ease-in-out",
-          isOpen ? "translate-x-0" : "-translate-x-full",
+          isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex h-full w-full flex-col items-center px-3 py-6">
-          <div className="flex w-full flex-col items-center gap-2.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={togglePanel}
-              customVariant={cn(
-                "h-11 w-11 rounded-full border border-border/50",
-                "bg-card/85 text-muted-foreground",
-                "transition hover:border-border/40 hover:bg-card/90 hover:text-foreground",
-              )}
-            >
-              <PanelLeftClose className="h-5 w-5" />
-              <span className="sr-only">Toggle sidebar</span>
-            </Button>
-          </div>
-
-          <div className="mt-6 h-px w-10 bg-border/40" aria-hidden="true" />
-
           <div className="mt-6 w-full overflow-y-auto">
             <div className="flex flex-col items-center gap-2.5 pb-4">
               {/* Show skeleton loaders only on initial load (when no projects exist yet) */}
@@ -185,7 +154,7 @@ export function ProjectPanel({
                         "transition-all duration-200",
                         isSelected
                           ? "border-transparent bg-secondary text-secondary-foreground shadow-none opacity-100"
-                          : "border-border/45 hover:border-border/30 hover:bg-card/90 opacity-50 hover:opacity-100",
+                          : "border-border/45 hover:border-border/30 hover:bg-card/90 opacity-50 hover:opacity-100"
                       )}
                       disabled={isLoadingThisProject}
                     >
@@ -197,7 +166,7 @@ export function ProjectPanel({
                             "text-sm font-mono transition",
                             isSelected
                               ? "text-foreground"
-                              : "text-muted-foreground group-hover:text-foreground",
+                              : "text-muted-foreground group-hover:text-foreground"
                           )}
                         >
                           {label}
@@ -214,7 +183,7 @@ export function ProjectPanel({
                 customVariant={cn(
                   "mt-2 h-11 w-11 rounded-full border border-border/45",
                   "bg-card/88 text-foreground",
-                  "transition hover:border-border/30 hover:bg-card/95",
+                  "transition hover:border-border/30 hover:bg-card/95"
                 )}
               >
                 <Plus className="h-5 w-5" />
