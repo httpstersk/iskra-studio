@@ -273,20 +273,52 @@ export function getErrorMessage(error: unknown): string {
     if (typeof payload === "string") {
       return payload;
     }
+
     if (payload instanceof Error) {
       return payload.message;
     }
-    if (payload && typeof payload === "object" && "message" in payload) {
-      return String((payload as { message: unknown }).message);
+
+    if (payload && typeof payload === "object") {
+      // Check for message property
+      if ("message" in payload && payload.message) {
+        return String(payload.message);
+      }
+      // Check for nested cause with message (common in wrapped errors)
+      if (
+        "cause" in payload &&
+        payload.cause &&
+        typeof payload.cause === "object" &&
+        "message" in payload.cause
+      ) {
+        return String((payload.cause as { message: unknown }).message);
+      }
     }
-    return "Unknown error";
+    // Fallback: try to stringify the payload for debugging
+    try {
+      const stringified = JSON.stringify(payload);
+
+      if (stringified && stringified !== "{}" && stringified !== "null") {
+        return `Error: ${stringified}`;
+      }
+    } catch {
+      // Ignore stringify errors
+    }
+    return "An unexpected error occurred. Please try again.";
   }
 
   if (error instanceof Error) {
     return error.message;
   }
 
-  return String(error);
+  // Handle non-Error thrown values
+  if (error !== null && error !== undefined) {
+    const str = String(error);
+    if (str && str !== "[object Object]") {
+      return str;
+    }
+  }
+
+  return "An unexpected error occurred. Please try again.";
 }
 
 /**
