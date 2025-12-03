@@ -105,12 +105,27 @@ export class ValidationErr extends st.Err<ValidationErrPayload> {
 const fiboAnalysisErrSymbol = Symbol("fiboAnalysisErrSymbol");
 
 export interface FiboAnalysisErrPayload {
-  message: string;
   cause?: unknown;
+  message: string;
 }
 
 export class FiboAnalysisErr extends st.Err<FiboAnalysisErrPayload> {
   [fiboAnalysisErrSymbol]: null = null;
+}
+
+/**
+ * Rate Limit Error - for 429 Too Many Requests responses
+ */
+const rateLimitErrSymbol = Symbol("rateLimitErrSymbol");
+
+export interface RateLimitErrPayload {
+  cause?: unknown;
+  message: string;
+  retryAfterMs?: number;
+}
+
+export class RateLimitErr extends st.Err<RateLimitErrPayload> {
+  [rateLimitErrSymbol]: null = null;
 }
 
 // ============================================================================
@@ -194,6 +209,10 @@ export function isFiboAnalysisErr(value: unknown): value is FiboAnalysisErr {
   return value instanceof FiboAnalysisErr;
 }
 
+export function isRateLimitErr(value: unknown): value is RateLimitErr {
+  return value instanceof RateLimitErr;
+}
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -245,6 +264,10 @@ export function getErrorMessage(error: unknown): string {
     return error.payload.message;
   }
 
+  if (isRateLimitErr(error)) {
+    return error.payload.message;
+  }
+
   if (isErr(error)) {
     const payload = error.payload;
     if (typeof payload === "string") {
@@ -280,7 +303,7 @@ export async function retryWithBackoff<T>(
   fn: () => Promise<T | st.Err<unknown>>,
   maxRetries: number,
   shouldRetry: (error: st.Err<unknown>) => boolean = () => true,
-  baseDelay = 1000,
+  baseDelay = 1000
 ): Promise<T | st.Err<unknown>> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const result = await fn();
@@ -313,7 +336,7 @@ export async function retryWithBackoff<T>(
  */
 export function mapOk<T, U>(
   result: T | st.Err<unknown>,
-  fn: (value: T) => U,
+  fn: (value: T) => U
 ): U | st.Err<unknown> {
   if (isErr(result)) {
     return result;
@@ -326,7 +349,7 @@ export function mapOk<T, U>(
  */
 export function mapErr<T>(
   result: T | st.Err<unknown>,
-  fn: (error: st.Err<unknown>) => st.Err<unknown>,
+  fn: (error: st.Err<unknown>) => st.Err<unknown>
 ): T | st.Err<unknown> {
   if (isErr(result)) {
     return fn(result);
@@ -360,7 +383,7 @@ export function unwrapOr<T>(result: T | st.Err<unknown>, defaultValue: T): T {
  */
 export function unwrapOrElse<T>(
   result: T | st.Err<unknown>,
-  fn: (error: st.Err<unknown>) => T,
+  fn: (error: st.Err<unknown>) => T
 ): T {
   if (isErr(result)) {
     return fn(result);

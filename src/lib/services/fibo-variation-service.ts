@@ -10,8 +10,19 @@
 
 import { FIBO_ANALYSIS, getFiboSeed } from "@/constants/fibo";
 import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
+import { isBriaApiErr, RateLimitErr } from "@/lib/errors/safe-errors";
 import { generateStructuredPrompt } from "@/lib/services/bria-client";
 import { analyzeFiboImageWithRetry } from "@/lib/services/fibo-image-analyzer";
+
+/** User-friendly message for rate limit errors */
+const RATE_LIMIT_MESSAGE =
+  "The image analysis service has reached its request limit. Please try again later or contact support to upgrade your plan.";
+
+/** Maximum retries for refinement calls */
+const REFINEMENT_MAX_RETRIES = 2;
+
+/** Base delay for exponential backoff in milliseconds */
+const REFINEMENT_BASE_DELAY_MS = 1000;
 
 /**
  * Configuration for FIBO variation generation
@@ -86,7 +97,7 @@ export interface FiboVariationResult<T = string> {
  * ```
  */
 export async function generateFiboVariations<T = string>(
-  config: FiboVariationConfig,
+  config: FiboVariationConfig
 ): Promise<FiboVariationResult<T>> {
   const {
     imageUrls,
@@ -105,42 +116,81 @@ export async function generateFiboVariations<T = string>(
   // Check if result is an error (has payload property)
   if ("payload" in fiboAnalysisResult) {
     throw new Error(
-      `FIBO analysis failed: ${fiboAnalysisResult.payload.message || "Unknown error"}`,
+      `FIBO analysis failed: ${fiboAnalysisResult.payload.message || "Unknown error"}`
     );
   }
 
   const fiboAnalysis = fiboAnalysisResult;
 
   const refinementPromises = variations.map(async (variationPrompt) => {
-    // Call Bria API to refine structured prompt with variation text prompt
-    // We pass the original structured_prompt + variation text prompt
-    // Bria will return a refined structured_prompt without generating the image
-    const result = await generateStructuredPrompt(
-      {
-        prompt: variationPrompt,
-        seed,
-        structured_prompt: JSON.stringify(fiboAnalysis),
-        sync: true,
-      },
-      timeout,
-    );
+    // Call Bria API with retry logic for transient failures
+    let lastError: unknown;
 
-    // Check if result is an error (has payload property)
-    if ("payload" in result) {
-      throw new Error(
-        `FIBO refinement failed: ${result.payload.message || "Unknown error"}`,
+    for (let attempt = 0; attempt <= REFINEMENT_MAX_RETRIES; attempt++) {
+      const result = await generateStructuredPrompt(
+        {
+          prompt: variationPrompt,
+          seed,
+          structured_prompt: JSON.stringify(fiboAnalysis),
+          sync: true,
+        },
+        timeout
       );
+
+      // Check if result is an error (has payload property)
+      if ("payload" in result) {
+        lastError = result;
+
+        // Check for rate limit error - don't retry, fail immediately with user-friendly message
+        if (isBriaApiErr(result) && result.payload.statusCode === 429) {
+          throw new RateLimitErr({
+            message: RATE_LIMIT_MESSAGE,
+            cause: result,
+          });
+        }
+
+        // Don't retry on non-transient errors
+        if (isBriaApiErr(result)) {
+          const statusCode = result.payload.statusCode;
+          if (
+            statusCode === 400 || // Bad request
+            statusCode === 401 || // Unauthorized
+            statusCode === 403 // Forbidden
+          ) {
+            throw new Error(
+              `FIBO refinement failed: ${result.payload.message || "Unknown error"}`
+            );
+          }
+        }
+
+        // Retry on transient errors with exponential backoff
+        if (attempt < REFINEMENT_MAX_RETRIES) {
+          const delay = Math.pow(2, attempt) * REFINEMENT_BASE_DELAY_MS;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+
+        // Max retries exceeded
+        throw new Error(
+          `FIBO refinement failed after ${REFINEMENT_MAX_RETRIES + 1} attempts: ${result.payload.message || "Unknown error"}`
+        );
+      }
+
+      // Parse the refined structured prompt
+      const refinedStructuredPrompt: FiboStructuredPrompt = JSON.parse(
+        result.structured_prompt
+      );
+
+      return {
+        refinedStructuredPrompt,
+        variation: variationPrompt as T,
+      };
     }
 
-    // Parse the refined structured prompt
-    const refinedStructuredPrompt: FiboStructuredPrompt = JSON.parse(
-      result.structured_prompt,
+    // Should not reach here, but handle edge case
+    throw new Error(
+      `FIBO refinement failed: ${lastError instanceof Error ? lastError.message : "Unknown error"}`
     );
-
-    return {
-      refinedStructuredPrompt,
-      variation: variationPrompt as T,
-    };
   });
 
   const refinedPrompts = await Promise.all(refinementPromises);

@@ -10,14 +10,19 @@
 
 import { FIBO_ANALYSIS, getFiboSeed } from "@/constants/fibo";
 import type { FiboStructuredPrompt } from "@/lib/adapters/fibo-to-analysis-adapter";
-import { generateStructuredPrompt } from "@/lib/services/bria-client";
 import {
   FiboAnalysisErr,
-  ValidationErr,
-  isErr,
   isBriaApiErr,
+  isErr,
+  RateLimitErr,
   trySync,
+  ValidationErr,
 } from "@/lib/errors/safe-errors";
+import { generateStructuredPrompt } from "@/lib/services/bria-client";
+
+/** User-friendly message for rate limit errors */
+const RATE_LIMIT_MESSAGE =
+  "The image analysis service has reached its request limit. Please try again later or contact support to upgrade your plan.";
 
 /**
  * Configuration for FIBO analysis
@@ -51,8 +56,10 @@ export interface FiboAnalysisOptions {
  * ```
  */
 export async function analyzeFiboImage(
-  options: FiboAnalysisOptions,
-): Promise<FiboStructuredPrompt | FiboAnalysisErr | ValidationErr> {
+  options: FiboAnalysisOptions
+): Promise<
+  FiboStructuredPrompt | FiboAnalysisErr | RateLimitErr | ValidationErr
+> {
   const {
     imageUrls,
     seed = getFiboSeed(),
@@ -74,12 +81,20 @@ export async function analyzeFiboImage(
       seed,
       sync: false,
     },
-    timeout,
+    timeout
   );
 
   if (isErr(result)) {
     // Handle Bria API errors
     if (isBriaApiErr(result)) {
+      // Check for rate limit error - return user-friendly message
+      if (result.payload.statusCode === 429) {
+        return new RateLimitErr({
+          message: RATE_LIMIT_MESSAGE,
+          cause: result,
+        });
+      }
+
       let errorMessage = `${result.payload.message} (Request ID: ${result.payload.requestId || "N/A"})`;
 
       // Add helpful context for common error codes
@@ -124,9 +139,11 @@ export async function analyzeFiboImage(
  */
 export async function analyzeFiboImageWithRetry(
   options: FiboAnalysisOptions,
-  maxRetries = 2,
-): Promise<FiboStructuredPrompt | FiboAnalysisErr | ValidationErr> {
-  let lastError: FiboAnalysisErr | ValidationErr | undefined;
+  maxRetries = 2
+): Promise<
+  FiboStructuredPrompt | FiboAnalysisErr | RateLimitErr | ValidationErr
+> {
+  let lastError: FiboAnalysisErr | RateLimitErr | ValidationErr | undefined;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const result = await analyzeFiboImage(options);
@@ -137,12 +154,12 @@ export async function analyzeFiboImageWithRetry(
 
     lastError = result;
 
-    // Don't retry on validation errors
-    if (result instanceof ValidationErr) {
+    // Don't retry on validation errors or rate limit errors
+    if (result instanceof ValidationErr || result instanceof RateLimitErr) {
       return result;
     }
 
-    // Don't retry on specific error codes (authentication or bad request)
+    // Don't retry on specific error codes (authentication, bad request)
     if (result instanceof FiboAnalysisErr) {
       const cause = result.payload.cause;
       if (isBriaApiErr(cause)) {
