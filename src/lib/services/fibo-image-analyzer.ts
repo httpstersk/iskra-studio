@@ -181,8 +181,11 @@ export async function analyzeFiboImageWithRetry(
     }
   }
 
+  // Extract the underlying error message for better debugging
+  const underlyingMessage = lastError?.payload?.message || "Unknown error";
+
   return new FiboAnalysisErr({
-    message: `FIBO analysis failed after ${maxRetries + 1} attempts`,
+    message: `FIBO analysis failed after ${maxRetries + 1} attempts: ${underlyingMessage}`,
     cause: lastError,
   });
 }
