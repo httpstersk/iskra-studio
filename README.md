@@ -98,6 +98,10 @@ Iskra Studio uses the **BRIA FIBO** (Foundation Image-to-Image Base Orchestrator
 
 ### Structured Prompt Example
 
+![Iskra Studio Demo Process 01](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/iskra-sudio-demo-process-01.jpg)
+![Iskra Studio Demo Process 02](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/iskra-sudio-demo-process-02.jpg)
+![Iskra Studio Demo Process 03](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/iskra-sudio-demo-process-03.jpg)
+
 Below is an example of a JSON-structured prompt used with BRIA's `structured_prompt/generate` API:
 
 ```typescript
