@@ -1,6 +1,6 @@
 # Iskra ✸ Studio
 
-**Iskra ✸ Studio** is an AI image and video generator that is designed for quick exploration. The word 'iskra' means 'spark' in Slovak. With just one click, it creates different camera angles, styles, characters, lighting, emotions and storylines based on the reference image = no prompts needed!
+**Iskra ✸ Studio** is an AI image and video generator that is designed for quick exploration. The word 'iskra' means 'spark' in Slovak. With just one click, it creates different camera angles, styles, characters, lighting, emotions and storylines based on the reference image === no prompts needed!
 
 ![Iskra Studio Cover](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/cover.png)
 
@@ -95,6 +95,84 @@ Iskra Studio uses the **BRIA FIBO** (Foundation Image-to-Image Base Orchestrator
    - **Camera Angle Mode**: Applies perspective changes (e.g., "Re-render from a low angle")
 
 3. **Style Preservation**: A "Vibe Lock" constraint ensures the original image's color grading, lighting mood, and visual continuity are preserved across all variations.
+
+### Structured Prompt Example
+
+Below is an example of a JSON-structured prompt used with BRIA's `structured_prompt/generate` API:
+
+```typescript
+const PROMPT_BRIA_REFINED = {
+  short_description:
+    "A close-up, eye-level shot captures the intense gaze of an African-American woman with vibrant rainbow-colored hair, as she looks down, with only her eyes and forehead visible above a dark, horizontal obstruction. The scene is bathed in a cool, dark blue light, suggesting a late-night or low-light environment, possibly illuminated by a screen. Her expression is serious and focused, conveying deep concentration or perhaps concern. The overall mood is somber and mysterious, highlighting the woman's intense focus on something unseen below the frame. The camera glides horizontally, adding subtle production value and dimensional depth.",
+  objects: [
+    {
+      description:
+        "The upper portion of an African-American woman's face, specifically her eyes, eyebrows, and forehead, with vibrant rainbow-colored hair visible above. Her eyes are dark and appear to be looking downwards with intense focus. There are subtle lines on her forehead, suggesting concentration.",
+      location: "center-top",
+      relationship:
+        "The woman's face is the primary subject, partially obscured by an unseen object in the foreground.",
+      relative_size: "large within frame",
+      shape_and_color:
+        "Irregular shape, primarily dark skin tones and multi-colored hair.",
+      texture: "Smooth skin, textured, possibly braided or styled hair.",
+      appearance_details:
+        "Her eyes reflect a subtle blue light, indicating a light source directly in front and below her.",
+      pose: "Head slightly tilted down, eyes looking directly forward and down.",
+      expression:
+        "Serious, focused, intense, possibly contemplative or concerned.",
+      action: "Looking intently at something below the frame.",
+      gender: "female",
+      skin_tone_and_texture:
+        "Dark skin tone with a smooth texture, showing some subtle pores and lines.",
+      orientation: "Facing forward, slightly downward.",
+    },
+    {
+      description:
+        "A dark, horizontal bar or surface that obscures the lower half of the woman's face, cutting across just below her eyes. It appears to be a solid, opaque object, possibly a desk, a screen, or a barrier.",
+      location: "bottom-center foreground",
+      relationship:
+        "It acts as a foreground element, partially obscuring the main subject and creating a sense of mystery about what the woman is looking at.",
+      relative_size: "large within frame",
+      shape_and_color: "Rectangular, dark blue/black.",
+      texture:
+        "Smooth, possibly reflective due to the subtle light on its top edge.",
+      appearance_details:
+        "The top edge catches a faint blue light, suggesting it is illuminated from above or reflecting light from the woman's face.",
+      orientation: "Horizontal.",
+    },
+  ],
+  background_setting:
+    "The background is a dark, indistinct blur of deep blue and teal, suggesting a dimly lit indoor environment. There are no discernible features, emphasizing the woman's face and the immediate foreground.",
+  lighting: {
+    conditions:
+      "Dim, low-light conditions, possibly artificial light from a screen.",
+    direction:
+      "Front-lit from below and slightly to the front, casting a subtle blue glow upwards onto the woman's face and the top edge of the foreground object.",
+    shadows:
+      "Minimal shadows on the visible part of the face, with the overall scene being dark, implying deep shadows elsewhere.",
+  },
+  aesthetics: {
+    composition:
+      "Close-up, portrait composition, with the subject's face partially obscured by a foreground element, creating a sense of intimacy and mystery. The camera's horizontal glide adds subtle production value and dimensional depth.",
+    color_scheme:
+      "Monochromatic cool tones, dominated by dark blues and teals, with subtle warm undertones in the skin and vibrant rainbow accents in the hair.",
+    mood_atmosphere: "Intense, mysterious, contemplative, somber, focused.",
+    preference_score: "very high",
+    aesthetic_score: "very high",
+  },
+  photographic_characteristics: {
+    depth_of_field:
+      "Shallow, with the woman's face in sharp focus and the background softly blurred.",
+    focus: "Sharp focus on the woman's eyes and forehead.",
+    camera_angle:
+      "Eye-level, with a subtle horizontal camera glide parallel to the subject.",
+    lens_focal_length: "Portrait lens (e.g., 50mm-85mm).",
+  },
+  style_medium: "photograph",
+  context:
+    "This is a still from a film or television series, likely a dramatic or suspenseful scene, focusing on the character's internal state or reaction to something unseen.",
+};
+```
 
 ### Key Components
 
