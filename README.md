@@ -1,8 +1,14 @@
 # Iskra ✸ Studio
 
-**Iskra ✸ Studio** is an AI image and video generator that is designed for quick exploration. The word 'iskra' means 'spark' in Slovak. With just one click, it creates different camera angles, styles, characters, lighting, emotions and storylines based on the reference image === no prompts needed!
+**Iskra ✸ Studio** is an AI image and video generator designed for quick exploration. The word *iskra* means *spark* in Slovak. With just one click, it creates different camera angles, styles, characters, lighting, emotions, and storylines based on a reference image — no prompts needed!
 
 ![Iskra Studio Cover](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/cover.png)
+
+## Demo
+
+![Iskra Studio Demo Process 01](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/iskra-sudio-demo-process-01.jpg)
+![Iskra Studio Demo Process 02](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/iskra-sudio-demo-process-02.jpg)
+![Iskra Studio Demo Process 03](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/iskra-sudio-demo-process-03.jpg)
 
 ## Key Features
 
@@ -98,11 +104,8 @@ Iskra Studio uses the **BRIA FIBO** (Foundation Image-to-Image Base Orchestrator
 
 ### Structured Prompt Example
 
-![Iskra Studio Demo Process 01](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/iskra-sudio-demo-process-01.jpg)
-![Iskra Studio Demo Process 02](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/iskra-sudio-demo-process-02.jpg)
-![Iskra Studio Demo Process 03](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/iskra-sudio-demo-process-03.jpg)
-
-Below is an example of a JSON-structured prompt used with BRIA's `structured_prompt/generate` API:
+<details>
+<summary>View example JSON-structured prompt used with BRIA's <code>structured_prompt/generate</code> API</summary>
 
 ```typescript
 const PROMPT_BRIA_REFINED = {
@@ -177,6 +180,8 @@ const PROMPT_BRIA_REFINED = {
     "This is a still from a film or television series, likely a dramatic or suspenseful scene, focusing on the character's internal state or reaction to something unseen.",
 };
 ```
+
+</details>
 
 ### Key Components
 
