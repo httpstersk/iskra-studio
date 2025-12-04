@@ -2,7 +2,7 @@
 
 **Iskra ✸ Studio** is an AI image and video generator that is designed for quick exploration. The word 'iskra' means 'spark' in Slovak. With just one click, it creates different camera angles, styles, characters, lighting, emotions and storylines based on the reference image = no prompts needed!
 
-![Iskra Studio Cover](https://raw.githubusercontent.com/httpstersk/iskra-studio/refs/heads/main/public/cover.png)
+![Iskra Studio Cover](https://raw.githubusercontent.com/httpstersk/iskra-studio/main/public/cover.png)
 
 ## Key Features
 
